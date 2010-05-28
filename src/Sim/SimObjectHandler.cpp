@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "./SimObjectHandler.hpp"
 #include "./SimObject.hpp"
 #include "./SimObjectDef.hpp"
@@ -47,15 +49,13 @@ SimObjectHandler::SimObjectHandler() {
 		SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
 			so->SetMat(mat);
 
-		simObjects[so->GetID()] = so;
-		simObjectUsedIDs.insert(so->GetID());
-		simObjectFreeIDs.erase(so->GetID());
+		AddObject(so);
 	}
 }
 
 SimObjectHandler::~SimObjectHandler() {
 	for (std::set<unsigned int>::const_iterator it = simObjectUsedIDs.begin(); it != simObjectUsedIDs.end(); ++it) {
-		delete simObjects[*it];
+		delete simObjects[*it]; simObjects[*it] = NULL;
 	}
 
 	simObjectFreeIDs.clear();
@@ -67,4 +67,24 @@ void SimObjectHandler::Update() {
 	for (std::set<unsigned int>::const_iterator it = simObjectUsedIDs.begin(); it != simObjectUsedIDs.end(); ++it) {
 		simObjects[*it]->Update();
 	}
+}
+
+
+
+void SimObjectHandler::AddObject(SimObject* o) {
+	assert(simObjects[o->GetID()] == NULL);
+
+	simObjects[o->GetID()] = o;
+	simObjectUsedIDs.insert(o->GetID());
+	simObjectFreeIDs.erase(o->GetID());
+}
+
+void SimObjectHandler::DelObject(SimObject* o) {
+	assert(simObjects[o->GetID()] == o);
+
+	simObjectUsedIDs.erase(o->GetID());
+	simObjectFreeIDs.insert(o->GetID());
+
+	simObjects[o->GetID()] = NULL;
+	delete o;
 }
