@@ -10,11 +10,12 @@ struct LocalModel;
 class SimObjectDef;
 class SimObject {
 public:
-	SimObject(SimObjectDef* d): def(d) {}
+	SimObject(SimObjectDef* d, unsigned int i): def(d), id(i) {}
 	virtual ~SimObject();
 	virtual void Update();
 
 	const SimObjectDef* GetDef() const { return def; }
+	unsigned int GetID() const { return id; }
 
 	void SetModel(LocalModel* m) { mdl = m; }
 	LocalModel* GetModel() const { return mdl; }
@@ -24,6 +25,7 @@ public:
 
 private:
 	const SimObjectDef* def;
+	const unsigned int id;
 
 	std::string mdlName;
 	LocalModel* mdl;

@@ -26,10 +26,16 @@ SimObjectHandler::SimObjectHandler() {
 	const LuaTable* rootTable = LUA->GetRoot();
 	const LuaTable* objectsTable = rootTable->GetTblVal("objects");
 
-	std::list<int> simObjectIDs;
-	objectsTable->GetIntTblKeys(&simObjectIDs);
+	simObjects.resize(unsigned(objectsTable->GetFltVal("maxObjects", 10000)), NULL);
 
-	for (std::list<int>::iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); it++) {
+	for (unsigned int i = 0; i < simObjects.size(); i++) {
+		simObjectFreeIDs.insert(i);
+	}
+
+	std::list<int> simObjectKeys;
+	objectsTable->GetIntTblKeys(&simObjectKeys);
+
+	for (std::list<int>::iterator it = simObjectKeys.begin(); it != simObjectKeys.end(); it++) {
 		const LuaTable* objectTbl = objectsTable->GetTblVal(*it);
 
 		vec3f pos = objectTbl->GetVec<vec3f>("pos", 3);
@@ -38,21 +44,27 @@ SimObjectHandler::SimObjectHandler() {
 			mat.SetYDirXZ(ground->GetNormal(pos.x, pos.z));
 
 		SimObjectDef* sod = SimObjectDefLoader::GetDef(objectTbl->GetStrVal("mdl", ""));
-		SimObject* so = new SimObject(sod);
+		SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
 			so->SetMat(mat);
 
-		simObjects.push_back(so);
+		simObjects[so->GetID()] = so;
+		simObjectUsedIDs.insert(so->GetID());
+		simObjectFreeIDs.erase(so->GetID());
 	}
 }
 
 SimObjectHandler::~SimObjectHandler() {
-	for (std::list<SimObject*>::iterator it = simObjects.begin(); it != simObjects.end(); it++) {
-		delete *it;
+	for (std::set<unsigned int>::const_iterator it = simObjectUsedIDs.begin(); it != simObjectUsedIDs.end(); ++it) {
+		delete simObjects[*it];
 	}
+
+	simObjectFreeIDs.clear();
+	simObjectUsedIDs.clear();
+	simObjects.clear();
 }
 
 void SimObjectHandler::Update() {
-	for (std::list<SimObject*>::iterator it = simObjects.begin(); it != simObjects.end(); it++) {
-		(*it)->Update();
+	for (std::set<unsigned int>::const_iterator it = simObjectUsedIDs.begin(); it != simObjectUsedIDs.end(); ++it) {
+		simObjects[*it]->Update();
 	}
 }

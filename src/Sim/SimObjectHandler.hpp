@@ -1,7 +1,8 @@
 #ifndef PFFG_SIMOBJECTHANDLER_HDR
 #define PFFG_SIMOBJECTHANDLER_HDR
 
-#include <list>
+#include <set>
+#include <vector>
 
 class SimObject;
 class SimObjectHandler {
@@ -14,10 +15,15 @@ public:
 
 	void Update();
 
-	const std::list<SimObject*>& GetSimObjects() const { return simObjects; }
+	const std::set<unsigned int>& GetSimObjectFreeIDs() const { return simObjectFreeIDs; }
+	const std::set<unsigned int>& GetSimObjectUsedIDs() const { return simObjectUsedIDs; }
+
+	SimObject* GetSimObject(unsigned int id) const { return simObjects[id]; }
 
 private:
-	std::list<SimObject*> simObjects;
+	std::vector<SimObject*> simObjects;
+	std::set<unsigned int> simObjectFreeIDs;
+	std::set<unsigned int> simObjectUsedIDs;
 };
 
 #endif

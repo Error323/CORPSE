@@ -57,10 +57,12 @@ CScene::CScene() {
 	const std::string shaderDir = LUA->GetRoot()->GetTblVal("general")->GetStrVal("shadersDir", "data/shaders/");
 
 	const SimObjectHandler* simObjectHandler = SimObjectHandler::GetInstance();
-	const std::list<SimObject*>& simObjects = simObjectHandler->GetSimObjects();
+	const std::set<unsigned int>& simObjectIDs = simObjectHandler->GetSimObjectUsedIDs();
 
-	for (std::list<SimObject*>::const_iterator it = simObjects.begin(); it != simObjects.end(); it++) {
-		std::string mdlName    = (*it)->GetDef()->GetModelName();
+	for (std::set<unsigned int>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
+		SimObject* obj = simObjectHandler->GetSimObject(*it);
+
+		std::string mdlName    = obj->GetDef()->GetModelName();
 		std::string mdlFile    = modelDir + mdlName;
 		std::string mdlFileExt = &mdlFile.data()[mdlFile.size() - 3];
 
@@ -116,10 +118,10 @@ CScene::CScene() {
 					}
 				}
 
-				(*it)->SetModel(localMdl);
+				obj->SetModel(localMdl);
 			} break;
 			case MODELTYPE_3DO: {
-				(*it)->SetModel(new LocalModel(reader3DO->Load(mdlFile)));
+				obj->SetModel(new LocalModel(reader3DO->Load(mdlFile)));
 			} break;
 			default: break;
 		}
@@ -175,11 +177,12 @@ void CScene::DrawModels(bool inShadowPass) {
 		}
 
 		const SimObjectHandler* simObjectHandler = SimObjectHandler::GetInstance();
-		const std::list<SimObject*>& simObjects = simObjectHandler->GetSimObjects();
+		const std::set<unsigned int>& simObjectIDs = simObjectHandler->GetSimObjectUsedIDs();
 
-		for (std::list<SimObject*>::const_iterator it = simObjects.begin(); it != simObjects.end(); it++) {
-			const mat44f& mat = (*it)->GetMat();
-			const LocalModel* lm = (*it)->GetModel();
+		for (std::set<unsigned int>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
+			const SimObject* obj = simObjectHandler->GetSimObject(*it);
+			const mat44f& mat = obj->GetMat();
+			const LocalModel* lm = obj->GetModel();
 			const ModelBase* mb = lm->GetModelBase();
 
 			Shader::IProgramObject* shObj = const_cast<Shader::IProgramObject*>(lm->GetShaderProgramObj());
