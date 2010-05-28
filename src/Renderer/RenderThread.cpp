@@ -3,7 +3,6 @@
 #include <GL/glut.h>
 #include <SDL/SDL.h>
 
-#include "../Map/MapInfo.hpp"
 #include "./RenderThread.hpp"
 #include "./Camera.hpp"
 #include "./CameraController.hpp"
@@ -34,8 +33,6 @@ void CRenderThread::FreeInstance(CRenderThread* rt) {
 CRenderThread::CRenderThread() {
 	camCon = new CCameraController();
 	scene = new CScene();
-
-	InitLight();
 }
 
 CRenderThread::~CRenderThread() {
@@ -47,7 +44,6 @@ CRenderThread::~CRenderThread() {
 
 inline static void PreFrameState() {
 	glEnable(GL_BLEND);
-	// glEnable(GL_NORMALIZE);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
@@ -61,7 +57,6 @@ inline static void PreFrameState() {
 	glFrontFace(GL_CCW);
 
 	glPolygonMode(GL_FRONT, GL_FILL);
-	glShadeModel(GL_SMOOTH);
 
 	if (ENG->GetLineSmoothing()) {
 		glEnable(GL_LINE_SMOOTH);
@@ -94,7 +89,6 @@ inline static void PostFrameState() {
 	// glDisable(GL_POLYGON_SMOOTH);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DEPTH_TEST);
-	// glDisable(GL_NORMALIZE);
 	glDisable(GL_BLEND);
 
 	glDisable(GL_DEPTH_TEST);
@@ -141,52 +135,4 @@ vec3f CRenderThread::MouseToWorldCoors(int mx, int my) {
 	gluUnProject(mx, myy, mz,  viewMat, projMat, viewport,  &wcoors[0], &wcoors[1], &wcoors[2]);
 
 	return vec3f(float(wcoors[0]), float(wcoors[1]), float(wcoors[2]));
-}
-
-
-
-void CRenderThread::InitLight(void) {
-	const GLfloat* ambientLightCol  = (GLfloat*) &mapInfo->light.groundAmbientColor.x;
-	const GLfloat* diffuseLightCol  = (GLfloat*) &mapInfo->light.groundDiffuseColor.x;
-	const GLfloat* specularLightCol = (GLfloat*) &mapInfo->light.groundSpecularColor.x;
-	const GLfloat* lightDir         = (GLfloat*) &mapInfo->light.sunDir.x;
-
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-		glLoadIdentity();
-		// if we multiply by the view-matrix here, the shaders
-		// don't need to transform the dir with gl_NormalMatrix
-		//
-		// glMultMatrixf(camCon->GetCurrCam()->GetViewMatrix());
-		glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLightCol);
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLightCol);
-		glLightfv(GL_LIGHT0, GL_SPECULAR, specularLightCol);
-		glLightfv(GL_LIGHT0, GL_POSITION, lightDir);
-	glPopMatrix();
-
-	/*
-	// GLfloat globalAmbientLight[] = {1.0f, 1.0f, 1.0f, 1.0f};
-	// GLfloat specularReflection[] = {1.0f, 1.0f, 1.0f, 1.0f};
-	// GLfloat materialEmission[] = {0.2f, 0.1f, 0.2f, 1.0f};
-	//
-	// disabling is required for the glMaterial() calls to work
-	// glDisable(GL_COLOR_MATERIAL);
-	// glMaterialfv(GL_FRONT, GL_EMISSION, materialEmission);
-	// glMaterialfv(GL_FRONT, GL_SPECULAR, specularReflection);
-	// glMateriali(GL_FRONT, GL_SHININESS, 128);
-
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHTING);
-
-	// glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientLight);
-	// glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmbientLight);
-	// glLightModelfv(GL_LIGHT_MODEL_LOCAL_VIEWER, globalAmbientLight);
-
-	// make the ambient (front)-material
-	// properties track the current color
-	glEnable(GL_COLOR_MATERIAL);
-	glColorMaterial(GL_FRONT, GL_AMBIENT);
-
-	lightEnabled = true;
-	*/
 }

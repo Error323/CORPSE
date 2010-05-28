@@ -13,7 +13,6 @@ public:
 	static void FreeInstance(CRenderThread*);
 
 	void Update();
-	void InitLight();
 
 	vec3f MouseToWorldCoors(int, int);
 

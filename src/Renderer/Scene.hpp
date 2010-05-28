@@ -18,6 +18,7 @@ public:
 private:
 	void DrawModels(bool);
 	void DrawMapAndModels(Camera*, bool);
+	void InitLight();
 
 	Camera* sun;
 	CSMFRenderer* smfRenderer;

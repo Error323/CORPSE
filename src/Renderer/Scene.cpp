@@ -1,6 +1,4 @@
-#include <GL/glew.h> // glGetUniform*(), etc
 #include <GL/gl.h>
-#include <GL/glu.h>
 
 #include <sstream>
 
@@ -145,6 +143,8 @@ CScene::CScene() {
 	// DOES receive input), sun will react to mouse movements
 	sun = new FPSCamera(mapInfo->light.sunDir * (boundingRadius * 2.0f) * 1.25f, ZVECf, CAM_PROJ_MODE_PERSP);
 	sun->DisableInput();
+
+	InitLight();
 }
 
 CScene::~CScene() {
@@ -305,4 +305,26 @@ void CScene::DrawMapAndModels(Camera* eye, bool shadows) {
 void CScene::Draw(Camera* eye) {
 	// DrawMapAndModels(eye, false); return;
 	DrawMapAndModels(eye, true); return;
+}
+
+
+
+void CScene::InitLight(void) {
+	const GLfloat* ambientLightCol  = (GLfloat*) &mapInfo->light.groundAmbientColor.x;
+	const GLfloat* diffuseLightCol  = (GLfloat*) &mapInfo->light.groundDiffuseColor.x;
+	const GLfloat* specularLightCol = (GLfloat*) &mapInfo->light.groundSpecularColor.x;
+	const GLfloat* lightDir         = (GLfloat*) &mapInfo->light.sunDir.x;
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+		glLoadIdentity();
+		// if we multiply by the view-matrix here, the shaders
+		// don't need to transform the dir with gl_NormalMatrix
+		//
+		// glMultMatrixf(camCon->GetCurrCam()->GetViewMatrix());
+		glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLightCol);
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLightCol);
+		glLightfv(GL_LIGHT0, GL_SPECULAR, specularLightCol);
+		glLightfv(GL_LIGHT0, GL_POSITION, lightDir);
+	glPopMatrix();
 }
