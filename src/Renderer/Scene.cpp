@@ -51,10 +51,12 @@ CScene::CScene() {
 	reader3DO = new CModelReader3DO();
 	readerS3O = new CModelReaderS3O();
 
+	const LuaTable* rootTable = LUA->GetRoot();
+	const LuaTable* generalTable = rootTable->GetTblVal("general");
+	const LuaTable* modelsTable = rootTable->GetTblVal("models");
 
-
-	const std::string modelDir = LUA->GetRoot()->GetTblVal("general")->GetStrVal("modelsDir", "data/models/");
-	const std::string shaderDir = LUA->GetRoot()->GetTblVal("general")->GetStrVal("shadersDir", "data/shaders/");
+	const std::string modelDir = generalTable->GetStrVal("modelsDir", "data/models/");
+	const std::string shaderDir = generalTable->GetStrVal("shadersDir", "data/shaders/");
 
 	const SimObjectHandler* simObjectHandler = SimObjectHandler::GetInstance();
 	const std::set<unsigned int>& simObjectIDs = simObjectHandler->GetSimObjectUsedIDs();
@@ -75,7 +77,7 @@ CScene::CScene() {
 			case MODELTYPE_S3O: {
 				LocalModel* localMdl = new LocalModel(readerS3O->Load(mdlFile));
 
-				const LuaTable* mdlTable = LUA->GetRoot()->GetTblVal("models")->GetTblVal(mdlName);
+				const LuaTable* mdlTable = modelsTable->GetTblVal(mdlName);
 
 				// load the model shader program
 				const std::string vShaderFileS3O = mdlTable->GetStrVal("vShader", "");
@@ -285,8 +287,6 @@ void CScene::DrawMapAndModels(Camera* eye, bool shadows) {
 				glCullFace(GL_BACK);
 
 				#ifndef CUSTOM_SMF_RENDERER
-				// TODO: move model-shader binding to the model-draw code
-				// TODO: make shaders store their own uniforms?
 					glPushMatrix();
 						readMap->GetGroundDrawer()->Draw(eye, false);
 					glPopMatrix();

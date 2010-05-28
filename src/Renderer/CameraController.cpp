@@ -4,22 +4,26 @@
 #include "../System/LuaParser.hpp"
 
 CCameraController::CCameraController(): currCam(0x0) {
-	const vec3f camPos = LUA->GetRoot()->GetTblVal("camera")->GetVec<vec3f>("pos", 3);
-	const vec3f camVRP = LUA->GetRoot()->GetTblVal("camera")->GetVec<vec3f>("vrp", 3);
+	const LuaTable* rootTable = LUA->GetRoot();
+	const LuaTable* cameraTable = rootTable->GetTblVal("camera");
+	const LuaTable* vportTable = rootTable->GetTblVal("viewport");
 
-	const unsigned int vxsize = unsigned(LUA->GetRoot()->GetTblVal("viewport")->GetFltVal("xsize", 800));
-	const unsigned int vysize = unsigned(LUA->GetRoot()->GetTblVal("viewport")->GetFltVal("ysize", 600));
+	const vec3f camPos = cameraTable->GetVec<vec3f>("pos", 3);
+	const vec3f camVRP = cameraTable->GetVec<vec3f>("vrp", 3);
+
+	const unsigned int vxsize = unsigned(vportTable->GetFltVal("xsize", 800));
+	const unsigned int vysize = unsigned(vportTable->GetFltVal("ysize", 600));
 
 	const float hAspRat = float(vxsize) / float(vysize);
 
-	const float vFOVdeg = LUA->GetRoot()->GetTblVal("camera")->GetFltVal("vFOV", 45.0f);
+	const float vFOVdeg = cameraTable->GetFltVal("vFOV", 45.0f);
 	const float hFOVdeg = RAD2DEG(atanf(hAspRat * tanf(DEG2RAD(vFOVdeg * 0.5f))) * 2.0f);
 
-	const float zNearDist = LUA->GetRoot()->GetTblVal("camera")->GetFltVal("zNearDist",     1.0f);
-	const float zFarDist  = LUA->GetRoot()->GetTblVal("camera")->GetFltVal("zFarDist",  32768.0f);
+	const float zNearDist = cameraTable->GetFltVal("zNearDist",     1.0f);
+	const float zFarDist  = cameraTable->GetFltVal("zFarDist",  32768.0f);
 
-	const std::string mms = (LUA->GetRoot()->GetTblVal("camera"  )->GetStrVal("moveMode", "fps"));
-	const std::string pms = (LUA->GetRoot()->GetTblVal("camera"  )->GetStrVal("projMode", "persp"));
+	const std::string mms = cameraTable->GetStrVal("moveMode", "fps");
+	const std::string pms = cameraTable->GetStrVal("projMode", "persp");
 
 	CAMERA_MOVE_MODE moveMode = (mms == "fps"  )? CAM_MOVE_MODE_FPS:    (mms == "orbit")? CAM_MOVE_MODE_ORBIT:  CAM_MOVE_MODE_UNKNOWN;
 	CAMERA_PROJ_MODE projMode = (pms == "persp")? CAM_PROJ_MODE_PERSP:  (pms == "ortho")? CAM_PROJ_MODE_ORTHO:  CAM_PROJ_MODE_UNKNOWN;
