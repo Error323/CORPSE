@@ -32,11 +32,11 @@ CSimThread::CSimThread() {
 	mGround  = CGround::GetInstance();
 	mReadMap = CReadMap::GetInstance(generalTable->GetStrVal("mapsDir", "data/maps/") + mapTable->GetStrVal("smf", "map.smf"));
 
-	simObjectHandler = SimObjectHandler::GetInstance();
+	mSimObjectHandler = SimObjectHandler::GetInstance();
 }
 
 CSimThread::~CSimThread() {
-	SimObjectHandler::FreeInstance(simObjectHandler);
+	SimObjectHandler::FreeInstance(mSimObjectHandler);
 
 	CReadMap::FreeInstance(mReadMap);
 	CGround::FreeInstance(mGround);
@@ -44,5 +44,5 @@ CSimThread::~CSimThread() {
 }
 
 void CSimThread::Update() {
-	simObjectHandler->Update();
+	mSimObjectHandler->Update();
 }

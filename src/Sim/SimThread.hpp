@@ -13,8 +13,6 @@ public:
 
 	void Update();
 
-	SimObjectHandler* GetSimObjectHandler() const { return simObjectHandler; }
-
 private:
 	CSimThread();
 	~CSimThread();
@@ -23,7 +21,7 @@ private:
 	CReadMap* mReadMap;
 	const CMapInfo* mMapInfo;
 
-	SimObjectHandler* simObjectHandler;
+	SimObjectHandler* mSimObjectHandler;
 };
 
 #endif

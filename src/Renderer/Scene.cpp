@@ -56,7 +56,6 @@ CScene::CScene() {
 	const std::string modelDir = generalTable->GetStrVal("modelsDir", "data/models/");
 	const std::string shaderDir = generalTable->GetStrVal("shadersDir", "data/shaders/");
 
-	const SimObjectHandler* simObjectHandler = SimObjectHandler::GetInstance();
 	const std::set<unsigned int>& simObjectIDs = simObjectHandler->GetSimObjectUsedIDs();
 
 	for (std::set<unsigned int>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
@@ -178,7 +177,6 @@ void CScene::DrawModels(bool inShadowPass) {
 			glEnable(GL_TEXTURE_2D);
 		}
 
-		const SimObjectHandler* simObjectHandler = SimObjectHandler::GetInstance();
 		const std::set<unsigned int>& simObjectIDs = simObjectHandler->GetSimObjectUsedIDs();
 
 		for (std::set<unsigned int>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {

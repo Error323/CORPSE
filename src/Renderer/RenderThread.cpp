@@ -43,56 +43,78 @@ CRenderThread::~CRenderThread() {
 
 
 inline static void PreFrameState() {
-	glEnable(GL_BLEND);
+	static int preDL = 0;
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
-	glDepthFunc(GL_LESS);
-	glDepthRange(0.0f, 1.0f);
+	if (preDL == 0) {
+		preDL = glGenLists(1);
+		glNewList(preDL, GL_COMPILE);
 
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+		glEnable(GL_BLEND);
 
-	// note: default winding is already CCW
-	glFrontFace(GL_CCW);
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
+		glDepthFunc(GL_LESS);
+		glDepthRange(0.0f, 1.0f);
 
-	glPolygonMode(GL_FRONT, GL_FILL);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 
-	if (ENG->GetLineSmoothing()) {
-		glEnable(GL_LINE_SMOOTH);
-		glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+		// note: default winding is already CCW
+		glFrontFace(GL_CCW);
+
+		glPolygonMode(GL_FRONT, GL_FILL);
+
+		if (ENG->GetLineSmoothing()) {
+			glEnable(GL_LINE_SMOOTH);
+			glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+		}
+		if (ENG->GetPointSmoothing()) {
+			glEnable(GL_POINT_SMOOTH);
+			glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+		}
+
+		// poor-man's FSAA (unused)
+		// glEnable(GL_POLYGON_SMOOTH);
+
+		if (ENG->GetUseFSAA()) {
+			glEnable(GL_MULTISAMPLE_ARB);
+		}
+
+
+		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+		glClearDepth(1.0f);
+		glClearStencil(0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+		glEndList();
+	} else {
+		glCallList(preDL);
 	}
-	if (ENG->GetPointSmoothing()) {
-		glEnable(GL_POINT_SMOOTH);
-		glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-	}
-
-	// poor-man's FSAA (unused)
-	// glEnable(GL_POLYGON_SMOOTH);
-
-	if (ENG->GetUseFSAA()) {
-		glEnable(GL_MULTISAMPLE_ARB);
-	}
-
-
-	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
-	glClearDepth(1.0f);
-	glClearStencil(0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
 inline static void PostFrameState() {
-	if (ENG->GetUseFSAA()) {
-		glDisable(GL_MULTISAMPLE_ARB);
+	static int postDL = 0;
+
+	if (postDL == 0) {
+		postDL = glGenLists(1);
+		glNewList(postDL, GL_COMPILE);
+
+		if (ENG->GetUseFSAA()) {
+			glDisable(GL_MULTISAMPLE_ARB);
+		}
+
+		// glDisable(GL_POLYGON_SMOOTH);
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_BLEND);
+
+		glDisable(GL_DEPTH_TEST);
+		glDepthMask(GL_FALSE);
+
+		glEndList();
+	} else {
+		glCallList(postDL);
 	}
-
-	// glDisable(GL_POLYGON_SMOOTH);
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-
-	glDisable(GL_DEPTH_TEST);
-	glDepthMask(GL_FALSE);
 }
 
 void CRenderThread::Update() {

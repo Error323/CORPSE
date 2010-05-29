@@ -21,6 +21,7 @@ public:
 	const std::set<unsigned int>& GetSimObjectFreeIDs() const { return simObjectFreeIDs; }
 	const std::set<unsigned int>& GetSimObjectUsedIDs() const { return simObjectUsedIDs; }
 
+	unsigned int GetMaxSimObjects() const { return simObjects.size(); }
 	SimObject* GetSimObject(unsigned int id) const { return simObjects[id]; }
 
 private:
@@ -28,5 +29,7 @@ private:
 	std::set<unsigned int> simObjectFreeIDs;
 	std::set<unsigned int> simObjectUsedIDs;
 };
+
+#define simObjectHandler (SimObjectHandler::GetInstance())
 
 #endif

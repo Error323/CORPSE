@@ -14,6 +14,8 @@ BIN = ./bin
 
 BASE_SRC_DIR     = $(SRC)
 BASE_OBJ_DIR     = $(OBJ)
+EXT_SRC_DIR      = $(BASE_SRC_DIR)/Ext
+EXT_OBJ_DIR      = $(BASE_OBJ_DIR)/Ext
 INPUT_SRC_DIR    = $(BASE_SRC_DIR)/Input
 INPUT_OBJ_DIR    = $(BASE_OBJ_DIR)/Input
 MAP_SRC_DIR      = $(BASE_SRC_DIR)/Map
@@ -37,6 +39,7 @@ SIM_OBJ_DIR      = $(BASE_OBJ_DIR)/Sim
 SYSTEM_SRC_DIR   = $(BASE_SRC_DIR)/System
 SYSTEM_OBJ_DIR   = $(BASE_OBJ_DIR)/System
 
+EXT_OBS = $(EXT_OBJ_DIR)/ModuleCallOutHandler.o
 INPUT_OBS = $(INPUT_OBJ_DIR)/InputHandler.o
 MAP_OBS = \
 	$(MAP_OBJ_DIR)/BaseGroundDrawer.o \
@@ -94,6 +97,7 @@ SYSTEM_OBS = \
 	$(SYSTEM_OBJ_DIR)/Main.o
 
 OBJECTS = \
+	$(EXT_OBS) \
 	$(INPUT_OBS) \
 	$(MAP_OBS) \
 	$(MAP_SMF_OBS) \
@@ -107,6 +111,9 @@ OBJECTS = \
 	$(SYSTEM_OBS)
 
 
+
+$(EXT_OBJ_DIR)/%.o: $(EXT_SRC_DIR)/%.cpp
+	$(CC) $(CFLAGS) -c   -o $@    $<
 
 $(INPUT_OBJ_DIR)/%.o: $(INPUT_SRC_DIR)/%.cpp
 	$(CC) $(CFLAGS) -c   -o $@    $<
@@ -151,6 +158,7 @@ dirs:
 	if [ ! -d $(BIN) ]; then $(MKDIR) $(BIN); fi
 	if [ ! -d $(OBJ) ]; then $(MKDIR) $(OBJ); fi
 
+	if [ ! -d $(EXT_OBJ_DIR) ];      then $(MKDIR) $(EXT_OBJ_DIR); fi
 	if [ ! -d $(INPUT_OBJ_DIR) ];    then $(MKDIR) $(INPUT_OBJ_DIR); fi
 	if [ ! -d $(MAP_OBJ_DIR) ];      then $(MKDIR) $(MAP_OBJ_DIR); fi
 	if [ ! -d $(MAP_SMF_OBJ_DIR) ];  then $(MKDIR) $(MAP_SMF_OBJ_DIR); fi
