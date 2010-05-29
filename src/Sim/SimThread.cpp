@@ -3,6 +3,7 @@
 #include "../Map/Ground.hpp"
 #include "../Map/MapInfo.hpp"
 #include "../Map/ReadMap.hpp"
+#include "../Path/PathModule.hpp"
 #include "./SimThread.hpp"
 
 #include "./SimObjectHandler.hpp"
@@ -33,6 +34,9 @@ CSimThread::CSimThread() {
 	mReadMap = CReadMap::GetInstance(generalTable->GetStrVal("mapsDir", "data/maps/") + mapTable->GetStrVal("smf", "map.smf"));
 
 	mSimObjectHandler = SimObjectHandler::GetInstance();
+
+	pathModule = GetPathModuleInstance();
+	pathModule->Init();
 }
 
 CSimThread::~CSimThread() {
@@ -41,8 +45,12 @@ CSimThread::~CSimThread() {
 	CReadMap::FreeInstance(mReadMap);
 	CGround::FreeInstance(mGround);
 	CMapInfo::FreeInstance(mMapInfo);
+
+	pathModule->Kill();
+	FreePathModuleInstance(pathModule);
 }
 
 void CSimThread::Update() {
 	mSimObjectHandler->Update();
+	pathModule->Update();
 }

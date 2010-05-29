@@ -5,6 +5,8 @@ class CGround;
 class CReadMap;
 class CMapInfo;
 
+class IPathModule;
+
 class SimObjectHandler;
 class CSimThread {
 public:
@@ -22,6 +24,7 @@ private:
 	const CMapInfo* mMapInfo;
 
 	SimObjectHandler* mSimObjectHandler;
+	IPathModule* pathModule;
 };
 
 #endif
