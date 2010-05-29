@@ -35,8 +35,8 @@ CSimThread::CSimThread() {
 
 	mSimObjectHandler = SimObjectHandler::GetInstance();
 
-	pathModule = GetPathModuleInstance();
-	pathModule->Init();
+	mPathModule = GetPathModuleInstance();
+	mPathModule->Init();
 }
 
 CSimThread::~CSimThread() {
@@ -46,11 +46,11 @@ CSimThread::~CSimThread() {
 	CGround::FreeInstance(mGround);
 	CMapInfo::FreeInstance(mMapInfo);
 
-	pathModule->Kill();
-	FreePathModuleInstance(pathModule);
+	mPathModule->Kill();
+	FreePathModuleInstance(mPathModule);
 }
 
 void CSimThread::Update() {
 	mSimObjectHandler->Update();
-	pathModule->Update();
+	mPathModule->Update();
 }

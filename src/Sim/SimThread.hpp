@@ -24,7 +24,7 @@ private:
 	const CMapInfo* mMapInfo;
 
 	SimObjectHandler* mSimObjectHandler;
-	IPathModule* pathModule;
+	IPathModule* mPathModule;
 };
 
 #endif
