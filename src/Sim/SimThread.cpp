@@ -1,5 +1,6 @@
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
+#include "../Ext/CallOutHandler.hpp"
 #include "../Map/Ground.hpp"
 #include "../Map/MapInfo.hpp"
 #include "../Map/ReadMap.hpp"
@@ -35,7 +36,7 @@ CSimThread::CSimThread() {
 
 	mSimObjectHandler = SimObjectHandler::GetInstance();
 
-	mPathModule = GetPathModuleInstance();
+	mPathModule = GetPathModuleInstance(CallOutHandler::GetInstance());
 	mPathModule->Init();
 }
 
@@ -47,6 +48,7 @@ CSimThread::~CSimThread() {
 	CMapInfo::FreeInstance(mMapInfo);
 
 	mPathModule->Kill();
+	CallOutHandler::FreeInstance((CallOutHandler*) mPathModule->GetCallOutHandler());
 	FreePathModuleInstance(mPathModule);
 }
 

@@ -3,20 +3,17 @@
 
 #include "./IPathModule.hpp"
 
-class CallOutHandler;
 class PathModule: public IPathModule {
 public:
+	PathModule(ICallOutHandler* icoh): IPathModule(icoh) {
+	}
+
 	void Init();
 	void Update();
 	void Kill();
-
-private:
-	CallOutHandler* coh;
 };
 
-
-
-IPathModule* CALL_CONV GetPathModuleInstance(               ) { return (new PathModule()); }
+IPathModule* CALL_CONV GetPathModuleInstance(ICallOutHandler* icoh) { return (new PathModule(icoh)); }
 void         CALL_CONV FreePathModuleInstance(IPathModule* m) { delete ((PathModule*) m); }
 
 #endif
