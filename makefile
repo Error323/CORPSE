@@ -39,7 +39,7 @@ SIM_OBJ_DIR      = $(BASE_OBJ_DIR)/Sim
 SYSTEM_SRC_DIR   = $(BASE_SRC_DIR)/System
 SYSTEM_OBJ_DIR   = $(BASE_OBJ_DIR)/System
 
-EXT_OBS = $(EXT_OBJ_DIR)/ModuleCallOutHandler.o
+EXT_OBS = $(EXT_OBJ_DIR)/CallOutModule.o
 INPUT_OBS = $(INPUT_OBJ_DIR)/InputHandler.o
 MAP_OBS = \
 	$(MAP_OBJ_DIR)/BaseGroundDrawer.o \
