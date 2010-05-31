@@ -97,10 +97,10 @@ params = {
 	["objectdefs"] = {
 		core_commander = {
 			mdl                  = "core_commander.s3o",
-			maxForwardSpeed      = 0.0,
-			maxTurningRate       = 0.0,
-			maxAccelerationRate  = 0.0,
-			maxDeccelerationRate = 0.0,
+			maxForwardSpeed      =   5.0,
+			maxTurningRate       =  20.0,
+			maxAccelerationRate  =   1.0,
+			maxDeccelerationRate =   1.0,
 		},
 	},
 

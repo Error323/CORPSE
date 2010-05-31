@@ -46,9 +46,9 @@ public:
 	const std::string& GetStrVal(LuaTable*, const std::string& defVal) const;
 	const std::string& GetStrVal(const std::string&, const std::string& defVal) const;
 	const std::string& GetStrVal(int, const std::string& defVal) const;
-	int GetFltVal(LuaTable*, float defVal) const;
-	int GetFltVal(const std::string&, float defVal) const;
-	int GetFltVal(int, float defVal) const;
+	float GetFltVal(LuaTable*, float defVal) const;
+	float GetFltVal(const std::string&, float defVal) const;
+	float GetFltVal(int, float defVal) const;
 
 	bool HasStrTblKey(const std::string& key) const { return (StrTblPairs.find(key) != StrTblPairs.end()); }
 	bool HasStrStrKey(const std::string& key) const { return (StrStrPairs.find(key) != StrStrPairs.end()); }

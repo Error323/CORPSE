@@ -52,6 +52,7 @@ SimObjectHandler::SimObjectHandler() {
 			SimObjectDef* sod = SimObjectDefLoader::GetDef(objectTable->GetStrVal("def", ""));
 			SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
 				so->SetMat(mat);
+				so->SetWantedDirection(mat.GetZDir());
 
 			AddObject(so, true);
 		}

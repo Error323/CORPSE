@@ -31,8 +31,8 @@ CEngine::CEngine(int argc, char** argv) {
 	mNetBuf = CNetMessageBuffer::GetInstance();
 	mEventHandler = EventHandler::GetInstance();
 
-	mClient = CClient::GetInstance(argc, argv);
 	mServer = CServer::GetInstance();
+	mClient = CClient::GetInstance(argc, argv);
 }
 
 CEngine::~CEngine() {

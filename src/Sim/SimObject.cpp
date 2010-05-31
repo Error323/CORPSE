@@ -24,9 +24,9 @@ void SimObject::Update() {
 		forwardDir.y = 0.0f;
 		forwardDir.inorm();
 
-	// TODO: figure out whether to turn left or right to match wantedDir
+	// figure out whether to turn left or right to match wantedDir
 	//
-	// the world-space coordinate system is inverted along the Z-axis
+	// the WORLD-space coordinate system is inverted along the Z-axis
 	// (ie. has its origin in the top-left corner) with respect to the
 	// mathematical definition (where the origin lies bottom-left); the
 	// OBJECT-space coordinate system is inverted along the X-axis with
@@ -38,9 +38,20 @@ void SimObject::Update() {
 	//
 	float forwardGlobalAngleRad = atan2f(-forwardDir.z, -forwardDir.x);
 	float wantedGlobalAngleRad = atan2f(wantedDir.z, wantedDir.x);
+	float deltaGlobalAngleRad = 0.0f;
 
 	if (forwardGlobalAngleRad < 0.0f) { forwardGlobalAngleRad += (M_PI * 2.0f); }
 	if (wantedGlobalAngleRad < 0.0f) { wantedGlobalAngleRad += (M_PI * 2.0f); }
+
+
+	deltaGlobalAngleRad = (forwardGlobalAngleRad - wantedGlobalAngleRad);
+
+	if (deltaGlobalAngleRad >  M_PI) { deltaGlobalAngleRad = -((M_PI * 2.0f) - deltaGlobalAngleRad); }
+	if (deltaGlobalAngleRad < -M_PI) { deltaGlobalAngleRad =  ((M_PI * 2.0f) + deltaGlobalAngleRad); }
+
+	if (def->GetMaxTurningRate() != 0.0f) {
+		mat.RotateY(deltaGlobalAngleRad / DEG2RAD(def->GetMaxTurningRate()));
+	}
 
 
 	if (currentSpeed < wantedSpeed) {
@@ -57,6 +68,5 @@ void SimObject::Update() {
 		pos.y = std::min(pos.y, ground->GetHeight(pos.x, pos.z));
 
 	mat.SetPos(pos);
-	mat.SetZDir(forwardDir);
 	mat.SetYDirXZ(ground->GetNormal(pos.x, pos.z));
 }

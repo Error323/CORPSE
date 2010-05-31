@@ -36,9 +36,12 @@ CServer::CServer() {
 	lastTick       = 0;
 	missedFrames   = 0;
 
-	simFrameRate = unsigned(LUA->GetRoot()->GetTblVal("general")->GetFltVal("simFrameRate", 25));
+	const LuaTable* rootTable = LUA->GetRoot();
+	const LuaTable* generalTable = rootTable->GetTblVal("general");
+
+	simFrameRate = unsigned(generalTable->GetFltVal("simFrameRate", 25));
 	simFrameTime = 1000 / simFrameRate;
-	simFrameMult = unsigned(LUA->GetRoot()->GetTblVal("general")->GetFltVal("simRateMult", 1));
+	simFrameMult = unsigned(generalTable->GetFltVal("simRateMult", 1));
 }
 
 void CServer::ChangeSpeed(uint mult) {

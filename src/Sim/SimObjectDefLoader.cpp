@@ -2,6 +2,7 @@
 #include "./SimObjectDef.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
+#include "../System/Server.hpp"
 
 std::map<std::string, SimObjectDef*> SimObjectDefLoader::objectDefs;
 
@@ -19,12 +20,13 @@ bool SimObjectDefLoader::LoadDefs() {
 	for (std::list<std::string>::iterator it = simObjectDefKeys.begin(); it != simObjectDefKeys.end(); it++) {
 		const LuaTable* objectDefTable = objectDefsTable->GetTblVal(*it);
 
+		// convert to per-frame units
 		SimObjectDef* def = new SimObjectDef();
 			def->SetModelName(objectDefTable->GetStrVal("mdl", ""));
-			def->SetMaxForwardSpeed(objectDefTable->GetFltVal("maxForwardSpeed", 0.0f));
-			def->SetMaxTurningRate(objectDefTable->GetFltVal("maxTurningRate", 0.0f));
-			def->SetMaxAccelerationRate(objectDefTable->GetFltVal("maxAccelerationRate", 0.0f));
-			def->SetMaxDeccelerationRate(objectDefTable->GetFltVal("maxDecelerationRate", 0.0f));
+			def->SetMaxForwardSpeed(objectDefTable->GetFltVal("maxForwardSpeed", 0.0f) / server->GetSimFrameRate());
+			def->SetMaxTurningRate(objectDefTable->GetFltVal("maxTurningRate", 0.0f) / server->GetSimFrameRate());
+			def->SetMaxAccelerationRate(objectDefTable->GetFltVal("maxAccelerationRate", 0.0f) / server->GetSimFrameRate());
+			def->SetMaxDeccelerationRate(objectDefTable->GetFltVal("maxDecelerationRate", 0.0f) / server->GetSimFrameRate());
 
 		objectDefs[*it] = def;
 	}

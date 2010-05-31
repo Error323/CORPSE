@@ -227,15 +227,15 @@ const std::string& LuaTable::GetStrVal(int key, const std::string& defVal) const
 	return ((it != IntStrPairs.end())? it->second: defVal);
 }
 
-int LuaTable::GetFltVal(LuaTable* key, float defVal) const {
+float LuaTable::GetFltVal(LuaTable* key, float defVal) const {
 	const std::map<LuaTable*, float>::const_iterator it = TblFltPairs.find(key);
 	return ((it != TblFltPairs.end())? it->second: defVal);
 }
-int LuaTable::GetFltVal(const std::string& key, float defVal) const {
+float LuaTable::GetFltVal(const std::string& key, float defVal) const {
 	const std::map<std::string, float>::const_iterator it = StrFltPairs.find(key);
 	return ((it != StrFltPairs.end())? it->second: defVal);
 }
-int LuaTable::GetFltVal(int key, float defVal) const {
+float LuaTable::GetFltVal(int key, float defVal) const {
 	const std::map<int, float>::const_iterator it = IntFltPairs.find(key);
 	return ((it != IntFltPairs.end())? it->second: defVal);
 }
