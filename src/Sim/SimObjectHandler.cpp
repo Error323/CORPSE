@@ -37,22 +37,24 @@ SimObjectHandler::SimObjectHandler() {
 		simObjectFreeIDs.insert(i);
 	}
 
-	std::list<int> simObjectKeys;
-	objectsTable->GetIntTblKeys(&simObjectKeys);
+	if (SimObjectDefLoader::LoadDefs()) {
+		std::list<int> simObjectKeys;
+		objectsTable->GetIntTblKeys(&simObjectKeys);
 
-	for (std::list<int>::iterator it = simObjectKeys.begin(); it != simObjectKeys.end(); it++) {
-		const LuaTable* objectTbl = objectsTable->GetTblVal(*it);
+		for (std::list<int>::iterator it = simObjectKeys.begin(); it != simObjectKeys.end(); it++) {
+			const LuaTable* objectTable = objectsTable->GetTblVal(*it);
 
-		vec3f pos = objectTbl->GetVec<vec3f>("pos", 3);
-			pos.y = ground->GetHeight(pos.x, pos.z);
-		mat44f mat = mat44f(pos, XVECf, YVECf, ZVECf);
-			mat.SetYDirXZ(ground->GetNormal(pos.x, pos.z));
+			vec3f pos = objectTable->GetVec<vec3f>("pos", 3);
+				pos.y = ground->GetHeight(pos.x, pos.z);
+			mat44f mat = mat44f(pos, XVECf, YVECf, ZVECf);
+				mat.SetYDirXZ(ground->GetNormal(pos.x, pos.z));
 
-		SimObjectDef* sod = SimObjectDefLoader::GetDef(objectTbl->GetStrVal("mdl", ""));
-		SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
-			so->SetMat(mat);
+			SimObjectDef* sod = SimObjectDefLoader::GetDef(objectTable->GetStrVal("def", ""));
+			SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
+				so->SetMat(mat);
 
-		AddObject(so, true);
+			AddObject(so, true);
+		}
 	}
 }
 

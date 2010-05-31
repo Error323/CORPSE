@@ -5,12 +5,18 @@
 
 #include "../Math/mat44fwd.hpp"
 #include "../Math/mat44.hpp"
+#include "../Math/vec3fwd.hpp"
+#include "../Math/vec3.hpp"
 
 struct LocalModel;
 class SimObjectDef;
 class SimObject {
 public:
-	SimObject(SimObjectDef* d, unsigned int i): def(d), id(i) {}
+	SimObject(SimObjectDef* d, unsigned int i): def(d), id(i) {
+		currentSpeed = 0.0f;
+		wantedSpeed = 0.0f;
+	}
+
 	virtual ~SimObject();
 	virtual void Update();
 
@@ -23,13 +29,27 @@ public:
 	const mat44f& GetMat() const { return mat; }
 	void SetMat(const mat44f& m) { mat = m; }
 
+	void SetWantedPosition(const vec3f& pos) { wantedPos = pos; }
+	void SetWantedDirection(const vec3f& dir) { wantedDir = dir; }
+
 private:
 	const SimObjectDef* def;
 	const unsigned int id;
 
 	std::string mdlName;
 	LocalModel* mdl;
+
+	// world-space transform matrix
 	mat44f mat;
+
+	// where this object wants to be in world-space
+	// (and in which direction it wants to be facing)
+	vec3f wantedPos;
+	vec3f wantedDir;
+
+	float currentSpeed;
+	// speed-scale this object wants to be moving at
+	float wantedSpeed;
 };
 
 #endif

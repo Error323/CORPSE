@@ -94,13 +94,22 @@ params = {
 		[4] = "nebulus.dds",
 	},
 
+	["objectdefs"] = {
+		core_commander = {
+			mdl                  = "core_commander.s3o",
+			maxTurningRate       = 0.0,
+			maxAccelerationRate  = 0.0,
+			maxDeccelerationRate = 0.0,
+		},
+	},
+
 	["objects"] = {
 		[1] = {
-			mdl = "core_commander.s3o",
+			def = "core_commander",
 			pos = {200.0, 0.0, 200.0},
 		},
 		[2] = {
-			mdl = "core_commander.s3o",
+			def = "core_commander",
 			pos = {3800.0, 0.0, 3800.0},
 		},
 	},

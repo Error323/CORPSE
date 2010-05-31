@@ -20,13 +20,12 @@ public:
 	virtual unsigned int GetFreeSimObjectIDs(unsigned int* array, unsigned int size) const = 0;
 	virtual unsigned int GetUsedSimObjectIDs(unsigned int* array, unsigned int size) const = 0;
 
-	virtual const mat44f& GetObjectMatrix(unsigned int id) const = 0;
-	virtual const vec3f& GetObjectPosition(unsigned int id) const = 0;
-	virtual const vec3f& GetObjectDirection(unsigned int id) const = 0;
+	virtual const mat44f& GetSimObjectMatrix(unsigned int id) const = 0;
+	virtual const vec3f& GetSimObjectPosition(unsigned int id) const = 0;
+	virtual const vec3f& GetSimObjectDirection(unsigned int id) const = 0;
 
-	virtual void SetObjectMatrix(unsigned int id, const mat44f&) const = 0;
-	virtual void SetObjectPosition(unsigned int id, const vec3f&) const = 0;
-	virtual void SetObjectDirection(unsigned int id, const vec3f&) const = 0;
+	virtual void SetSimObjectWantedPosition(unsigned int id, const vec3f& pos) const = 0;
+	virtual void SetSimObjectWantedDirection(unsigned int id, const vec3f& dir) const = 0;
 };
 
 #endif

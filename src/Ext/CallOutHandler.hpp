@@ -21,16 +21,15 @@ public:
 
 	unsigned int GetMaxSimObjects() const;
 	unsigned int GetNumSimObjects() const;
-	unsigned int GetFreeSimObjectIDs(unsigned int* array, unsigned int size) const;
-	unsigned int GetUsedSimObjectIDs(unsigned int* array, unsigned int size) const;
+	unsigned int GetFreeSimObjectIDs(unsigned int*, unsigned int) const;
+	unsigned int GetUsedSimObjectIDs(unsigned int*, unsigned int) const;
 
-	const mat44f& GetObjectMatrix(unsigned int id) const;
-	const vec3f& GetObjectPosition(unsigned int id) const;
-	const vec3f& GetObjectDirection(unsigned int id) const;
+	const mat44f& GetSimObjectMatrix(unsigned int) const;
+	const vec3f& GetSimObjectPosition(unsigned int) const;
+	const vec3f& GetSimObjectDirection(unsigned int) const;
 
-	void SetObjectMatrix(unsigned int id, const mat44f&) const;
-	void SetObjectPosition(unsigned int id, const vec3f&) const;
-	void SetObjectDirection(unsigned int id, const vec3f&) const;
+	void SetSimObjectWantedPosition(unsigned int, const vec3f&) const;
+	void SetSimObjectWantedDirection(unsigned int, const vec3f&) const;
 };
 
 #endif

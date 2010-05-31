@@ -7,6 +7,7 @@
 class SimObjectDef;
 class SimObjectDefLoader {
 public:
+	static bool LoadDefs();
 	static void DelDefs();
 	static SimObjectDef* GetDef(const std::string&);
 
