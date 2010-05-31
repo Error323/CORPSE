@@ -3,7 +3,7 @@
 #include "../Map/Ground.hpp"
 #include "../Renderer/Models/ModelReaderBase.hpp"
 
-SimObject(SimObjectDef* d, unsigned int i): def(d), id(i) {
+SimObject::SimObject(SimObjectDef* d, unsigned int i): def(d), id(i) {
 	currentSpeed = 0.0f;
 	wantedSpeed = def->GetMaxForwardSpeed();
 }

@@ -6,8 +6,9 @@
 class SimObjectDef {
 public:
 	SimObjectDef() {
-		maxTurningRate = 0.0f;
-		maxAccelerationRate = 0.0f;
+		maxForwardSpeed      = 0.0f;
+		maxTurningRate       = 0.0f;
+		maxAccelerationRate  = 0.0f;
 		maxDeccelerationRate = 0.0f;
 	}
 
