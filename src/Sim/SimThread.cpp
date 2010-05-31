@@ -1,5 +1,6 @@
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
+#include "../System/EventHandler.hpp"
 #include "../Ext/CallOutHandler.hpp"
 #include "../Map/Ground.hpp"
 #include "../Map/MapInfo.hpp"
@@ -34,20 +35,25 @@ CSimThread::CSimThread() {
 	mGround  = CGround::GetInstance();
 	mReadMap = CReadMap::GetInstance(generalTable->GetStrVal("mapsDir", "data/maps/") + mapTable->GetStrVal("smf", "map.smf"));
 
-	mSimObjectHandler = SimObjectHandler::GetInstance();
-
 	mPathModule = GetPathModuleInstance(CallOutHandler::GetInstance());
+	eventHandler->AddReceiver(mPathModule);
+	// create objects after path-module is loaded
+	mSimObjectHandler = SimObjectHandler::GetInstance();
+	// initialize module after the object-handler
 	mPathModule->Init();
 }
 
 CSimThread::~CSimThread() {
-	SimObjectHandler::FreeInstance(mSimObjectHandler);
-
 	CReadMap::FreeInstance(mReadMap);
 	CGround::FreeInstance(mGround);
 	CMapInfo::FreeInstance(mMapInfo);
 
+	// destroy objects before path-module is unloaded
+	SimObjectHandler::FreeInstance(mSimObjectHandler);
+
 	mPathModule->Kill();
+	eventHandler->DelReceiver(mPathModule);
+
 	CallOutHandler::FreeInstance((CallOutHandler*) mPathModule->GetCallOutHandler());
 	FreePathModuleInstance(mPathModule);
 }

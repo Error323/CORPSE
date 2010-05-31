@@ -7,6 +7,8 @@
 #include "../Map/Ground.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
+#include "../System/IEvent.hpp"
+#include "../System/EventHandler.hpp"
 
 SimObjectHandler* SimObjectHandler::GetInstance() {
 	static SimObjectHandler* soh = NULL;
@@ -54,8 +56,10 @@ SimObjectHandler::SimObjectHandler() {
 }
 
 SimObjectHandler::~SimObjectHandler() {
-	for (std::set<unsigned int>::const_iterator it = simObjectUsedIDs.begin(); it != simObjectUsedIDs.end(); ++it) {
-		delete simObjects[*it]; simObjects[*it] = NULL;
+	for (unsigned int i = 0; i < simObjects.size(); i++) {
+		if (simObjects[i] != NULL) {
+			DelObject(simObjects[i]);
+		}
 	}
 
 	simObjectFreeIDs.clear();
@@ -77,6 +81,9 @@ void SimObjectHandler::AddObject(SimObject* o) {
 	simObjects[o->GetID()] = o;
 	simObjectUsedIDs.insert(o->GetID());
 	simObjectFreeIDs.erase(o->GetID());
+
+	SimObjectCreatedEvent e(123, o->GetID());
+	eventHandler->NotifyReceivers(&e);
 }
 
 void SimObjectHandler::DelObject(SimObject* o) {
@@ -84,6 +91,9 @@ void SimObjectHandler::DelObject(SimObject* o) {
 
 	simObjectUsedIDs.erase(o->GetID());
 	simObjectFreeIDs.insert(o->GetID());
+
+	SimObjectDestroyedEvent e(456, o->GetID());
+	eventHandler->NotifyReceivers(&e);
 
 	simObjects[o->GetID()] = NULL;
 	delete o;

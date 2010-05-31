@@ -6,11 +6,14 @@
 #include "../Math/mat44fwd.hpp"
 #include "../Math/vec3fwd.hpp"
 
+class IEvent;
 class ICallOutHandler;
 class IPathModule: public IEngineModule {
 public:
 	IPathModule(ICallOutHandler* icoh): coh(icoh) {}
 	virtual ~IPathModule() {}
+
+	virtual void OnEvent(const IEvent*) {}
 
 	virtual void Init() {}
 	virtual void Update() {}

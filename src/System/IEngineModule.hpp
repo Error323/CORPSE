@@ -4,7 +4,9 @@
 #define SLIB_EXPORT __attribute__((visibility("default")))
 #define CALL_CONV   __attribute__((stdcall))
 
-class IEngineModule {
+#include "../System/IEventReceiver.hpp"
+
+class IEngineModule: public IEventReceiver {
 public:
 	virtual ~IEngineModule() {}
 

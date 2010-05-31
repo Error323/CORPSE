@@ -92,6 +92,8 @@ SYSTEM_OBS = \
 	$(SYSTEM_OBJ_DIR)/Client.o \
 	$(SYSTEM_OBJ_DIR)/Server.o \
 	$(SYSTEM_OBJ_DIR)/NetMessageBuffer.o \
+	$(SYSTEM_OBJ_DIR)/EventHandler.o \
+	$(SYSTEM_OBJ_DIR)/IEvent.o \
 	$(SYSTEM_OBJ_DIR)/Engine.o \
 	$(SYSTEM_OBJ_DIR)/EngineAux.o \
 	$(SYSTEM_OBJ_DIR)/FileHandler.o \

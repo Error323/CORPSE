@@ -6,6 +6,7 @@
 #include "./LuaParser.hpp"
 #include "./Client.hpp"
 #include "./Server.hpp"
+#include "./EventHandler.hpp"
 #include "./NetMessageBuffer.hpp"
 
 CEngine* CEngine::GetInstance(int argc, char** argv) {
@@ -28,6 +29,8 @@ CEngine::CEngine(int argc, char** argv) {
 	EngineAux::Init(argc, argv);
 
 	mNetBuf = CNetMessageBuffer::GetInstance();
+	mEventHandler = EventHandler::GetInstance();
+
 	mClient = CClient::GetInstance(argc, argv);
 	mServer = CServer::GetInstance();
 }
@@ -36,6 +39,7 @@ CEngine::~CEngine() {
 	CServer::FreeInstance(mServer);
 	CClient::FreeInstance(mClient);
 
+	EventHandler::FreeInstance(mEventHandler);
 	CNetMessageBuffer::FreeInstance(mNetBuf);
 }
 

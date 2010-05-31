@@ -2,6 +2,7 @@
 #define PFFG_ENGINE_HDR
 
 class CNetMessageBuffer;
+class EventHandler;
 class CClient;
 class CServer;
 
@@ -17,6 +18,7 @@ private:
 	~CEngine();
 
 	CNetMessageBuffer* mNetBuf;
+	EventHandler* mEventHandler;
 
 	CClient* mClient;
 	CServer* mServer;

@@ -2,11 +2,24 @@
 #define PFFG_PATH_MODULE_HDR
 
 #include "./IPathModule.hpp"
+#include "../System/IEvent.hpp"
 
+class IEvent;
 class PathModule: public IPathModule {
 public:
 	PathModule(ICallOutHandler* icoh): IPathModule(icoh) {
+		// NOTE:
+		//    do not use call-outs here or in destructor,
+		//    SimObjectHandler does not exist yet or is
+		//    already deleted
 	}
+
+	bool WantsEvent(int eventType) const {
+		return
+			 eventType == EVENT_SIMOBJECT_CREATED ||
+			 eventType == EVENT_SIMOBJECT_DESTROYED;
+	}
+	void OnEvent(const IEvent*);
 
 	void Init();
 	void Update();
