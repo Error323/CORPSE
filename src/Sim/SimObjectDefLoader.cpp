@@ -21,7 +21,7 @@ bool SimObjectDefLoader::LoadDefs() {
 
 		SimObjectDef* def = new SimObjectDef();
 			def->SetModelName(objectDefTable->GetStrVal("mdl", ""));
-			def->SetForwardSpeed(objectDefTable->GetFltVal("maxForwardSpeed", 0.0f));
+			def->SetMaxForwardSpeed(objectDefTable->GetFltVal("maxForwardSpeed", 0.0f));
 			def->SetMaxTurningRate(objectDefTable->GetFltVal("maxTurningRate", 0.0f));
 			def->SetMaxAccelerationRate(objectDefTable->GetFltVal("maxAccelerationRate", 0.0f));
 			def->SetMaxDeccelerationRate(objectDefTable->GetFltVal("maxDecelerationRate", 0.0f));
