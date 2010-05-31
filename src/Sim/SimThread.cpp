@@ -26,7 +26,7 @@ void CSimThread::FreeInstance(CSimThread* st) {
 
 
 
-CSimThread::CSimThread() {
+CSimThread::CSimThread(): frame(0) {
 	const LuaTable* rootTable = LUA->GetRoot();
 	const LuaTable* generalTable = rootTable->GetTblVal("general");
 	const LuaTable* mapTable = rootTable->GetTblVal("map");
@@ -36,8 +36,8 @@ CSimThread::CSimThread() {
 	mReadMap = CReadMap::GetInstance(generalTable->GetStrVal("mapsDir", "data/maps/") + mapTable->GetStrVal("smf", "map.smf"));
 
 	mPathModule = GetPathModuleInstance(CallOutHandler::GetInstance());
-
 	eventHandler->AddReceiver(mPathModule);
+
 	// create objects after path-module is loaded
 	mSimObjectHandler = SimObjectHandler::GetInstance();
 	// initialize module after the object-handler
@@ -49,8 +49,8 @@ CSimThread::~CSimThread() {
 	CGround::FreeInstance(mGround);
 	CMapInfo::FreeInstance(mMapInfo);
 
-	// destroy objects before path-module is unloaded
 	mPathModule->Kill();
+	// destroy objects before path-module is unloaded
 	SimObjectHandler::FreeInstance(mSimObjectHandler);
 	eventHandler->DelReceiver(mPathModule);
 
@@ -61,4 +61,6 @@ CSimThread::~CSimThread() {
 void CSimThread::Update() {
 	mSimObjectHandler->Update();
 	mPathModule->Update();
+
+	frame += 1;
 }

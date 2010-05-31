@@ -30,7 +30,7 @@ void CRenderThread::FreeInstance(CRenderThread* rt) {
 
 
 
-CRenderThread::CRenderThread() {
+CRenderThread::CRenderThread(): frame(0) {
 	camCon = new CCameraController();
 	scene = new CScene();
 }
@@ -131,6 +131,8 @@ void CRenderThread::Update() {
 
 		PostFrameState();
 		SDL_GL_SwapBuffers();
+
+		frame += 1;
 	}
 }
 

@@ -4,6 +4,7 @@
 #include "./SimObject.hpp"
 #include "./SimObjectDef.hpp"
 #include "./SimObjectDefLoader.hpp"
+#include "./SimThread.hpp"
 #include "../Map/Ground.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
@@ -51,15 +52,13 @@ SimObjectHandler::SimObjectHandler() {
 		SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
 			so->SetMat(mat);
 
-		AddObject(so);
+		AddObject(so, true);
 	}
 }
 
 SimObjectHandler::~SimObjectHandler() {
-	for (unsigned int i = 0; i < simObjects.size(); i++) {
-		if (simObjects[i] != NULL) {
-			DelObject(simObjects[i]);
-		}
+	while (!simObjectUsedIDs.empty()) {
+		DelObject(simObjects[ *(simObjectUsedIDs.begin()) ], true);
 	}
 
 	simObjectFreeIDs.clear();
@@ -75,24 +74,24 @@ void SimObjectHandler::Update() {
 
 
 
-void SimObjectHandler::AddObject(SimObject* o) {
+void SimObjectHandler::AddObject(SimObject* o, bool inConstructor) {
 	assert(simObjects[o->GetID()] == NULL);
 
 	simObjects[o->GetID()] = o;
 	simObjectUsedIDs.insert(o->GetID());
 	simObjectFreeIDs.erase(o->GetID());
 
-	SimObjectCreatedEvent e(123, o->GetID());
+	SimObjectCreatedEvent e(((inConstructor)? 0: simThread->GetFrame()), o->GetID());
 	eventHandler->NotifyReceivers(&e);
 }
 
-void SimObjectHandler::DelObject(SimObject* o) {
+void SimObjectHandler::DelObject(SimObject* o, bool inDestructor) {
 	assert(simObjects[o->GetID()] == o);
 
 	simObjectUsedIDs.erase(o->GetID());
 	simObjectFreeIDs.insert(o->GetID());
 
-	SimObjectDestroyedEvent e(456, o->GetID());
+	SimObjectDestroyedEvent e(((inDestructor)? -1: simThread->GetFrame()), o->GetID());
 	eventHandler->NotifyReceivers(&e);
 
 	simObjects[o->GetID()] = NULL;

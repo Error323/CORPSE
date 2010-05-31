@@ -24,6 +24,9 @@ private:
 
 	CCameraController* camCon;
 	CScene* scene;
+
+	// current renderer-frame
+	unsigned int frame;
 };
 
 #endif

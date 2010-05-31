@@ -14,6 +14,7 @@ public:
 	static void FreeInstance(CSimThread*);
 
 	void Update();
+	unsigned int GetFrame() const { return frame; }
 
 private:
 	CSimThread();
@@ -25,6 +26,11 @@ private:
 
 	SimObjectHandler* mSimObjectHandler;
 	IPathModule* mPathModule;
+
+	// current simulation-frame
+	unsigned int frame;
 };
+
+#define simThread (CSimThread::GetInstance())
 
 #endif

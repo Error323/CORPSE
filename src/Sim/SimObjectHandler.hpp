@@ -15,8 +15,8 @@ public:
 
 	void Update();
 
-	void AddObject(SimObject*);
-	void DelObject(SimObject*);
+	void AddObject(SimObject*, bool);
+	void DelObject(SimObject*, bool);
 
 	const std::set<unsigned int>& GetSimObjectFreeIDs() const { return simObjectFreeIDs; }
 	const std::set<unsigned int>& GetSimObjectUsedIDs() const { return simObjectUsedIDs; }
