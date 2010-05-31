@@ -19,9 +19,9 @@ SimObject::~SimObject() {
 }
 
 void SimObject::Update() {
-	const vec3f& dir = mat.GetZDir();
+	const vec3f& zdir = mat.GetZDir();
 
-	if (dir.dot3D(wantedDir) < 1.0f) {
+	if (zdir.dot3D(wantedDir) < 1.0f) {
 		// TODO: turn (at maximum turning-rate) to match wantedDir
 	}
 
@@ -39,5 +39,6 @@ void SimObject::Update() {
 		pos.y = std::min(pos.y, ground->GetHeight(pos.x, pos.z));
 
 	mat.SetPos(pos);
+	mat.SetZDir(zdir);
 	mat.SetYDirXZ(ground->GetNormal(pos.x, pos.z));
 }
