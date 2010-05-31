@@ -28,9 +28,11 @@ void SimObject::Update() {
 	if (currentSpeed < wantedSpeed) {
 		// accelerate (at maximum acceleration-rate) to match wantedSpeed
 		currentSpeed += def->GetMaxAccelerationRate();
+		currentSpeed = std::min(currentSpeed, wantedSpeed);
 	} else {
 		// deccelerate (at maximum decceleration-rate) to match wantedSpeed
 		currentSpeed -= def->GetMaxDeccelerationRate();
+		currentSpeed = std::max(currentSpeed, 0.0f);
 	}
 
 	vec3f pos = mat.GetPos() + (mat.GetZDir() * currentSpeed);
