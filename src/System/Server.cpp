@@ -53,7 +53,7 @@ void CServer::ReadNetMessages() {
 
 	while (netBuf->PopClientToServerMessage(&m)) {
 		if (m == CLIENT_MSG_PAUSE) {
-			paused = true;
+			paused = !paused;
 		}
 	}
 }
