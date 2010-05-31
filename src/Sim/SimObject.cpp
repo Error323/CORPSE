@@ -36,21 +36,24 @@ void SimObject::Update() {
 	// that atan2 uses we need to flip the sign of both forwardDir.x AND
 	// forwardDir.z
 	//
-	float forwardGlobalAngleRad = atan2f(-forwardDir.z, -forwardDir.x);
-	float wantedGlobalAngleRad = atan2f(wantedDir.z, wantedDir.x);
-	float deltaGlobalAngleRad = 0.0f;
-
-	if (forwardGlobalAngleRad < 0.0f) { forwardGlobalAngleRad += (M_PI * 2.0f); }
-	if (wantedGlobalAngleRad < 0.0f) { wantedGlobalAngleRad += (M_PI * 2.0f); }
-
-
-	deltaGlobalAngleRad = (forwardGlobalAngleRad - wantedGlobalAngleRad);
-
-	if (deltaGlobalAngleRad >  M_PI) { deltaGlobalAngleRad = -((M_PI * 2.0f) - deltaGlobalAngleRad); }
-	if (deltaGlobalAngleRad < -M_PI) { deltaGlobalAngleRad =  ((M_PI * 2.0f) + deltaGlobalAngleRad); }
-
 	if (def->GetMaxTurningRate() != 0.0f) {
-		mat.RotateY(deltaGlobalAngleRad / DEG2RAD(def->GetMaxTurningRate()));
+		float forwardGlobalAngleRad = atan2f(-forwardDir.z, -forwardDir.x);
+		float wantedGlobalAngleRad = atan2f(-wantedDir.z, -wantedDir.x);
+		float deltaGlobalAngleRad = 0.0f;
+
+		if (forwardGlobalAngleRad < 0.0f) { forwardGlobalAngleRad += (M_PI * 2.0f); }
+		if (wantedGlobalAngleRad < 0.0f) { wantedGlobalAngleRad += (M_PI * 2.0f); }
+
+		deltaGlobalAngleRad = (forwardGlobalAngleRad - wantedGlobalAngleRad);
+
+		// take the shorter of the two possible turns
+		// (positive angle means a right turn and vv)
+		if (deltaGlobalAngleRad >  M_PI) { deltaGlobalAngleRad = -((M_PI * 2.0f) - deltaGlobalAngleRad); }
+		if (deltaGlobalAngleRad < -M_PI) { deltaGlobalAngleRad =  ((M_PI * 2.0f) + deltaGlobalAngleRad); }
+
+		if (fabs(deltaGlobalAngleRad) > 0.01f) {
+			mat.RotateY(DEG2RAD(def->GetMaxTurningRate()) * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
+		}
 	}
 
 

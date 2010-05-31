@@ -27,10 +27,10 @@ public:
 private:
 	std::string modelName;
 
-	float maxForwardSpeed;       // must be specified in units per second
-	float maxTurningRate;        // must be specified in degrees per second
-	float maxAccelerationRate;   // must be specified in units per second^2
-	float maxDeccelerationRate;  // must be specified in units per second^2
+	float maxForwardSpeed;       // must be specified in units per second, converted to units per frame
+	float maxTurningRate;        // must be specified in degrees per second, converted to degrees per frame
+	float maxAccelerationRate;   // must be specified in units per second^2, converted to units per frame
+	float maxDeccelerationRate;  // must be specified in units per second^2, converted to units per frame
 };
 
 #endif
