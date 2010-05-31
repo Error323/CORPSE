@@ -66,6 +66,8 @@ SimObjectHandler::~SimObjectHandler() {
 	simObjectFreeIDs.clear();
 	simObjectUsedIDs.clear();
 	simObjects.clear();
+
+	SimObjectDefLoader::DelDefs();
 }
 
 void SimObjectHandler::Update() {
