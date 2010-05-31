@@ -4,10 +4,20 @@
 #include "../Math/mat44fwd.hpp"
 #include "../Math/vec3fwd.hpp"
 
-// exposes engine state to libraries
+// exposes simulation state to libraries
 class ICallOutHandler {
 public:
+	virtual int GetHeightMapSizeX() const = 0;
+	virtual int GetHeightMapSizeZ() const = 0;
+	virtual float GetMinMapHeight() const = 0;
+	virtual float GetMaxMapHeight() const = 0;
+	virtual const float* GetCenterHeightMap() const = 0;
+	virtual const float* GetCornerHeightMap() const = 0;
+	virtual const float* GetSlopeMap() const = 0;
+
 	virtual unsigned int GetMaxSimObjects() const = 0;
+	virtual unsigned int GetFreeSimObjectIDs(unsigned int* array, unsigned int size) const = 0;
+	virtual unsigned int GetUsedSimObjectIDs(unsigned int* array, unsigned int size) const = 0;
 
 	virtual const mat44f& GetObjectMatrix(unsigned int id) const = 0;
 	virtual const vec3f& GetObjectPosition(unsigned int id) const = 0;

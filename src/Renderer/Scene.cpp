@@ -23,7 +23,7 @@
 #include "./SMFRenderer.hpp"
 #else
 #include "../Map/BaseGroundDrawer.hpp"
-#include "../Map/SMF/SMFReadMap.hpp"
+#include "../Map/ReadMap.hpp"
 #endif
 
 #include "./Env/SkyBox.hpp"

@@ -1,4 +1,5 @@
 #include "./CallOutHandler.hpp"
+#include "../Map/ReadMap.hpp"
 #include "../Math/mat44.hpp"
 #include "../Math/vec3.hpp"
 #include "../Sim/SimObject.hpp"
@@ -20,9 +21,45 @@ void CallOutHandler::FreeInstance(CallOutHandler* coh) {
 
 
 
+int CallOutHandler::GetHeightMapSizeX() const { return readMap->mapx; }
+int CallOutHandler::GetHeightMapSizeZ() const { return readMap->mapy; }
+float CallOutHandler::GetMinMapHeight() const { return readMap->minheight; }
+float CallOutHandler::GetMaxMapHeight() const { return readMap->maxheight; }
+const float* CallOutHandler::GetCenterHeightMap() const { return &readMap->centerheightmap[0]; }
+const float* CallOutHandler::GetCornerHeightMap() const { return readMap->GetHeightmap(); }
+const float* CallOutHandler::GetSlopeMap() const { return &readMap->slopemap[0]; }
+
+
+
 unsigned int CallOutHandler::GetMaxSimObjects() const {
 	return simObjectHandler->GetMaxSimObjects();
 }
+
+unsigned int CallOutHandler::GetFreeSimObjectIDs(unsigned int* array, unsigned int size) const {
+	const std::set<unsigned int>& freeIDs = simObjectHandler->GetSimObjectFreeIDs();
+
+	unsigned int n = 0;
+
+	for (std::set<unsigned int>::const_iterator it = freeIDs.begin(); it != freeIDs.end() && n < size; ++it) {
+		array[n++] = *it;
+	}
+
+	return n;
+}
+
+unsigned int CallOutHandler::GetUsedSimObjectIDs(unsigned int* array, unsigned int size) const {
+	const std::set<unsigned int>& usedIDs = simObjectHandler->GetSimObjectUsedIDs();
+
+	unsigned int n = 0;
+
+	for (std::set<unsigned int>::const_iterator it = usedIDs.begin(); it != usedIDs.end() && n < size; ++it) {
+		array[n++] = *it;
+	}
+
+	return n;
+}
+
+
 
 const mat44f& CallOutHandler::GetObjectMatrix(unsigned int id) const {
 	if (id < simObjectHandler->GetMaxSimObjects()) {
