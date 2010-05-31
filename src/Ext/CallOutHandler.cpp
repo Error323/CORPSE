@@ -31,9 +31,8 @@ const float* CallOutHandler::GetSlopeMap() const { return &readMap->slopemap[0];
 
 
 
-unsigned int CallOutHandler::GetMaxSimObjects() const {
-	return simObjectHandler->GetMaxSimObjects();
-}
+unsigned int CallOutHandler::GetMaxSimObjects() const { return simObjectHandler->GetMaxSimObjects(); }
+unsigned int CallOutHandler::GetNumSimObjects() const { return simObjectHandler->GetSimObjectUsedIDs().size(); }
 
 unsigned int CallOutHandler::GetFreeSimObjectIDs(unsigned int* array, unsigned int size) const {
 	const std::set<unsigned int>& freeIDs = simObjectHandler->GetSimObjectFreeIDs();

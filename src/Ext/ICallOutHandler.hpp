@@ -16,6 +16,7 @@ public:
 	virtual const float* GetSlopeMap() const = 0;
 
 	virtual unsigned int GetMaxSimObjects() const = 0;
+	virtual unsigned int GetNumSimObjects() const = 0;
 	virtual unsigned int GetFreeSimObjectIDs(unsigned int* array, unsigned int size) const = 0;
 	virtual unsigned int GetUsedSimObjectIDs(unsigned int* array, unsigned int size) const = 0;
 

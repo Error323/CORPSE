@@ -20,6 +20,7 @@ public:
 	const float* GetSlopeMap() const;
 
 	unsigned int GetMaxSimObjects() const;
+	unsigned int GetNumSimObjects() const;
 	unsigned int GetFreeSimObjectIDs(unsigned int* array, unsigned int size) const;
 	unsigned int GetUsedSimObjectIDs(unsigned int* array, unsigned int size) const;
 
