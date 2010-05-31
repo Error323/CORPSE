@@ -46,7 +46,7 @@ SimObjectHandler::SimObjectHandler() {
 
 			vec3f pos = objectTable->GetVec<vec3f>("pos", 3);
 				pos.y = ground->GetHeight(pos.x, pos.z);
-			mat44f mat = mat44f(pos, XVECf, YVECf, ZVECf);
+			mat44f mat = mat44f(pos, NVECf, NVECf, ZVECf);
 				mat.SetYDirXZ(ground->GetNormal(pos.x, pos.z));
 
 			SimObjectDef* sod = SimObjectDefLoader::GetDef(objectTable->GetStrVal("def", ""));

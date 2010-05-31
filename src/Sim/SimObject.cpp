@@ -1,5 +1,6 @@
 #include "./SimObject.hpp"
 #include "./SimObjectDef.hpp"
+#include "../Math/Trig.hpp"
 #include "../Map/Ground.hpp"
 #include "../Renderer/Models/ModelReaderBase.hpp"
 
@@ -19,11 +20,28 @@ SimObject::~SimObject() {
 }
 
 void SimObject::Update() {
-	const vec3f& zdir = mat.GetZDir();
+	vec3f forwardDir = mat.GetZDir();
+		forwardDir.y = 0.0f;
+		forwardDir.inorm();
 
-	if (zdir.dot3D(wantedDir) < 1.0f) {
-		// TODO: turn (at maximum turning-rate) to match wantedDir
-	}
+	// TODO: figure out whether to turn left or right to match wantedDir
+	//
+	// the world-space coordinate system is inverted along the Z-axis
+	// (ie. has its origin in the top-left corner) with respect to the
+	// mathematical definition (where the origin lies bottom-left); the
+	// OBJECT-space coordinate system is inverted along the X-axis with
+	// respect to the world-space coordinate system
+	//
+	// therefore, to get the proper angles wrt. the mathematical x-axis
+	// that atan2 uses we need to flip the sign of both forwardDir.x AND
+	// forwardDir.z
+	//
+	float forwardGlobalAngleRad = atan2f(-forwardDir.z, -forwardDir.x);
+	float wantedGlobalAngleRad = atan2f(wantedDir.z, wantedDir.x);
+
+	if (forwardGlobalAngleRad < 0.0f) { forwardGlobalAngleRad += (M_PI * 2.0f); }
+	if (wantedGlobalAngleRad < 0.0f) { wantedGlobalAngleRad += (M_PI * 2.0f); }
+
 
 	if (currentSpeed < wantedSpeed) {
 		// accelerate (at maximum acceleration-rate) to match wantedSpeed
@@ -39,6 +57,6 @@ void SimObject::Update() {
 		pos.y = std::min(pos.y, ground->GetHeight(pos.x, pos.z));
 
 	mat.SetPos(pos);
-	mat.SetZDir(zdir);
+	mat.SetZDir(forwardDir);
 	mat.SetYDirXZ(ground->GetNormal(pos.x, pos.z));
 }
