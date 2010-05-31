@@ -12,12 +12,9 @@ struct LocalModel;
 class SimObjectDef;
 class SimObject {
 public:
-	SimObject(SimObjectDef* d, unsigned int i): def(d), id(i) {
-		currentSpeed = 0.0f;
-		wantedSpeed = 0.0f;
-	}
-
+	SimObject(SimObjectDef*, unsigned int);
 	virtual ~SimObject();
+
 	virtual void Update();
 
 	const SimObjectDef* GetDef() const { return def; }
