@@ -36,6 +36,7 @@ CSimThread::CSimThread() {
 	mReadMap = CReadMap::GetInstance(generalTable->GetStrVal("mapsDir", "data/maps/") + mapTable->GetStrVal("smf", "map.smf"));
 
 	mPathModule = GetPathModuleInstance(CallOutHandler::GetInstance());
+
 	eventHandler->AddReceiver(mPathModule);
 	// create objects after path-module is loaded
 	mSimObjectHandler = SimObjectHandler::GetInstance();
@@ -49,9 +50,8 @@ CSimThread::~CSimThread() {
 	CMapInfo::FreeInstance(mMapInfo);
 
 	// destroy objects before path-module is unloaded
-	SimObjectHandler::FreeInstance(mSimObjectHandler);
-
 	mPathModule->Kill();
+	SimObjectHandler::FreeInstance(mSimObjectHandler);
 	eventHandler->DelReceiver(mPathModule);
 
 	CallOutHandler::FreeInstance((CallOutHandler*) mPathModule->GetCallOutHandler());
