@@ -186,6 +186,13 @@ void CClient::KeyPressed(int sdlKeyCode, bool repeat) {
 				SendNetMessage(CLIENT_MSG_PAUSE);
 			} break;
 
+			case SDLK_EQUALS: {
+				SendNetMessage(CLIENT_MSG_INCSIMSPEED);
+			} break;
+			case SDLK_MINUS: {
+				SendNetMessage(CLIENT_MSG_DECSIMSPEED);
+			} break;
+
 			case SDLK_g: {
 				const int grabMode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
 

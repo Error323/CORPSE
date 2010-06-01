@@ -45,8 +45,10 @@ CServer::CServer() {
 }
 
 void CServer::ChangeSpeed(uint mult) {
-	simFrameMult = mult;
-	simFrameTime = 1000 / (simFrameRate * simFrameMult);
+	if ((mult > 0) && (1000 / (simFrameRate * simFrameMult)) > 0) {
+		simFrameMult = mult;
+		simFrameTime = 1000 / (simFrameRate * simFrameMult);
+	}
 }
 
 
@@ -55,8 +57,17 @@ void CServer::ReadNetMessages() {
 	int m = CLIENT_MSG_NONE;
 
 	while (netBuf->PopClientToServerMessage(&m)) {
-		if (m == CLIENT_MSG_PAUSE) {
-			paused = !paused;
+		switch (m) {
+			case CLIENT_MSG_PAUSE: {
+				paused = !paused;
+			} break;
+
+			case CLIENT_MSG_INCSIMSPEED: {
+				ChangeSpeed(simFrameMult + 1);
+			} break;
+			case CLIENT_MSG_DECSIMSPEED: {
+				ChangeSpeed(simFrameMult - 1);
+			} break;
 		}
 	}
 }
