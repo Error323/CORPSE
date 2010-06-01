@@ -45,7 +45,7 @@ CServer::CServer() {
 }
 
 void CServer::ChangeSpeed(uint mult) {
-	if ((mult > 0) && (1000 / (simFrameRate * simFrameMult)) > 0) {
+	if ((mult > 0) && ((1000 / (simFrameRate * mult)) > 0)) {
 		simFrameMult = mult;
 		simFrameTime = 1000 / (simFrameRate * simFrameMult);
 	}
