@@ -69,8 +69,9 @@ void SimObject::Update() {
 		currentForwardSpeed = std::max(currentForwardSpeed, 0.0f);
 	}
 
+	// note: no gravity, since we only simulate earth-bound objects
 	vec3f pos = mat.GetPos() + (mat.GetZDir() * currentForwardSpeed);
-		pos.y = std::min(pos.y, ground->GetHeight(pos.x, pos.z));
+		pos.y = ground->GetHeight(pos.x, pos.z);
 
 	mat.SetPos(pos);
 	mat.SetYDirXZ(ground->GetSmoothNormal(pos.x, pos.z));
