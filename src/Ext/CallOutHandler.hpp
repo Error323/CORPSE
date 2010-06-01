@@ -30,6 +30,7 @@ public:
 	const vec3f& GetSimObjectPosition(unsigned int) const;
 	const vec3f& GetSimObjectDirection(unsigned int) const;
 
+	void SetSimObjectWantedForwardSpeed(unsigned int, float) const;
 	void SetSimObjectWantedPosition(unsigned int, const vec3f&) const;
 	void SetSimObjectWantedDirection(unsigned int, const vec3f&) const;
 };

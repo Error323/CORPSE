@@ -26,6 +26,7 @@ public:
 	virtual const vec3f& GetSimObjectPosition(unsigned int id) const = 0;
 	virtual const vec3f& GetSimObjectDirection(unsigned int id) const = 0;
 
+	virtual void SetSimObjectWantedForwardSpeed(unsigned int id, float spd) const = 0;
 	virtual void SetSimObjectWantedPosition(unsigned int id, const vec3f& pos) const = 0;
 	virtual void SetSimObjectWantedDirection(unsigned int id, const vec3f& dir) const = 0;
 };

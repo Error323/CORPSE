@@ -100,6 +100,12 @@ const vec3f& CallOutHandler::GetSimObjectDirection(unsigned int id) const {
 
 
 
+void CallOutHandler::SetSimObjectWantedForwardSpeed(unsigned int id, float spd) const {
+	if (IsValidSimObjectID(id)) {
+		simObjectHandler->GetSimObject(id)->SetWantedForwardSpeed(spd);
+	}
+}
+
 void CallOutHandler::SetSimObjectWantedPosition(unsigned int id, const vec3f& pos) const {
 	if (IsValidSimObjectID(id)) {
 		simObjectHandler->GetSimObject(id)->SetWantedPosition(pos);

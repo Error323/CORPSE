@@ -5,8 +5,8 @@
 #include "../Renderer/Models/ModelReaderBase.hpp"
 
 SimObject::SimObject(SimObjectDef* d, unsigned int i): def(d), id(i) {
-	currentSpeed = 0.0f;
-	wantedSpeed = def->GetMaxForwardSpeed();
+	currentForwardSpeed = 0.0f;
+	wantedForwardSpeed = def->GetMaxForwardSpeed();
 }
 
 SimObject::~SimObject() {
@@ -57,17 +57,19 @@ void SimObject::Update() {
 	}
 
 
-	if (currentSpeed < wantedSpeed) {
+	wantedForwardSpeed = std::min(wantedForwardSpeed, def->GetMaxForwardSpeed());
+
+	if (currentForwardSpeed <= wantedForwardSpeed) {
 		// accelerate (at maximum acceleration-rate) to match wantedSpeed
-		currentSpeed += def->GetMaxAccelerationRate();
-		currentSpeed = std::min(currentSpeed, wantedSpeed);
+		currentForwardSpeed += def->GetMaxAccelerationRate();
+		currentForwardSpeed = std::min(currentForwardSpeed, wantedForwardSpeed);
 	} else {
 		// deccelerate (at maximum decceleration-rate) to match wantedSpeed
-		currentSpeed -= def->GetMaxDeccelerationRate();
-		currentSpeed = std::max(currentSpeed, 0.0f);
+		currentForwardSpeed -= def->GetMaxDeccelerationRate();
+		currentForwardSpeed = std::max(currentForwardSpeed, 0.0f);
 	}
 
-	vec3f pos = mat.GetPos() + (mat.GetZDir() * currentSpeed);
+	vec3f pos = mat.GetPos() + (mat.GetZDir() * currentForwardSpeed);
 		pos.y = std::min(pos.y, ground->GetHeight(pos.x, pos.z));
 
 	mat.SetPos(pos);

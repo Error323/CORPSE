@@ -26,6 +26,7 @@ public:
 	const mat44f& GetMat() const { return mat; }
 	void SetMat(const mat44f& m) { mat = m; }
 
+	void SetWantedForwardSpeed(float f) { wantedForwardSpeed = f; }
 	void SetWantedPosition(const vec3f& pos) { wantedPos = pos; }
 	void SetWantedDirection(const vec3f& dir) { wantedDir = dir; }
 
@@ -44,9 +45,10 @@ private:
 	vec3f wantedPos;
 	vec3f wantedDir;
 
-	float currentSpeed;
+	// speed-scale this object is currently moving at
+	float currentForwardSpeed;
 	// speed-scale this object wants to be moving at
-	float wantedSpeed;
+	float wantedForwardSpeed;
 };
 
 #endif
