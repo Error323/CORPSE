@@ -71,5 +71,5 @@ void SimObject::Update() {
 		pos.y = std::min(pos.y, ground->GetHeight(pos.x, pos.z));
 
 	mat.SetPos(pos);
-	mat.SetYDirXZ(ground->GetNormal(pos.x, pos.z));
+	mat.SetYDirXZ(ground->GetSmoothNormal(pos.x, pos.z));
 }
