@@ -95,8 +95,8 @@ params = {
 	},
 
 	["objectdefs"] = {
-		core_commander = {
-			mdl                  = "core_commander.s3o",
+		core_goliath = {
+			mdl                  = "core_goliath.s3o",
 			maxForwardSpeed      =  15.0,
 			maxTurningRate       =  20.0,
 			maxAccelerationRate  =   1.0,
@@ -106,17 +106,17 @@ params = {
 
 	["objects"] = {
 		[1] = {
-			def = "core_commander",
+			def = "core_goliath",
 			pos = {200.0, 0.0, 200.0},
 		},
 		[2] = {
-			def = "core_commander",
+			def = "core_goliath",
 			pos = {3800.0, 0.0, 3800.0},
 		},
 	},
 
 	["models"] = {
-		["core_commander.s3o"] = {
+		["core_goliath.s3o"] = {
 			vShader = "S3OVP.glsl",
 			fShader = "S3OFP.glsl",
 		},
