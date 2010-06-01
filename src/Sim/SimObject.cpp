@@ -57,7 +57,7 @@ void SimObject::Update() {
 	}
 
 
-	wantedForwardSpeed = std::min(wantedForwardSpeed, def->GetMaxForwardSpeed());
+	wantedForwardSpeed = std::max(0.0f, std::min(wantedForwardSpeed, def->GetMaxForwardSpeed()));
 
 	if (currentForwardSpeed <= wantedForwardSpeed) {
 		// accelerate (at maximum acceleration-rate) to match wantedSpeed
