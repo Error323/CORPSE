@@ -10,7 +10,7 @@ MKDIR = mkdir
 CC = g++
 CFLAGS = -Wall -Wextra -g -O2 -fno-strict-aliasing
 LFLAGS_ENGINE = -lSDL -lGL -lGLEW -lGLU -lglut -lIL -lILU -llua5.1   -L$(BIN_DIR) -l$(MODULE_TARGET)
-LFLAGS_MODULE = -shared
+LFLAGS_MODULE = -shared -fPIC
 
 BASE_SRC_DIR     = $(SRC_DIR)
 BASE_OBJ_DIR     = $(OBJ_DIR)
