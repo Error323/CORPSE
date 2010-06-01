@@ -10,7 +10,7 @@ MKDIR = mkdir
 CC = g++
 CFLAGS = -Wall -Wextra -g -O2 -fno-strict-aliasing
 LFLAGS_ENGINE = -lSDL -lGL -lGLEW -lGLU -lglut -lIL -lILU -llua5.1   -L$(BIN_DIR) -l$(MODULE_TARGET)
-LFLAGS_MODULE = -shared -fPIC
+LFLAGS_MODULE = -shared
 
 BASE_SRC_DIR     = $(SRC_DIR)
 BASE_OBJ_DIR     = $(OBJ_DIR)
@@ -137,7 +137,7 @@ $(MATH_OBJ_DIR)/%.o: $(MATH_SRC_DIR)/%.cpp
 	$(CC) $(CFLAGS) -c   -o $@    $<
 
 $(PATH_OBJ_DIR)/%.o: $(PATH_SRC_DIR)/%.cpp
-	$(CC) $(CFLAGS) -c   -o $@    $<
+	$(CC) $(CFLAGS) -fPIC -c   -o $@    $<
 
 $(RENDERER_OBJ_DIR)/%.o: $(RENDERER_SRC_DIR)/%.cpp
 	$(CC) $(CFLAGS) -c   -o $@    $<
