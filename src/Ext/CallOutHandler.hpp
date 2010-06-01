@@ -24,6 +24,8 @@ public:
 	unsigned int GetFreeSimObjectIDs(unsigned int*, unsigned int) const;
 	unsigned int GetUsedSimObjectIDs(unsigned int*, unsigned int) const;
 
+	bool IsValidSimObjectID(unsigned int) const;
+
 	const mat44f& GetSimObjectMatrix(unsigned int) const;
 	const vec3f& GetSimObjectPosition(unsigned int) const;
 	const vec3f& GetSimObjectDirection(unsigned int) const;

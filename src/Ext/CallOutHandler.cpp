@@ -58,43 +58,41 @@ unsigned int CallOutHandler::GetUsedSimObjectIDs(unsigned int* array, unsigned i
 	return n;
 }
 
+bool CallOutHandler::IsValidSimObjectID(unsigned int id) const {
+	return ((id < simObjectHandler->GetMaxSimObjects()) && (simObjectHandler->GetSimObject(id) != NULL));
+}
+
 
 
 const mat44f& CallOutHandler::GetSimObjectMatrix(unsigned int id) const {
-	if (id < simObjectHandler->GetMaxSimObjects()) {
-		if (simObjectHandler->GetSimObject(id) != NULL) {
-			const SimObject* o = simObjectHandler->GetSimObject(id);
-			const mat44f& m = o->GetMat();
+	if (IsValidSimObjectID(id)) {
+		const SimObject* o = simObjectHandler->GetSimObject(id);
+		const mat44f& m = o->GetMat();
 
-			return m;
-		}
+		return m;
 	}
 
-	static mat44f m;
+	static const mat44f m;
 	return m;
 }
 
 const vec3f& CallOutHandler::GetSimObjectPosition(unsigned int id) const {
-	if (id < simObjectHandler->GetMaxSimObjects()) {
-		if (simObjectHandler->GetSimObject(id) != NULL) {
-			const SimObject* o = simObjectHandler->GetSimObject(id);
-			const mat44f& m = o->GetMat();
+	if (IsValidSimObjectID(id)) {
+		const SimObject* o = simObjectHandler->GetSimObject(id);
+		const mat44f& m = o->GetMat();
 
-			return (m.GetPos());
-		}
+		return (m.GetPos());
 	}
 
 	return NVECf;
 }
 
 const vec3f& CallOutHandler::GetSimObjectDirection(unsigned int id) const {
-	if (id < simObjectHandler->GetMaxSimObjects()) {
-		if (simObjectHandler->GetSimObject(id) != NULL) {
-			const SimObject* o = simObjectHandler->GetSimObject(id);
-			const mat44f& m = o->GetMat();
+	if (IsValidSimObjectID(id)) {
+		const SimObject* o = simObjectHandler->GetSimObject(id);
+		const mat44f& m = o->GetMat();
 
-			return (m.GetZDir());
-		}
+		return (m.GetZDir());
 	}
 
 	return NVECf;
@@ -103,17 +101,13 @@ const vec3f& CallOutHandler::GetSimObjectDirection(unsigned int id) const {
 
 
 void CallOutHandler::SetSimObjectWantedPosition(unsigned int id, const vec3f& pos) const {
-	if (id < simObjectHandler->GetMaxSimObjects()) {
-		if (simObjectHandler->GetSimObject(id) != NULL) {
-			simObjectHandler->GetSimObject(id)->SetWantedPosition(pos);
-		}
+	if (IsValidSimObjectID(id)) {
+		simObjectHandler->GetSimObject(id)->SetWantedPosition(pos);
 	}
 }
 
 void CallOutHandler::SetSimObjectWantedDirection(unsigned int id, const vec3f& dir) const {
-	if (id < simObjectHandler->GetMaxSimObjects()) {
-		if (simObjectHandler->GetSimObject(id) != NULL) {
-			simObjectHandler->GetSimObject(id)->SetWantedDirection(dir);
-		}
+	if (IsValidSimObjectID(id)) {
+		simObjectHandler->GetSimObject(id)->SetWantedDirection(dir);
 	}
 }

@@ -20,6 +20,8 @@ public:
 	virtual unsigned int GetFreeSimObjectIDs(unsigned int* array, unsigned int size) const = 0;
 	virtual unsigned int GetUsedSimObjectIDs(unsigned int* array, unsigned int size) const = 0;
 
+	virtual bool IsValidSimObjectID(unsigned int id) const = 0;
+
 	virtual const mat44f& GetSimObjectMatrix(unsigned int id) const = 0;
 	virtual const vec3f& GetSimObjectPosition(unsigned int id) const = 0;
 	virtual const vec3f& GetSimObjectDirection(unsigned int id) const = 0;
