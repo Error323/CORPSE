@@ -28,23 +28,29 @@ protected:
 
 
 struct SimObjectCreatedEvent: public IEvent {
+public:
 	SimObjectCreatedEvent(unsigned int f, unsigned int a0): IEvent(EVENT_SIMOBJECT_CREATED, f) {
 		objectID = a0;
 	}
 
+	unsigned int GetObjectID() const { return objectID; }
 	std::string str() const;
 
-	private: unsigned int objectID;
+private:
+	unsigned int objectID;
 };
 
 struct SimObjectDestroyedEvent: public IEvent {
+public:
 	SimObjectDestroyedEvent(unsigned int f, unsigned int a0): IEvent(EVENT_SIMOBJECT_DESTROYED, f) {
 		objectID = a0;
 	}
 
+	unsigned int GetObjectID() const { return objectID; }
 	std::string str() const;
 
-	private: unsigned int objectID;
+private:
+	unsigned int objectID;
 };
 
 #endif

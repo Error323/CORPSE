@@ -15,6 +15,7 @@ public:
 	int GetHeightMapSizeZ() const;
 	float GetMinMapHeight() const;
 	float GetMaxMapHeight() const;
+	int GetSquareSize() const;
 	const float* GetCenterHeightMap() const;
 	const float* GetCornerHeightMap() const;
 	const float* GetSlopeMap() const;

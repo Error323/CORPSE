@@ -97,7 +97,7 @@ params = {
 	["objectdefs"] = {
 		core_goliath = {
 			mdl                  = "core_goliath.s3o",
-			maxForwardSpeed      =  15.0,
+			maxForwardSpeed      =  50.0,
 			maxTurningRate       =  20.0,
 			maxAccelerationRate  =   1.0,
 			maxDeccelerationRate =   1.0,
@@ -108,10 +108,12 @@ params = {
 		[1] = {
 			def = "core_goliath",
 			pos = {200.0, 0.0, 200.0},
+			dir = {  0.0, 0.0,   1.0},
 		},
 		[2] = {
 			def = "core_goliath",
 			pos = {3800.0, 0.0, 3800.0},
+			dir = {   0.0, 0.0,   -1.0},
 		},
 	},
 

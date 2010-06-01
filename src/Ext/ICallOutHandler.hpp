@@ -11,6 +11,7 @@ public:
 	virtual int GetHeightMapSizeZ() const = 0;
 	virtual float GetMinMapHeight() const = 0;
 	virtual float GetMaxMapHeight() const = 0;
+	virtual int GetSquareSize() const = 0;
 	virtual const float* GetCenterHeightMap() const = 0;
 	virtual const float* GetCornerHeightMap() const = 0;
 	virtual const float* GetSlopeMap() const = 0;

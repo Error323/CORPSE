@@ -1,6 +1,8 @@
 #ifndef PFFG_PATH_MODULE_HDR
 #define PFFG_PATH_MODULE_HDR
 
+#include <set>
+
 #include "./IPathModule.hpp"
 #include "../System/IEvent.hpp"
 
@@ -24,6 +26,9 @@ public:
 	void Init();
 	void Update();
 	void Kill();
+
+private:
+	std::set<unsigned int> simObjectIDs;
 };
 
 IPathModule* CALL_CONV GetPathModuleInstance(ICallOutHandler* icoh) { return (new PathModule(icoh)); }

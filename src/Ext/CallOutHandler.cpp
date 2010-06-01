@@ -25,6 +25,7 @@ int CallOutHandler::GetHeightMapSizeX() const { return readMap->mapx; }
 int CallOutHandler::GetHeightMapSizeZ() const { return readMap->mapy; }
 float CallOutHandler::GetMinMapHeight() const { return readMap->minheight; }
 float CallOutHandler::GetMaxMapHeight() const { return readMap->maxheight; }
+int CallOutHandler::GetSquareSize() const { return readMap->SQUARE_SIZE; }
 const float* CallOutHandler::GetCenterHeightMap() const { return &readMap->centerheightmap[0]; }
 const float* CallOutHandler::GetCornerHeightMap() const { return readMap->GetHeightmap(); }
 const float* CallOutHandler::GetSlopeMap() const { return &readMap->slopemap[0]; }
