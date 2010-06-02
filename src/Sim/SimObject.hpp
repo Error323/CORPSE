@@ -67,6 +67,7 @@ private:
 		}
 		PhysicalState& operator / (float s) {
 			// note: re-orthonormalize?
+			mat.SetPos(mat.GetPos() / s);
 			mat.SetXDir((mat.GetXDir() / s).norm());
 			mat.SetYDir((mat.GetYDir() / s).norm());
 			mat.SetZDir((mat.GetZDir() / s).norm());
