@@ -39,6 +39,7 @@ CServer::CServer() {
 	startTime      = SDL_GetTicks();
 	gameTime       = 0;
 	lastTick       = 0;
+	pauseTickDelta = 0;
 	missedFrames   = 0;
 
 	const LuaTable* rootTable = LUA->GetRoot();
@@ -65,6 +66,10 @@ void CServer::ReadNetMessages() {
 		switch (m) {
 			case CLIENT_MSG_PAUSE: {
 				paused = !paused;
+
+				if (paused) {
+					pauseTickDelta = SDL_GetTicks() - lastTick;
+				}
 			} break;
 
 			case CLIENT_MSG_INCSIMSPEED: {
@@ -108,7 +113,7 @@ bool CServer::Update() {
 		}
 
 		lastTick        = SDL_GetTicks();
-		realTime        = (lastTick - startTime) / 1000;    // update the program's real running time
+		realTime        = (lastTick - startTime) / 1000;    // update the program's real running time (inc. pauses)
 		frameDelta      = simFrameTime - frameTime;         // how much time we had left to complete this frame
 		totalFrameTime += frameTime;                        // update the cumulative frame-time
 
@@ -141,5 +146,5 @@ bool CServer::Update() {
 
 
 unsigned int CServer::GetLastTickDelta() const {
-	return (SDL_GetTicks() - lastTick);
+	return ((!paused)? (SDL_GetTicks() - lastTick): pauseTickDelta);
 }

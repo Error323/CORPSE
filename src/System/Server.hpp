@@ -38,6 +38,7 @@ private:
 	unsigned int startTime;                 // program start-time
 	unsigned int gameTime;                  // number of game-time seconds elapsed so far
 	unsigned int lastTick;                  // time-stamp in ticks of last-executed sim-frame
+	unsigned int pauseTickDelta;            // snapshot of GetLastTickDelta() when simulation was last paused
 	int          missedFrames;              // num. of frames delayed (due to high frameTime) by the last frame
 
 	unsigned int simFrameRate;              // current simulation speed (number of simframes processed per real-time second)
