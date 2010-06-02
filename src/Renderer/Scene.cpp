@@ -187,7 +187,9 @@ void CScene::DrawModels(bool inShadowPass) {
 			const ModelBase* mb = lm->GetModelBase();
 
 			// interpolate the draw-position between sim-frames
-			mat44f rMat(mat.GetPos() + (mat.GetZDir() * server->GetLastTickDeltaFrames()), mat.GetXDir(), mat.GetYDir(), mat.GetZDir()); //!!
+			const vec3f rPos = mat.GetPos() + (mat.GetZDir() * obj->GetCurrentForwardSpeed() * server->GetLastTickDeltaFrames());
+			const mat44f rMat(rPos, mat.GetXDir(), mat.GetYDir(), mat.GetZDir());
+
 			Shader::IProgramObject* shObj = const_cast<Shader::IProgramObject*>(lm->GetShaderProgramObj());
 
 			if (!inShadowPass) {

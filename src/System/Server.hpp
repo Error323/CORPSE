@@ -13,7 +13,7 @@ public:
 	void TogglePause() { paused = !paused; }
 
 	unsigned int GetLastTickDelta() const;
-	unsigned int GetLastTickDeltaFrames() const { return (GetLastTickDelta() / simFrameTime); }
+	float GetLastTickDeltaFrames() const { return (GetLastTickDelta() / float(simFrameTime)); }
 	float GetLastTickDeltaSecs() const { return (GetLastTickDelta() / 1000.0f); }
 
 	unsigned int GetSimFrameRate() const { return simFrameRate; }
