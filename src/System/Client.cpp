@@ -25,9 +25,14 @@
 
 CClient* CClient::GetInstance(int argc, char** argv) {
 	static CClient* c = NULL;
+	static unsigned depth = 0;
 
 	if (c == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
 		c = new CClient(argc, argv);
+		depth -= 1;
 	}
 
 	return c;

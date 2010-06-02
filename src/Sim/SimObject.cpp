@@ -20,6 +20,7 @@ SimObject::~SimObject() {
 }
 
 void SimObject::Update() {
+	vec3f currentPos = mat.GetPos();
 	vec3f forwardDir = mat.GetZDir();
 		forwardDir.y = 0.0f;
 		forwardDir.inorm();
@@ -58,6 +59,11 @@ void SimObject::Update() {
 
 
 	wantedForwardSpeed = std::max(0.0f, std::min(wantedForwardSpeed, def->GetMaxForwardSpeed()));
+
+	// horizontal terrain ==> normal.y ~= 1 ==> slope ~= 0
+	// vertical   terrain ==> normal.y ~= 0 ==> slope ~= 1
+	// if ((mat.GetZDir()).y >  0.05f) { wantedForwardSpeed *=         (1.0f - ground->GetSlope(currentPos.x, currentPos.z)); }
+	// if ((mat.GetZDir()).y < -0.05f) { wantedForwardSpeed *= (1.0f / (1.0f - ground->GetSlope(currentPos.x, currentPos.z))); }
 
 	if (currentForwardSpeed <= wantedForwardSpeed) {
 		// accelerate (at maximum acceleration-rate) to match wantedSpeed

@@ -1,10 +1,16 @@
+#include <cassert>
 #include "./NetMessageBuffer.hpp"
 
 CNetMessageBuffer* CNetMessageBuffer::GetInstance() {
 	static CNetMessageBuffer* nmb = NULL;
+	static unsigned int depth = 0;
 
 	if (nmb == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
 		nmb = new CNetMessageBuffer();
+		depth -= 1;
 	}
 
 	return nmb;

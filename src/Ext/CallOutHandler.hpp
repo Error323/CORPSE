@@ -27,9 +27,11 @@ public:
 
 	bool IsValidSimObjectID(unsigned int) const;
 
+	const SimObjectDef* GetSimObjectDef(unsigned int) const;
 	const mat44f& GetSimObjectMatrix(unsigned int) const;
 	const vec3f& GetSimObjectPosition(unsigned int) const;
 	const vec3f& GetSimObjectDirection(unsigned int) const;
+	float GetSimObjectCurrentForwardSpeed(unsigned int) const;
 
 	void SetSimObjectWantedForwardSpeed(unsigned int, float) const;
 	void SetSimObjectWantedPosition(unsigned int, const vec3f&) const;

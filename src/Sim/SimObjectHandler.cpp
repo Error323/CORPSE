@@ -13,9 +13,14 @@
 
 SimObjectHandler* SimObjectHandler::GetInstance() {
 	static SimObjectHandler* soh = NULL;
+	static unsigned int depth = 0;
 
 	if (soh == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
 		soh = new SimObjectHandler();
+		depth -= 1;
 	}
 
 	return soh;

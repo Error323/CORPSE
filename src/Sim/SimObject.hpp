@@ -26,6 +26,8 @@ public:
 	const mat44f& GetMat() const { return mat; }
 	void SetMat(const mat44f& m) { mat = m; }
 
+	float GetCurrentForwardSpeed() const { return currentForwardSpeed; }
+
 	void SetWantedForwardSpeed(float f) { wantedForwardSpeed = f; }
 	void SetWantedPosition(const vec3f& pos) { wantedPos = pos; }
 	void SetWantedDirection(const vec3f& dir) { wantedDir = dir; }
@@ -34,7 +36,6 @@ private:
 	const SimObjectDef* def;
 	const unsigned int id;
 
-	std::string mdlName;
 	LocalModel* mdl;
 
 	// world-space transform matrix

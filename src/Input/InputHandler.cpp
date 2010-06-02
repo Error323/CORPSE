@@ -6,9 +6,14 @@
 
 CInputHandler* CInputHandler::GetInstance() {
 	static CInputHandler* ih = NULL;
+	static unsigned int depth = 0;
 
 	if (ih == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
 		ih = new CInputHandler();
+		depth -= 1;
 	}
 
 	return ih;

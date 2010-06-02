@@ -8,10 +8,15 @@
 #define MMAX(a, b) (((a) > (b))? (a): (b));
 
 CServer* CServer::GetInstance() {
-	CServer* s = NULL;
+	static CServer* s = NULL;
+	static unsigned int depth = 0;
 
 	if (s == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
 		s = new CServer();
+		depth -= 1;
 	}
 
 	return s;

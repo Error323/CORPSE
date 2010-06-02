@@ -4,6 +4,8 @@
 #include "../Math/mat44fwd.hpp"
 #include "../Math/vec3fwd.hpp"
 
+class SimObjectDef;
+
 // exposes simulation state to libraries
 class ICallOutHandler {
 public:
@@ -23,9 +25,11 @@ public:
 
 	virtual bool IsValidSimObjectID(unsigned int id) const = 0;
 
+	virtual const SimObjectDef* GetSimObjectDef(unsigned int id) const = 0;
 	virtual const mat44f& GetSimObjectMatrix(unsigned int id) const = 0;
 	virtual const vec3f& GetSimObjectPosition(unsigned int id) const = 0;
 	virtual const vec3f& GetSimObjectDirection(unsigned int id) const = 0;
+	virtual float GetSimObjectCurrentForwardSpeed(unsigned int id) const = 0;
 
 	virtual void SetSimObjectWantedForwardSpeed(unsigned int id, float spd) const = 0;
 	virtual void SetSimObjectWantedPosition(unsigned int id, const vec3f& pos) const = 0;

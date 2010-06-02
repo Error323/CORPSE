@@ -26,7 +26,7 @@ bool SimObjectDefLoader::LoadDefs() {
 			def->SetMaxForwardSpeed(objectDefTable->GetFltVal("maxForwardSpeed", 0.0f) / server->GetSimFrameRate());
 			def->SetMaxTurningRate(objectDefTable->GetFltVal("maxTurningRate", 0.0f) / server->GetSimFrameRate());
 			def->SetMaxAccelerationRate(objectDefTable->GetFltVal("maxAccelerationRate", 0.0f) / server->GetSimFrameRate());
-			def->SetMaxDeccelerationRate(objectDefTable->GetFltVal("maxDecelerationRate", 0.0f) / server->GetSimFrameRate());
+			def->SetMaxDeccelerationRate(objectDefTable->GetFltVal("maxDeccelerationRate", 0.0f) / server->GetSimFrameRate());
 
 		objectDefs[*it] = def;
 	}

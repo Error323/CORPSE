@@ -12,9 +12,14 @@
 
 CSimThread* CSimThread::GetInstance() {
 	static CSimThread* st = NULL;
+	static unsigned int depth = 0;
 
 	if (st == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
 		st = new CSimThread();
+		depth -= 1;
 	}
 
 	return st;

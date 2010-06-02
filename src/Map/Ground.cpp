@@ -8,9 +8,14 @@
 
 CGround* CGround::GetInstance() {
 	static CGround* g = NULL;
+	static unsigned int depth = 0;
 
 	if (g == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
 		g = new CGround();
+		depth -= 1;
 	}
 
 	return g;

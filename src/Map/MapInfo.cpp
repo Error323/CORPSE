@@ -4,9 +4,14 @@
 
 const CMapInfo* CMapInfo::GetInstance(const std::string& mapName) {
 	static const CMapInfo* mi = NULL;
+	static unsigned int depth = 0;
 
 	if (mi == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
 		mi = new CMapInfo(mapName);
+		depth -= 1;
 	}
 
 	return mi;

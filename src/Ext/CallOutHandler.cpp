@@ -7,9 +7,14 @@
 
 CallOutHandler* CallOutHandler::GetInstance() {
 	static CallOutHandler* coh = NULL;
+	static unsigned int depth = 0;
 
 	if (coh == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
 		coh = new CallOutHandler();
+		depth -= 1;
 	}
 
 	return coh;
@@ -65,6 +70,17 @@ bool CallOutHandler::IsValidSimObjectID(unsigned int id) const {
 
 
 
+const SimObjectDef* CallOutHandler::GetSimObjectDef(unsigned int id) const {
+	if (IsValidSimObjectID(id)) {
+		const SimObject* o = simObjectHandler->GetSimObject(id);
+		const SimObjectDef* d = o->GetDef();
+
+		return d;
+	}
+
+	return NULL;
+}
+
 const mat44f& CallOutHandler::GetSimObjectMatrix(unsigned int id) const {
 	if (IsValidSimObjectID(id)) {
 		const SimObject* o = simObjectHandler->GetSimObject(id);
@@ -97,6 +113,17 @@ const vec3f& CallOutHandler::GetSimObjectDirection(unsigned int id) const {
 	}
 
 	return NVECf;
+}
+
+float CallOutHandler::GetSimObjectCurrentForwardSpeed(unsigned int id) const {
+	if (IsValidSimObjectID(id)) {
+		const SimObject* o = simObjectHandler->GetSimObject(id);
+		const float f = o->GetCurrentForwardSpeed();
+
+		return f;
+	}
+
+	return 0.0f;
 }
 
 

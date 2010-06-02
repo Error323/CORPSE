@@ -16,9 +16,14 @@
 
 CRenderThread* CRenderThread::GetInstance() {
 	static CRenderThread* rt = NULL;
+	static unsigned int depth = 0;
 
 	if (rt == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
 		rt = new CRenderThread();
+		depth -= 1;
 	}
 
 	return rt;

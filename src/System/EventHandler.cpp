@@ -1,3 +1,4 @@
+#include <cassert>
 #include <string>
 
 #include "./EventHandler.hpp"
@@ -6,9 +7,14 @@
 
 EventHandler* EventHandler::GetInstance() {
 	static EventHandler* eh = NULL;
+	static unsigned int depth = 0;
 
 	if (eh == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
 		eh = new EventHandler();
+		depth -= 1;
 	}
 
 	return eh;

@@ -11,9 +11,14 @@
 
 CEngine* CEngine::GetInstance(int argc, char** argv) {
 	static CEngine* e = NULL;
+	static unsigned int depth = 0;
 
 	if (e == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
 		e = new CEngine(argc, argv);
+		depth -= 1;
 	}
 
 	return e;
