@@ -51,6 +51,35 @@ private:
 			return *this;
 		}
 
+		PhysicalState& operator + (const PhysicalState& state) {
+			mat.SetPos(mat.GetPos() + state.mat.GetPos());
+			mat.SetXDir(mat.GetXDir() + state.mat.GetXDir());
+			mat.SetYDir(mat.GetYDir() + state.mat.GetYDir());
+			mat.SetZDir(mat.GetZDir() + state.mat.GetZDir());
+
+			wantedPos += state.wantedPos;
+			wantedDir += state.wantedDir;
+
+			currentForwardSpeed += state.currentForwardSpeed;
+			wantedForwardSpeed += state.wantedForwardSpeed;
+
+			return *this;
+		}
+		PhysicalState& operator / (float s) {
+			// note: re-orthonormalize?
+			mat.SetXDir((mat.GetXDir() / s).norm());
+			mat.SetYDir((mat.GetYDir() / s).norm());
+			mat.SetZDir((mat.GetZDir() / s).norm());
+
+			wantedPos = (wantedPos / s);
+			wantedDir = (wantedDir / s).norm();
+
+			currentForwardSpeed /= s;
+			wantedForwardSpeed /= s;
+
+			return *this;
+		}
+
 		void Update(const SimObjectDef*);
 
 		// world-space transform matrix
