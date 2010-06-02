@@ -47,8 +47,7 @@ MAP_OBS = \
 	$(MAP_OBJ_DIR)/BaseGroundDrawer.o \
 	$(MAP_OBJ_DIR)/Ground.o \
 	$(MAP_OBJ_DIR)/MapInfo.o \
-	$(MAP_OBJ_DIR)/ReadMap.o \
-	$(MAP_OBJ_DIR)/MetalMap.o
+	$(MAP_OBJ_DIR)/ReadMap.o
 MAP_SMF_OBS = \
 	$(MAP_SMF_OBJ_DIR)/SMFReadMap.o \
 	$(MAP_SMF_OBJ_DIR)/SMFMapFile.o \

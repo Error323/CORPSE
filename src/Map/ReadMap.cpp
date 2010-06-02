@@ -6,7 +6,6 @@
 #include "../System/EngineAux.hpp"
 #include "./ReadMap.hpp"
 #include "./MapInfo.hpp"
-#include "./MetalMap.hpp"
 #include "./SMF/SMFReadMap.hpp"
 //! #include "./SM3/SM3ReadMap.hpp"
 #include "../System/Logger.hpp"
@@ -33,38 +32,25 @@ CReadMap* CReadMap::GetInstance(const std::string& mapname) {
 
 		LOG << "[CReadMap::LoadMap] [2]\n";
 
-		/* Read metal map */
 		MapBitmapInfo mbi;
 		unsigned char* metalmap = rm->GetInfoMap("metal", &mbi);
 
 		LOG << "[CReadMap::LoadMap] [3]\n";
 
-		if (metalmap && mbi.width == rm->width / 2 && mbi.height == rm->height / 2) {
-			int size = mbi.width * mbi.height;
-			unsigned char* map = new unsigned char[size];
-			memcpy(map, metalmap, size);
-			rm->metalMap = new CMetalMap(map, mbi.width, mbi.height, mapInfo->map.maxMetal, rm->SQUARE_SIZE);
-		}
-
-		LOG << "[CReadMap::LoadMap] [4]\n";
-
 		if (metalmap != NULL) {
+			if ((mbi.width == rm->width / 2 && mbi.height == rm->height / 2)) {
+			}
+
 			rm->FreeInfoMap("metal", metalmap);
 		}
 
-		if (rm->metalMap == NULL) {
-			unsigned char* zd = new unsigned char[rm->width * rm->height / 4];
-			memset(zd, 0, rm->width * rm->height / 4);
-			rm->metalMap = new CMetalMap(zd, rm->width / 2, rm->height / 2, 1.0f, rm->SQUARE_SIZE);
-		}
-
-		LOG << "[CReadMap::LoadMap] [5]\n";
+		LOG << "[CReadMap::LoadMap] [4]\n";
 
 		/* Read type map */
 		MapBitmapInfo tbi;
 		unsigned char* typemap = rm->GetInfoMap("type", &tbi);
 
-		LOG << "[CReadMap::LoadMap] [6]\n";
+		LOG << "[CReadMap::LoadMap] [5]\n";
 
 		if (typemap && tbi.width == rm->width / 2 && tbi.height == rm->height / 2) {
 			assert(rm->hmapx == tbi.width && rm->hmapy == tbi.height);
@@ -75,13 +61,13 @@ CReadMap* CReadMap::GetInstance(const std::string& mapname) {
 			assert(false);
 		}
 
-		LOG << "[CReadMap::LoadMap] [7]\n";
+		LOG << "[CReadMap::LoadMap] [6]\n";
 
 		if (typemap != NULL) {
 			rm->FreeInfoMap("type", typemap);
 		}
 
-		LOG << "[CReadMap::LoadMap] [8]\n";
+		LOG << "[CReadMap::LoadMap] [7]\n";
 	}
 
 	return rm;
@@ -93,13 +79,11 @@ void CReadMap::FreeInstance(CReadMap* rm) {
 
 
 
-CReadMap::CReadMap():
-	typemap(NULL), metalMap(NULL), SQUARE_SIZE(8) {
+CReadMap::CReadMap(): typemap(NULL), SQUARE_SIZE(8) {
 	memset(mipHeightmap, 0, sizeof(mipHeightmap));
 }
 
 CReadMap::~CReadMap() {
-	delete metalMap;
 	delete[] typemap;
 
 	// don't delete first pointer since it points to centerheightmap

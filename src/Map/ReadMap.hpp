@@ -6,7 +6,6 @@
 #include "../Math/vec3fwd.hpp"
 #include "../Math/vec3.hpp"
 
-class CMetalMap;
 class CBaseGroundDrawer;
 
 
@@ -64,14 +63,6 @@ public:
 
 	unsigned char* typemap;
 
-	// Metal-density/height-map
-	CMetalMap* metalMap;
-
-	int width, height;
-
-	unsigned int mapChecksum;
-
-
 	virtual CBaseGroundDrawer* GetGroundDrawer() { return 0; }
 	virtual void HeightmapUpdated(int x1, int x2, int y1, int y2) = 0;
 	virtual void Update() {};
@@ -124,6 +115,9 @@ public:
 	int pwr2mapx, pwr2mapy;
 	int maxxpos, maxzpos;
 	const int SQUARE_SIZE;
+
+	int width, height;
+	unsigned int mapChecksum;
 };
 
 #define readMap (CReadMap::GetInstance())
