@@ -13,6 +13,7 @@ public:
 	void TogglePause() { paused = !paused; }
 
 	unsigned int GetLastTickDelta() const;
+	unsigned int GetLastTickDeltaFrames() const { return (GetLastTickDelta() / simFrameTime); }
 	float GetLastTickDeltaSecs() const { return (GetLastTickDelta() / 1000.0f); }
 
 	unsigned int GetSimFrameRate() const { return simFrameRate; }
@@ -41,7 +42,7 @@ private:
 	int          missedFrames;              // num. of frames delayed (due to high frameTime) by the last frame
 
 	unsigned int simFrameRate;              // current simulation speed (number of simframes processed per real-time second)
-	unsigned int simFrameTime;              // ideal maximum amount of time a single sim-frame may take at current speed
+	unsigned int simFrameTime;              // ideal maximum amount of time a single sim-frame may take at current speed (ms)
 	unsigned int simFrameMult;              // simulation speed multiplier
 };
 
