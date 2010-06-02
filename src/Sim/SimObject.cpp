@@ -25,6 +25,7 @@ void SimObject::Update() {
 		forwardDir.y = 0.0f;
 		forwardDir.inorm();
 
+
 	// figure out whether to turn left or right to match wantedDir
 	//
 	// the WORLD-space coordinate system is inverted along the Z-axis
@@ -58,12 +59,23 @@ void SimObject::Update() {
 	}
 
 
+	const bool posSlope = ((mat.GetZDir()).y >  0.05f);
+	const bool negSlope = ((mat.GetZDir()).y < -0.05f);
+
+	const float posSlopeSpeedMod = 1.0f - ground->GetSlope(currentPos.x, currentPos.z);
+	const float negSlopeSpeedMod = 1.0f / posSlopeSpeedMod;
+	const float posSlopeMaxSpeed = posSlopeSpeedMod * wantedForwardSpeed;
+	const float negSlopeMaxSpeed = negSlopeSpeedMod * wantedForwardSpeed;
+
 	wantedForwardSpeed = std::max(0.0f, std::min(wantedForwardSpeed, def->GetMaxForwardSpeed()));
 
-	// horizontal terrain ==> normal.y ~= 1 ==> slope ~= 0
-	// vertical   terrain ==> normal.y ~= 0 ==> slope ~= 1
-	// if ((mat.GetZDir()).y >  0.05f) { wantedForwardSpeed *=         (1.0f - ground->GetSlope(currentPos.x, currentPos.z)); }
-	// if ((mat.GetZDir()).y < -0.05f) { wantedForwardSpeed *= (1.0f / (1.0f - ground->GetSlope(currentPos.x, currentPos.z))); }
+	// on slopes, temporarily override wantedForwardSpeed
+	//   horizontal terrain ==> normal.y ~= 1 ==> slope ~= 0
+	//   vertical   terrain ==> normal.y ~= 0 ==> slope ~= 1
+	if (posSlope || negSlope) {
+		if (posSlope && currentForwardSpeed > posSlopeMaxSpeed) { currentForwardSpeed *= posSlopeSpeedMod; }
+		if (negSlope && currentForwardSpeed < negSlopeMaxSpeed) { currentForwardSpeed *= negSlopeSpeedMod; }
+	}
 
 	if (currentForwardSpeed <= wantedForwardSpeed) {
 		// accelerate (at maximum acceleration-rate) to match wantedSpeed
