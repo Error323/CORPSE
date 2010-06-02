@@ -41,6 +41,11 @@ SimObjectHandler::SimObjectHandler() {
 	for (unsigned int i = 0; i < simObjects.size(); i++) {
 		simObjectFreeIDs.insert(i);
 	}
+}
+
+void SimObjectHandler::AddObjects() {
+	const LuaTable* rootTable = LUA->GetRoot();
+	const LuaTable* objectsTable = rootTable->GetTblVal("objects");
 
 	if (SimObjectDefLoader::LoadDefs()) {
 		std::list<int> simObjectKeys;
@@ -65,15 +70,17 @@ SimObjectHandler::SimObjectHandler() {
 }
 
 SimObjectHandler::~SimObjectHandler() {
-	while (!simObjectUsedIDs.empty()) {
-		DelObject(simObjects[ *(simObjectUsedIDs.begin()) ], true);
-	}
-
 	simObjectFreeIDs.clear();
 	simObjectUsedIDs.clear();
 	simObjects.clear();
 
 	SimObjectDefLoader::DelDefs();
+}
+
+void SimObjectHandler::DelObjects() {
+	while (!simObjectUsedIDs.empty()) {
+		DelObject(simObjects[ *(simObjectUsedIDs.begin()) ], true);
+	}
 }
 
 void SimObjectHandler::Update() {

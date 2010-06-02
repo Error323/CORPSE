@@ -15,6 +15,8 @@ public:
 
 	void Update();
 
+	void AddObjects();
+	void DelObjects();
 	void AddObject(SimObject*, bool);
 	void DelObject(SimObject*, bool);
 

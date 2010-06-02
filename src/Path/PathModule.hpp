@@ -1,12 +1,13 @@
 #ifndef PFFG_PATH_MODULE_HDR
 #define PFFG_PATH_MODULE_HDR
 
-#include <set>
+#include <map>
 
 #include "./IPathModule.hpp"
 #include "../System/IEvent.hpp"
 
 class IEvent;
+class SimObjectDef;
 class PathModule: public IPathModule {
 public:
 	PathModule(ICallOutHandler* icoh): IPathModule(icoh) {
@@ -28,7 +29,7 @@ public:
 	void Kill();
 
 private:
-	std::set<unsigned int> simObjectIDs;
+	std::map<unsigned int, const SimObjectDef*> simObjectIDs;
 };
 
 IPathModule* CALL_CONV GetPathModuleInstance(ICallOutHandler* icoh) { return (new PathModule(icoh)); }

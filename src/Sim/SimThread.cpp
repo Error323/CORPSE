@@ -45,6 +45,7 @@ CSimThread::CSimThread(): frame(0) {
 
 	// create objects after path-module is loaded
 	mSimObjectHandler = SimObjectHandler::GetInstance();
+	mSimObjectHandler->AddObjects();
 	// initialize module after the object-handler
 	mPathModule->Init();
 }
@@ -54,6 +55,7 @@ CSimThread::~CSimThread() {
 	CGround::FreeInstance(mGround);
 	CMapInfo::FreeInstance(mMapInfo);
 
+	mSimObjectHandler->DelObjects();
 	mPathModule->Kill();
 	// destroy objects before path-module is unloaded
 	SimObjectHandler::FreeInstance(mSimObjectHandler);
