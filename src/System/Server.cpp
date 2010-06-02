@@ -137,3 +137,9 @@ bool CServer::Update() {
 
 	return updated;
 }
+
+
+
+unsigned int CServer::GetLastTickDelta() const {
+	return (SDL_GetTicks() - lastTick);
+}

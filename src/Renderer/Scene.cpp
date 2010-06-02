@@ -8,6 +8,7 @@
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
 #include "../System/Logger.hpp"
+#include "../System/Server.hpp"
 
 #include "../Sim/SimObjectHandler.hpp"
 #include "../Sim/SimObjectDef.hpp"
@@ -185,6 +186,8 @@ void CScene::DrawModels(bool inShadowPass) {
 			const LocalModel* lm = obj->GetModel();
 			const ModelBase* mb = lm->GetModelBase();
 
+			// interpolate the draw-position between sim-frames
+			mat44f rMat(mat.GetPos() + (mat.GetZDir() * server->GetLastTickDeltaSecs()), mat.GetXDir(), mat.GetYDir(), mat.GetZDir()); //!!
 			Shader::IProgramObject* shObj = const_cast<Shader::IProgramObject*>(lm->GetShaderProgramObj());
 
 			if (!inShadowPass) {
@@ -195,7 +198,7 @@ void CScene::DrawModels(bool inShadowPass) {
 					glBindTexture(GL_TEXTURE_2D, shadowHandler->GetDepthTextureID());
 
 					glPushMatrix();
-						glMultMatrixf(&mat.m[0]);
+						glMultMatrixf(&rMat.m[0]);
 						mb->texturer->Bind(mb);
 						mb->drawer->Draw(mb->rootPiece);
 						mb->texturer->UnBind();
@@ -206,7 +209,7 @@ void CScene::DrawModels(bool inShadowPass) {
 				shObj->Disable();
 			} else {
 				glPushMatrix();
-					glMultMatrixf(&mat.m[0]);
+					glMultMatrixf(&rMat.m[0]);
 					mb->drawer->Draw(mb->rootPiece);
 				glPopMatrix();
 			}

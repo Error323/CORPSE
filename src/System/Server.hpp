@@ -12,6 +12,9 @@ public:
 	bool IsPaused() const { return paused; }
 	void TogglePause() { paused = !paused; }
 
+	unsigned int GetLastTickDelta() const;
+	float GetLastTickDeltaSecs() const { return (GetLastTickDelta() / 1000.0f); }
+
 	unsigned int GetSimFrameRate() const { return simFrameRate; }
 	unsigned int GetSimFrameTime() const { return simFrameTime; }
 	unsigned int GetSimFrameMult() const { return simFrameMult; }
@@ -34,7 +37,7 @@ private:
 	unsigned int prevRealTime;              // previous real-time snapshot
 	unsigned int startTime;                 // program start-time
 	unsigned int gameTime;                  // number of game-time seconds elapsed so far
-	unsigned int lastTick;
+	unsigned int lastTick;                  // time-stamp in ticks of last-executed sim-frame
 	int          missedFrames;              // num. of frames delayed (due to high frameTime) by the last frame
 
 	unsigned int simFrameRate;              // current simulation speed (number of simframes processed per real-time second)
