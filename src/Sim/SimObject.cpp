@@ -5,8 +5,8 @@
 #include "../Renderer/Models/ModelReaderBase.hpp"
 
 SimObject::SimObject(SimObjectDef* d, unsigned int i): def(d), id(i) {
-	currentForwardSpeed = 0.0f;
-	wantedForwardSpeed = def->GetMaxForwardSpeed();
+	physicalState.currentForwardSpeed = 0.0f;
+	physicalState.wantedForwardSpeed = def->GetMaxForwardSpeed();
 }
 
 SimObject::~SimObject() {
@@ -20,6 +20,14 @@ SimObject::~SimObject() {
 }
 
 void SimObject::Update() {
+	PhysicalState p = physicalState;
+		p.Update(def);
+	physicalState = p;
+}
+
+
+
+void SimObject::PhysicalState::Update(const SimObjectDef* def) {
 	vec3f currentPos = mat.GetPos();
 	vec3f forwardDir = mat.GetZDir();
 		forwardDir.y = 0.0f;

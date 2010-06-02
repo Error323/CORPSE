@@ -23,14 +23,14 @@ public:
 	void SetModel(LocalModel* m) { mdl = m; }
 	LocalModel* GetModel() const { return mdl; }
 
-	const mat44f& GetMat() const { return mat; }
-	void SetMat(const mat44f& m) { mat = m; }
+	const mat44f& GetMat() const { return physicalState.mat; }
+	void SetMat(const mat44f& m) { physicalState.mat = m; }
 
-	float GetCurrentForwardSpeed() const { return currentForwardSpeed; }
+	float GetCurrentForwardSpeed() const { return physicalState.currentForwardSpeed; }
 
-	void SetWantedForwardSpeed(float f) { wantedForwardSpeed = f; }
-	void SetWantedPosition(const vec3f& pos) { wantedPos = pos; }
-	void SetWantedDirection(const vec3f& dir) { wantedDir = dir; }
+	void SetWantedForwardSpeed(float f) { physicalState.wantedForwardSpeed = f; }
+	void SetWantedPosition(const vec3f& pos) { physicalState.wantedPos = pos; }
+	void SetWantedDirection(const vec3f& dir) { physicalState.wantedDir = dir; }
 
 private:
 	const SimObjectDef* def;
@@ -38,18 +38,35 @@ private:
 
 	LocalModel* mdl;
 
-	// world-space transform matrix
-	mat44f mat;
+	struct PhysicalState {
+		PhysicalState& operator = (const PhysicalState& state) {
+			mat = state.mat;
 
-	// where this object wants to be in world-space
-	// (and in which direction it wants to be facing)
-	vec3f wantedPos;
-	vec3f wantedDir;
+			wantedPos = state.wantedPos;
+			wantedDir = state.wantedDir;
 
-	// speed-scale this object is currently moving at
-	float currentForwardSpeed;
-	// speed-scale this object wants to be moving at
-	float wantedForwardSpeed;
+			currentForwardSpeed = state.currentForwardSpeed;
+			wantedForwardSpeed = state.wantedForwardSpeed;
+
+			return *this;
+		}
+
+		void Update(const SimObjectDef*);
+
+		// world-space transform matrix
+		mat44f mat;
+
+		// where this object wants to be in world-space
+		// (and in which direction it wants to be facing)
+		vec3f wantedPos;
+		vec3f wantedDir;
+
+		// speed-scale this object is currently moving at
+		float currentForwardSpeed;
+		// speed-scale this object wants to be moving at
+		float wantedForwardSpeed;
+	};
+	PhysicalState physicalState;
 };
 
 #endif

@@ -58,8 +58,11 @@ template<typename T> struct mat44 {
 		return m[i];
 	}
 	inline void operator = (const mat44<T>& n) {
-		for (int i = 0; i < 16; ++i) {
-			m[i] = n[i];
+		for (int i = 0; i < 16; i += 4) {
+			m[i + 0] = n[i + 0];
+			m[i + 1] = n[i + 1];
+			m[i + 2] = n[i + 2];
+			m[i + 3] = n[i + 3];
 		}
 
 		UpdatePXYZ();
