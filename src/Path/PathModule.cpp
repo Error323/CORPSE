@@ -21,6 +21,20 @@ void PathModule::OnEvent(const IEvent* e) {
 			simObjectIDs.erase(objectID);
 		} break;
 
+		case EVENT_SIMOBJECT_MOVEORDER: {
+			const SimObjectMoveOrderEvent* ee = dynamic_cast<const SimObjectMoveOrderEvent*>(e);
+
+			const std::list<unsigned int>& objectIDs = ee->GetObjectIDs();
+			const vec3f& goalPos = ee->GetGoalPos();
+
+			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
+				assert(coh->IsValidSimObjectID(*it));
+
+				coh->SetSimObjectWantedPosition(*it, goalPos);
+				coh->SetSimObjectWantedDirection(*it, (goalPos - coh->GetSimObjectPosition(*it)).norm());
+			}
+		} break;
+
 		default: {
 		} break;
 	}

@@ -19,3 +19,10 @@ std::string SimObjectDestroyedEvent::str() const {
 	snprintf(s, 511, "[frame=%u][event=SimObjectDestroyed][objectID=%u]", frame, objectID);
 	return std::string(s);
 }
+
+
+
+std::string SimObjectMoveOrderEvent::str() const {
+	snprintf(s, 511, "[frame=%u][event=SimObjectMoveOrderEvent]", frame);
+	return std::string(s);
+}

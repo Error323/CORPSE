@@ -1,13 +1,17 @@
 #ifndef PFFG_IEVENT_HDR
 #define PFFG_IEVENT_HDR
 
+#include <list>
+
 #include "../Math/vec3fwd.hpp"
+#include "../Math/vec3.hpp"
 
 enum EventType {
 	EVENT_BASE                = -1,
 	EVENT_SIMOBJECT_CREATED   =  0,
 	EVENT_SIMOBJECT_DESTROYED =  2,
-	EVENT_LAST                =  3,
+	EVENT_SIMOBJECT_MOVEORDER =  3,
+	EVENT_LAST                =  4,
 };
 
 struct IEvent {
@@ -29,8 +33,8 @@ protected:
 
 struct SimObjectCreatedEvent: public IEvent {
 public:
-	SimObjectCreatedEvent(unsigned int f, unsigned int a0): IEvent(EVENT_SIMOBJECT_CREATED, f) {
-		objectID = a0;
+	SimObjectCreatedEvent(unsigned int f, unsigned int objID): IEvent(EVENT_SIMOBJECT_CREATED, f) {
+		objectID = objID;
 	}
 
 	unsigned int GetObjectID() const { return objectID; }
@@ -42,8 +46,8 @@ private:
 
 struct SimObjectDestroyedEvent: public IEvent {
 public:
-	SimObjectDestroyedEvent(unsigned int f, unsigned int a0): IEvent(EVENT_SIMOBJECT_DESTROYED, f) {
-		objectID = a0;
+	SimObjectDestroyedEvent(unsigned int f, unsigned int objID): IEvent(EVENT_SIMOBJECT_DESTROYED, f) {
+		objectID = objID;
 	}
 
 	unsigned int GetObjectID() const { return objectID; }
@@ -51,6 +55,29 @@ public:
 
 private:
 	unsigned int objectID;
+};
+
+
+
+struct SimObjectMoveOrderEvent: public IEvent {
+public:
+	SimObjectMoveOrderEvent(unsigned int f): IEvent(EVENT_SIMOBJECT_MOVEORDER, f) {
+	}
+
+	void AddObjectID(unsigned int id) { objectIDs.push_back(id); }
+	const std::list<unsigned int>& GetObjectIDs() const { return objectIDs; }
+
+	void SetGoalPos(const vec3f& pos) { goalPos = pos; }
+	const vec3f& GetGoalPos() const { return goalPos; }
+
+	std::string str() const;
+
+private:
+	// sim-objects that received the move-order to <goalPos>
+	std::list<unsigned int> objectIDs;
+
+	// shared destination of all involved sim-objects
+	vec3f goalPos;
 };
 
 #endif
