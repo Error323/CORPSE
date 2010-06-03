@@ -44,7 +44,7 @@ void CClient::FreeInstance(CClient* c) {
 
 
 
-CClient::CClient(int argc, char** argv) {
+CClient::CClient(int argc, char** argv): clientID(0) {
 	ParseArgs(argc, argv);
 
 	mInputHandler = CInputHandler::GetInstance();
@@ -139,7 +139,7 @@ void CClient::Update() {
 void CClient::ReadNetMessages() {
 	NetMessage m;
 
-	while (netBuf->PopServerToClientMessage(&m))  {
+	while (mNetBuf->PopServerToClientMessage(&m))  {
 		if (m.GetID() == SERVER_MSG_SIMFRAME) {
 			mSimThread->Update();
 		}
@@ -147,7 +147,7 @@ void CClient::ReadNetMessages() {
 }
 
 void CClient::SendNetMessage(const NetMessage& m) {
-	netBuf->AddClientToServerMessage(m);
+	mNetBuf->AddClientToServerMessage(m);
 }
 
 

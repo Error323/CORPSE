@@ -33,19 +33,24 @@ void CEngine::FreeInstance(CEngine* e) {
 CEngine::CEngine(int argc, char** argv) {
 	EngineAux::Init(argc, argv);
 
-	mNetBuf = CNetMessageBuffer::GetInstance();
 	mEventHandler = EventHandler::GetInstance();
 
 	mServer = CServer::GetInstance();
 	mClient = CClient::GetInstance(argc, argv);
+
+	mClient->SetClientID(mServer->GetNumClients());
+	mServer->AddNetMessageBuffer(mClient->GetClientID());
+
+	mClient->SetNetMessageBuffer(mServer->GetNetMessageBuffer(mClient->GetClientID()));
 }
 
 CEngine::~CEngine() {
+	mServer->DelNetMessageBuffer(mClient->GetClientID());
+
 	CServer::FreeInstance(mServer);
 	CClient::FreeInstance(mClient);
 
 	EventHandler::FreeInstance(mEventHandler);
-	CNetMessageBuffer::FreeInstance(mNetBuf);
 }
 
 void CEngine::Run() {

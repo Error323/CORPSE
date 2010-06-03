@@ -8,8 +8,8 @@ typedef std::list<NetMessage> MsgQueue;
 
 class CNetMessageBuffer {
 public:
-	static CNetMessageBuffer* GetInstance();
-	static void FreeInstance(CNetMessageBuffer*);
+	CNetMessageBuffer() {}
+	~CNetMessageBuffer();
 
 	bool PopClientToServerMessage(NetMessage*);
 	bool PopServerToClientMessage(NetMessage*);
@@ -22,9 +22,6 @@ public:
 	void AddServerToClientMessage(const NetMessage&);
 
 private:
-	CNetMessageBuffer() {}
-	~CNetMessageBuffer();
-
 	MsgQueue clientServerMsgs;   // client-to-server
 	MsgQueue serverClientMsgs;   // server-to-client(s)
 };

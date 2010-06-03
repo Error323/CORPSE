@@ -10,12 +10,18 @@ class CInputHandler;
 class CSimThread;
 class CRenderThread;
 
+class CNetMessageBuffer;
 struct NetMessage;
 
 class CClient: public CInputReceiver {
 public:
 	static CClient* GetInstance(int, char**);
 	static void FreeInstance(CClient*);
+
+	void SetClientID(unsigned int id) { clientID = id; }
+	unsigned int GetClientID() const { return clientID; }
+
+	void SetNetMessageBuffer(CNetMessageBuffer* buf) { mNetBuf = buf; }
 
 	void ParseArgs(int, char**);
 	void Update();
@@ -55,6 +61,11 @@ private:
 	CInputHandler* mInputHandler;
 	CSimThread* mSimThread;
 	CRenderThread* mRenderThread;
+
+	unsigned int clientID;
+
+	// bi-directional comm. channel to server
+	CNetMessageBuffer* mNetBuf;
 };
 
 #endif

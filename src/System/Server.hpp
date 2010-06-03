@@ -1,11 +1,21 @@
 #ifndef PFFG_SERVER_HDR
 #define PFFG_SERVER_HDR
 
+#include <map>
+
+class CNetMessageBuffer;
 struct NetMessage;
+
 class CServer {
 public:
 	static CServer* GetInstance();
 	static void FreeInstance(CServer*);
+
+	void AddNetMessageBuffer(unsigned int);
+	void DelNetMessageBuffer(unsigned int);
+
+	unsigned int GetNumClients() const { return netBufs.size(); }
+	CNetMessageBuffer* GetNetMessageBuffer(unsigned int clientID) { return netBufs[clientID]; }
 
 	bool Update();
 
@@ -45,6 +55,8 @@ private:
 	unsigned int simFrameRate;              // current simulation speed (number of simframes processed per real-time second)
 	unsigned int simFrameTime;              // ideal maximum amount of time a single sim-frame may take at current speed (ms)
 	unsigned int simFrameMult;              // simulation speed multiplier
+
+	std::map<unsigned int, CNetMessageBuffer*> netBufs;
 };
 
 #define server (CServer::GetInstance())

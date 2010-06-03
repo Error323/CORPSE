@@ -17,7 +17,6 @@ private:
 	CEngine(int, char**);
 	~CEngine();
 
-	CNetMessageBuffer* mNetBuf;
 	EventHandler* mEventHandler;
 
 	CClient* mClient;

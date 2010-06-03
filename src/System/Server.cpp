@@ -50,6 +50,19 @@ CServer::CServer() {
 	simFrameMult = unsigned(generalTable->GetFltVal("simRateMult", 1));
 }
 
+
+
+void CServer::AddNetMessageBuffer(unsigned int clientID) {
+	netBufs[clientID] = new CNetMessageBuffer();
+}
+
+void CServer::DelNetMessageBuffer(unsigned int clientID) {
+	delete netBufs[clientID];
+	netBufs.erase(clientID);
+}
+
+
+
 void CServer::ChangeSpeed(uint mult) {
 	if ((mult > 0) && ((1000 / (simFrameRate * mult)) > 0)) {
 		simFrameMult = mult;
@@ -60,40 +73,40 @@ void CServer::ChangeSpeed(uint mult) {
 
 
 void CServer::ReadNetMessages() {
-	NetMessage m;
+	for (std::map<unsigned int, CNetMessageBuffer*>::iterator it = netBufs.begin(); it != netBufs.end(); ++it) {
+		CNetMessageBuffer* clientMsgBuf = it->second;
+		NetMessage m;
 
-	while (netBuf->PopClientToServerMessage(&m)) {
-		switch (m.GetID()) {
-			case CLIENT_MSG_PAUSE: {
-				paused = !paused;
+		while (clientMsgBuf->PopClientToServerMessage(&m)) {
+			switch (m.GetID()) {
+				case CLIENT_MSG_PAUSE: {
+					paused = !paused;
 
-				if (paused) {
-					pauseTickDelta = SDL_GetTicks() - lastTick;
+					if (paused) {
+						pauseTickDelta = SDL_GetTicks() - lastTick;
+					}
+				} break;
+
+				case CLIENT_MSG_INCSIMSPEED: {
+					ChangeSpeed(simFrameMult + 1);
+				} break;
+				case CLIENT_MSG_DECSIMSPEED: {
+					ChangeSpeed(simFrameMult - 1);
+				} break;
+
+				case CLIENT_MSG_COMMAND: {
+					SendNetMessage(m); // broadcast
 				}
-			} break;
-
-			case CLIENT_MSG_INCSIMSPEED: {
-				ChangeSpeed(simFrameMult + 1);
-			} break;
-			case CLIENT_MSG_DECSIMSPEED: {
-				ChangeSpeed(simFrameMult - 1);
-			} break;
-
-			case CLIENT_MSG_COMMAND: {
-				SendNetMessage(m); // broadcast
 			}
 		}
 	}
 }
 
 void CServer::SendNetMessage(const NetMessage& m) {
-	/*
-	for each client {
-		netBuf[client]->AddServerToClientMessage(m);
+	for (std::map<unsigned int, CNetMessageBuffer*>::iterator it = netBufs.begin(); it != netBufs.end(); ++it) {
+		CNetMessageBuffer* clientMsgBuf = it->second;
+		clientMsgBuf->AddServerToClientMessage(m);
 	}
-	*/
-
-	netBuf->AddServerToClientMessage(m);
 }
 
 
