@@ -60,10 +60,10 @@ void CServer::ChangeSpeed(uint mult) {
 
 
 void CServer::ReadNetMessages() {
-	int m = CLIENT_MSG_NONE;
+	NetMessage m;
 
 	while (netBuf->PopClientToServerMessage(&m)) {
-		switch (m) {
+		switch (m.GetID()) {
 			case CLIENT_MSG_PAUSE: {
 				paused = !paused;
 
@@ -78,13 +78,21 @@ void CServer::ReadNetMessages() {
 			case CLIENT_MSG_DECSIMSPEED: {
 				ChangeSpeed(simFrameMult - 1);
 			} break;
+
+			case CLIENT_MSG_COMMAND: {
+				SendNetMessage(m); // broadcast
+			}
 		}
 	}
 }
 
-void CServer::SendNetMessage(int m) {
-	// FIXME: needs to be done for each
-	// client link (local loopback conn?)
+void CServer::SendNetMessage(const NetMessage& m) {
+	/*
+	for each client {
+		netBuf[client]->AddServerToClientMessage(m);
+	}
+	*/
+
 	netBuf->AddServerToClientMessage(m);
 }
 
@@ -101,7 +109,7 @@ bool CServer::Update() {
 		// frames due to some unusually long frameTime, catch up by
 		// creating a new one too
 		if (!paused) {
-			SendNetMessage(SERVER_MSG_SIMFRAME);
+			SendNetMessage(NetMessage(SERVER_MSG_SIMFRAME, 0));
 
 			gameTime      = frame / simFrameRate;           // game-time is based on number of elapsed frames
 			frame        += 1;                              // update the server's internal frame number

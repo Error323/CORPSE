@@ -10,6 +10,8 @@ class CInputHandler;
 class CSimThread;
 class CRenderThread;
 
+struct NetMessage;
+
 class CClient: public CInputReceiver {
 public:
 	static CClient* GetInstance(int, char**);
@@ -30,7 +32,7 @@ private:
 	~CClient();
 
 	void ReadNetMessages();
-	void SendNetMessage(int);
+	void SendNetMessage(const NetMessage&);
 
 	void Init();
 	void InitSDL(const char*);

@@ -4,21 +4,22 @@
 #include <list>
 #include "./NetMessages.hpp"
 
-typedef std::list<int> MsgQueue;
+typedef std::list<NetMessage> MsgQueue;
 
 class CNetMessageBuffer {
 public:
 	static CNetMessageBuffer* GetInstance();
 	static void FreeInstance(CNetMessageBuffer*);
 
-	bool PopClientToServerMessage(int*);
-	bool PopServerToClientMessage(int*);
+	bool PopClientToServerMessage(NetMessage*);
+	bool PopServerToClientMessage(NetMessage*);
 
-	bool PeekClientToServerMessage(int*) const;
-	bool PeekServerToClientMessage(int*) const;
+	bool PeekClientToServerMessage(NetMessage*) const;
+	bool PeekServerToClientMessage(NetMessage*) const;
 
-	void AddClientToServerMessage(int);
-	void AddServerToClientMessage(int);
+	// these deep-copy the message
+	void AddClientToServerMessage(const NetMessage&);
+	void AddServerToClientMessage(const NetMessage&);
 
 private:
 	CNetMessageBuffer() {}

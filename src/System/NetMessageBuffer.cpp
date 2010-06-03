@@ -27,9 +27,8 @@ CNetMessageBuffer::~CNetMessageBuffer() {
 	serverClientMsgs.clear();
 }
 
-bool CNetMessageBuffer::PopClientToServerMessage(int* m) {
+bool CNetMessageBuffer::PopClientToServerMessage(NetMessage* m) {
 	if (clientServerMsgs.empty()) {
-		*m = CLIENT_MSG_NONE;
 		return false;
 	} else {
 		*m = clientServerMsgs.front();
@@ -37,9 +36,8 @@ bool CNetMessageBuffer::PopClientToServerMessage(int* m) {
 		return true;
 	}
 }
-bool CNetMessageBuffer::PopServerToClientMessage(int* m) {
+bool CNetMessageBuffer::PopServerToClientMessage(NetMessage* m) {
 	if (serverClientMsgs.empty()) {
-		*m = SERVER_MSG_NONE;
 		return false;
 	} else {
 		*m = serverClientMsgs.front();
@@ -49,18 +47,16 @@ bool CNetMessageBuffer::PopServerToClientMessage(int* m) {
 }
 
 
-bool CNetMessageBuffer::PeekClientToServerMessage(int* m) const {
+bool CNetMessageBuffer::PeekClientToServerMessage(NetMessage* m) const {
 	if (clientServerMsgs.empty()) {
-		*m = CLIENT_MSG_NONE;
 		return false;
 	} else {
 		*m = clientServerMsgs.front();
 		return true;
 	}
 }
-bool CNetMessageBuffer::PeekServerToClientMessage(int* m) const {
+bool CNetMessageBuffer::PeekServerToClientMessage(NetMessage* m) const {
 	if (serverClientMsgs.empty()) {
-		*m = SERVER_MSG_NONE;
 		return false;
 	} else {
 		*m = serverClientMsgs.front();
@@ -69,9 +65,5 @@ bool CNetMessageBuffer::PeekServerToClientMessage(int* m) const {
 }
 
 
-void CNetMessageBuffer::AddClientToServerMessage(int m) {
-	clientServerMsgs.push_back(m);
-}
-void CNetMessageBuffer::AddServerToClientMessage(int m) {
-	serverClientMsgs.push_back(m);
-}
+void CNetMessageBuffer::AddClientToServerMessage(const NetMessage& m) { clientServerMsgs.push_back(m); }
+void CNetMessageBuffer::AddServerToClientMessage(const NetMessage& m) { serverClientMsgs.push_back(m); }

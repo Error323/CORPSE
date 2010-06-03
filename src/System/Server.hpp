@@ -1,6 +1,7 @@
 #ifndef PFFG_SERVER_HDR
 #define PFFG_SERVER_HDR
 
+struct NetMessage;
 class CServer {
 public:
 	static CServer* GetInstance();
@@ -24,7 +25,7 @@ private:
 	~CServer() {}
 
 	void ReadNetMessages();
-	void SendNetMessage(int);
+	void SendNetMessage(const NetMessage&);
 
 	bool paused;
 
