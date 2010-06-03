@@ -70,8 +70,8 @@ void SimObject::PhysicalState::Update(const SimObjectDef* def) {
 	const bool posSlope = ((mat.GetZDir()).y >  0.05f);
 	const bool negSlope = ((mat.GetZDir()).y < -0.05f);
 
-	const float posSlopeSpeedMod = 1.0f - ground->GetSlope(currentPos.x, currentPos.z);
-	const float negSlopeSpeedMod = 1.0f / posSlopeSpeedMod;
+	const float posSlopeSpeedMod = std::max(0.5f, 1.0f - ground->GetSlope(currentPos.x, currentPos.z));
+	const float negSlopeSpeedMod = std::min(2.0f, 1.0f / posSlopeSpeedMod);
 	const float posSlopeMaxSpeed = posSlopeSpeedMod * wantedForwardSpeed;
 	const float negSlopeMaxSpeed = negSlopeSpeedMod * wantedForwardSpeed;
 
