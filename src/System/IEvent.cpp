@@ -23,6 +23,6 @@ std::string SimObjectDestroyedEvent::str() const {
 
 
 std::string SimObjectMoveOrderEvent::str() const {
-	snprintf(s, 511, "[frame=%u][event=SimObjectMoveOrderEvent]", frame);
+	snprintf(s, 511, "[frame=%u][event=SimObjectMoveOrderEvent][goalPos=%s][numObjects=%u]", frame, (goalPos.str()).c_str(), objectIDs.size());
 	return std::string(s);
 }
