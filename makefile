@@ -85,7 +85,7 @@ ENV_OBS = \
 SIM_OBS = \
 	$(SIM_OBJ_DIR)/SimThread.o \
 	$(SIM_OBJ_DIR)/SimObject.o \
-	$(SIM_OBJ_DIR)/SimObjectDefLoader.o \
+	$(SIM_OBJ_DIR)/SimObjectDefHandler.o \
 	$(SIM_OBJ_DIR)/SimObjectHandler.o
 SYSTEM_OBS = \
 	$(SYSTEM_OBJ_DIR)/Client.o \

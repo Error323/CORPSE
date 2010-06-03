@@ -5,6 +5,7 @@
 #include <vector>
 
 class SimObject;
+class SimObjectDefHandler;
 class SimObjectHandler {
 public:
 	SimObjectHandler();
@@ -31,6 +32,8 @@ private:
 	std::vector<SimObject*> simObjects;
 	std::set<unsigned int> simObjectFreeIDs;
 	std::set<unsigned int> simObjectUsedIDs;
+
+	SimObjectDefHandler* mSimObjectDefHandler;
 };
 
 #define simObjectHandler (SimObjectHandler::GetInstance())

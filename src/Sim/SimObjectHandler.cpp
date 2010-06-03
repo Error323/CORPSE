@@ -3,7 +3,7 @@
 #include "./SimObjectHandler.hpp"
 #include "./SimObject.hpp"
 #include "./SimObjectDef.hpp"
-#include "./SimObjectDefLoader.hpp"
+#include "./SimObjectDefHandler.hpp"
 #include "./SimThread.hpp"
 #include "../Map/Ground.hpp"
 #include "../System/EngineAux.hpp"
@@ -41,13 +41,15 @@ SimObjectHandler::SimObjectHandler() {
 	for (unsigned int i = 0; i < simObjects.size(); i++) {
 		simObjectFreeIDs.insert(i);
 	}
+
+	mSimObjectDefHandler = SimObjectDefHandler::GetInstance();
 }
 
 void SimObjectHandler::AddObjects() {
 	const LuaTable* rootTable = LUA->GetRoot();
 	const LuaTable* objectsTable = rootTable->GetTblVal("objects");
 
-	if (SimObjectDefLoader::LoadDefs()) {
+	if (mSimObjectDefHandler->LoadDefs()) {
 		std::list<int> simObjectKeys;
 		objectsTable->GetIntTblKeys(&simObjectKeys);
 
@@ -59,7 +61,7 @@ void SimObjectHandler::AddObjects() {
 			mat44f mat = mat44f(pos, NVECf, NVECf, objectTable->GetVec<vec3f>("dir", 3));
 				mat.SetYDirXZ(ground->GetSmoothNormal(pos.x, pos.z));
 
-			SimObjectDef* sod = SimObjectDefLoader::GetDef(objectTable->GetStrVal("def", ""));
+			SimObjectDef* sod = mSimObjectDefHandler->GetDef(objectTable->GetStrVal("def", ""));
 			SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
 				so->SetMat(mat);
 				so->SetWantedDirection(mat.GetZDir());
@@ -74,7 +76,8 @@ SimObjectHandler::~SimObjectHandler() {
 	simObjectUsedIDs.clear();
 	simObjects.clear();
 
-	SimObjectDefLoader::DelDefs();
+	mSimObjectDefHandler->DelDefs();
+	SimObjectDefHandler::FreeInstance(mSimObjectDefHandler);
 }
 
 void SimObjectHandler::DelObjects() {

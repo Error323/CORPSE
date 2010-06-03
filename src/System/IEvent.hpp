@@ -74,6 +74,7 @@ public:
 
 private:
 	// sim-objects that received the move-order to <goalPos>
+	// NOTE: transferred across DLL boundary, so not ABI-safe
 	std::list<unsigned int> objectIDs;
 
 	// shared destination of all involved sim-objects

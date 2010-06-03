@@ -1,12 +1,31 @@
-#include "./SimObjectDefLoader.hpp"
+#include "./SimObjectDefHandler.hpp"
 #include "./SimObjectDef.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
 #include "../System/Server.hpp"
 
-std::map<std::string, SimObjectDef*> SimObjectDefLoader::objectDefs;
+SimObjectDefHandler* SimObjectDefHandler::GetInstance() {
+	static SimObjectDefHandler* sodh = NULL;
+	static unsigned int depth = 0;
 
-bool SimObjectDefLoader::LoadDefs() {
+	if (sodh == NULL) {
+		assert(depth == 0);
+
+		depth += 1;
+		sodh = new SimObjectDefHandler();
+		depth -= 1;
+	}
+
+	return sodh;
+}
+
+void SimObjectDefHandler::FreeInstance(SimObjectDefHandler* sodh) {
+	delete sodh;
+}
+
+
+
+bool SimObjectDefHandler::LoadDefs() {
 	const LuaTable* rootTable = LUA->GetRoot();
 	const LuaTable* objectDefsTable = rootTable->GetTblVal("objectdefs");
 
@@ -34,13 +53,13 @@ bool SimObjectDefLoader::LoadDefs() {
 	return true;
 }
 
-void SimObjectDefLoader::DelDefs() {
+void SimObjectDefHandler::DelDefs() {
 	for (std::map<std::string, SimObjectDef*>::iterator it = objectDefs.begin(); it != objectDefs.end(); it++) {
 		delete it->second;
 	}
 }
 
-SimObjectDef* SimObjectDefLoader::GetDef(const std::string& defName) {
+SimObjectDef* SimObjectDefHandler::GetDef(const std::string& defName) {
 	std::map<std::string, SimObjectDef*>::const_iterator it = objectDefs.find(defName);
 
 	if (it == objectDefs.end()) {
