@@ -1,4 +1,5 @@
 #include <GL/gl.h>
+#include <GL/glu.h>
 #include <SDL/SDL.h>
 
 #include "./Camera.hpp"
@@ -280,6 +281,41 @@ void Camera::ApplyViewProjTransform() {
 	glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		glMultMatrixf(GetViewMatrix()); // or glLoadMatrixf()
+}
+
+
+
+vec3f Camera::MouseToWorldCoors(int mx, int my) {
+	// gluUnProject() expects double*'s
+	static double wcoors[3]   = {0.0, 0.0, 0.0};
+	static double viewMat[16] = {0.0};
+	static double projMat[16] = {0.0};
+	static int    viewport[4] = {0};
+
+	for (int i = 0; i < 16; i += 4) {
+		viewMat[i + 0] = viewMatrix.m[i + 0];
+		viewMat[i + 1] = viewMatrix.m[i + 1];
+		viewMat[i + 2] = viewMatrix.m[i + 2];
+		viewMat[i + 3] = viewMatrix.m[i + 3];
+		projMat[i + 0] = projMatrix.m[i + 0];
+		projMat[i + 1] = projMatrix.m[i + 1];
+		projMat[i + 2] = projMatrix.m[i + 2];
+		projMat[i + 3] = projMatrix.m[i + 3];
+	}
+
+	// glGetDoublev(GL_PROJECTION_MATRIX, projMatrix);
+	// glGetDoublev(GL_MODELVIEW_MATRIX, viewMatrix);
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	// note: mz value of 0 maps to zNear, mz value of 1 maps to zFar
+	// mouse origin is at top-left, OGL window origin is at bottom-left
+	float mz = 1.0f;
+	int myy = viewport[3] - my;
+
+	glReadPixels(mx, myy,  1, 1,  GL_DEPTH_COMPONENT, GL_FLOAT, &mz);
+	gluUnProject(mx, myy, mz,  viewMat, projMat, viewport,  &wcoors[0], &wcoors[1], &wcoors[2]);
+
+	return vec3f(float(wcoors[0]), float(wcoors[1]), float(wcoors[2]));
 }
 
 

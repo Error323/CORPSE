@@ -56,6 +56,8 @@ public:
 	const float* GetProjMatrix();
 	void ApplyViewProjTransform();
 
+	vec3f MouseToWorldCoors(int, int);
+
 	protected: mat44f mat;    // shadow copy of (pos, xdir, ydir, zdir)
 	public:    vec3f  vrp;    // point relative to pos determining zdir
 	public:    vec3f  pos;    // world-space camera ("eye") location

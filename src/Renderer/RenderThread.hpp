@@ -14,8 +14,6 @@ public:
 
 	void Update();
 
-	vec3f MouseToWorldCoors(int, int);
-
 	CCameraController* GetCamCon() const { return camCon; }
 
 private:

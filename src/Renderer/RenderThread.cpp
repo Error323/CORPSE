@@ -1,6 +1,4 @@
 #include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glut.h>
 #include <SDL/SDL.h>
 
 #include "./RenderThread.hpp"
@@ -139,29 +137,4 @@ void CRenderThread::Update() {
 
 		frame += 1;
 	}
-}
-
-
-
-vec3f CRenderThread::MouseToWorldCoors(int mx, int my) {
-	// these need to be doubles
-	double wcoors[3] = {0.0, 0.0, 0.0};
-	double viewMat[16] = {0.0};
-	double projMat[16] = {0.0};
-	int viewport[4] = {0};
-
-	// todo: just use the current camera's matrices
-	glGetDoublev(GL_PROJECTION_MATRIX, projMat);
-	glGetDoublev(GL_MODELVIEW_MATRIX, viewMat);
-	glGetIntegerv(GL_VIEWPORT, viewport);
-
-	// note: mz value of 0 maps to zNear, mz value of 1 maps to zFar
-	// mouse origin is at top-left, OGL window origin is at bottom-left
-	float mz = 1.0f;
-	int myy = viewport[3] - my;
-
-	glReadPixels(mx, myy,  1, 1,  GL_DEPTH_COMPONENT, GL_FLOAT, &mz);
-	gluUnProject(mx, myy, mz,  viewMat, projMat, viewport,  &wcoors[0], &wcoors[1], &wcoors[2]);
-
-	return vec3f(float(wcoors[0]), float(wcoors[1]), float(wcoors[2]));
 }
