@@ -7,22 +7,22 @@
 
 // messages originating from client
 enum ClientMessageIDs {
-	CLIENT_MSG_PAUSE       =  0,
-	CLIENT_MSG_INCSIMSPEED =  1,
-	CLIENT_MSG_DECSIMSPEED =  2,
-	CLIENT_MSG_COMMAND     =  3,
+	CLIENT_MSG_PAUSE       =  1,
+	CLIENT_MSG_INCSIMSPEED =  2,
+	CLIENT_MSG_DECSIMSPEED =  3,
+	CLIENT_MSG_COMMAND     =  4,
 };
 
 // messages originating from server
 enum ServerMessageIDs {
-	SERVER_MSG_SIMFRAME = 0
+	SERVER_MSG_SIMFRAME = 1
 };
 
 
 
 struct NetMessage {
 public:
-	NetMessage(): id(-1), pos(-1) {}
+	NetMessage(): id(0), pos(0) {}
 	NetMessage(unsigned int msgID, unsigned int size): id(msgID), pos(0) {
 		data.resize(size);
 	}
@@ -44,11 +44,27 @@ public:
 		pos += sizeof(T);
 		return *this;
 	}
+	template<typename T> NetMessage& operator << (const std::vector<T>& v) {
+		for (typename std::vector<T>::const_iterator it = v.begin(); it != v.end(); ++it) {
+			(*this) << (*it);
+		}
+
+		return *this;
+	}
+
 	// note: extracts in reverse-order
 	template<typename T> NetMessage& operator >> (T& t) {
 		pos -= sizeof(T);
 		assert((pos + sizeof(T)) <= data.size());
 		t = *(reinterpret_cast<T*>(&data[pos]));
+		return *this;
+	}
+	// note: <v> must have as many elements as the
+	// corresponding vector passed to operator <<
+	template<typename T> NetMessage& operator >> (std::vector<T>& v) {
+		for (typename std::vector<T>::iterator it = v.begin(); it != v.end(); ++it) {
+			(*this) >> (*it);
+		}
 		return *this;
 	}
 
