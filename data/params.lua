@@ -45,8 +45,8 @@ params = {
 	},
 
 	["camera"] = {
-		moveMode = "orbit", -- "fps"
-		projMode = "persp", -- "ortho"
+		moveMode = 1, -- orbit
+		projMode = 0, -- perspective
 
 		-- set the vertical FOV to 22.5 degrees
 		-- up / down; horizontal FOV is derived
