@@ -127,6 +127,8 @@ public:
 
 	vec3f GetOrbitPos() const;
 
+	void KeyPressed(int, bool);
+	void KeyReleased(int);
 	void MousePressed(int, int, int, bool);
 	void MouseMoved(int, int, int, int);
 
@@ -134,10 +136,13 @@ public:
 	void VStrafe(int sign, float sens);
 
 private:
-	float distance, cDistance;		// world-space distance from <pos> to <cen>
-	float rotation, cRotation;		// in degrees (hor. rot. is wrt. world x-axis)
-	float elevation, cElevation;	// in degrees
-	vec3f cen;						// world-space position that we orbit
+	bool canOrbit;
+
+	float distance, cDistance;      // world-space distance from <pos> to <cen>
+	float rotation, cRotation;      // in degrees (hor. rot. is wrt. world x-axis)
+	float elevation, cElevation;    // in degrees
+
+	vec3f cen;                      // world-space position that we orbit
 };
 
 #endif

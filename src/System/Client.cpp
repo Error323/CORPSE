@@ -165,14 +165,14 @@ void CClient::MouseMoved(int, int, int, int) {
 
 void CClient::MousePressed(int button, int x, int y, bool repeat) {
 	if (!repeat) {
-		engAux->GetInpState()->SetLastMouseButton(button);
-		engAux->GetInpState()->SetLastMouseCoors(x, y);
+		INP->SetLastMouseButton(button);
+		INP->SetLastMouseCoors(x, y);
 	}
 }
 
 void CClient::MouseReleased(int, int x, int y) {
-	engAux->GetInpState()->SetLastMouseButton(-1);
-	engAux->GetInpState()->SetLastMouseCoors(x, y);
+	INP->SetLastMouseButton(-1);
+	INP->SetLastMouseCoors(x, y);
 }
 
 

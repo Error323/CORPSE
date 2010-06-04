@@ -471,6 +471,8 @@ void OrbitCamera::Init(const vec3f& p, const vec3f& t) {
 	elevation = cElevation = e;
 	rotation  = cRotation  = (v.z > 0.0f)? 180.0f + r: 180.0f - r;
 	cen       = t;
+
+	canOrbit = false;
 }
 
 vec3f OrbitCamera::GetOrbitPos() const {
@@ -485,12 +487,12 @@ vec3f OrbitCamera::GetOrbitPos() const {
 	float cz = 0.0f;
 	float tx = cx;
 
-	// rotate around Z (elevation)
+	// elevation around Z
 	tx = cx;
 	cx = cx * cosf(beta) + cy * sinf(beta);
 	cy = tx * sinf(beta) + cy * cosf(beta);
 
-	// rotate around Y (rotation)
+	// rotation around Y
 	tx = cx;
 	cx = cx * cosf(gamma) - cz * sinf(gamma);
 	cz = tx * sinf(gamma) + cz * cosf(gamma);
@@ -498,14 +500,26 @@ vec3f OrbitCamera::GetOrbitPos() const {
 	return vec3f(cx, cy, cz);
 }
 
+void OrbitCamera::KeyPressed(int key, bool) { canOrbit = (key == SDLK_SPACE); }
+void OrbitCamera::KeyReleased(int key) { canOrbit = canOrbit && (key != SDLK_SPACE); }
+
 void OrbitCamera::MousePressed(int, int, int, bool repeat) {
+	if (!canOrbit) {
+		return;
+	}
+
 	if (!repeat) {
 		cDistance = distance;
 		cRotation = rotation;
 		cElevation = elevation;
 	}
 }
+
 void OrbitCamera::MouseMoved(int x, int y, int dx, int dy) {
+	if (!canOrbit) {
+		return;
+	}
+
 	switch (INP->GetLastMouseButton()) {
 		case SDL_BUTTON_LEFT: {
 			// we want translation wrt. coors of last press

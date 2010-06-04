@@ -27,6 +27,7 @@ void CInputHandler::FreeInstance(CInputHandler* ih) {
 
 CInputHandler::CInputHandler() {
 	keys.resize(SDLK_LAST, 0);
+	buts.resize(SDLK_LAST, 0); // LEFT, MIDDLE, RIGHT, WHEELDOWN, WHEELUP, ?
 
 	// X----------X--X--X--X--X--X--X
 	// SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY >> 2, SDL_DEFAULT_REPEAT_INTERVAL);
@@ -40,6 +41,7 @@ CInputHandler::~CInputHandler() {
 	SDL_WM_GrabInput(SDL_GRAB_OFF);
 
 	keys.clear();
+	buts.clear();
 }
 
 
@@ -113,6 +115,8 @@ void CInputHandler::Update() {
 		}
 	}
 
+	// process the input to generate extra
+	// KeyPressed and MousePressed events
 	UpdateKeyState();
 	UpdateMouseState();
 }
@@ -132,8 +136,13 @@ void CInputHandler::UpdateKeyState() {
 	keys[SDLK_LMETA]  = (mods & KMOD_META) ? 1: 0;
 	keys[SDLK_LSHIFT] = (mods & KMOD_SHIFT)? 1: 0;
 
-	// note: excessive? <numKeys> is always equal to
-	// SDLK_LAST no matter how many keys are pressed
+	// SDL's own key-repeat functionality is not
+	// fast enough, so we take a snapshot of the
+	// keyboard state every frame and fire events
+	// ourselves
+	// note: <numKeys> is always equal to SDLK_LAST
+	// (keys.size()) no matter how many are actually
+	// pressed
 	for (int i = numKeys - 1; i >= 0; i--) {
 		if (keys[i]) {
 			for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
@@ -153,19 +162,18 @@ void CInputHandler::UpdateMouseState() {
 	INP->SetCurrMouseCoors(mx, my);
 
 	if (state == 0) {
-		// if (state & SDL_BUTTON_{LMASK, MMASK, RMASK})) {}
 		INP->SetLastMouseButton(-1);
-	}
-
-	if (INP->GetLastMouseButton() != -1) {
-		for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
-			if ((*it)->InputEnabled()) {
-				(*it)->MousePressed(
-					INP->GetLastMouseButton(),
-					INP->GetLastMouseX(),
-					INP->GetLastMouseY(),
-					true
-				);
+	} else {
+		if ((state & SDL_BUTTON_LMASK) || (state & SDL_BUTTON_MMASK) || (state & SDL_BUTTON_RMASK)) {
+			for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
+				if ((*it)->InputEnabled()) {
+					(*it)->MousePressed(
+						INP->GetLastMouseButton(),
+						INP->GetLastMouseX(),
+						INP->GetLastMouseY(),
+						true
+					);
+				}
 			}
 		}
 	}
@@ -181,13 +189,20 @@ void CInputHandler::MouseMoved(SDL_Event* e) {
 	}
 }
 void CInputHandler::MousePressed(SDL_Event* e) {
+	const int button = (e->button).button;
+	const bool repeat = !!buts[button];
+
+	buts[button] = 1;
+
 	for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
 		if ((*it)->InputEnabled()) {
-			(*it)->MousePressed((e->button).button, e->motion.x, e->motion.y, false);
+			(*it)->MousePressed(button, e->motion.x, e->motion.y, repeat);
 		}
 	}
 }
 void CInputHandler::MouseReleased(SDL_Event* e) {
+	buts[(e->button).button] = 0;
+
 	for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
 		if ((*it)->InputEnabled()) {
 			(*it)->MouseReleased((e->button).button, e->motion.x, e->motion.y);
@@ -197,20 +212,23 @@ void CInputHandler::MouseReleased(SDL_Event* e) {
 
 void CInputHandler::KeyPressed(SDL_Event* e) {
 	// check if key <i> was already pressed earlier
-	// note: not really needed with repeat enabled
-	// note: does not work for modifiers anyway
-	const int i = e->key.keysym.sym;
-	const bool r = !!keys[i];
+	// note:
+	//   this is not really needed with repeat enabled,
+	//   and does not work at all for modifiers anyway
+	const int key = e->key.keysym.sym;
+	const bool repeat = !!keys[key];
 
-	// assert(keys[i] == 1);
+	keys[key] = 1;
+
 	for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
 		if ((*it)->InputEnabled()) {
-			(*it)->KeyPressed(e->key.keysym.sym, r);
+			(*it)->KeyPressed(key, repeat);
 		}
 	}
 }
 void CInputHandler::KeyReleased(SDL_Event* e) {
-	// assert(keys[i] == 0);
+	keys[e->key.keysym.sym] = 0;
+
 	for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
 		if ((*it)->InputEnabled()) {
 			(*it)->KeyReleased(e->key.keysym.sym);
@@ -234,10 +252,12 @@ void CInputHandler::WindowResized(SDL_Event* e) {
 				}
 			}
 		} break;
+
 		case SDL_ACTIVEEVENT: {
-			// SDL_APPACTIVE (gain 0: hidden, gain 1: restored)
-			// SDL_APPMOUSEFOCUS
-			// SDL_APPINPUTFOCUS
+			// possible masks are
+			//     SDL_APPACTIVE (gain 0: hidden, gain 1: restored)
+			//     SDL_APPMOUSEFOCUS
+			//     SDL_APPINPUTFOCUS
 			if (e->active.state & SDL_APPACTIVE) {
 				for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
 					if ((*it)->InputEnabled()) {
@@ -248,40 +268,3 @@ void CInputHandler::WindowResized(SDL_Event* e) {
 		} break;
 	}
 }
-
-
-
-/*
-static void KeyPressed(SDL_Event* e) { keys[e->key.keysym.sym] = 1; }
-static void KeyReleased(SDL_Event* e) { keys[e->key.keysym.sym] = 0; }
-static void MouseMoved(SDL_Event* e) {  e->motion.x, e->motion.y, e->motion.xrel, e->motion.yrel;  }
-static void MousePressed(SDL_Event* e) {  mouse[(e->button).button] = 1; e->motion.x; e->motion.y; }
-static void MouseReleased(SDL_Event* e) {  mouse[(e->button).button] = 0; e->motion.x; e->motion.y;  }
-
-static void ReadInput(bool* quit) {
-	SDL_Event event;
-
-	while (SDL_PollEvent(&event)) {
-		switch (event.type) {
-			case SDL_QUIT: {
-				*quit = true;
-			} break;
-
-			case SDL_KEYDOWN: { KeyPressed(&event);  } break;
-			case SDL_KEYUP:   { KeyReleased(&event); } break;
-
-			case SDL_MOUSEMOTION:     { MouseMoved(&event);    } break;
-			case SDL_MOUSEBUTTONDOWN: { MousePressed(&event);  } break;
-			case SDL_MOUSEBUTTONUP:   { MouseReleased(&event); } break;
-		}
-	}
-}
-static void Loop() {
-	bool quit = false;
-
-	while (!quit) {
-		ReadInput(&quit);
-		ProcessInput(&quit);
-	}
-}
-*/

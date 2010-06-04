@@ -14,6 +14,7 @@ public:
 
 	void Update();
 
+	unsigned int GetFrame() const { return frame; }
 	CCameraController* GetCamCon() const { return camCon; }
 
 private:
