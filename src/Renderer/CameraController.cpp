@@ -22,22 +22,20 @@ CCameraController::CCameraController(): currCam(0x0) {
 	const float zNearDist = cameraTable->GetFltVal("zNearDist",     1.0f);
 	const float zFarDist  = cameraTable->GetFltVal("zFarDist",  32768.0f);
 
-	const std::string mms = cameraTable->GetStrVal("moveMode", "fps");
-	const std::string pms = cameraTable->GetStrVal("projMode", "persp");
-
-	CAMERA_MOVE_MODE moveMode = (mms == "fps"  )? CAM_MOVE_MODE_FPS:    (mms == "orbit")? CAM_MOVE_MODE_ORBIT:  CAM_MOVE_MODE_UNKNOWN;
-	CAMERA_PROJ_MODE projMode = (pms == "persp")? CAM_PROJ_MODE_PERSP:  (pms == "ortho")? CAM_PROJ_MODE_ORTHO:  CAM_PROJ_MODE_UNKNOWN;
-
+	const int moveMode = cameraTable->GetFltVal("moveMode", Camera::CAM_MOVE_MODE_FPS);
+	const int projMode = cameraTable->GetFltVal("projMode", Camera::CAM_PROJ_MODE_PERSP);
 
 	// note: integrate this with SwitchCams()?
 	switch (moveMode) {
-		case CAM_MOVE_MODE_FPS: {
+		case Camera::CAM_MOVE_MODE_FPS: {
 			currCam = new FPSCamera(camPos, camVRP, projMode);
-			cameras[CAM_MOVE_MODE_FPS] = currCam;
+			currCam->Init(currCam->pos, currCam->pos + currCam->zdir);
+			cameras[Camera::CAM_MOVE_MODE_FPS] = currCam;
 		} break;
-		case CAM_MOVE_MODE_ORBIT: {
+		case Camera::CAM_MOVE_MODE_ORBIT: {
 			currCam = new OrbitCamera(camPos, camVRP, projMode);
-			cameras[CAM_MOVE_MODE_ORBIT] = currCam;
+			currCam->Init(currCam->pos, currCam->pos + currCam->zdir);
+			cameras[Camera::CAM_MOVE_MODE_ORBIT] = currCam;
 		} break;
 		default: {
 			assert(false);
@@ -73,13 +71,14 @@ void CCameraController::Update() {
 }
 
 void CCameraController::SwitchCams() {
+	Camera* nextCam = NULL;
+
 	switch (currCam->moveMode) {
-		case CAM_MOVE_MODE_FPS: {
-			OrbitCamera* nextCam = 0x0;
-			std::map<int, Camera*>::iterator it = cameras.find(CAM_MOVE_MODE_ORBIT);
+		case Camera::CAM_MOVE_MODE_FPS: {
+			std::map<int, Camera*>::iterator it = cameras.find(Camera::CAM_MOVE_MODE_ORBIT);
 
 			if (it == cameras.end()) {
-				nextCam = new OrbitCamera(currCam->pos, currCam->vrp, CAM_PROJ_MODE_PERSP);
+				nextCam = new OrbitCamera(currCam->pos, currCam->vrp, Camera::CAM_PROJ_MODE_PERSP);
 			} else {
 				nextCam = dynamic_cast<OrbitCamera*>(it->second);
 			}
@@ -87,33 +86,29 @@ void CCameraController::SwitchCams() {
 			// disable the old camera so it
 			// does not react to input until
 			// we switch back to it
-			cameras[CAM_MOVE_MODE_ORBIT] = nextCam;
-			nextCam->SetState(currCam);
-			nextCam->Init(currCam->pos, currCam->pos + currCam->zdir * 512.0f);
-			nextCam->EnableInput();
-			currCam->DisableInput();
-			currCam = nextCam;
+			cameras[Camera::CAM_MOVE_MODE_ORBIT] = nextCam;
 		} break;
 
-		case CAM_MOVE_MODE_ORBIT: {
-			FPSCamera* nextCam = 0x0;
-			std::map<int, Camera*>::iterator it = cameras.find(CAM_MOVE_MODE_FPS);
+		case Camera::CAM_MOVE_MODE_ORBIT: {
+			std::map<int, Camera*>::iterator it = cameras.find(Camera::CAM_MOVE_MODE_FPS);
 
 			if (it == cameras.end()) {
-				nextCam = new FPSCamera(currCam->pos, currCam->vrp, CAM_PROJ_MODE_PERSP);
+				nextCam = new FPSCamera(currCam->pos, currCam->vrp, Camera::CAM_PROJ_MODE_PERSP);
 			} else {
 				nextCam = dynamic_cast<FPSCamera*>(it->second);
 			}
 
-			cameras[CAM_MOVE_MODE_FPS] = nextCam;
-			nextCam->SetState(currCam);
-			nextCam->EnableInput();
-			currCam->DisableInput();
-			currCam = nextCam;
+			cameras[Camera::CAM_MOVE_MODE_FPS] = nextCam;
 		} break;
 
 		default: {
 			assert(false);
 		} break;
 	}
+
+	nextCam->SetState(currCam);
+	nextCam->Init(currCam->pos, currCam->pos + currCam->zdir);
+	nextCam->EnableInput();
+	currCam->DisableInput();
+	currCam = nextCam;
 }

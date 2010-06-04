@@ -8,15 +8,15 @@
 
 #define SDL_BUTTON_WHEEL 8
 
-Camera::Camera(const vec3f& p, const vec3f& t, CAMERA_MOVE_MODE mm, CAMERA_PROJ_MODE pm):
+Camera::Camera(const vec3f& p, const vec3f& t, int movementMode, int projectionMode):
 	mat(p, XVECf, YVECf, ZVECf),
 	vrp(t),
 	pos(p),
 	xdir(mat.GetXDir()),
 	ydir(mat.GetYDir()),
 	zdir(mat.GetZDir()),
-	moveMode(mm),
-	projMode(pm) {
+	moveMode(movementMode),
+	projMode(projectionMode) {
 
 	inputHandler->AddReceiver(this);
 	Update();

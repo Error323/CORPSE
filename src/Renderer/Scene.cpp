@@ -141,7 +141,7 @@ CScene::CScene() {
 	// we disable it here
 	// however, because parts of eye are copied to sun (and eye
 	// DOES receive input), sun will react to mouse movements
-	sun = new FPSCamera(mapInfo->light.sunDir * (boundingRadius * 2.0f) * 1.25f, ZVECf, CAM_PROJ_MODE_PERSP);
+	sun = new FPSCamera(mapInfo->light.sunDir * (boundingRadius * 2.0f) * 1.25f, ZVECf, Camera::CAM_PROJ_MODE_PERSP);
 	sun->DisableInput();
 
 	InitLight();

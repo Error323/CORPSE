@@ -10,20 +10,20 @@
 #include "../Math/vec3.hpp"
 #include "../Math/Trig.hpp"
 
-enum CAMERA_MOTIONS {
-	CAM_YAW     = 0,
-	CAM_PITCH   = 1,
-	CAM_ROLL    = 2,
-	CAM_MOVE    = 3,
-	CAM_HSTRAFE = 4,
-	CAM_VSTRAFE = 5
-};
-enum CAMERA_MOVE_MODE {CAM_MOVE_MODE_FPS = 0, CAM_MOVE_MODE_ORBIT = 1, CAM_MOVE_MODE_UNKNOWN = 2};
-enum CAMERA_PROJ_MODE {CAM_PROJ_MODE_PERSP = 0, CAM_PROJ_MODE_ORTHO = 1, CAM_PROJ_MODE_UNKNOWN = 2};
-
 struct Camera: public CInputReceiver {
 public:
-	Camera(const vec3f&, const vec3f&, CAMERA_MOVE_MODE, CAMERA_PROJ_MODE);
+	enum {
+		CAM_YAW     = 0,
+		CAM_PITCH   = 1,
+		CAM_ROLL    = 2,
+		CAM_MOVE    = 3,
+		CAM_HSTRAFE = 4,
+		CAM_VSTRAFE = 5
+	};
+	enum {CAM_MOVE_MODE_FPS = 0, CAM_MOVE_MODE_ORBIT = 1, CAM_MOVE_MODE_LAST = 2};
+	enum {CAM_PROJ_MODE_PERSP = 0, CAM_PROJ_MODE_ORTHO = 1, CAM_PROJ_MODE_LAST = 2};
+
+	Camera(const vec3f&, const vec3f&, int, int);
 	virtual ~Camera();
 
 	bool AABBInOriginPlane(const vec3f& plane, const vec3f& mins, const vec3f& maxs) const;
@@ -39,6 +39,7 @@ public:
 
 	void SetState(const Camera*);
 
+	virtual void Init(const vec3f&, const vec3f&) {}
 	virtual void Update();
 
 	virtual void RotateX(float, bool) {}
@@ -80,8 +81,8 @@ public:
 	float zNear;
 	float zFar;
 
-	CAMERA_MOVE_MODE moveMode;
-	CAMERA_PROJ_MODE projMode;
+	int moveMode;
+	int projMode;
 
 private:
 	const float* GetProjMatrixPersp();
@@ -94,7 +95,7 @@ private:
 
 
 struct FPSCamera: public Camera {
-	FPSCamera(const vec3f& p, const vec3f& t, CAMERA_PROJ_MODE pm): Camera(p, t, CAM_MOVE_MODE_FPS, pm) {
+	FPSCamera(const vec3f& p, const vec3f& t, int projectionMode): Camera(p, t, CAM_MOVE_MODE_FPS, projectionMode) {
 	}
 
 	void KeyPressed(int, bool);
@@ -119,8 +120,7 @@ struct FPSCamera: public Camera {
 
 struct OrbitCamera: public Camera {
 public:
-	OrbitCamera(const vec3f& p, const vec3f& t, CAMERA_PROJ_MODE pm): Camera(p, t, CAM_MOVE_MODE_ORBIT, pm) {
-		Init(p, t);
+	OrbitCamera(const vec3f& p, const vec3f& t, int projectionMode): Camera(p, t, CAM_MOVE_MODE_ORBIT, projectionMode) {
 	}
 
 	void Init(const vec3f& p, const vec3f& t);
