@@ -5,13 +5,15 @@
 
 class SimObjectDef {
 public:
-	SimObjectDef() {
+	SimObjectDef(unsigned int objID): id(objID) {
 		maxForwardSpeed      = 0.0f;
 		maxTurningRate       = 0.0f;
 		maxAccelerationRate  = 0.0f;
 		maxDeccelerationRate = 0.0f;
 		maxSlopeAngleCosine  = 0.0f;
 	}
+
+	unsigned int GetID() const { return id; }
 
 	void SetModelName(const std::string& m) { modelName = m; }
 	const std::string& GetModelName() const { return modelName; }
@@ -28,6 +30,8 @@ public:
 	float GetMaxSlopeAngleCosine() const { return maxSlopeAngleCosine; } 
 
 private:
+	unsigned int id;
+
 	std::string modelName;
 
 	float maxForwardSpeed;       // must be specified in units per second, converted to units per frame

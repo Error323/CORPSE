@@ -6,6 +6,7 @@ class CReadMap;
 class CMapInfo;
 
 class IPathModule;
+struct NetMessage;
 
 class SimObjectHandler;
 class CSimThread {
@@ -14,6 +15,7 @@ public:
 	static void FreeInstance(CSimThread*);
 
 	void Update();
+	void SimCommand(NetMessage&);
 	unsigned int GetFrame() const { return frame; }
 
 private:

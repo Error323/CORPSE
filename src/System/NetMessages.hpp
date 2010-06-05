@@ -10,7 +10,7 @@ enum ClientMessageIDs {
 	CLIENT_MSG_PAUSE       =  1,
 	CLIENT_MSG_INCSIMSPEED =  2,
 	CLIENT_MSG_DECSIMSPEED =  3,
-	CLIENT_MSG_COMMAND     =  4,
+	CLIENT_MSG_SIMCOMMAND  =  4,
 };
 
 // messages originating from server
@@ -52,11 +52,10 @@ public:
 		return *this;
 	}
 
-	// note: extracts in reverse-order
 	template<typename T> NetMessage& operator >> (T& t) {
-		pos -= sizeof(T);
 		assert((pos + sizeof(T)) <= data.size());
 		t = *(reinterpret_cast<T*>(&data[pos]));
+		pos += sizeof(T);
 		return *this;
 	}
 	// note: <v> must have as many elements as the
@@ -69,6 +68,9 @@ public:
 	}
 
 	unsigned int GetID() const { return id; }
+	unsigned int GetPos() const { return pos; }
+	void SetPos(unsigned int p) { pos = p; }
+	bool End() const { return (pos >= data.size()); }
 
 private:
 	unsigned int id;

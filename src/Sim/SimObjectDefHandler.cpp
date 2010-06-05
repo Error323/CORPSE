@@ -40,7 +40,7 @@ bool SimObjectDefHandler::LoadDefs() {
 		const LuaTable* objectDefTable = objectDefsTable->GetTblVal(*it);
 
 		// convert to per-frame units
-		SimObjectDef* def = new SimObjectDef();
+		SimObjectDef* def = new SimObjectDef(objectDefs.size());
 			def->SetModelName(objectDefTable->GetStrVal("mdl", ""));
 			def->SetMaxForwardSpeed(objectDefTable->GetFltVal("maxForwardSpeed", 0.0f) / server->GetSimFrameRate());
 			def->SetMaxTurningRate(objectDefTable->GetFltVal("maxTurningRate", 0.0f) / server->GetSimFrameRate());

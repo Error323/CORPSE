@@ -1,13 +1,14 @@
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
 #include "../System/EventHandler.hpp"
+#include "../System/NetMessages.hpp"
 #include "../Ext/CallOutHandler.hpp"
 #include "../Map/Ground.hpp"
 #include "../Map/MapInfo.hpp"
 #include "../Map/ReadMap.hpp"
 #include "../Path/PathModule.hpp"
 #include "./SimThread.hpp"
-
+#include "./SimCommands.hpp"
 #include "./SimObjectHandler.hpp"
 
 CSimThread* CSimThread::GetInstance() {
@@ -70,4 +71,43 @@ void CSimThread::Update() {
 	mPathModule->Update();
 
 	frame += 1;
+}
+
+void CSimThread::SimCommand(NetMessage& m) {
+	unsigned int simCommandID;
+
+	m.SetPos(0);
+	m >> simCommandID;
+
+	switch (simCommandID) {
+		case COMMAND_CREATE_SIMOBJECT: {
+			// spawns SimObjectCreatedEvent
+			// TODO: mSimObjectHandler->AddObject();
+		} break;
+
+		case COMMAND_DESTROY_SIMOBJECT: {
+			// spawns SimObjectDestroyedEvent
+			// TODO: mSimObjectHandler->DelObject();
+		} break;
+
+		case COMMAND_MOVE_SIMOBJECT: {
+			SimObjectMoveOrderEvent e(frame);
+
+			vec3f goalPos;
+
+			assert(!m.End()); m >> goalPos.x;
+			assert(!m.End()); m >> goalPos.y;
+			assert(!m.End()); m >> goalPos.z;
+
+			while (!m.End()) {
+				// TODO
+			}
+
+			e.SetGoalPos(goalPos);
+			eventHandler->NotifyReceivers(&e);
+		} break;
+
+		default: {
+		} break;
+	}
 }

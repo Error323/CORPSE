@@ -94,7 +94,7 @@ void CServer::ReadNetMessages() {
 					ChangeSpeed(simFrameMult - 1);
 				} break;
 
-				case CLIENT_MSG_COMMAND: {
+				case CLIENT_MSG_SIMCOMMAND: {
 					SendNetMessage(m); // broadcast
 				}
 			}

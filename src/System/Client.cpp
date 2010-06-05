@@ -140,8 +140,18 @@ void CClient::ReadNetMessages() {
 	NetMessage m;
 
 	while (mNetBuf->PopServerToClientMessage(&m))  {
-		if (m.GetID() == SERVER_MSG_SIMFRAME) {
-			mSimThread->Update();
+		switch (m.GetID()) {
+			case SERVER_MSG_SIMFRAME: {
+				mSimThread->Update();
+			} break;
+
+			case CLIENT_MSG_SIMCOMMAND: {
+				mSimThread->SimCommand(m);
+			} break;
+
+			default: {
+				assert(false);
+			}
 		}
 	}
 }
