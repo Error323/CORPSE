@@ -74,36 +74,45 @@ void CSimThread::Update() {
 }
 
 void CSimThread::SimCommand(NetMessage& m) {
-	unsigned int simCommandID;
+	unsigned int simCommandID = 0;
+	unsigned int objectID     = 0;
+	unsigned int objectDefID  = 0;
+	vec3f objectPos;
+	vec3f objectDir;
 
 	m.SetPos(0);
 	m >> simCommandID;
 
 	switch (simCommandID) {
 		case COMMAND_CREATE_SIMOBJECT: {
-			// spawns SimObjectCreatedEvent
-			// TODO: mSimObjectHandler->AddObject();
+			assert(!m.End()); m >> objectDefID;
+			assert(!m.End()); m >> objectPos.x;
+			assert(!m.End()); m >> objectPos.y;
+			assert(!m.End()); m >> objectPos.z;
+			assert(!m.End()); m >> objectDir.x;
+			assert(!m.End()); m >> objectDir.y;
+			assert(!m.End()); m >> objectDir.z;
+
+			mSimObjectHandler->AddObject(objectDefID, objectPos, objectDir, false);
 		} break;
 
 		case COMMAND_DESTROY_SIMOBJECT: {
-			// spawns SimObjectDestroyedEvent
-			// TODO: mSimObjectHandler->DelObject();
+			assert(!m.End()); m >> objectID;
+
+			mSimObjectHandler->DelObject(objectID, false);
 		} break;
 
 		case COMMAND_MOVE_SIMOBJECT: {
 			SimObjectMoveOrderEvent e(frame);
 
-			vec3f goalPos;
+			assert(!m.End()); m >> objectPos.x;
+			assert(!m.End()); m >> objectPos.y;
+			assert(!m.End()); m >> objectPos.z;
+			assert(!m.End());
 
-			assert(!m.End()); m >> goalPos.x;
-			assert(!m.End()); m >> goalPos.y;
-			assert(!m.End()); m >> goalPos.z;
-
-			e.SetGoalPos(goalPos);
+			e.SetGoalPos(objectPos);
 
 			while (!m.End()) {
-				unsigned int objectID;
-
 				m >> objectID;
 				e.AddObjectID(objectID);
 

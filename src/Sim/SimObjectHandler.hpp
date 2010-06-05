@@ -4,6 +4,8 @@
 #include <set>
 #include <vector>
 
+#include "../Math/vec3fwd.hpp"
+
 class SimObject;
 class SimObjectDefHandler;
 class SimObjectHandler {
@@ -18,8 +20,8 @@ public:
 
 	void AddObjects();
 	void DelObjects();
-	void AddObject(SimObject*, bool);
-	void DelObject(SimObject*, bool);
+	void AddObject(unsigned int, const vec3f&, const vec3f&, bool = false);
+	void DelObject(unsigned int, bool = false);
 
 	const std::set<unsigned int>& GetSimObjectFreeIDs() const { return simObjectFreeIDs; }
 	const std::set<unsigned int>& GetSimObjectUsedIDs() const { return simObjectUsedIDs; }
@@ -30,6 +32,9 @@ public:
 	SimObject* GetSimObject(unsigned int id) const { return simObjects[id]; }
 
 private:
+	void AddObject(SimObject*, bool);
+	void DelObject(SimObject*, bool);
+
 	std::vector<SimObject*> simObjects;
 	std::set<unsigned int> simObjectFreeIDs;
 	std::set<unsigned int> simObjectUsedIDs;

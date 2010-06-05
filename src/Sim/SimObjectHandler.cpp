@@ -56,17 +56,11 @@ void SimObjectHandler::AddObjects() {
 		for (std::list<int>::iterator it = simObjectKeys.begin(); it != simObjectKeys.end(); it++) {
 			const LuaTable* objectTable = objectsTable->GetTblVal(*it);
 
-			vec3f pos = objectTable->GetVec<vec3f>("pos", 3);
-				pos.y = ground->GetHeight(pos.x, pos.z);
-			mat44f mat = mat44f(pos, NVECf, NVECf, objectTable->GetVec<vec3f>("dir", 3));
-				mat.SetYDirXZ(ground->GetSmoothNormal(pos.x, pos.z));
+			const SimObjectDef* def = mSimObjectDefHandler->GetDef(objectTable->GetStrVal("def", ""));
+			const vec3f& pos = objectTable->GetVec<vec3f>("pos", 3);
+			const vec3f& dir = objectTable->GetVec<vec3f>("dir", 3);
 
-			SimObjectDef* sod = mSimObjectDefHandler->GetDef(objectTable->GetStrVal("def", ""));
-			SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
-				so->SetMat(mat);
-				so->SetWantedDirection(mat.GetZDir());
-
-			AddObject(so, true);
+			AddObject(def->GetID(), pos, dir, true);
 		}
 	}
 }
@@ -94,7 +88,30 @@ void SimObjectHandler::Update() {
 
 
 
+void SimObjectHandler::AddObject(unsigned int defID, const vec3f& pos, const vec3f& dir, bool inConstructor) {
+	if (!simObjectFreeIDs.empty()) {
+		vec3f gpos = pos;
+			gpos.y = ground->GetHeight(pos.x, pos.z);
+		mat44f mat = mat44f(gpos, NVECf, NVECf, dir);
+			mat.SetYDirXZ(ground->GetSmoothNormal(gpos.x, gpos.z));
+
+		SimObjectDef* sod = mSimObjectDefHandler->GetDef(defID);
+		SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
+			so->SetMat(mat);
+			so->SetWantedDirection(mat.GetZDir());
+
+		AddObject(so, inConstructor);
+	}
+}
+
+void SimObjectHandler::DelObject(unsigned int objID, bool inDestructor) {
+	if (!simObjectUsedIDs.empty()) {
+		DelObject(simObjects[objID], inDestructor);
+	}
+}
+
 void SimObjectHandler::AddObject(SimObject* o, bool inConstructor) {
+	assert(o != NULL);
 	assert(simObjects[o->GetID()] == NULL);
 
 	simObjects[o->GetID()] = o;
@@ -106,6 +123,7 @@ void SimObjectHandler::AddObject(SimObject* o, bool inConstructor) {
 }
 
 void SimObjectHandler::DelObject(SimObject* o, bool inDestructor) {
+	assert(o != NULL);
 	assert(simObjects[o->GetID()] == o);
 
 	simObjectUsedIDs.erase(o->GetID());
