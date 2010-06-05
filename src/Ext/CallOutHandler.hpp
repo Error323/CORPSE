@@ -20,6 +20,9 @@ public:
 	const float* GetCornerHeightMap() const;
 	const float* GetSlopeMap() const;
 
+	unsigned int GetNumSimObjectDefs() const;
+	const SimObjectDef* GetRawSimObjectDef(unsigned int defID) const;
+
 	unsigned int GetMaxSimObjects() const;
 	unsigned int GetNumSimObjects() const;
 	unsigned int GetFreeSimObjectIDs(unsigned int*, unsigned int) const;

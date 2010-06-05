@@ -4,6 +4,7 @@
 #include "../Math/vec3.hpp"
 #include "../Sim/SimObject.hpp"
 #include "../Sim/SimObjectHandler.hpp"
+#include "../Sim/SimObjectDefHandler.hpp"
 
 CallOutHandler* CallOutHandler::GetInstance() {
 	static CallOutHandler* coh = NULL;
@@ -36,6 +37,9 @@ const float* CallOutHandler::GetCornerHeightMap() const { return readMap->GetHei
 const float* CallOutHandler::GetSlopeMap() const { return &readMap->slopemap[0]; }
 
 
+
+unsigned int CallOutHandler::GetNumSimObjectDefs() const { return simObjectDefHandler->GetNumDefs(); }
+const SimObjectDef* CallOutHandler::GetRawSimObjectDef(unsigned int defID) const { return simObjectDefHandler->GetDef(defID); }
 
 unsigned int CallOutHandler::GetMaxSimObjects() const { return simObjectHandler->GetMaxSimObjects(); }
 unsigned int CallOutHandler::GetNumSimObjects() const { return simObjectHandler->GetNumSimObjects(); }

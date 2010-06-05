@@ -18,22 +18,25 @@ public:
 	virtual const float* GetCornerHeightMap() const = 0;
 	virtual const float* GetSlopeMap() const = 0;
 
+	virtual unsigned int GetNumSimObjectDefs() const = 0;
+	virtual const SimObjectDef* GetRawSimObjectDef(unsigned int defID) const = 0;
+
 	virtual unsigned int GetMaxSimObjects() const = 0;
 	virtual unsigned int GetNumSimObjects() const = 0;
 	virtual unsigned int GetFreeSimObjectIDs(unsigned int* array, unsigned int size) const = 0;
 	virtual unsigned int GetUsedSimObjectIDs(unsigned int* array, unsigned int size) const = 0;
 
-	virtual bool IsValidSimObjectID(unsigned int id) const = 0;
+	virtual bool IsValidSimObjectID(unsigned int objID) const = 0;
 
-	virtual const SimObjectDef* GetSimObjectDef(unsigned int id) const = 0;
-	virtual const mat44f& GetSimObjectMatrix(unsigned int id) const = 0;
-	virtual const vec3f& GetSimObjectPosition(unsigned int id) const = 0;
-	virtual const vec3f& GetSimObjectDirection(unsigned int id) const = 0;
-	virtual float GetSimObjectCurrentForwardSpeed(unsigned int id) const = 0;
+	virtual const SimObjectDef* GetSimObjectDef(unsigned int objID) const = 0;
+	virtual const mat44f& GetSimObjectMatrix(unsigned int objID) const = 0;
+	virtual const vec3f& GetSimObjectPosition(unsigned int objID) const = 0;
+	virtual const vec3f& GetSimObjectDirection(unsigned int objID) const = 0;
+	virtual float GetSimObjectCurrentForwardSpeed(unsigned int objIDd) const = 0;
 
-	virtual void SetSimObjectWantedForwardSpeed(unsigned int id, float spd) const = 0;
-	virtual void SetSimObjectWantedPosition(unsigned int id, const vec3f& pos) const = 0;
-	virtual void SetSimObjectWantedDirection(unsigned int id, const vec3f& dir) const = 0;
+	virtual void SetSimObjectWantedForwardSpeed(unsigned int objID, float spd) const = 0;
+	virtual void SetSimObjectWantedPosition(unsigned int objID, const vec3f& pos) const = 0;
+	virtual void SetSimObjectWantedDirection(unsigned int objID, const vec3f& dir) const = 0;
 };
 
 #endif

@@ -36,11 +36,13 @@ bool SimObjectDefHandler::LoadDefs() {
 		return false;
 	}
 
+	objectDefsVec.resize(simObjectDefKeys.size(), NULL);
+
 	for (std::list<std::string>::iterator it = simObjectDefKeys.begin(); it != simObjectDefKeys.end(); it++) {
 		const LuaTable* objectDefTable = objectDefsTable->GetTblVal(*it);
 
 		// convert to per-frame units
-		SimObjectDef* def = new SimObjectDef(objectDefs.size());
+		SimObjectDef* def = new SimObjectDef(objectDefsMap.size());
 			def->SetModelName(objectDefTable->GetStrVal("mdl", ""));
 			def->SetMaxForwardSpeed(objectDefTable->GetFltVal("maxForwardSpeed", 0.0f) / server->GetSimFrameRate());
 			def->SetMaxTurningRate(objectDefTable->GetFltVal("maxTurningRate", 0.0f) / server->GetSimFrameRate());
@@ -48,24 +50,34 @@ bool SimObjectDefHandler::LoadDefs() {
 			def->SetMaxDeccelerationRate(objectDefTable->GetFltVal("maxDeccelerationRate", 0.0f) / server->GetSimFrameRate());
 			def->SetMaxSlopeAngleCosine(objectDefTable->GetFltVal("maxSlopeAngleCosine", 1.0f));
 
-		objectDefs[*it] = def;
+		objectDefsMap[*it] = def;
+		objectDefsVec[def->GetID()] = def;
 	}
 
+	assert(objectDefsMap.size() == objectDefsVec.size());
 	return true;
 }
 
 void SimObjectDefHandler::DelDefs() {
-	for (std::map<std::string, SimObjectDef*>::iterator it = objectDefs.begin(); it != objectDefs.end(); it++) {
+	for (std::map<std::string, SimObjectDef*>::iterator it = objectDefsMap.begin(); it != objectDefsMap.end(); it++) {
 		delete it->second;
 	}
 }
 
 SimObjectDef* SimObjectDefHandler::GetDef(const std::string& defName) {
-	std::map<std::string, SimObjectDef*>::const_iterator it = objectDefs.find(defName);
+	std::map<std::string, SimObjectDef*>::const_iterator it = objectDefsMap.find(defName);
 
-	if (it == objectDefs.end()) {
+	if (it == objectDefsMap.end()) {
 		return NULL;
 	} else {
 		return it->second;
 	}
+}
+
+SimObjectDef* SimObjectDefHandler::GetDef(unsigned int defID) {
+	if (defID < objectDefsVec.size()) {
+		return objectDefsVec[defID];
+	}
+
+	return NULL;
 }
