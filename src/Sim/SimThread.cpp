@@ -99,11 +99,18 @@ void CSimThread::SimCommand(NetMessage& m) {
 			assert(!m.End()); m >> goalPos.y;
 			assert(!m.End()); m >> goalPos.z;
 
+			e.SetGoalPos(goalPos);
+
 			while (!m.End()) {
-				// TODO
+				unsigned int objectID;
+
+				m >> objectID;
+				e.AddObjectID(objectID);
+
+				assert(objectID < mSimObjectHandler->GetMaxSimObjects());
+				assert(mSimObjectHandler->GetSimObject(objectID) != NULL);
 			}
 
-			e.SetGoalPos(goalPos);
 			eventHandler->NotifyReceivers(&e);
 		} break;
 

@@ -26,6 +26,7 @@ public:
 
 	unsigned int GetNumSimObjects() const { return simObjectUsedIDs.size(); }
 	unsigned int GetMaxSimObjects() const { return simObjects.size(); }
+
 	SimObject* GetSimObject(unsigned int id) const { return simObjects[id]; }
 
 private:

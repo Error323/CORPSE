@@ -16,6 +16,7 @@ public:
 
 	void Update();
 	void SimCommand(NetMessage&);
+
 	unsigned int GetFrame() const { return frame; }
 
 private:
