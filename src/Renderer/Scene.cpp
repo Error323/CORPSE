@@ -247,7 +247,7 @@ void CScene::DrawMapAndModels(Camera* eye, bool shadows) {
 		sun->SetState(eye);
 			sun->pos = mapInfo->light.sunDir * (boundingRadius * 2.0f) * 1.25f;
 			sun->vrp = ZVECf;
-			sun->zNear = 1536.0f;
+			sun->zNearDistance = 1536.0f;
 		sun->Update();
 
 

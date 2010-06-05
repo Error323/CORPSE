@@ -3,24 +3,12 @@
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
 
-CCameraController::CCameraController(): currCam(0x0) {
+CCameraController::CCameraController(): currCam(NULL) {
 	const LuaTable* rootTable = LUA->GetRoot();
 	const LuaTable* cameraTable = rootTable->GetTblVal("camera");
-	const LuaTable* vportTable = rootTable->GetTblVal("viewport");
 
-	const vec3f camPos = cameraTable->GetVec<vec3f>("pos", 3);
-	const vec3f camVRP = cameraTable->GetVec<vec3f>("vrp", 3);
-
-	const unsigned int vxsize = unsigned(vportTable->GetFltVal("xsize", 800));
-	const unsigned int vysize = unsigned(vportTable->GetFltVal("ysize", 600));
-
-	const float hAspRat = float(vxsize) / float(vysize);
-
-	const float vFOVdeg = cameraTable->GetFltVal("vFOV", 45.0f);
-	const float hFOVdeg = RAD2DEG(atanf(hAspRat * tanf(DEG2RAD(vFOVdeg * 0.5f))) * 2.0f);
-
-	const float zNearDist = cameraTable->GetFltVal("zNearDist",     1.0f);
-	const float zFarDist  = cameraTable->GetFltVal("zFarDist",  32768.0f);
+	const vec3f& camPos = cameraTable->GetVec<vec3f>("pos", 3);
+	const vec3f& camVRP = cameraTable->GetVec<vec3f>("vrp", 3);
 
 	const int moveMode = cameraTable->GetFltVal("moveMode", Camera::CAM_MOVE_MODE_FPS);
 	const int projMode = cameraTable->GetFltVal("projMode", Camera::CAM_PROJ_MODE_PERSP);
@@ -41,19 +29,6 @@ CCameraController::CCameraController(): currCam(0x0) {
 			assert(false);
 		} break;
 	}
-
-
-	currCam->zNear     = zNearDist;
-	currCam->zFar      = zFarDist;
-	currCam->hAspRat   = hAspRat;
-
-	currCam->vFOVdeg   = vFOVdeg;
-	currCam->hvFOVrad  = vFOVdeg * (M_PI / 360.0f);
-	currCam->thvFOVrad = tanf(currCam->hvFOVrad);
-
-	currCam->hFOVdeg   = hFOVdeg;
-	currCam->hhFOVrad  = hFOVdeg * (M_PI / 360.0f);
-	currCam->thhFOVrad = tanf(currCam->hhFOVrad);
 }
 
 CCameraController::~CCameraController() {
@@ -61,7 +36,7 @@ CCameraController::~CCameraController() {
 		delete (it->second);
 	}
 
-	currCam = 0x0;
+	currCam = NULL;
 }
 
 

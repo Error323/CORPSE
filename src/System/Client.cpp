@@ -102,16 +102,9 @@ void CClient::ParseArgs(int argc, char** argv) {
 
 void CClient::Init() {
 	LOG << "[CClient::Init] [1]\n";
-
-	const LuaTable* rootTable = LUA->GetRoot();
-	const LuaTable* windowTable = rootTable->GetTblVal("window");
-
-	const std::string& windowTitle = windowTable->GetStrVal("title", "");
-	const unsigned int windowSizeX = windowTable->GetFltVal("xsize", 800);
-	const unsigned int windowSizeY = windowTable->GetFltVal("ysize", 600);
-
-	InitSDL(windowTitle.c_str());
-	SetWindowSize(windowSizeX, windowSizeY);
+printf("[CClient::Init] WIN->GetWindowSizeX()=%d, WIN->GetWindowSizeY()=%d\n", WIN->GetWindowSizeX(), WIN->GetWindowSizeY());
+	InitSDL((WIN->GetTitle()).c_str());
+	SetWindowSize(WIN->GetWindowSizeX(), WIN->GetWindowSizeY());
 
 	const std::string glVersion( (const char*) glGetString(GL_VERSION) );
 	const std::string glVendor(  (const char*) glGetString(GL_VENDOR)  );
@@ -401,16 +394,16 @@ void CClient::UpdateViewPortDimensions() {
 	UpdateWindowInfo();
 
 	if (!ENG->GetDualScreen()) {
-		WIN->SetViewPortSizeX(WIN->GetWindowSizeX());
-		WIN->SetViewPortSizeY(WIN->GetWindowSizeY());
+		WIN->SetViewPortSizeX(WIN->GetViewPortSizeX());
+		WIN->SetViewPortSizeY(WIN->GetViewPortSizeY());
 		WIN->SetViewPortPosX(0);
 		WIN->SetViewPortPosY(0);
 	} else {
-		WIN->SetViewPortSizeX(WIN->GetWindowSizeX() >> 1);
-		WIN->SetViewPortSizeY(WIN->GetWindowSizeY() >> 0);
+		WIN->SetViewPortSizeX(WIN->GetViewPortSizeX() >> 1);
+		WIN->SetViewPortSizeY(WIN->GetViewPortSizeY() >> 0);
 
 		if (ENG->GetDualScreenMapLeft()) {
-			WIN->SetViewPortPosX(WIN->GetWindowSizeX() >> 1);
+			WIN->SetViewPortPosX(WIN->GetViewPortSizeX() >> 1);
 			WIN->SetViewPortPosY(0);
 		} else {
 			WIN->SetViewPortPosX(0);

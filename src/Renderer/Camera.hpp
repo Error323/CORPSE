@@ -31,12 +31,6 @@ public:
 	bool InView(const vec3f& pos, float radius = 0.0f) const;
 	vec3f GetPixelDir(int x, int y) const;
 
-	void UpdateCoorSys();
-	void UpdateFrustum();
-	void UpdateHFOV(float);
-	void UpdateVFOV(float);
-	void Clamp();
-
 	void SetState(const Camera*);
 
 	virtual void Init(const vec3f&, const vec3f&) {}
@@ -59,6 +53,7 @@ public:
 
 	vec3f MouseToWorldCoors(int, int);
 
+
 	protected: mat44f mat;    // shadow copy of (pos, xdir, ydir, zdir)
 	public:    vec3f  vrp;    // point relative to pos determining zdir
 	public:    vec3f  pos;    // world-space camera ("eye") location
@@ -66,25 +61,31 @@ public:
 	public:    vec3f  ydir;   // "up"      dir (vUp) in world-coors
 	public:    vec3f  zdir;   // "forward" dir (vFo) in world-coors
 
-	vec3f frustumR;    // right view-frustrum plane
-	vec3f frustumL;    // left view-frustrum plane
-	vec3f frustumB;    // bottom view-frustrum plane
-	vec3f frustumT;    // top view-frustrum plane
+	vec3f frustumL, frustumR;    // {left, right} view-frustrum plane
+	vec3f frustumB, frustumT;    // {bottom, top} view-frustrum plane
 
-	float hFOVdeg;     // horizontal FOV (in degrees)
-	float vFOVdeg;     // vertical FOV (in degrees)
-	float hhFOVrad;    // half of hVOFdeg (in radians)
-	float hvFOVrad;    // half of vVOFdeg (in radians)
-	float thhFOVrad;   // tangent of hhFOVrad
-	float thvFOVrad;   // tangent of hvFOVrad
-	float hAspRat;     // aspect ratio (vpsx / vpsy)
-	float zNear;
-	float zFar;
+	float    vFOVdeg,    hFOVdeg;  // {horizontal, vertical} FOV angle (in degrees)
+	float    hFOVrad,    vFOVrad;  // {horizontal, vertical} FOV angle (in radians)
+	float   hhFOVrad,   hvFOVrad;  // half of PhVOFrad, vVOFrad} angle (in radians)
+	float  thhFOVrad,  thvFOVrad;  // tangent of {hhFOVrad, hvFOVrad} (side ratio, not "in radians")
+	float ithhFOVrad, ithvFOVrad;  // reciprocal of {thhFOVrad, thvFOVrad}
+
+	float hAspectRatio;   // horizontal viewport aspect ratio (W / H)
+	float vAspectRatio;   // vertical viewport aspect ratio (H / W)
+
+	float zNearDistance;
+	float zFarDistance;
 
 	int moveMode;
 	int projMode;
 
-private:
+protected:
+	void SetInternalParameters();
+	void UpdateCoorSys();
+	void UpdateFrustum();
+	void UpdateHFOV(float);
+	void UpdateVFOV(float);
+
 	const float* GetProjMatrixPersp();
 	const float* GetProjMatrixOrtho();
 

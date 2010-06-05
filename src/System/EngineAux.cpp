@@ -76,15 +76,38 @@ void EngineAux::EngineState::Init(LuaParser* p) {
 }
 
 void EngineAux::InputState::Init(LuaParser* p) {
-	inputFrameRate = unsigned(p->GetRoot()->GetTblVal("input")->GetFltVal("inputRate", 100));
+	const LuaTable* rootTable = p->GetRoot();
+	const LuaTable* inputTable = rootTable->GetTblVal("input");
+
+	inputFrameRate = inputTable->GetFltVal("inputRate", 100);
 	inputFrameTime = 1000 / inputFrameRate;
 
-	keySens   = inputFrameTime * (p->GetRoot()->GetTblVal("input")->GetFltVal("keySens", 0.5f * 100.0f)) * 0.01f;
-	mouseSens = inputFrameTime * (p->GetRoot()->GetTblVal("input")->GetFltVal("mouseSens", 0.2f * 100.0f)) * 0.01f;
+	keySens   = inputFrameTime * inputTable->GetFltVal("keySens", 0.5f * 100.0f) * 0.01f;
+	mouseSens = inputFrameTime * inputTable->GetFltVal("mouseSens", 0.2f * 100.0f) * 0.01f;
 
 	currMouseX = lastMouseX = -1;
 	currMouseY = lastMouseY = -1;
 
 	lastMouseButton = -1;
 	lastInputTick = 0;
+}
+
+void EngineAux::WindowState::Init(LuaParser* p) {
+	const LuaTable* rootTable = p->GetRoot();
+	const LuaTable* windowTable = rootTable->GetTblVal("window");
+	const LuaTable* vportTable = rootTable->GetTblVal("viewport");
+
+	desktopSizeX  = desktopSizeY  = 0;
+	windowSizeX   = windowSizeY   = 0;
+	windowPosX    = windowPosY    = 0;
+	viewPortSizeX = viewPortSizeY = 0;
+	viewPortPosX  = viewPortPosY  = 0;
+	pixelSizeX    = pixelSizeY    = 0.0f;
+
+	viewPortSizeX = vportTable->GetFltVal("xsize", 800);
+	viewPortSizeY = vportTable->GetFltVal("ysize", 600);
+	windowSizeX = windowTable->GetFltVal("xsize", 800);
+	windowSizeY = windowTable->GetFltVal("ysize", 600);
+
+	title = windowTable->GetStrVal("title", "");
 }

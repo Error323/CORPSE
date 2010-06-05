@@ -2,6 +2,7 @@
 #define PFFG_ENGINEAUX_HDR
 
 #include <cassert>
+#include <string>
 
 struct lua_State;
 struct LuaParser;
@@ -103,14 +104,7 @@ public:
 
 	struct WindowState {
 	public:
-		void Init(LuaParser*) {
-			desktopSizeX  = desktopSizeY  = 0;
-			windowSizeX   = windowSizeY   = 0;
-			windowPosX    = windowPosY    = 0;
-			viewPortSizeX = viewPortSizeY = 0;
-			viewPortPosX  = viewPortPosY  = 0;
-			pixelSizeX    = pixelSizeY    = 0.0f;
-		}
+		void Init(LuaParser*);
 
 		void SetWindowPosX(unsigned int x) { windowPosX = x; }
 		void SetWindowPosY(unsigned int y) { windowPosY = y; }
@@ -133,6 +127,8 @@ public:
 		void SetPixelSizeX(float w) { pixelSizeX = w; }
 		void SetPixelSizeY(float h) { pixelSizeY = h; }
 
+		const std::string GetTitle() const { return title; }
+
 	private:
 		unsigned int desktopSizeX;      // width of entire desktop in pixels (screen resolution, screenSizeX)
 		unsigned int desktopSizeY;      // height of entire desktop in pixels (screen resolution, screenSizeY)
@@ -150,6 +146,8 @@ public:
 
 		// int screenW;                 // game screen width (REDUNDANT, winSizeX)
 		// int screenH;                 // game screen height (REDUNDANT, winSizeY)
+
+		std::string title;
 	};
 
 private:

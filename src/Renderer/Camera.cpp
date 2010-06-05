@@ -5,6 +5,7 @@
 #include "./Camera.hpp"
 #include "../Input/InputHandler.hpp"
 #include "../System/EngineAux.hpp"
+#include "../System/LuaParser.hpp"
 
 #define SDL_BUTTON_WHEEL 8
 
@@ -19,6 +20,7 @@ Camera::Camera(const vec3f& p, const vec3f& t, int movementMode, int projectionM
 	projMode(projectionMode) {
 
 	inputHandler->AddReceiver(this);
+	SetInternalParameters();
 	Update();
 }
 Camera::~Camera() {
@@ -75,6 +77,33 @@ vec3f Camera::GetPixelDir(int x, int y) const {
 	return ((zdir - (ydir * dy) + (xdir * dx)).norm());
 }
 
+void Camera::SetInternalParameters() {
+	const LuaTable* rootTable = LUA->GetRoot();
+	const LuaTable* cameraTable = rootTable->GetTblVal("camera");
+
+	hAspectRatio = float(WIN->GetViewPortSizeX()) / float(WIN->GetViewPortSizeY());
+	vAspectRatio = float(WIN->GetViewPortSizeY()) / float(WIN->GetViewPortSizeX());
+
+	vFOVdeg = cameraTable->GetFltVal("vFOV", 45.0f);
+	vFOVrad = DEG2RAD(vFOVdeg);
+	// hFOVdeg = RAD2DEG(atanf(hAspectRatio * tanf(DEG2RAD(vFOVdeg * 0.5f))) * 2.0f);
+	// hFOVrad = DEG2RAD(hFOVdeg);
+	hFOVrad = (atanf(hAspectRatio * tanf(vFOVrad * 0.5f)) * 2.0f);
+	hFOVdeg = RAD2DEG(hFOVrad);
+
+	hhFOVrad = hFOVrad * 0.5f; thhFOVrad = tanf(hhFOVrad); ithhFOVrad = 1.0f / thhFOVrad;
+	hvFOVrad = vFOVrad * 0.5f; thvFOVrad = tanf(hvFOVrad); ithvFOVrad = 1.0f / thvFOVrad;
+
+	// vFOV and aspect-ratio together do not fully determine
+	// the projection; also need the z-distance parameters
+	zNearDistance = cameraTable->GetFltVal("zNearDist",     1.0f);
+	zFarDistance  = cameraTable->GetFltVal("zFarDist",  32768.0f);
+
+	// viewPlane.x = camVP.x;
+	// viewPlane.y = camVP.y;
+	// viewPlane.z = (camVP.y * 0.5f) / tanf(DEG2RAD(camFOV * 0.5f));
+}
+
 
 
 void Camera::UpdateCoorSys() {
@@ -90,8 +119,8 @@ void Camera::UpdateCoorSys() {
 }
 
 void Camera::UpdateFrustum() {
-	const vec3f zdirY = (-zdir * (    thvFOVrad           ));
-	const vec3f zdirX = (-zdir * (tanf(hvFOVrad * hAspRat)));
+	const vec3f zdirY = (-zdir * (    thvFOVrad               ));
+	const vec3f zdirX = (-zdir * (tanf(hvFOVrad * hAspectRatio)));
 
 	frustumT = (zdirY + ydir).inorm();
 	frustumB = (zdirY - ydir).inorm();
@@ -99,30 +128,13 @@ void Camera::UpdateFrustum() {
 	frustumL = (zdirX - xdir).inorm();
 }
 
-void Camera::Clamp() {
-	/*
-	const float dx0 = pos.x - MAXVEC.x;
-	const float dx1 = pos.x - MINVEC.x;
-	const float dy0 = pos.y - MAXVEC.y;
-	const float dy1 = pos.y - MINVEC.y;
-	const float dz0 = pos.z - MAXVEC.z;
-	const float dz1 = pos.z - MINVEC.z;
-	if (dx0 > 0.0f) { pos.x -= dx0; vrp.x -= dx0; }
-	if (dx1 < 0.0f) { pos.x -= dx1; vrp.x -= dx1; }
-	if (dy0 > 0.0f) { pos.y -= dy0; vrp.y -= dy0; }
-	if (dy1 < 0.0f) { pos.y -= dy1; vrp.y -= dy1; }
-	if (dz0 > 0.0f) { pos.z -= dz0; vrp.z -= dz0; }
-	if (dz1 < 0.0f) { pos.z -= dz1; vrp.z -= dz1; }
-	*/
-}
-
 void Camera::SetState(const Camera* c) {
-	pos    = c->pos;
-	xdir   = c->xdir;
-	ydir   = c->ydir;
-	zdir   = c->zdir;
-	vrp    = c->vrp;
-	mat    = c->mat;
+	pos  = c->pos;
+	xdir = c->xdir;
+	ydir = c->ydir;
+	zdir = c->zdir;
+	vrp  = c->vrp;
+	mat  = c->mat;
 
 	hFOVdeg   = c->hFOVdeg;
 	hhFOVrad  = c->hhFOVrad;
@@ -131,15 +143,14 @@ void Camera::SetState(const Camera* c) {
 	hvFOVrad  = c->hvFOVrad;
 	thvFOVrad = c->thvFOVrad;
 
-	hAspRat = c->hAspRat;
-	zNear   = c->zNear;
-	zFar    = c->zFar;
+	hAspectRatio  = c->hAspectRatio;
+	zNearDistance = c->zNearDistance;
+	zFarDistance  = c->zFarDistance;
 }
 
 void Camera::Update() {
 	UpdateCoorSys();
 	UpdateFrustum();
-	Clamp();
 }
 
 
@@ -202,29 +213,29 @@ const float* Camera::GetProjMatrix() {
 // same as gluPerspective(vFOV, aspRat, zNear, zFar)
 // except the matrix needs to be multiplied manually
 const float* Camera::GetProjMatrixPersp() {
-	const float t = zNear * thvFOVrad;
+	const float t = zNearDistance * thvFOVrad;
 	const float b = -t;
-	const float l = b * hAspRat;
-	const float r = t * hAspRat;
+	const float l = b * hAspectRatio;
+	const float r = t * hAspectRatio;
 
-	projMatrix.m[ 0] = (2.0f * zNear) / (r - l);
+	projMatrix.m[ 0] = (2.0f * zNearDistance) / (r - l);
 	projMatrix.m[ 1] =  0.0f;
 	projMatrix.m[ 2] =  0.0f;
 	projMatrix.m[ 3] =  0.0f;
 
 	projMatrix.m[ 4] =  0.0f;
-	projMatrix.m[ 5] = (2.0f * zNear) / (t - b);
+	projMatrix.m[ 5] = (2.0f * zNearDistance) / (t - b);
 	projMatrix.m[ 6] =  0.0f;
 	projMatrix.m[ 7] =  0.0f;
 
 	projMatrix.m[ 8] = (r + l) / (r - l);
 	projMatrix.m[ 9] = (t + b) / (t - b);
-	projMatrix.m[10] = -(zFar + zNear) / (zFar - zNear);
+	projMatrix.m[10] = -(zFarDistance + zNearDistance) / (zFarDistance - zNearDistance);
 	projMatrix.m[11] = -1.0f;
 
 	projMatrix.m[12] =   0.0f;
 	projMatrix.m[13] =   0.0f;
-	projMatrix.m[14] = -(2.0f * zFar * zNear) / (zFar - zNear);
+	projMatrix.m[14] = -(2.0f * zFarDistance * zNearDistance) / (zFarDistance - zNearDistance);
 	projMatrix.m[15] =   0.0f;
 
 	projMatrix.UpdatePXYZ();
@@ -247,7 +258,7 @@ const float* Camera::GetProjMatrixOrtho() {
 
 	const float tx = -((r + l) / (r - l));
 	const float ty = -((t + b) / (t - b));
-	const float tz = -((zFar + zNear) / (zFar - zNear));
+	const float tz = -((zFarDistance + zNearDistance) / (zFarDistance - zNearDistance));
 
 	projMatrix.m[ 0] =  2.0f / (r - l);
 	projMatrix.m[ 1] =  0.0f;
@@ -261,7 +272,7 @@ const float* Camera::GetProjMatrixOrtho() {
 
 	projMatrix.m[ 8] =  0.0f;
 	projMatrix.m[ 9] =  0.0f;
-	projMatrix.m[10] = -2.0f / (zFar - zNear);
+	projMatrix.m[10] = -2.0f / (zFarDistance - zNearDistance);
 	projMatrix.m[11] =  0.0f;
 
 	projMatrix.m[12] = tx;
