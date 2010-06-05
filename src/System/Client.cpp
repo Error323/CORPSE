@@ -102,7 +102,7 @@ void CClient::ParseArgs(int argc, char** argv) {
 
 void CClient::Init() {
 	LOG << "[CClient::Init] [1]\n";
-printf("[CClient::Init] WIN->GetWindowSizeX()=%d, WIN->GetWindowSizeY()=%d\n", WIN->GetWindowSizeX(), WIN->GetWindowSizeY());
+
 	InitSDL((WIN->GetTitle()).c_str());
 	SetWindowSize(WIN->GetWindowSizeX(), WIN->GetWindowSizeY());
 
