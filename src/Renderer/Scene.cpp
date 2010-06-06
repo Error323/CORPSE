@@ -98,6 +98,7 @@ CScene::CScene() {
 						pObj->SetUniformLocation("diffuseMap"); // idx 0
 						pObj->SetUniformLocation("shadowMap");  // idx 1
 						pObj->SetUniformLocation("shadowMat");  // idx 2
+						pObj->SetUniformLocation("viewMat");    // idx 3
 
 						pObj->Enable();
 						pObj->SetUniform1i(0, 0);               // (idx 0, texunit 0)
@@ -164,7 +165,7 @@ CScene::~CScene() {
 
 
 
-void CScene::DrawModels(bool inShadowPass) {
+void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 	glPushAttrib(GL_POLYGON_BIT);
 		#ifdef WIREFRAME_DRAW
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -195,6 +196,7 @@ void CScene::DrawModels(bool inShadowPass) {
 			if (!inShadowPass) {
 				shObj->Enable();
 					shObj->SetUniformMatrix4fv(2, false, const_cast<float*>(shadowHandler->GetShadowProjectionMatrix()));
+					shObj->SetUniformMatrix4fv(3, false, const_cast<float*>(eye->GetViewMatrix()));
 
 					glActiveTexture(GL_TEXTURE7);
 					glBindTexture(GL_TEXTURE_2D, shadowHandler->GetDepthTextureID());
@@ -240,7 +242,7 @@ void CScene::DrawMapAndModels(Camera* eye, bool shadows) {
 		readMap->GetGroundDrawer()->Draw(eye, false);
 		#endif
 
-		DrawModels(false);
+		DrawModels(eye, false);
 	} else {
 		// copy the FOV / AR / Z parameters only
 		// (pos, *dir, and vrp are overwritten)
@@ -277,7 +279,7 @@ void CScene::DrawMapAndModels(Camera* eye, bool shadows) {
 						#else
 						readMap->GetGroundDrawer()->Draw(sun, true);
 						#endif
-						DrawModels(true);
+						DrawModels(eye, true);
 					glPopMatrix();
 				shadowHandler->UnBindDepthTextureFBO();
 
@@ -297,7 +299,7 @@ void CScene::DrawMapAndModels(Camera* eye, bool shadows) {
 					smfRenderer->Render(eye);
 				#endif
 
-				DrawModels(false);
+				DrawModels(eye, false);
 				// shadowHandler->DrawDepthTexture();
 		glPopAttrib();
 	}

@@ -16,7 +16,7 @@ public:
 	void Draw(Camera*);
 
 private:
-	void DrawModels(bool);
+	void DrawModels(Camera*, bool);
 	void DrawMapAndModels(Camera*, bool);
 	void InitLight();
 
