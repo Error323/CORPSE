@@ -7,7 +7,7 @@
 #include "./LuaParser.hpp"
 #include "./Logger.hpp"
 
-#include "Corpse.hpp"
+#include "CORPSE.hpp"
 
 int    EngineAux::argc      = 0;
 char** EngineAux::argv      = NULL;
