@@ -1,0 +1,3 @@
+#define NAME       "Corpse"
+#define VERSION    "@VERSION@"
+#define HUMAN_NAME NAME " - v" VERSION " @ " __DATE__
