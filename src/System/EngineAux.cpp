@@ -7,6 +7,8 @@
 #include "./LuaParser.hpp"
 #include "./Logger.hpp"
 
+#include "Corpse.hpp"
+
 int    EngineAux::argc      = 0;
 char** EngineAux::argv      = NULL;
 char   EngineAux::cwd[1024] = {'\0'};
@@ -109,5 +111,5 @@ void EngineAux::WindowState::Init(LuaParser* p) {
 	windowSizeX = windowTable->GetFltVal("xsize", 800);
 	windowSizeY = windowTable->GetFltVal("ysize", 600);
 
-	title = windowTable->GetStrVal("title", "");
+	title = windowTable->GetStrVal("title", "") + " " + HUMAN_NAME;
 }
