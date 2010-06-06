@@ -23,18 +23,19 @@ IF(GIT_VERSION)
 ELSE(NOT GIT_VERSION)
 	SET(VERSION "1.0.0")
 ENDIF(GIT_VERSION)
+MESSAGE("-- Corpse version set to ${VERSION}")
 
 CONFIGURE_FILE(
 	"${CORPSE_SOURCE_DIR}/cmake/Corpse.hpp.in"
-	"${CORPSE_BINARY_DIR}/src/System/Corpse.hpp"
+	"${CORPSE_BINARY_DIR}/Corpse.hpp"
 	)
 
 
 #-------------------------------------------------------------------------------
 # Include sources
 #-------------------------------------------------------------------------------
-INCLUDE(${CORPSE_BINARY_DIR})
 INCLUDE(cmake/sources.list)
+INCLUDE_DIRECTORIES(${CORPSE_BINARY_DIR})
 
 
 #-------------------------------------------------------------------------------
@@ -69,12 +70,12 @@ INCLUDE_DIRECTORIES(
 ADD_EXECUTABLE(CORPSE ${CORPSE_SOURCE})
 
 TARGET_LINK_LIBRARIES(CORPSE
-	${GLUT_LIBRARIES}
 	${SDL_LIBRARIES}
 	${OPENGL_LIBRARIES}
 	${GLEW_LIBRARIES}
-	${LUA51_LIBRARIES}
+	${GLUT_LIBRARIES}
 	${IL_LIBRARIES}
 	${ILU_LIBRARIES}
+	${LUA51_LIBRARIES}
 	Pathmodule
 	)
