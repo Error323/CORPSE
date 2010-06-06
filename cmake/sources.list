@@ -2,6 +2,9 @@
 # Source listing
 #-------------------------------------------------------------------------------
 
+SET(PATHMODULE_SOURCE_DIR "${CORPSE_SOURCE_DIR}/src/Path")
+SET(PATHMODULE_BINARY_DIR "${CORPSE_BINARY_DIR}/src/Path")
+
 INCLUDE_DIRECTORIES(${CORPSE_SOURCE_DIR} ${PATHMODULE_SOURCE_DIR})
 
 SET(CORPSE_SOURCE
@@ -69,8 +72,6 @@ SET(CORPSE_SOURCE
 	src/Renderer/RenderThread.hpp
 	src/Renderer/Scene.cpp
 	src/Renderer/Scene.hpp
-	src/Renderer/Shaders/ExtLoader.cpp
-	src/Renderer/Shaders/ExtLoader.hpp
 	src/Renderer/Shaders/Shader.cpp
 	src/Renderer/Shaders/ShaderHandler.cpp
 	src/Renderer/Shaders/ShaderHandler.hpp
@@ -125,8 +126,6 @@ SET(CORPSE_SOURCE
 	src/System/Server.cpp
 	src/System/Server.hpp
 	src/System/TDFGrammar.hpp
-	src/System/TDFParser.cpp
-	src/System/TDFParser.hpp
 	src/System/VFSModes.h
 	src/System/Window.hpp
 )

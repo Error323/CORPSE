@@ -21,9 +21,9 @@ EXECUTE_PROCESS(
 IF(GIT_VERSION)
 	SET(VERSION ${GIT_VERSION})
 ELSE(NOT GIT_VERSION)
-	SET(VERSION "1.0.0")
+	MESSAGE(WARNING "No git tag found, adding VERSION as option")
+	SET(VERSION "1.0.0" CACHE STRING "Define the build version." FORCE)
 ENDIF(GIT_VERSION)
-MESSAGE("-- Corpse version set to ${VERSION}")
 
 CONFIGURE_FILE(
 	"${CORPSE_SOURCE_DIR}/cmake/Corpse.hpp.in"
@@ -41,7 +41,7 @@ INCLUDE_DIRECTORIES(${CORPSE_BINARY_DIR})
 #-------------------------------------------------------------------------------
 # Add our own libraries
 #-------------------------------------------------------------------------------
-ADD_LIBRARY(Pathmodule ${PATHMODULE_SOURCE})
+ADD_LIBRARY(PathModule SHARED ${PATHMODULE_SOURCE})
 
 
 #-------------------------------------------------------------------------------
@@ -59,7 +59,7 @@ INCLUDE_DIRECTORIES(
 	${SDL_INCLUDE_DIR}
 	${OPENGL_INCLUDE_DIR}
 	${GLEW_INCLUDE_DIR}
-	${LUA51_INCLUDE_DIR}
+	${LUA_INCLUDE_DIR}
 	${IL_INCLUDE_DIR}
 	)
 
@@ -70,12 +70,12 @@ INCLUDE_DIRECTORIES(
 ADD_EXECUTABLE(CORPSE ${CORPSE_SOURCE})
 
 TARGET_LINK_LIBRARIES(CORPSE
-	${SDL_LIBRARIES}
+	${SDL_LIBRARY}
 	${OPENGL_LIBRARIES}
 	${GLEW_LIBRARIES}
 	${GLUT_LIBRARIES}
 	${IL_LIBRARIES}
 	${ILU_LIBRARIES}
-	${LUA51_LIBRARIES}
-	Pathmodule
+	${LUA_LIBRARIES}
+	PathModule
 	)

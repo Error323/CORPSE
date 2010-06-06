@@ -1,7 +1,7 @@
 #!/bin/bash
 
-BIN="./bin/PathEngine.bin"
+BIN="./release/CORPSE"
 ARG="./data/params.lua"
 
-export LD_LIBRARY_PATH="./bin/"
+export LD_LIBRARY_PATH="./release"
 $BIN $ARG
