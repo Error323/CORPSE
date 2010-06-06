@@ -101,7 +101,7 @@ void Camera::SetInternalParameters() {
 
 	// viewPlane.x = camVP.x;
 	// viewPlane.y = camVP.y;
-	// viewPlane.z = (camVP.y * 0.5f) / tanf(DEG2RAD(camFOV * 0.5f));
+	// viewPlane.z = (camVP.y * 0.5f) / tanf(DEG2RAD(vFOVdeg * 0.5f));
 }
 
 
