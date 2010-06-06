@@ -2,11 +2,6 @@
 # Source listing
 #-------------------------------------------------------------------------------
 
-SET(PATHMODULE_SOURCE_DIR "${CORPSE_SOURCE_DIR}/src/Path")
-SET(PATHMODULE_BINARY_DIR "${CORPSE_BINARY_DIR}/src/Path")
-
-INCLUDE_DIRECTORIES(${CORPSE_SOURCE_DIR} ${PATHMODULE_SOURCE_DIR})
-
 SET(CORPSE_SOURCE
 	src/Ext/CallOutHandler.cpp
 	src/Ext/CallOutHandler.hpp
