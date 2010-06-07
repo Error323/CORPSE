@@ -308,8 +308,8 @@ void CScene::DrawMapAndModels(Camera* eye, bool shadows) {
 
 
 void CScene::Draw(Camera* eye) {
-	// DrawMapAndModels(eye, false); return;
-	DrawMapAndModels(eye, true); return;
+	// DrawMapAndModels(eye, false);
+	DrawMapAndModels(eye, true);
 }
 
 

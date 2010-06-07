@@ -31,16 +31,17 @@ float CGround::LineGroundCol(vec3f from, vec3f to) {
 	float savedLength = 0.0f;
 
 	if (from.z > readMap->maxzpos && to.z < readMap->maxzpos) {
-		// a special case since the camera in overhead mode can often do this
-		vec3f dir = to - from;
-		float maxLength = dir.len3D();
-		dir /= maxLength;
+		// special case: origin outside map, destination inside
+		const vec3f dir = (to - from).norm();
 
 		savedLength = -(from.z - readMap->maxzpos) / dir.z;
 		from += dir * savedLength;
 	}
 
-	/// from.CheckInBounds();
+	if (from.x <             0.0f) { from.x =             0.0f; }
+	if (from.x > readMap->maxxpos) { from.x = readMap->maxxpos; }
+	if (from.z <             0.0f) { from.z =             0.0f; }
+	if (from.z > readMap->maxzpos) { from.z = readMap->maxzpos; }
 
 	vec3f dir = to - from;
 	float maxLength = dir.len3D();
@@ -83,14 +84,12 @@ float CGround::LineGroundCol(vec3f from, vec3f to) {
 
 			keepgoing = (fabs(zp - from.z) < fabs(dz));
 
-			if (dz > 0.0f)
+			if (dz > 0.0f) {
 				zp += sqSz;
-			else
+			} else {
 				zp -= sqSz;
+			}
 		}
-
-		// if you hit this the collision detection hit an infinite loop
-		assert(!keepgoing);
 	} else if (floor(from.z / sqSz) == floor(to.z / sqSz)) {
 		while (keepgoing) {
 			ret = LineGroundSquareCol(from, to, (int) floor(xp / sqSz), (int) floor(zp / sqSz));
@@ -100,14 +99,12 @@ float CGround::LineGroundCol(vec3f from, vec3f to) {
 
 			keepgoing = (fabs(xp - from.x) < fabs(dx));
 
-			if (dx > 0.0f)
+			if (dx > 0.0f) {
 				xp += sqSz;
-			else
+			} else {
 				xp -= sqSz;
+			}
 		}
-
-		// if you hit this the collision detection hit an infinite loop
-		assert(!keepgoing);
 	} else {
 		while (keepgoing) {
 			float xs, zs;
