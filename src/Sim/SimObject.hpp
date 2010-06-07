@@ -25,6 +25,7 @@ public:
 
 	const mat44f& GetMat() const { return physicalState.mat; }
 	void SetMat(const mat44f& m) { physicalState.mat = m; }
+	const vec3f& GetPos() const {  return (physicalState.mat).GetPos(); }
 
 	float GetCurrentForwardSpeed() const { return physicalState.currentForwardSpeed; }
 

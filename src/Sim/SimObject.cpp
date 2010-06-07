@@ -33,7 +33,6 @@ void SimObject::PhysicalState::Update(const SimObjectDef* def) {
 		forwardDir.y = 0.0f;
 		forwardDir.inorm();
 
-
 	// figure out whether to turn left or right to match wantedDir
 	//
 	// the WORLD-space coordinate system is inverted along the Z-axis

@@ -4,8 +4,10 @@
 #include "./SimObject.hpp"
 #include "./SimObjectDef.hpp"
 #include "./SimObjectDefHandler.hpp"
+#include "./SimObjectGrid.hpp"
 #include "./SimThread.hpp"
 #include "../Map/Ground.hpp"
+#include "../Map/ReadMap.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
 #include "../System/IEvent.hpp"
@@ -37,12 +39,21 @@ SimObjectHandler::SimObjectHandler() {
 	const LuaTable* objectsTable = rootTable->GetTblVal("objects");
 
 	simObjects.resize(unsigned(objectsTable->GetFltVal("maxObjects", 10000)), NULL);
+	simObjectGridIts.resize(simObjects.size());
 
 	for (unsigned int i = 0; i < simObjects.size(); i++) {
 		simObjectFreeIDs.insert(i);
 	}
 
 	mSimObjectDefHandler = SimObjectDefHandler::GetInstance();
+
+	// vertical dimension of grid must cover all y-values
+	// that simulation objects can realistically exist at
+	const vec3i& numObjectGridCells = objectsTable->GetVec<vec3i>("numObjectGridCells", 3);
+	const vec3f  objectGridMins = vec3f(                                0.0f, -1e6f,                                 0.0f);
+	const vec3f  objectGridMaxs = vec3f(readMap->mapx * readMap->SQUARE_SIZE,  1e6f, readMap->mapy * readMap->SQUARE_SIZE);
+
+	mSimObjectGrid = SimObjectGrid<const SimObject*>::GetInstance(numObjectGridCells, objectGridMins, objectGridMaxs);
 }
 
 void SimObjectHandler::AddObjects() {
@@ -69,9 +80,12 @@ SimObjectHandler::~SimObjectHandler() {
 	simObjectFreeIDs.clear();
 	simObjectUsedIDs.clear();
 	simObjects.clear();
+	simObjectGridIts.clear();
 
 	mSimObjectDefHandler->DelDefs();
 	SimObjectDefHandler::FreeInstance(mSimObjectDefHandler);
+
+	SimObjectGrid<const SimObject*>::FreeInstance(mSimObjectGrid);
 }
 
 void SimObjectHandler::DelObjects() {
@@ -82,7 +96,11 @@ void SimObjectHandler::DelObjects() {
 
 void SimObjectHandler::Update() {
 	for (std::set<unsigned int>::const_iterator it = simObjectUsedIDs.begin(); it != simObjectUsedIDs.end(); ++it) {
-		simObjects[*it]->Update();
+		SimObject* o = simObjects[*it];
+
+		mSimObjectGrid->DelObject( o, simObjectGridIts[o->GetID()] );
+		o->Update();
+		simObjectGridIts[o->GetID()] = mSimObjectGrid->AddObject(o);
 	}
 }
 
@@ -118,6 +136,8 @@ void SimObjectHandler::AddObject(SimObject* o, bool inConstructor) {
 	simObjectUsedIDs.insert(o->GetID());
 	simObjectFreeIDs.erase(o->GetID());
 
+	simObjectGridIts[o->GetID()] = mSimObjectGrid->AddObject(o);
+
 	SimObjectCreatedEvent e(((inConstructor)? 0: simThread->GetFrame()), o->GetID());
 	eventHandler->NotifyReceivers(&e);
 }
@@ -128,6 +148,9 @@ void SimObjectHandler::DelObject(SimObject* o, bool inDestructor) {
 
 	simObjectUsedIDs.erase(o->GetID());
 	simObjectFreeIDs.insert(o->GetID());
+
+	mSimObjectGrid->DelObject( o, simObjectGridIts[o->GetID()] );
+	// simObjectGridIts[o->GetID()] = NULL;
 
 	SimObjectDestroyedEvent e(((inDestructor)? -1: simThread->GetFrame()), o->GetID());
 	eventHandler->NotifyReceivers(&e);

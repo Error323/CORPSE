@@ -105,6 +105,8 @@ params = {
 	},
 
 	["objects"] = {
+		numObjectGridCells = {64, 1, 64},
+
 		[1] = {
 			def = "core_goliath",
 			pos = {200.0, 0.0, 200.0},
