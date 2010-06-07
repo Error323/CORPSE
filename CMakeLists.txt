@@ -74,8 +74,10 @@ TARGET_LINK_LIBRARIES(CORPSE
 	${OPENGL_LIBRARIES}
 	${GLEW_LIBRARIES}
 	${GLUT_LIBRARIES}
-	${IL_LIBRARIES}
-	${ILU_LIBRARIES}
+	${IL_LIBRARY}       ## cmake-2.6 (Modules/FindDevIL.cmake)
+	${IL_LIBRARIES}     ## cmake 2.8 (Modules/FindDevIL.cmake)
+	${ILU_LIBRARY}      ## cmake-2.6
+	${ILU_LIBRARIES}    ## cmake 2.8
 	${LUA_LIBRARIES}
 	PathModule
 	)
