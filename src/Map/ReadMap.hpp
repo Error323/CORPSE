@@ -46,9 +46,6 @@ public:
 	virtual void SetHeight(int idx, float h) = 0;
 	virtual void AddHeight(int idx, float a) = 0;
 
-	// float* orgheightmap;
-	// float* centerheightmap;
-	// float* slopemap;
 	std::vector<float> orgheightmap;
 	std::vector<float> centerheightmap;
 	std::vector<float> slopemap;
@@ -103,10 +100,8 @@ public:
 	float currMinHeight, currMaxHeight;
 
 
-	// Converts a map-square into a vec3f-position.
-	inline vec3f SquareToVec3(int xSquare, int zSquare) {
-		return vec3f(xSquare * SQUARE_SIZE, centerheightmap[xSquare + zSquare * mapx], zSquare * SQUARE_SIZE);
-	};
+	inline vec3f square2pos(int x, int z) { return vec3f(x * SQUARE_SIZE, centerheightmap[z * mapx + x], z * SQUARE_SIZE); }
+	inline int pos2square(const vec3f& pos) { return ((int(pos.z / SQUARE_SIZE) * (mapx + 1)) + int(pos.x / SQUARE_SIZE)); }
 
 	// copied from GS and float3; set in CSM{F, 3}ReadMap
 	int mapSquares;
