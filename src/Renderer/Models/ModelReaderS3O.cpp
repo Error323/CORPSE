@@ -11,7 +11,12 @@
 #include "../../System/FileHandler.hpp"
 #include "../../System/Logger.hpp"
 
-CModelReaderS3O* readerS3O = 0x0;
+#define SWAP(x) (x)
+
+static const vec3f DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
+static const vec3f DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
+
+CModelReaderS3O* readerS3O = NULL;
 
 CModelReaderS3O::CModelReaderS3O() {
 	drawerS3O = new CModelDrawerS3O();
@@ -26,8 +31,8 @@ CModelReaderS3O::~CModelReaderS3O() {
 		delete m;
 	}
 
-	delete drawerS3O; drawerS3O = 0x0;
-	delete textureHandlerS3O; textureHandlerS3O = 0x0;
+	delete drawerS3O; drawerS3O = NULL;
+	delete textureHandlerS3O; textureHandlerS3O = NULL;
 }
 
 
@@ -43,24 +48,25 @@ ModelBase* CModelReaderS3O::Load(const std::string& name) {
 		LOG << "[CModelReaderS3O::Load]\n";
 		LOG << "\tcould not open S3O \"" << name << "\"\n";
 		assert(false);
-		return 0x0;
+		return NULL;
 	}
 
 	unsigned char* fileBuf = new unsigned char[file.FileSize()];
 	file.Read(fileBuf, file.FileSize());
 
-	// needs to be swap()'ed on BE machines
 	RawS3O::RHeader header;
 	memcpy(&header, fileBuf, sizeof(header));
 
 	ModelBase* model = new ModelBase();
-		model->drawer = drawerS3O;
-		model->texturer = textureHandlerS3O;
+		model->name = name;
 		model->type = MODELTYPE_S3O;
 		model->numObjects = 0;
-		model->name = name;
 		model->tex1 = (char*) &fileBuf[header.tex1offset];
 		model->tex2 = (char*) &fileBuf[header.tex2offset];
+		model->mins = DEF_MIN_SIZE;
+		model->maxs = DEF_MAX_SIZE;
+		model->drawer = drawerS3O;
+		model->texturer = textureHandlerS3O;
 
 	textureHandlerS3O->Load(model);
 
@@ -77,49 +83,37 @@ ModelBase* CModelReaderS3O::Load(const std::string& name) {
 	LOG << "\t(model base) texture 1:     \"" << model->tex1 << "\"\n";
 	LOG << "\t(model base) texture 2:     \"" << model->tex2 << "\"\n";
 
-	PieceS3O* piece = LoadPiece(fileBuf, header.rootPieceOffset, model);
-	piece->type = MODELTYPE_S3O;
+	PieceS3O* rootPiece = LoadPiece(model, NULL, fileBuf, header.rootPieceOffset, 0);
 
-	FindMinMax(piece);
-
-	model->rootPiece = piece;
+	model->rootPiece = rootPiece;
 	model->radius = header.radius;
 	model->height = header.height;
-	model->relMidPos.x = header.midx;
-	model->relMidPos.y = header.midy;
-	model->relMidPos.z = header.midz;
-	model->relMidPos.y = std::max(1.0f, model->relMidPos.y);
-
-	model->maxx = piece->maxx;
-	model->maxy = piece->maxy;
-	model->maxz = piece->maxz;
-
-	model->minx = piece->minx;
-	model->miny = piece->miny;
-	model->minz = piece->minz;
+	model->relMidPos = vec3f(header.midx, header.midy, header.midz);
+	model->relMidPos.y = std::max(model->relMidPos.y, 1.0f); // ?
 
 	loadedModels[model->name] = model;
 	// create the display list tree
 	model->drawer->Init(model->rootPiece);
 
 	delete[] fileBuf;
-	return CloneModel(model);
+	return (CloneModel(model));
 }
 
-PieceS3O* CModelReaderS3O::LoadPiece(unsigned char* buf, int offset, ModelBase* model, unsigned int depth) {
+PieceS3O* CModelReaderS3O::LoadPiece(ModelBase* model, PieceS3O* parent, unsigned char* buf, int offset, unsigned int depth) {
 	model->numObjects++;
 
-	PieceS3O* piece = new PieceS3O();
-	piece->type = MODELTYPE_S3O;
-
-	// needs to be swap()'ed on BE machines
 	RawS3O::RPiece* rawPiece = (RawS3O::RPiece*) &buf[offset];
 
-	piece->offset.x = rawPiece->xoffset;
-	piece->offset.y = rawPiece->yoffset;
-	piece->offset.z = rawPiece->zoffset;
-	piece->primitiveType = rawPiece->primitiveType;
-	piece->name = (char*) &buf[rawPiece->nameOffset];
+	PieceS3O* piece = new PieceS3O();
+		piece->type = MODELTYPE_S3O;
+		piece->mins = DEF_MIN_SIZE;
+		piece->maxs = DEF_MAX_SIZE;
+		piece->offset.x = rawPiece->xoffset;
+		piece->offset.y = rawPiece->yoffset;
+		piece->offset.z = rawPiece->zoffset;
+		piece->primitiveType = rawPiece->primitiveType;
+		piece->name = (char*) &buf[rawPiece->nameOffset];
+		piece->parent = parent;
 
 	#ifdef PFFG_DEBUG
 	std::string tabs = "";
@@ -127,7 +121,7 @@ PieceS3O* CModelReaderS3O::LoadPiece(unsigned char* buf, int offset, ModelBase* 
 		tabs += "\t";
 	}
 	LOG << tabs + "[CModelReaderS3O::LoadPiece()" << std::endl;
-	LOG << tabs + "\tpiece offset: " << offset << std::endl;
+	LOG << tabs + "\tpiece offset:                  " << offset << std::endl;
 	LOG << tabs + "\t(raw piece) nameOffset:        " << rawPiece->nameOffset << "\n";
 	LOG << tabs + "\t(raw piece) numChildren:       " << rawPiece->numChildren << "\n";
 	LOG << tabs + "\t(raw piece) numVertices:       " << rawPiece->numVertices << "\n";
@@ -145,11 +139,10 @@ PieceS3O* CModelReaderS3O::LoadPiece(unsigned char* buf, int offset, ModelBase* 
 	int vertexOffset = rawPiece->vertexOffset;
 
 	for (int a = 0; a < rawPiece->numVertices; ++a) {
-		// ((RawS3O::RVertex*) &buf[vertexOffset])->swap();
 		VertexS3O v = *(VertexS3O*) &buf[vertexOffset];
-
 		piece->vertices.push_back(v);
-		vertexOffset += sizeof(RawS3O::RVertex);
+
+		vertexOffset += sizeof(VertexS3O);
 	}
 
 
@@ -157,38 +150,42 @@ PieceS3O* CModelReaderS3O::LoadPiece(unsigned char* buf, int offset, ModelBase* 
 	int vertexTableOffset = rawPiece->vertexTableOffset;
 
 	for (int a = 0; a < rawPiece->vertexTableSize; ++a) {
-		// needs to be swabdword()'ed on BE machines
-		int vertexDrawIdx = *(int*) &buf[vertexTableOffset];
+		int vertexDrawIdx = SWAP(*(int*) &buf[vertexTableOffset]);
 
 		piece->vertexDrawOrder.push_back(vertexDrawIdx);
 		vertexTableOffset += sizeof(int);
 
-		// -1 == 0xFFFFFFFF when converted to unsigned
+		// -1 == 0xFFFFFFFF (U)
 		if (vertexDrawIdx == -1 && a != rawPiece->vertexTableSize - 1) {
 			// for triangle strips
 			piece->vertexDrawOrder.push_back(vertexDrawIdx);
 
-			vertexDrawIdx = *(int*) &buf[vertexTableOffset];
+			vertexDrawIdx = SWAP(*(int*) &buf[vertexTableOffset]);
 			piece->vertexDrawOrder.push_back(vertexDrawIdx);
 		}
 	}
 
-
-	piece->isEmpty = piece->vertexDrawOrder.empty(); 
+	piece->isEmpty = piece->vertexDrawOrder.empty();
 	piece->vertexCount = piece->vertices.size();
+	piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: NVECf);
 
-	// calculate the S- and T-tangents
-	SetVertexTangents(piece);
+	piece->SetVertexTangents();
+	piece->SetMinMaxExtends();
 
+	model->mins.x = std::min(piece->mins.x, model->mins.x);
+	model->mins.y = std::min(piece->mins.y, model->mins.y);
+	model->mins.z = std::min(piece->mins.z, model->mins.z);
+	model->maxs.x = std::max(piece->maxs.x, model->maxs.x);
+	model->maxs.y = std::max(piece->maxs.y, model->maxs.y);
+	model->maxs.z = std::max(piece->maxs.z, model->maxs.z);
 
 	int childTableOffset = rawPiece->childTableOffset;
 
 	for (int a = 0; a < rawPiece->numChildren; ++a) {
-		// needs to be swabdword()'ed on BE machines
-		int childOffset = *(int*) &buf[childTableOffset];
+		int childOffset = SWAP(*(int*) &buf[childTableOffset]);
 
-		PieceS3O* lp = LoadPiece(buf, childOffset, model, depth + 1);
-		piece->children.push_back(lp);
+		PieceS3O* childPiece = LoadPiece(model, piece, buf, childOffset, depth + 1);
+		piece->children.push_back(childPiece);
 
 		childTableOffset += sizeof(int);
 	}
@@ -197,206 +194,10 @@ PieceS3O* CModelReaderS3O::LoadPiece(unsigned char* buf, int offset, ModelBase* 
 }
 
 
-void CModelReaderS3O::SetVertexTangents(PieceS3O* p) {
-	if (p->isEmpty || p->primitiveType == PRIMTYPE_QUADS) {
-		return;
-	}
-
-	// LOG << "[CModelReaderS3O::SetVertexTangents]\n";
-	// LOG << "\tpiece: " << p << ", primType: " << p->primitiveType << "\n";
-	// filter out duplicate vertices somehow
-	// no need to store (A, B) *and* (B, A)
-	/*
-	for (unsigned int i = 0; i < p->vertexCount; i++) {
-		const VertexS3O* v0 = &p->vertices[i];
-
-		for (unsigned int j = 0; j < p->vertexCount; j++) {
-			if (j != i) {
-				const VertexS3O* v1 = &p->vertices[j];
-
-				const float dx = fabsf(v0->pos.x - v1->pos.x);
-				const float dy = fabsf(v0->pos.y - v1->pos.y);
-				const float dz = fabsf(v0->pos.z - v1->pos.z);
-
-				if (dx < 0.001f && dy < 0.001f && dz < 0.001f) {
-					LOG << "\tvertex j=" << j << " is ";
-					LOG << "duplicate of i=" << i << "\n";
-				}
-			}
-		}
-	}
-	*/
-
-	p->sTangents.resize(p->vertexCount, ZVECf);
-	p->tTangents.resize(p->vertexCount, ZVECf);
-
-	std::vector<TriangleS3O> triangles;
-	std::vector<std::vector<unsigned int> > verts2tris(p->vertexCount);
-
-	unsigned int stride = 0;
-
-	switch (p->primitiveType) {
-		case PRIMTYPE_TRIANGLES: {
-			stride = 3;
-		} break;
-		case PRIMTYPE_TRIANGLE_STRIP: {
-			stride = 1;
-		} break;
-	}
-
-	// for triangle strips, the piece vertex _indices_ are defined
-	// by the draw order of the vertices numbered <v, v + 1, v + 2>
-	// for v in [0, n - 2]
-	const unsigned int vrtMaxNr = (stride == 1)?
-		p->vertexDrawOrder.size() - 2:
-		p->vertexDrawOrder.size();
-
-	// set the triangle-level S- and T-tangents
-	for (unsigned int vrtNr = 0; vrtNr < vrtMaxNr; vrtNr += stride) {
-		bool flipWinding = false;
-
-		if (p->primitiveType == PRIMTYPE_TRIANGLE_STRIP) {
-			flipWinding = ((vrtNr & 1) == 1); 
-		}
-
-		const int v0idx = p->vertexDrawOrder[vrtNr                      ];
-		const int v1idx = p->vertexDrawOrder[vrtNr + (flipWinding? 2: 1)];
-		const int v2idx = p->vertexDrawOrder[vrtNr + (flipWinding? 1: 2)];
-
-		if (v1idx == -1 || v2idx == -1) {
-			// not a valid triangle, skip
-			// to start of next tri-strip
-			vrtNr += 3; continue;
-		}
-
-		const VertexS3O* v0 = &p->vertices[v0idx];
-		const VertexS3O* v1 = &p->vertices[v1idx];
-		const VertexS3O* v2 = &p->vertices[v2idx];
-
-		const vec3f v1v0 = v1->pos - v0->pos;
-		const vec3f v2v0 = v2->pos - v0->pos;
-
-		const float sd1 = v1->textureX - v0->textureX; // u1u0
-		const float sd2 = v2->textureX - v0->textureX; // u2u0
-		const float td1 = v1->textureY - v0->textureY; // v1v0
-		const float td2 = v2->textureY - v0->textureY; // v2v0
-
-		// if d is 0, texcoors are degenerate
-		const float d = (sd1 * td2) - (sd2 * td1);
-		const bool b = (d > -0.001f && d < 0.001f);
-		const float r = b? 1.0f: 1.0f / d;
-
-		// sDir and tDir are orthogonal to the _triangle_ surface
-		// normal, not necessarily to the smoothed vertex normals
-		// _or_ to each other (but likely they will be very close
-		// to orthogonal)
-		// note: the matrix (T=sDir, B=tDir, N) transforms vectors
-		// in tangent space to object space however, while we want
-		// the inverse for our shader... this is easy IF sDir and
-		// tDir are orthogonal (M^-1 = M^T), which we assume here
-		const vec3f sDir = (v1v0 * -td2 + v2v0 * td1) * r;
-		const vec3f tDir = (v1v0 * -sd2 + v2v0 * sd1) * r;
-
-		// equal sDir, always inverted tDir (wrt. above expressions)
-		// const vec3f sDir((td2 * v1v0.x - td1 * v2v0.x) * r,  (td2 * v1v0.y - td1 * v2v0.y) * r,  (td2 * v1v0.z - td1 * v2v0.z) * r);
-		// const vec3f tDir((sd1 * v2v0.x - sd2 * v1v0.x) * r,  (sd1 * v2v0.y - sd2 * v1v0.y) * r,  (sd1 * v2v0.z - sd2 * v1v0.z) * r);
-
-		TriangleS3O tri;
-			tri.v0idx = v0idx;
-			tri.v1idx = v1idx;
-			tri.v2idx = v2idx;
-			tri.sTangent = sDir;
-			tri.tTangent = tDir;
-		triangles.push_back(tri);
-
-		// save the triangle index
-		verts2tris[v0idx].push_back(triangles.size() - 1);
-		verts2tris[v1idx].push_back(triangles.size() - 1);
-		verts2tris[v2idx].push_back(triangles.size() - 1);
-	}
-
-	// set the per-vertex tangents (for each vertex, this
-	// is the average of the tangents of all the triangles
-	// used by it)
-	for (unsigned int vrtNr = 0; vrtNr < p->vertexCount; vrtNr++) {
-		for (unsigned int triNr = 0; triNr < verts2tris[vrtNr].size(); triNr++) {
-			const unsigned int triIdx = verts2tris[vrtNr][triNr];
-			const TriangleS3O& tri    = triangles[triIdx];
-
-			p->sTangents[vrtNr] += tri.sTangent;
-			p->tTangents[vrtNr] += tri.tTangent;
-		}
-
-		vec3f& s = p->sTangents[vrtNr];
-		vec3f& t = p->tTangents[vrtNr];
-		vec3f& n = p->vertices[vrtNr].normal;
-		int h = 1; // handedness
-
-		if (isnan(n.x) || isnan(n.y) || isnan(n.z)) {
-			n = vec3f(0.0f, 1.0f, 0.0f);
-		}
-
-		// note: we create smoothed S- and T-tangents,
-		// but these possibly do not form an orthogonal
-		// basis so we must? perform Gram-Schmidt here
-		// s = (s - (n * (n.dot3D(s)))).norm();
-		// t = (t - (n * (n.dot3D(t))) - (s * s.dot3D(t))).norm();
-		// h = ((s.cross(t)).dot3D(n) >= 0.0f)? 1: -1; same as
-		// h = ((n.cross(s)).dot3D(t) >= 0.0f)? 1: -1;
-
-		s = (s - (n * s.dot3D(n))).norm();
-		h = ((s.cross(t)).dot3D(n) >= 0.0f)? 1: -1;
-		t = (s.cross(n)).norm() * h;
-	}
-}
-
-
-void CModelReaderS3O::FindMinMax(PieceS3O* p) {
-	std::vector<PieceBase*>::iterator si;
-
-	// pieces with no children terminate the recursion
-	for (si = p->children.begin(); si != p->children.end(); ++si) {
-		FindMinMax(static_cast<PieceS3O*>(*si));
-	}
-
-	float maxx = -1000.0f, maxy = -1000.0f, maxz = -1000.0f;
-	float minx = 10000.0f, miny = 10000.0f, minz = 10000.0f;
-
-	std::vector<VertexS3O>::iterator vi;
-
-	for (vi = p->vertices.begin(); vi != p->vertices.end(); ++vi) {
-		maxx = std::max(maxx, vi->pos.x);
-		maxy = std::max(maxy, vi->pos.y);
-		maxz = std::max(maxz, vi->pos.z);
-
-		minx = std::min(minx, vi->pos.x);
-		miny = std::min(miny, vi->pos.y);
-		minz = std::min(minz, vi->pos.z);
-	}
-
-	for (si = p->children.begin(); si != p->children.end(); ++si) {
-		maxx = std::max(maxx, (*si)->offset.x + (*si)->maxx);
-		maxy = std::max(maxy, (*si)->offset.y + (*si)->maxy);
-		maxz = std::max(maxz, (*si)->offset.z + (*si)->maxz);
-
-		minx = std::min(minx, (*si)->offset.x + (*si)->minx);
-		miny = std::min(miny, (*si)->offset.y + (*si)->miny);
-		minz = std::min(minz, (*si)->offset.z + (*si)->minz);
-	}
-
-	p->maxx = maxx;
-	p->maxy = maxy;
-	p->maxz = maxz;
-	p->minx = minx;
-	p->miny = miny;
-	p->minz = minz;
-}
-
-
 
 PieceBase* CModelReaderS3O::ClonePiece(PieceBase* src) const {
 	PieceS3O* dst = new PieceS3O();
-	assert(dst != 0x0);
+	assert(dst != NULL);
 	dst->type = src->type;
 	dst->name = src->name;
 	dst->vertexCount = src->vertexCount;
@@ -404,16 +205,11 @@ PieceBase* CModelReaderS3O::ClonePiece(PieceBase* src) const {
 	dst->offset = src->offset;
 	dst->isEmpty = src->isEmpty;
 
-	dst->maxx = src->maxx;
-	dst->maxy = src->maxy;
-	dst->maxz = src->maxz;
-
-	dst->minx = src->minx;
-	dst->miny = src->miny;
-	dst->minz = src->minz;
+	dst->maxs = src->maxs;
+	dst->mins = src->mins;
 
 	PieceS3O* dsrc = dynamic_cast<PieceS3O*>(src);
-	assert(dsrc != 0x0);
+	assert(dsrc != NULL);
 
 	for (unsigned int i = 0; i < dsrc->vertices.size(); i++) {
 		dst->vertices.push_back(dsrc->vertices[i]);
@@ -437,8 +233,8 @@ PieceBase* CModelReaderS3O::ClonePiece(PieceBase* src) const {
 
 ModelBase* CModelReaderS3O::CloneModel(const ModelBase* src) const {
 	ModelBase* dst = new ModelBase();
-	assert(src != 0x0);
-	assert(dst != 0x0);
+	assert(src != NULL);
+	assert(dst != NULL);
 
 	dst->drawer = src->drawer;
 	dst->texturer = src->texturer;
@@ -455,14 +251,128 @@ ModelBase* CModelReaderS3O::CloneModel(const ModelBase* src) const {
 	dst->height = src->height;
 	dst->relMidPos = src->relMidPos;
 
-	dst->maxx = src->maxx;
-	dst->maxy = src->maxy;
-	dst->maxz = src->maxz;
-
-	dst->minx = src->minx;
-	dst->miny = src->miny;
-	dst->minz = src->minz;
+	dst->maxs = src->maxs;
+	dst->mins = src->mins;
 
 	dst->rootPiece = ClonePiece(src->rootPiece);
 	return dst;
+}
+
+
+
+void PieceS3O::SetMinMaxExtends() {
+	for (std::vector<VertexS3O>::const_iterator vi = vertices.begin(); vi != vertices.end(); ++vi) {
+		mins.x = std::min(mins.x, (goffset.x + vi->pos.x));
+		mins.y = std::min(mins.y, (goffset.y + vi->pos.y));
+		mins.z = std::min(mins.z, (goffset.z + vi->pos.z));
+		maxs.x = std::max(maxs.x, (goffset.x + vi->pos.x));
+		maxs.y = std::max(maxs.y, (goffset.y + vi->pos.y));
+		maxs.z = std::max(maxs.z, (goffset.z + vi->pos.z));
+	}
+}
+
+void PieceS3O::SetVertexTangents() {
+	if (isEmpty || primitiveType == PRIMTYPE_QUADS) {
+		return;
+	}
+
+	sTangents.resize(vertexCount, NVECf);
+	tTangents.resize(vertexCount, NVECf);
+
+	unsigned stride = 0;
+
+	switch (primitiveType) {
+		case PRIMTYPE_TRIANGLES: {
+			stride = 3;
+		} break;
+		case PRIMTYPE_TRIANGLE_STRIP: {
+			stride = 1;
+		} break;
+	}
+
+	// for triangle strips, the piece vertex _indices_ are defined
+	// by the draw order of the vertices numbered <v, v + 1, v + 2>
+	// for v in [0, n - 2]
+	const unsigned vrtMaxNr = (stride == 1)?
+		vertexDrawOrder.size() - 2:
+		vertexDrawOrder.size();
+
+	// set the triangle-level S- and T-tangents
+	for (unsigned vrtNr = 0; vrtNr < vrtMaxNr; vrtNr += stride) {
+		bool flipWinding = false;
+
+		if (primitiveType == PRIMTYPE_TRIANGLE_STRIP) {
+			flipWinding = ((vrtNr & 1) == 1);
+		}
+
+		const int v0idx = vertexDrawOrder[vrtNr                      ];
+		const int v1idx = vertexDrawOrder[vrtNr + (flipWinding? 2: 1)];
+		const int v2idx = vertexDrawOrder[vrtNr + (flipWinding? 1: 2)];
+
+		if (v1idx == -1 || v2idx == -1) {
+			// not a valid triangle, skip
+			// to start of next tri-strip
+			vrtNr += 3; continue;
+		}
+
+		const VertexS3O* vrt0 = &vertices[v0idx];
+		const VertexS3O* vrt1 = &vertices[v1idx];
+		const VertexS3O* vrt2 = &vertices[v2idx];
+
+		const vec3f& p0 = vrt0->pos;
+		const vec3f& p1 = vrt1->pos;
+		const vec3f& p2 = vrt2->pos;
+
+		const vec3f tc0(vrt0->textureX, vrt0->textureY, -1.0f);
+		const vec3f tc1(vrt1->textureX, vrt1->textureY, -1.0f);
+		const vec3f tc2(vrt2->textureX, vrt2->textureY, -1.0f);
+
+		const float x1x0 = p1.x - p0.x, x2x0 = p2.x - p0.x;
+		const float y1y0 = p1.y - p0.y, y2y0 = p2.y - p0.y;
+		const float z1z0 = p1.z - p0.z, z2z0 = p2.z - p0.z;
+
+		const float s1 = tc1.x - tc0.x, s2 = tc2.x - tc0.x;
+		const float t1 = tc1.y - tc0.y, t2 = tc2.y - tc0.y;
+
+		// if d is 0, texcoors are degenerate
+		const float d = (s1 * t2 - s2 * t1);
+		const bool  b = (d > -0.0001f && d < 0.0001f);
+		const float r = b? 1.0f: 1.0f / d;
+
+		// note: not necessarily orthogonal to each other
+		// or to vertex normal (only to the triangle plane)
+		const vec3f sdir((t2 * x1x0 - t1 * x2x0) * r, (t2 * y1y0 - t1 * y2y0) * r, (t2 * z1z0 - t1 * z2z0) * r);
+		const vec3f tdir((s1 * x2x0 - s2 * x1x0) * r, (s1 * y2y0 - s2 * y1y0) * r, (s1 * z2z0 - s2 * z1z0) * r);
+
+		sTangents[v0idx] += sdir;
+		sTangents[v1idx] += sdir;
+		sTangents[v2idx] += sdir;
+
+		tTangents[v0idx] += tdir;
+		tTangents[v1idx] += tdir;
+		tTangents[v2idx] += tdir;
+	}
+
+	// set the smoothed per-vertex tangents
+	for (int vrtIdx = vertices.size() - 1; vrtIdx >= 0; vrtIdx--) {
+		vec3f& n = vertices[vrtIdx].normal;
+		vec3f& s = sTangents[vrtIdx];
+		vec3f& t = tTangents[vrtIdx];
+		int h = 1;
+
+		if (isnan(n.x) || isnan(n.y) || isnan(n.z)) {
+			n = vec3f(0.0f, 0.0f, 1.0f);
+		}
+		if (s == NVECf) { s = vec3f(1.0f, 0.0f, 0.0f); }
+		if (t == NVECf) { t = vec3f(0.0f, 1.0f, 0.0f); }
+
+		h = ((n.cross(s)).dot3D(t) < 0.0f)? -1: 1;
+		s = (s - n * n.dot3D(s));
+		s = s.norm();
+		t = (s.cross(n)) * h;
+
+		// t = (s.cross(n));
+		// h = ((s.cross(t)).dot(n) >= 0.0f)? 1: -1;
+		// t = t * h;
+	}
 }

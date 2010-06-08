@@ -20,21 +20,33 @@ class CTextureHandlerBase;
 
 // generic base for 3DO and S3O model pieces
 struct PieceBase {
-	virtual ~PieceBase() {}
-	virtual const vec3f& GetVertexPos(const int idx) const = 0;
-
-
 	std::string name;
 	std::vector<PieceBase*> children;
 
+	PieceBase* parent;
+
+	bool isEmpty;
 	unsigned int vertexCount;
 	unsigned int displayListID;
-	vec3f offset;
-	bool isEmpty;
-	float maxx, maxy, maxz;
-	float minx, miny, minz;
 
-	ModelType type;
+	// MODELTYPE_*
+	int type;
+
+	vec3f mins;
+	vec3f maxs;
+	vec3f offset;    // wrt. parent
+	vec3f goffset;   // wrt. root
+
+	virtual ~PieceBase() {}
+	virtual void DrawList() const = 0;
+	virtual int GetVertexCount() const { return vertexCount; }
+	virtual int GetNormalCount() const { return 0; }
+	virtual int GetTxCoorCount() const { return 0; }
+	virtual void SetMinMaxExtends() {}
+	virtual void SetVertexTangents() {}
+	virtual const vec3f& GetVertexPos(int) const = 0;
+	virtual void Shatter(vec3f, int, int, const vec3f&, const vec3f&) const {}
+	void DrawStatic() const;
 };
 
 // generic base for 3DO and S3O models (piece hierarchies)
@@ -54,23 +66,22 @@ struct ModelBase {
 		delete p;
 	}
 
+	int type;               //! MODELTYPE_*
+	int textureType;        //! FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
 
-	PieceBase* rootPiece;
-	int numObjects;
-	float radius;
-	float height;
 	std::string name;
-	float maxx, maxy, maxz;
-	float minx, miny, minz;
-	vec3f relMidPos;
-
-	ModelType type;
-	// 0: 3DO, otherwise S3O
-	int textureType;
-
 	std::string tex1;
 	std::string tex2;
 
+	int numObjects;
+	float radius;
+	float height;
+
+	vec3f mins;
+	vec3f maxs;
+	vec3f relMidPos;
+
+	PieceBase* rootPiece;
 	CModelDrawerBase* drawer;
 	CTextureHandlerBase* texturer;
 };
