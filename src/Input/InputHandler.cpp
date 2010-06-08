@@ -83,7 +83,7 @@ void CInputHandler::Update() {
 			} break;
 
 			case SDL_ACTIVEEVENT: {
-				WindowResized(&event);
+				WindowExposed(&event);
 			} break;
 
 
@@ -187,6 +187,15 @@ void CInputHandler::MouseMoved(SDL_Event* e) {
 			(*it)->MouseMoved(e->motion.x, e->motion.y, e->motion.xrel, e->motion.yrel);
 		}
 	}
+
+	if (ENG->GetMouseLook()) {
+		// re-center the mouse and eat the event it generates
+		// note: this can also eat MouseReleased() events and
+		// cause auto-move unless WE update the mouse state
+		SDL_WarpMouse(WIN->GetWindowSizeX() >> 1, WIN->GetWindowSizeY() >> 1);
+		SDL_Event e;
+		while (SDL_PollEvent(&e)) {}
+	}
 }
 void CInputHandler::MousePressed(SDL_Event* e) {
 	const int button = (e->button).button;
@@ -199,6 +208,11 @@ void CInputHandler::MousePressed(SDL_Event* e) {
 			(*it)->MousePressed(button, e->motion.x, e->motion.y, repeat);
 		}
 	}
+
+	if (!repeat) {
+		INP->SetLastMouseButton(button);
+		INP->SetLastMouseCoors(e->motion.x, e->motion.y);
+	}
 }
 void CInputHandler::MouseReleased(SDL_Event* e) {
 	buts[(e->button).button] = 0;
@@ -208,6 +222,9 @@ void CInputHandler::MouseReleased(SDL_Event* e) {
 			(*it)->MouseReleased((e->button).button, e->motion.x, e->motion.y);
 		}
 	}
+
+	INP->SetLastMouseButton(-1);
+	INP->SetLastMouseCoors(e->motion.x, e->motion.y);
 }
 
 void CInputHandler::KeyPressed(SDL_Event* e) {
@@ -236,7 +253,17 @@ void CInputHandler::KeyReleased(SDL_Event* e) {
 	}
 }
 
-void CInputHandler::WindowExposed(SDL_Event*) {
+void CInputHandler::WindowExposed(SDL_Event* e) {
+	if (e->type == SDL_ACTIVEEVENT) {
+		// possible masks are
+		//     SDL_APPACTIVE (gain 0 means hidden, gain 1 means restored)
+		//     SDL_APPMOUSEFOCUS
+		//     SDL_APPINPUTFOCUS
+		if (e->active.state & SDL_APPACTIVE) {
+			ENG->SetWantDraw(e->active.gain);
+		}
+	}
+
 	for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
 		if ((*it)->InputEnabled()) {
 			(*it)->WindowExposed();
@@ -244,27 +271,11 @@ void CInputHandler::WindowExposed(SDL_Event*) {
 	}
 }
 void CInputHandler::WindowResized(SDL_Event* e) {
-	switch (e->type) {
-		case SDL_VIDEORESIZE: {
-			for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
-				if ((*it)->InputEnabled()) {
-					(*it)->WindowResized(e->resize.w, e->resize.h, -1);
-				}
-			}
-		} break;
+	assert(e->type == SDL_VIDEORESIZE);
 
-		case SDL_ACTIVEEVENT: {
-			// possible masks are
-			//     SDL_APPACTIVE (gain 0: hidden, gain 1: restored)
-			//     SDL_APPMOUSEFOCUS
-			//     SDL_APPINPUTFOCUS
-			if (e->active.state & SDL_APPACTIVE) {
-				for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
-					if ((*it)->InputEnabled()) {
-						(*it)->WindowResized(-1, -1, e->active.gain);
-					}
-				}
-			}
-		} break;
+	for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
+		if ((*it)->InputEnabled()) {
+			(*it)->WindowResized(e->resize.w, e->resize.h);
+		}
 	}
 }

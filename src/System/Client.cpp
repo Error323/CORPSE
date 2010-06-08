@@ -155,31 +155,6 @@ void CClient::SendNetMessage(const NetMessage& m) {
 
 
 
-void CClient::MouseMoved(int, int, int, int) {
-	if (ENG->GetMouseLook()) {
-		// re-center the mouse and eat the event it generates
-		// note: this can also eat MouseReleased() events and
-		// cause auto-move unless WE update the mouse state
-		SDL_WarpMouse(mScreen->w >> 1, mScreen->h >> 1);
-		SDL_Event e;
-		while (SDL_PollEvent(&e)) {}
-	}
-}
-
-void CClient::MousePressed(int button, int x, int y, bool repeat) {
-	if (!repeat) {
-		INP->SetLastMouseButton(button);
-		INP->SetLastMouseCoors(x, y);
-	}
-}
-
-void CClient::MouseReleased(int, int x, int y) {
-	INP->SetLastMouseButton(-1);
-	INP->SetLastMouseCoors(x, y);
-}
-
-
-
 void CClient::KeyPressed(int sdlKeyCode, bool repeat) {
 	if (!repeat) {
 		switch (sdlKeyCode) {
@@ -224,12 +199,8 @@ void CClient::KeyPressed(int sdlKeyCode, bool repeat) {
 
 
 
-void CClient::WindowResized(int nx, int ny, int gain) {
-	switch (gain) {
-		case -1: { SetWindowSize(nx, ny); } break;
-		case  0: { ENG->SetWantDraw(false); } break;
-		case  1: { ENG->SetWantDraw(true);  } break;
-	}
+void CClient::WindowResized(int nx, int ny) {
+	SetWindowSize(nx, ny);
 }
 
 void CClient::WindowExposed() {
@@ -276,7 +247,6 @@ void CClient::InitSDL(const char* caption) {
 	LOG << "\tlinked major, minor, patch: " << lib.major << ", " << lib.minor << ", " << lib.patch << "\n";
 }
 
-// called on resize
 void CClient::SetSDLWindowVideoMode() {
 	// set the video mode (32 bits per pixel, etc)
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,      (ENG->GetBitsPerPixel() >> 2));

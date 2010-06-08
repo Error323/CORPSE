@@ -26,11 +26,8 @@ public:
 	void ParseArgs(int, char**);
 	void Update();
 
-	void MouseMoved(int, int, int, int);
-	void MousePressed(int, int, int, bool);
-	void MouseReleased(int, int, int);
 	void KeyPressed(int, bool);
-	void WindowResized(int, int, int);
+	void WindowResized(int, int);
 	void WindowExposed();
 
 private:

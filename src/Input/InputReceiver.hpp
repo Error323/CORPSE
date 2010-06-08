@@ -13,7 +13,7 @@ class CInputReceiver {
 		virtual void KeyReleased(int) {}
 
 		virtual void WindowExposed() {}
-		virtual void WindowResized(int, int, int) {}
+		virtual void WindowResized(int, int) {}
 
 		virtual bool InputEnabled() const { return inputEnabled; }
 		virtual void EnableInput() { inputEnabled = true; }
