@@ -183,6 +183,11 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 
 		for (std::set<unsigned int>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
 			const SimObject* obj = simObjectHandler->GetSimObject(*it);
+
+			if (!eye->InView(obj->GetPos())) {
+				continue;
+			}
+
 			const mat44f& mat = obj->GetMat();
 			const LocalModel* lm = obj->GetModel();
 			const ModelBase* mb = lm->GetModelBase();
