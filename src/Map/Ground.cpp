@@ -381,7 +381,7 @@ float CGround::TrajectoryGroundCol(vec3f& from, const vec3f& flatdir, float leng
 
 	vec3f dir(flatdir.x, linear, flatdir.z);
 
-	for (float l = 0.0f; l < length; l += SQUARE_SIZE) {
+	for (float l = 0.0f; l < length; l += readMap->SQUARE_SIZE) {
 		vec3f pos(from + dir * l);
 		pos.y += quadratic * l * l;
 
