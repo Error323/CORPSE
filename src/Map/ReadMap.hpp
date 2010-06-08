@@ -102,6 +102,10 @@ public:
 
 	inline vec3f square2pos(int x, int z) { return vec3f(x * SQUARE_SIZE, centerheightmap[z * mapx + x], z * SQUARE_SIZE); }
 	inline int pos2square(const vec3f& pos) { return ((int(pos.z / SQUARE_SIZE) * (mapx + 1)) + int(pos.x / SQUARE_SIZE)); }
+	inline void SetPosInBounds(vec3f& pos) {
+		pos.x = std::max(0.0f, std::min(maxxpos, pos.x));
+		pos.z = std::max(0.0f, std::min(maxzpos, pos.z));
+	}
 
 	// copied from GS and float3; set in CSM{F, 3}ReadMap
 	int mapSquares;

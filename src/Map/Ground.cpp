@@ -38,23 +38,20 @@ float CGround::LineGroundCol(vec3f from, vec3f to) {
 		from += dir * savedLength;
 	}
 
-	if (from.x <             0.0f) { from.x =             0.0f; }
-	if (from.x > readMap->maxxpos) { from.x = readMap->maxxpos; }
-	if (from.z <             0.0f) { from.z =             0.0f; }
-	if (from.z > readMap->maxzpos) { from.z = readMap->maxzpos; }
+	readMap->SetPosInBounds(from);
 
 	vec3f dir = to - from;
 	float maxLength = dir.len3D();
 	dir /= maxLength;
 
-	if (from.x + dir.x * maxLength < 1.0f)
+	if ((from.x + dir.x * maxLength) < 1.0f)
 		maxLength = (1.0f - from.x) / dir.x;
-	else if (from.x + dir.x * maxLength > readMap->maxxpos)
+	else if ((from.x + dir.x * maxLength) > readMap->maxxpos)
 		maxLength = (readMap->maxxpos - from.x) / dir.x;
 
-	if (from.z + dir.z * maxLength < 1.0f)
+	if ((from.z + dir.z * maxLength) < 1.0f)
 		maxLength = (1.0f - from.z) / dir.z;
-	else if (from.z + dir.z * maxLength > readMap->maxzpos)
+	else if ((from.z + dir.z * maxLength) > readMap->maxzpos)
 		maxLength = (readMap->maxzpos - from.z) / dir.z;
 
 	to = from + dir * maxLength;
@@ -114,10 +111,10 @@ float CGround::LineGroundCol(vec3f from, vec3f to) {
 			// add one digit and (xp*constant) reduces to xp itself
 			// This accuracy means that at (16384,16384) (lower right of 32x32 map)
 			// 1 in every 1/(16384*1e-7f/8)=4883 clicks on the map will be ignored.
-			if (dx > 0.0f) xs = floor(xp * 1.0000001f / sqSz);
-			else           xs = floor(xp * 0.9999999f / sqSz);
-			if (dz > 0.0f) zs = floor(zp * 1.0000001f / sqSz);
-			else           zs = floor(zp * 0.9999999f / sqSz);
+			if (dx > 0.0f) { xs = floor(xp * 1.0000001f / sqSz); }
+			else           { xs = floor(xp * 0.9999999f / sqSz); }
+			if (dz > 0.0f) { zs = floor(zp * 1.0000001f / sqSz); }
+			else           { zs = floor(zp * 0.9999999f / sqSz); }
 
 			ret = LineGroundSquareCol(from, to, (int) xs, (int) zs);
 			if (ret >= 0.0f) {
@@ -158,8 +155,9 @@ float CGround::LineGroundCol(vec3f from, vec3f to) {
 }
 
 float CGround::LineGroundSquareCol(const vec3f& from, const vec3f& to, int xs, int ys) {
-	if ((xs < 0) || (ys < 0) || (xs >= readMap->mapx - 1) || (ys >= readMap->mapy - 1))
+	if ((xs < 0) || (ys < 0) || (xs > readMap->maxxpos) || (ys > readMap->maxzpos)) {
 		return -1;
+	}
 
 	vec3f dir = to - from;
 	vec3f tri;
@@ -217,12 +215,13 @@ float CGround::GetApproximateHeight(float x, float y) {
 
 	if (xsquare < 0)
 		xsquare = 0;
-	else if (xsquare > readMap->mapx - 1)
-		xsquare = readMap->mapx - 1;
+	else if (xsquare > readMap->maxxpos)
+		xsquare = readMap->maxxpos;
+
 	if (ysquare < 0)
 		ysquare = 0;
-	else if (ysquare > readMap->mapy - 1)
-		ysquare = readMap->mapy - 1;
+	else if (ysquare > readMap->maxzpos)
+		ysquare = readMap->maxzpos;
 
 	return readMap->centerheightmap[xsquare + ysquare * readMap->mapx];
 }
@@ -289,10 +288,11 @@ float CGround::GetOrigHeight(float x, float y) {
 		float ydif = (1.0f - dy) * (orgheightmap[hs +                 1] - orgheightmap[hs + 1 + 1 + readMap->mapx]);
 		r = orgheightmap[hs + 1 + 1 + readMap->mapx] + xdif + ydif;
 	}
+
 	return r;
 }
 
-// note: not called for SMF rendering purposes (see SMFReadMap::GetLightValue())
+// note: not called for rendering purposes (see SMFReadMap::GetLightValue())
 vec3f& CGround::GetNormal(float x, float y) {
 	if (x < 1.0f)
 		x = 1.0f;
@@ -325,7 +325,7 @@ float CGround::GetSlope(float x, float y) {
 	return (1.0f - readMap->facenormals[(int(x) / sqSz + int(y) / sqSz * readMap->mapx) * 2].y);
 }
 
-// note: not called for SMF rendering purposes (see SMFReadMap::GetLightValue())
+// note: not called for rendering purposes (see SMFReadMap::GetLightValue())
 vec3f CGround::GetSmoothNormal(float x, float y) {
 	const int sqSz = readMap->SQUARE_SIZE;
 
@@ -376,12 +376,12 @@ vec3f CGround::GetSmoothNormal(float x, float y) {
 	return norm1;
 }
 
-float CGround::TrajectoryGroundCol(const vec3f& from, const vec3f& flatdir, float length, float linear, float quadratic) {
-	/// from.CheckInBounds();
+float CGround::TrajectoryGroundCol(vec3f& from, const vec3f& flatdir, float length, float linear, float quadratic) {
+	readMap->SetPosInBounds(from);
 
 	vec3f dir(flatdir.x, linear, flatdir.z);
 
-	for (float l = 0.0f; l < length; l += 8.0f) {
+	for (float l = 0.0f; l < length; l += SQUARE_SIZE) {
 		vec3f pos(from + dir * l);
 		pos.y += quadratic * l * l;
 
@@ -395,6 +395,6 @@ float CGround::TrajectoryGroundCol(const vec3f& from, const vec3f& flatdir, floa
 
 inline int GetSquare(const vec3f& pos) {
 	return
-		std::max(0, std::min(readMap->mapx - 1, (int(pos.x) / readMap->SQUARE_SIZE))) +
-		std::max(0, std::min(readMap->mapy - 1, (int(pos.z) / readMap->SQUARE_SIZE))) * readMap->mapx;
+		std::max(0, std::min(readMap->maxxpos, (int(pos.x) / readMap->SQUARE_SIZE))) +
+		std::max(0, std::min(readMap->maxzpos, (int(pos.z) / readMap->SQUARE_SIZE))) * readMap->mapx;
 };
