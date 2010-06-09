@@ -106,8 +106,8 @@ void SimObjectSelector::DrawSelection() {
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LINE_BIT);
 			glDisable(GL_DEPTH_TEST);
 			glColor3f(1.0f, 0.0f, 0.0f);
-			glLineWidth(5.0f);
-			glBegin(GL_LINES);
+			glLineWidth(2.0f);
+			glBegin(GL_LINE_LOOP);
 				glVertex2f(tlxc / WIN->GetViewPortSizeX(), tlyc / WIN->GetViewPortSizeY());
 				glVertex2f(trxc / WIN->GetViewPortSizeX(), tryc / WIN->GetViewPortSizeY());
 				glVertex2f(brxc / WIN->GetViewPortSizeX(), bryc / WIN->GetViewPortSizeY());
