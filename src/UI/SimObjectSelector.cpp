@@ -25,8 +25,8 @@ void SimObjectSelector::StartSelection(int x, int y) {
 	if (!camera->Active()) {
 		ClearSelection();
 
-		selectionStartPos2D.x = x;
-		selectionStartPos2D.y = y;
+		selectionStartPos2D.x = x; selectionFinishPos2D.x = x;
+		selectionStartPos2D.y = y; selectionFinishPos2D.y = y;
 
 		haveSelection = true;
 		activeSelection = true;
