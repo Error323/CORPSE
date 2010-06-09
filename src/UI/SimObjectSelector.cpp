@@ -4,6 +4,7 @@
 
 #include "./SimObjectSelector.hpp"
 #include "../Map/Ground.hpp"
+#include "../Math/Geom.hpp"
 #include "../Renderer/RenderThread.hpp"
 #include "../Renderer/CameraController.hpp"
 #include "../Renderer/Camera.hpp"
@@ -109,13 +110,6 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 			const vec3i minsIdx = grid->GetCellIdx(selectionBounds3D[0], true);
 			const vec3i maxsIdx = grid->GetCellIdx(selectionBounds3D[1], true);
 
-			const vec3f selectionEdges[4] = {
-				selectionCoors3D[1] - selectionCoors3D[0],
-				selectionCoors3D[2] - selectionCoors3D[1],
-				selectionCoors3D[3] - selectionCoors3D[2],
-				selectionCoors3D[0] - selectionCoors3D[3],
-			};
-
 			// visit the grid-cells within the bounding-box
 			for (int i = minsIdx.x; i <= maxsIdx.x; i++) {
 				for (int j = minsIdx.z; j <= maxsIdx.z; j++) {
@@ -123,8 +117,18 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 					const std::list<const SimObject*> objects = cell.GetObjects();
 
 					for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it) {
-						if (false) {
-							selectedObjectIDs.push_back((*it)->GetID()); // TODO
+						const vec3f& pos = (*it)->GetPos();
+
+						const float edgeDist0 = geom::PointLineDistance(selectionCoors3D[1], selectionCoors3D[0], pos);
+						const float edgeDist1 = geom::PointLineDistance(selectionCoors3D[2], selectionCoors3D[1], pos);
+						const float edgeDist2 = geom::PointLineDistance(selectionCoors3D[3], selectionCoors3D[2], pos);
+						const float edgeDist3 = geom::PointLineDistance(selectionCoors3D[0], selectionCoors3D[3], pos);
+
+						const bool b0 = (edgeDist0 < 0.0f && edgeDist1 < 0.0f && edgeDist2 < 0.0f && edgeDist3 < 0.0f);
+						const bool b1 = (edgeDist0 > 0.0f && edgeDist1 > 0.0f && edgeDist2 > 0.0f && edgeDist3 > 0.0f);
+
+						if (b0 || b1) {
+							selectedObjectIDs.push_back((*it)->GetID());
 						}
 					}
 				}
