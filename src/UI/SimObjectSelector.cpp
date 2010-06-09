@@ -92,7 +92,7 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 				const vec3f& brPos = selectionCoors3D[2];
 				const vec3f& blPos = selectionCoors3D[3];
 
-				// AA bounding-box for the selection-rectangle
+				// AA bounding-box for the selection-rectangle corners
 				vec3f mins;
 					mins.x = std::min(tlPos.x, std::min(trPos.x, std::min(brPos.x, blPos.x)));
 					mins.y = std::min(tlPos.y, std::min(trPos.y, std::min(brPos.y, blPos.y)));
@@ -113,7 +113,7 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 				// visit the grid-cells within the bounding-box
 				for (int i = minsIdx.x; i <= maxsIdx.x; i++) {
 					for (int j = minsIdx.z; j <= maxsIdx.z; j++) {
-						SimObjectGrid<const SimObject*>::GridCell& cell = grid->GetCell(vec3i(i, 0, j));
+						const SimObjectGrid<const SimObject*>::GridCell& cell = grid->GetCell(vec3i(i, 0, j));
 						const std::list<const SimObject*> objects = cell.GetObjects();
 
 						for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it) {
