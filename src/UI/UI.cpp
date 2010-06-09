@@ -4,6 +4,7 @@
 
 #include "./UI.hpp"
 #include "./SimObjectSelector.hpp"
+#include "./SimObjectSpawner.hpp"
 #include "../Input/InputHandler.hpp"
 
 UI* UI::GetInstance() {
@@ -29,12 +30,14 @@ void UI::FreeInstance(UI* ui) {
 
 UI::UI(): mSimObjectSelector(NULL) {
 	mSimObjectSelector = new SimObjectSelector();
+	mSimObjectSpawner = new SimObjectSpawner();
 	inputHandler->AddReceiver(this);
 }
 
 UI::~UI() {
 	inputHandler->DelReceiver(this);
 	delete mSimObjectSelector;
+	delete mSimObjectSpawner;
 }
 
 void UI::Update() {
@@ -48,8 +51,12 @@ void UI::MouseMoved(int x, int y, int, int) {
 }
 
 void UI::MousePressed(int button, int x, int y, bool repeat) {
-	if (button == SDL_BUTTON_LEFT && !repeat) {
-		mSimObjectSelector->StartSelection(x, y);
+	switch (button) {
+		case SDL_BUTTON_LEFT: {
+			if (!repeat) {
+				mSimObjectSelector->StartSelection(x, y);
+			}
+		} break;
 	}
 }
 
@@ -57,6 +64,9 @@ void UI::MouseReleased(int button, int x, int y) {
 	switch (button) {
 		case SDL_BUTTON_LEFT: {
 			mSimObjectSelector->FinishSelection(x, y);
+		} break;
+		case SDL_BUTTON_MIDDLE: {
+			mSimObjectSpawner->SpawnObject(x, y);
 		} break;
 		case SDL_BUTTON_RIGHT: {
 			mSimObjectSelector->GiveSelectionOrder(x, y);

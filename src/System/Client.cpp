@@ -30,6 +30,7 @@ CClient* CClient::GetInstance(int argc, char** argv) {
 
 	if (c == NULL) {
 		assert(depth == 0);
+		assert(argc != 0 && argv != NULL);
 
 		depth += 1;
 		c = new CClient(argc, argv);

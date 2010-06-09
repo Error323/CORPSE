@@ -16,6 +16,7 @@ public:
 
 	unsigned int GetNumClients() const { return netBufs.size(); }
 	CNetMessageBuffer* GetNetMessageBuffer(unsigned int clientID) { return netBufs[clientID]; }
+	void SendNetMessage(const NetMessage&);
 
 	bool Update();
 
@@ -35,7 +36,6 @@ private:
 	~CServer() {}
 
 	void ReadNetMessages();
-	void SendNetMessage(const NetMessage&);
 
 	bool paused;
 

@@ -4,6 +4,7 @@
 #include "../Input/InputReceiver.hpp"
 
 struct SimObjectSelector;
+struct SimObjectSpawner;
 
 class UI: public CInputReceiver {
 public:
@@ -21,6 +22,7 @@ private:
 	~UI();
 
 	SimObjectSelector* mSimObjectSelector;
+	SimObjectSpawner* mSimObjectSpawner;
 };
 
 #endif

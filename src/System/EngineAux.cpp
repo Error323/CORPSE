@@ -24,7 +24,7 @@ void EngineAux::Init(int argCnt, char** argVec) {
 		exit(0);
 	}
 
-	srandom(time(0x0));
+	srandom(time(NULL));
 	getcwd(EngineAux::cwd, 1024);
 
 	EngineAux::argc = argCnt;

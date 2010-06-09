@@ -4,7 +4,6 @@
 
 #include "./SimObjectSelector.hpp"
 #include "../Map/Ground.hpp"
-#include "../Math/Geom.hpp"
 #include "../Renderer/RenderThread.hpp"
 #include "../Renderer/CameraController.hpp"
 #include "../Renderer/Camera.hpp"
@@ -14,6 +13,7 @@
 #include "../Sim/SimObjectHandler.hpp"
 #include "../Sim/SimObjectGrid.hpp"
 #include "../Sim/SimObject.hpp"
+#include "../System/Client.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/NetMessages.hpp"
 
@@ -113,8 +113,8 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 			// all four rays must have intersected the ground
 			SimObjectGrid<const SimObject*>* grid = simObjectHandler->GetSimObjectGrid();
 
-			const vec3i minsIdx = grid->GetCellIdx(selectionBounds3D[0], true);
-			const vec3i maxsIdx = grid->GetCellIdx(selectionBounds3D[1], true);
+			const vec3i& minsIdx = grid->GetCellIdx(selectionBounds3D[0], true);
+			const vec3i& maxsIdx = grid->GetCellIdx(selectionBounds3D[1], true);
 
 			const vec3f selectionEdgeDirs[4] = {
 				(selectionCoors3D[1] - selectionCoors3D[0]).norm(),
@@ -186,7 +186,7 @@ void SimObjectSelector::GiveSelectionOrder(int x, int y) {
 				m << (*it);
 			}
 
-			// client->SendNetMessage(m);
+			client->SendNetMessage(m);
 		}
 	}
 }

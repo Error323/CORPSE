@@ -126,6 +126,8 @@ SET(CORPSE_SOURCE
 	src/UI/UI.hpp
 	src/UI/SimObjectSelector.cpp
 	src/UI/SimObjectSelector.hpp
+	src/UI/SimObjectSpawner.cpp
+	src/UI/SimObjectSpawner.hpp
 )
 
 SET(PATHMODULE_SOURCE

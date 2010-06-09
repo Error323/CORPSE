@@ -24,6 +24,7 @@ public:
 	unsigned int GetClientID() const { return clientID; }
 
 	void SetNetMessageBuffer(CNetMessageBuffer* buf) { mNetBuf = buf; }
+	void SendNetMessage(const NetMessage&);
 
 	void ParseArgs(int, char**);
 	void Update();
@@ -37,7 +38,6 @@ private:
 	~CClient();
 
 	void ReadNetMessages();
-	void SendNetMessage(const NetMessage&);
 
 	void Init();
 	void InitSDL(const char*);
@@ -67,5 +67,7 @@ private:
 	// bi-directional comm. channel to server
 	CNetMessageBuffer* mNetBuf;
 };
+
+#define client (CClient::GetInstance(0, NULL))
 
 #endif
