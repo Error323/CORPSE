@@ -15,6 +15,7 @@ public:
 	void StartSelection(int, int);
 	void UpdateSelection(int, int);
 	void FinishSelection(int, int);
+	void GiveSelectionOrder(int, int);
 	void DrawSelection();
 
 private:

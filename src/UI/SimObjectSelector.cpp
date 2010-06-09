@@ -10,10 +10,12 @@
 #include "../Renderer/Camera.hpp"
 #include "../Renderer/VertexArray.hpp"
 #include "../Renderer/Models/ModelReaderBase.hpp"
+#include "../Sim/SimCommands.hpp"
 #include "../Sim/SimObjectHandler.hpp"
 #include "../Sim/SimObjectGrid.hpp"
 #include "../Sim/SimObject.hpp"
 #include "../System/EngineAux.hpp"
+#include "../System/NetMessages.hpp"
 
 void SimObjectSelector::ClearSelection() {
 	selectedObjectIDs.clear();
@@ -153,6 +155,38 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 					}
 				}
 			}
+		}
+	}
+}
+
+void SimObjectSelector::GiveSelectionOrder(int x, int y) {
+	if (activeSelection) { return; }
+	if (!haveSelection) { return; }
+
+	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+
+	if (!camera->Active()) {
+		const vec3f& dir = camera->GetPixelDir(x, y);
+		const float dst = ground->LineGroundCol(camera->pos, camera->pos + dir * camera->zFarDistance);
+		const vec3f pos = camera->pos + dir * dst;
+		const unsigned int msgSize =
+			(1 * sizeof(unsigned int)) +
+			(3 * sizeof(float)) +
+			(selectedObjectIDs.size() * sizeof(unsigned int));
+
+		if (dst > 0.0f) {
+			NetMessage m(CLIENT_MSG_SIMCOMMAND, msgSize);
+
+			m << COMMAND_MOVE_SIMOBJECT;
+			m << pos.x;
+			m << pos.y;
+			m << pos.z;
+
+			for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
+				m << (*it);
+			}
+
+			// client->SendNetMessage(m);
 		}
 	}
 }

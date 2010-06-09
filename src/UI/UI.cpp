@@ -54,7 +54,12 @@ void UI::MousePressed(int button, int x, int y, bool repeat) {
 }
 
 void UI::MouseReleased(int button, int x, int y) {
-	if (button == SDL_BUTTON_LEFT) {
-		mSimObjectSelector->FinishSelection(x, y);
+	switch (button) {
+		case SDL_BUTTON_LEFT: {
+			mSimObjectSelector->FinishSelection(x, y);
+		} break;
+		case SDL_BUTTON_RIGHT: {
+			mSimObjectSelector->GiveSelectionOrder(x, y);
+		}
 	}
 }
