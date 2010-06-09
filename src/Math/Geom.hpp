@@ -26,8 +26,9 @@ namespace geom {
 		float p;
 	};
 
-	float PointLineDistance(const vec3f& x1, const vec3f& x2, const vec3f& p) {
-		return (((p - x1).cross(p - x2)).len3D() / (x2 - x1).len3D());
+	// note: returns the absolute orthogonal distance from <p> to segment <AB>
+	float PointLineDistance(const vec3f& A, const vec3f& B, const vec3f& p) {
+		return (((p - A).cross(p - B)).len3D() / (B - A).len3D());
 	}
 }
 

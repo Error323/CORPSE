@@ -110,6 +110,13 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 			const vec3i minsIdx = grid->GetCellIdx(selectionBounds3D[0], true);
 			const vec3i maxsIdx = grid->GetCellIdx(selectionBounds3D[1], true);
 
+			const vec3f selectionEdgeDirs[4] = {
+				(selectionCoors3D[1] - selectionCoors3D[0]).norm(),
+				(selectionCoors3D[2] - selectionCoors3D[1]).norm(),
+				(selectionCoors3D[3] - selectionCoors3D[2]).norm(),
+				(selectionCoors3D[0] - selectionCoors3D[3]).norm(),
+			};
+
 			// visit the grid-cells within the bounding-box
 			for (int i = minsIdx.x; i <= maxsIdx.x; i++) {
 				for (int j = minsIdx.z; j <= maxsIdx.z; j++) {
@@ -119,16 +126,25 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 					for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it) {
 						const vec3f& pos = (*it)->GetPos();
 
-						const float edgeDist0 = geom::PointLineDistance(selectionCoors3D[1], selectionCoors3D[0], pos);
-						const float edgeDist1 = geom::PointLineDistance(selectionCoors3D[2], selectionCoors3D[1], pos);
-						const float edgeDist2 = geom::PointLineDistance(selectionCoors3D[3], selectionCoors3D[2], pos);
-						const float edgeDist3 = geom::PointLineDistance(selectionCoors3D[0], selectionCoors3D[3], pos);
+						const float
+							edgeDot0 = selectionEdgeDirs[0].dot3D((pos - selectionCoors3D[0]).norm()),
+							edgeDot1 = selectionEdgeDirs[1].dot3D((pos - selectionCoors3D[1]).norm()),
+							edgeDot2 = selectionEdgeDirs[2].dot3D((pos - selectionCoors3D[2]).norm()),
+							edgeDot3 = selectionEdgeDirs[3].dot3D((pos - selectionCoors3D[3]).norm());
+
+						/*
+						const float
+							edgeDist0 = geom::PointLineDistance(selectionCoors3D[1], selectionCoors3D[0], pos),
+							edgeDist1 = geom::PointLineDistance(selectionCoors3D[2], selectionCoors3D[1], pos),
+							edgeDist2 = geom::PointLineDistance(selectionCoors3D[3], selectionCoors3D[2], pos),
+							edgeDist3 = geom::PointLineDistance(selectionCoors3D[0], selectionCoors3D[3], pos);
 
 						const bool b0 = (edgeDist0 < 0.0f && edgeDist1 < 0.0f && edgeDist2 < 0.0f && edgeDist3 < 0.0f);
 						const bool b1 = (edgeDist0 > 0.0f && edgeDist1 > 0.0f && edgeDist2 > 0.0f && edgeDist3 > 0.0f);
+						*/
 
-						if (b0 || b1) {
-							selectedObjectIDs.push_back((*it)->GetID());
+						if (edgeDot0 > 0.0f && edgeDot1 > 0.0f && edgeDot2 > 0.0f && edgeDot3 > 0.0f) {
+							selectedObjectIDs.push_back((*it)->GetID()); printf("selected object %u\n", (*it)->GetID());
 						}
 					}
 				}
