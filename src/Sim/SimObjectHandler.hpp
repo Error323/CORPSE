@@ -31,6 +31,7 @@ public:
 
 	unsigned int GetNumSimObjects() const { return simObjectUsedIDs.size(); }
 	unsigned int GetMaxSimObjects() const { return simObjects.size(); }
+	bool IsValidSimObjectID(unsigned int id) const { return ((id < GetMaxSimObjects()) && (simObjects[id] != NULL)); }
 
 	SimObject* GetSimObject(unsigned int id) const { return simObjects[id]; }
 

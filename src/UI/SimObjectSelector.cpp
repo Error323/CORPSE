@@ -7,10 +7,11 @@
 #include "../Renderer/RenderThread.hpp"
 #include "../Renderer/CameraController.hpp"
 #include "../Renderer/Camera.hpp"
+#include "../Sim/SimObjectHandler.hpp"
 #include "../System/EngineAux.hpp"
 
 void SimObjectSelector::ClearSelection() {
-	selectedObjects.clear();
+	selectedObjectIDs.clear();
 
 	selectionStartPos2D.x = selectionStartPos2D.y = -1.0f;
 	selectionFinishPos2D.x = selectionFinishPos2D.y = -1.0f;
@@ -123,7 +124,10 @@ void SimObjectSelector::DrawSelection() {
 	} else {
 		if (haveSelection) {
 			// draw marker squares around selected objects
-			for (std::list<const SimObject*>::const_iterator it = selectedObjects.begin(); it != selectedObjects.end(); ++it) {
+			for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
+				if (simObjectHandler->IsValidSimObjectID(*it)) {
+					const SimObject* o = simObjectHandler->GetSimObject(*it);
+				}
 			}
 		}
 	}

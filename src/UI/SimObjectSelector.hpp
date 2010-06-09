@@ -6,8 +6,6 @@
 #include "../Math/vec3fwd.hpp"
 #include "../Math/vec3.hpp"
 
-class SimObject;
-
 struct SimObjectSelector {
 public:
 	SimObjectSelector(): haveSelection(false), activeSelection(false) {
@@ -26,7 +24,7 @@ private:
 	vec3f selectionStartPos2D;
 	vec3f selectionFinishPos2D;
 
-	std::list<const SimObject*> selectedObjects;
+	std::list<unsigned int> selectedObjectIDs;
 };
 
 #endif

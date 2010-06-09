@@ -69,7 +69,7 @@ unsigned int CallOutHandler::GetUsedSimObjectIDs(unsigned int* array, unsigned i
 }
 
 bool CallOutHandler::IsValidSimObjectID(unsigned int id) const {
-	return ((id < simObjectHandler->GetMaxSimObjects()) && (simObjectHandler->GetSimObject(id) != NULL));
+	return (simObjectHandler->IsValidSimObjectID(id));
 }
 
 
