@@ -220,7 +220,6 @@ void SimObjectSelector::DrawSelection() {
 				glEnable(GL_BLEND);
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
-				glBegin(GL_QUADS);
 
 				// draw marker squares around selected objects
 				for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
@@ -228,21 +227,20 @@ void SimObjectSelector::DrawSelection() {
 						const SimObject* obj = simObjectHandler->GetSimObject(*it);
 						const mat44f& mat = obj->GetMat();
 						const ModelBase* mdl = obj->GetModel()->GetModelBase();
-
-						const vec3f& pos = obj->GetPos();
 						const vec3f size = mdl->maxs - mdl->mins;
 
 						glPushMatrix();
-							glMultMatrixf(mat.m); // FIXME??
-							glVertex3f(pos.x - size.x * 0.5f, 0.0f, pos.z - size.z * 0.5f);
-							glVertex3f(pos.x + size.x * 0.5f, 0.0f, pos.z - size.z * 0.5f);
-							glVertex3f(pos.x + size.x * 0.5f, 0.0f, pos.z + size.z * 0.5f);
-							glVertex3f(pos.x - size.x * 0.5f, 0.0f, pos.z + size.z * 0.5f);
+							glMultMatrixf(mat.m);
+							glBegin(GL_QUADS);
+								glVertex3f(-size.x * 0.5f, 0.0f, -size.z * 0.5f);
+								glVertex3f( size.x * 0.5f, 0.0f, -size.z * 0.5f);
+								glVertex3f( size.x * 0.5f, 0.0f,  size.z * 0.5f);
+								glVertex3f(-size.x * 0.5f, 0.0f,  size.z * 0.5f);
+							glEnd();
 						glPopMatrix();
 					}
 				}
 
-				glEnd();
 			glPopAttrib();
 		}
 	}
