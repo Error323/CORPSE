@@ -101,8 +101,8 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 		const int h = selectionSquareSize2D.y;
 
 		// ignore spurious selections
-		if (selectionSquareSize2D.x >= -2 && selectionSquareSize2D.x <= 2) { ClearSelection(); return; }
-		if (selectionSquareSize2D.y >= -2 && selectionSquareSize2D.y <= 2) { ClearSelection(); return; }
+		if (selectionSquareSize2D.x >= -5 && selectionSquareSize2D.x <= 5) { ClearSelection(); return; }
+		if (selectionSquareSize2D.y >= -5 && selectionSquareSize2D.y <= 5) { ClearSelection(); return; }
 
 		if (selectionDists[0] > 0.0f && selectionDists[1] > 0.0f && selectionDists[2] > 0.0f && selectionDists[3] > 0.0f) {
 			// all four rays must have intersected the ground
@@ -161,8 +161,8 @@ void SimObjectSelector::DrawSelection() {
 	glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
 
 	if (activeSelection) {
-		if (selectionSquareSize2D.x >= -2 && selectionSquareSize2D.x <= 2) { return; }
-		if (selectionSquareSize2D.y >= -2 && selectionSquareSize2D.y <= 2) { return; }
+		if (selectionSquareSize2D.x >= -5 && selectionSquareSize2D.x <= 5) { return; }
+		if (selectionSquareSize2D.y >= -5 && selectionSquareSize2D.y <= 5) { return; }
 
 		// draw the selection rectangle while it is being created
 		// (in relative screen-space, coordinate range is [-1, 1])
