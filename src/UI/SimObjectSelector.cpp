@@ -144,7 +144,7 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 						*/
 
 						if (edgeDot0 > 0.0f && edgeDot1 > 0.0f && edgeDot2 > 0.0f && edgeDot3 > 0.0f) {
-							selectedObjectIDs.push_back((*it)->GetID()); printf("selected object %u\n", (*it)->GetID());
+							selectedObjectIDs.push_back((*it)->GetID());
 						}
 					}
 				}
