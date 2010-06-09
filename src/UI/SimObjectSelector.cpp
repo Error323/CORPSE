@@ -9,6 +9,7 @@
 #include "../Renderer/Camera.hpp"
 #include "../Sim/SimObjectHandler.hpp"
 #include "../Sim/SimObjectGrid.hpp"
+#include "../Sim/SimObject.hpp"
 #include "../System/EngineAux.hpp"
 
 void SimObjectSelector::ClearSelection() {
@@ -103,6 +104,25 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 
 				selectionBounds3D[0] = mins;
 				selectionBounds3D[1] = maxs;
+
+				SimObjectGrid<const SimObject*>* grid = simObjectHandler->GetSimObjectGrid();
+
+				const vec3i minsIdx = grid->GetCellIdx(mins, true);
+				const vec3i maxsIdx = grid->GetCellIdx(maxs, true);
+
+				// visit the grid-cells within the bounding-box
+				for (int i = minsIdx.x; i <= maxsIdx.x; i++) {
+					for (int j = minsIdx.z; j <= maxsIdx.z; j++) {
+						SimObjectGrid<const SimObject*>::GridCell& cell = grid->GetCell(vec3i(i, 0, j));
+						const std::list<const SimObject*> objects = cell.GetObjects();
+
+						for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it) {
+							if (false) {
+								selectedObjectIDs.push_back((*it)->GetID());
+							}
+						}
+					}
+				}
 			}
 		}
 	}
