@@ -118,7 +118,7 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 
 						for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it) {
 							if (false) {
-								selectedObjectIDs.push_back((*it)->GetID());
+								selectedObjectIDs.push_back((*it)->GetID()); // TODO
 							}
 						}
 					}
@@ -208,7 +208,7 @@ void SimObjectSelector::DrawSelection() {
 			// draw marker squares around selected objects
 			for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
 				if (simObjectHandler->IsValidSimObjectID(*it)) {
-					const SimObject* o = simObjectHandler->GetSimObject(*it);
+					const SimObject* o = simObjectHandler->GetSimObject(*it); // TODO
 				}
 			}
 		}
