@@ -139,6 +139,9 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 
 void SimObjectSelector::DrawSelection() {
 	if (activeSelection) {
+		if (selectionSquareSize2D.x >= -2 && selectionSquareSize2D.x <= 2) { return; }
+		if (selectionSquareSize2D.y >= -2 && selectionSquareSize2D.y <= 2) { return; }
+
 		// draw the selection rectangle while it is being created
 		// (in relative screen-space, coordinate range is [-1, 1])
 		glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
