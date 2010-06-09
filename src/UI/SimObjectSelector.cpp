@@ -8,6 +8,7 @@
 #include "../Renderer/RenderThread.hpp"
 #include "../Renderer/CameraController.hpp"
 #include "../Renderer/Camera.hpp"
+#include "../Renderer/Models/ModelReaderBase.hpp"
 #include "../Sim/SimObjectHandler.hpp"
 #include "../Sim/SimObjectGrid.hpp"
 #include "../Sim/SimObject.hpp"
@@ -154,17 +155,17 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 }
 
 void SimObjectSelector::DrawSelection() {
+	Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+
+	glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
+
 	if (activeSelection) {
 		if (selectionSquareSize2D.x >= -2 && selectionSquareSize2D.x <= 2) { return; }
 		if (selectionSquareSize2D.y >= -2 && selectionSquareSize2D.y <= 2) { return; }
 
 		// draw the selection rectangle while it is being created
 		// (in relative screen-space, coordinate range is [-1, 1])
-		glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
-		glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
-
-		Camera* camera = renderThread->GetCamCon()->GetCurrCam();
-
 		const int w = selectionSquareSize2D.x;
 		const int h = selectionSquareSize2D.y;
 
@@ -211,18 +212,41 @@ void SimObjectSelector::DrawSelection() {
 				glVertex3f(p3.x, p3.y, p3.z);
 			glEnd();
 		glPopAttrib();
-
-
-		glMatrixMode(GL_PROJECTION); glPopMatrix();
-		glMatrixMode(GL_MODELVIEW); glPopMatrix();
 	} else {
 		if (haveSelection) {
-			// draw marker squares around selected objects
-			for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
-				if (simObjectHandler->IsValidSimObjectID(*it)) {
-					const SimObject* o = simObjectHandler->GetSimObject(*it); // TODO
+			camera->ApplyViewProjTransform();
+
+			glPushAttrib(GL_CURRENT_BIT | GL_LINE_BIT);
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
+				glBegin(GL_QUADS);
+
+				// draw marker squares around selected objects
+				for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
+					if (simObjectHandler->IsValidSimObjectID(*it)) {
+						const SimObject* obj = simObjectHandler->GetSimObject(*it);
+						const mat44f& mat = obj->GetMat();
+						const ModelBase* mdl = obj->GetModel()->GetModelBase();
+
+						const vec3f& pos = obj->GetPos();
+						const vec3f size = mdl->maxs - mdl->mins;
+
+						glPushMatrix();
+							glMultMatrixf(mat.m); // FIXME??
+							glVertex3f(pos.x - size.x * 0.5f, 0.0f, pos.z - size.z * 0.5f);
+							glVertex3f(pos.x + size.x * 0.5f, 0.0f, pos.z - size.z * 0.5f);
+							glVertex3f(pos.x + size.x * 0.5f, 0.0f, pos.z + size.z * 0.5f);
+							glVertex3f(pos.x - size.x * 0.5f, 0.0f, pos.z + size.z * 0.5f);
+						glPopMatrix();
+					}
 				}
-			}
+
+				glEnd();
+			glPopAttrib();
 		}
 	}
+
+	glMatrixMode(GL_PROJECTION); glPopMatrix();
+	glMatrixMode(GL_MODELVIEW); glPopMatrix();
 }

@@ -207,7 +207,7 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 					glBindTexture(GL_TEXTURE_2D, shadowHandler->GetDepthTextureID());
 
 					glPushMatrix();
-						glMultMatrixf(&rMat.m[0]);
+						glMultMatrixf(rMat.m);
 						mb->texturer->Bind(mb);
 						mb->drawer->Draw(mb->rootPiece);
 						mb->texturer->UnBind();
@@ -218,7 +218,7 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 				shObj->Disable();
 			} else {
 				glPushMatrix();
-					glMultMatrixf(&rMat.m[0]);
+					glMultMatrixf(rMat.m);
 					mb->drawer->Draw(mb->rootPiece);
 				glPopMatrix();
 			}
