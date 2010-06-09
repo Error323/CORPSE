@@ -98,31 +98,33 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 		const int w = selectionSquareSize2D.x;
 		const int h = selectionSquareSize2D.y;
 
-		if ((w >= -2 && w <= 2) || (h >= -2 && h <= 2)) {
-			ClearSelection();
-		} else {
-			const float tlDirDst = selectionDists[0];
-			const float trDirDst = selectionDists[1];
-			const float brDirDst = selectionDists[2];
-			const float blDirDst = selectionDists[3];
+		// ignore spurious selections
+		if (selectionSquareSize2D.x >= -2 && selectionSquareSize2D.x <= 2) { ClearSelection(); return; }
+		if (selectionSquareSize2D.y >= -2 && selectionSquareSize2D.y <= 2) { ClearSelection(); return; }
 
-			if (tlDirDst > 0.0f && trDirDst > 0.0f && brDirDst > 0.0f && blDirDst > 0.0f) {
-				// all four rays must intersect the ground
-				SimObjectGrid<const SimObject*>* grid = simObjectHandler->GetSimObjectGrid();
+		if (selectionDists[0] > 0.0f && selectionDists[1] > 0.0f && selectionDists[2] > 0.0f && selectionDists[3] > 0.0f) {
+			// all four rays must have intersected the ground
+			SimObjectGrid<const SimObject*>* grid = simObjectHandler->GetSimObjectGrid();
 
-				const vec3i minsIdx = grid->GetCellIdx(selectionBounds3D[0], true);
-				const vec3i maxsIdx = grid->GetCellIdx(selectionBounds3D[1], true);
+			const vec3i minsIdx = grid->GetCellIdx(selectionBounds3D[0], true);
+			const vec3i maxsIdx = grid->GetCellIdx(selectionBounds3D[1], true);
 
-				// visit the grid-cells within the bounding-box
-				for (int i = minsIdx.x; i <= maxsIdx.x; i++) {
-					for (int j = minsIdx.z; j <= maxsIdx.z; j++) {
-						const SimObjectGrid<const SimObject*>::GridCell& cell = grid->GetCell(vec3i(i, 0, j));
-						const std::list<const SimObject*> objects = cell.GetObjects();
+			const vec3f selectionEdges[4] = {
+				selectionCoors3D[1] - selectionCoors3D[0],
+				selectionCoors3D[2] - selectionCoors3D[1],
+				selectionCoors3D[3] - selectionCoors3D[2],
+				selectionCoors3D[0] - selectionCoors3D[3],
+			};
 
-						for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it) {
-							if (false) {
-								selectedObjectIDs.push_back((*it)->GetID()); // TODO
-							}
+			// visit the grid-cells within the bounding-box
+			for (int i = minsIdx.x; i <= maxsIdx.x; i++) {
+				for (int j = minsIdx.z; j <= maxsIdx.z; j++) {
+					const SimObjectGrid<const SimObject*>::GridCell& cell = grid->GetCell(vec3i(i, 0, j));
+					const std::list<const SimObject*> objects = cell.GetObjects();
+
+					for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it) {
+						if (false) {
+							selectedObjectIDs.push_back((*it)->GetID()); // TODO
 						}
 					}
 				}
