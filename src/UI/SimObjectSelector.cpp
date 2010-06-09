@@ -131,10 +131,10 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 	}
 }
 
-// draw the selection rectangle while it is being created
-// (in relative screen-space, coordinate range is [-1, 1])
 void SimObjectSelector::DrawSelection() {
 	if (activeSelection) {
+		// draw the selection rectangle while it is being created
+		// (in relative screen-space, coordinate range is [-1, 1])
 		glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
 		glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
 
