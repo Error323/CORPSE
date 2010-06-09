@@ -39,7 +39,10 @@ void SimObjectSelector::StartSelection(int x, int y) {
 void SimObjectSelector::UpdateSelection(int x, int y) {
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
-	if (!camera->Active() && haveSelection && activeSelection) {
+	if (!haveSelection) { return; }
+	if (!activeSelection) { return; }
+
+	if (!camera->Active()) {
 		selectionFinishPos2D.x = x;
 		selectionFinishPos2D.y = y;
 
@@ -168,20 +171,15 @@ void SimObjectSelector::DrawSelection() {
 		const vec3f& p2 = selectionCoors3D[2];
 		const vec3f& p3 = selectionCoors3D[3];
 
-		// draw the quad between the four WS positions (FIXME)
+		// draw the quad between the four WS positions
 		camera->ApplyViewProjTransform();
 
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
-			glDisable(GL_DEPTH_TEST);
+			glEnable(GL_DEPTH_TEST);
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
 			glBegin(GL_QUADS);
-				glVertex3f(p0.x, p0.y, p0.z);
-				glVertex3f(p1.x, p1.y, p1.z);
-				glVertex3f(p2.x, p2.y, p2.z);
-				glVertex3f(p3.x, p3.y, p3.z);
-
 				glVertex3f(p0.x, p0.y, p0.z);
 				glVertex3f(p1.x, p1.y, p1.z);
 				glVertex3f(p2.x, p2.y, p2.z);
