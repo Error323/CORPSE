@@ -62,6 +62,24 @@ void SimObjectSelector::UpdateSelection(int x, int y) {
 		selectionCoors3D[1] = camera->pos + selectionDirs3D[1] * selectionDists[1];
 		selectionCoors3D[2] = camera->pos + selectionDirs3D[2] * selectionDists[2];
 		selectionCoors3D[3] = camera->pos + selectionDirs3D[3] * selectionDists[3];
+
+		const vec3f& tlPos = selectionCoors3D[0];
+		const vec3f& trPos = selectionCoors3D[1];
+		const vec3f& blPos = selectionCoors3D[2];
+		const vec3f& brPos = selectionCoors3D[3];
+
+		selectionBounds3D[0] = NVECf;
+		selectionBounds3D[1] = NVECf;
+
+		// AA bounding-box for the selection-rectangle corners
+		vec3f& mins = selectionBounds3D[0];
+			mins.x = std::min(tlPos.x, std::min(trPos.x, std::min(brPos.x, blPos.x)));
+			mins.y = std::min(tlPos.y, std::min(trPos.y, std::min(brPos.y, blPos.y)));
+			mins.z = std::min(tlPos.z, std::min(trPos.z, std::min(brPos.z, blPos.z)));
+		vec3f& maxs = selectionBounds3D[1];
+			maxs.x = std::max(tlPos.x, std::max(trPos.x, std::max(brPos.x, blPos.x)));
+			maxs.y = std::max(tlPos.y, std::max(trPos.y, std::max(brPos.y, blPos.y)));
+			maxs.z = std::max(tlPos.z, std::max(trPos.z, std::max(brPos.z, blPos.z)));
 	}
 }
 
@@ -87,28 +105,10 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 
 			if (tlDirDst > 0.0f && trDirDst > 0.0f && brDirDst > 0.0f && blDirDst > 0.0f) {
 				// all four rays must intersect the ground
-				const vec3f& tlPos = selectionCoors3D[0];
-				const vec3f& trPos = selectionCoors3D[1];
-				const vec3f& brPos = selectionCoors3D[2];
-				const vec3f& blPos = selectionCoors3D[3];
-
-				// AA bounding-box for the selection-rectangle corners
-				vec3f mins;
-					mins.x = std::min(tlPos.x, std::min(trPos.x, std::min(brPos.x, blPos.x)));
-					mins.y = std::min(tlPos.y, std::min(trPos.y, std::min(brPos.y, blPos.y)));
-					mins.z = std::min(tlPos.z, std::min(trPos.z, std::min(brPos.z, blPos.z)));
-				vec3f maxs;
-					maxs.x = std::max(tlPos.x, std::max(trPos.x, std::max(brPos.x, blPos.x)));
-					maxs.y = std::max(tlPos.y, std::max(trPos.y, std::max(brPos.y, blPos.y)));
-					maxs.z = std::max(tlPos.z, std::max(trPos.z, std::max(brPos.z, blPos.z)));
-
-				selectionBounds3D[0] = mins;
-				selectionBounds3D[1] = maxs;
-
 				SimObjectGrid<const SimObject*>* grid = simObjectHandler->GetSimObjectGrid();
 
-				const vec3i minsIdx = grid->GetCellIdx(mins, true);
-				const vec3i maxsIdx = grid->GetCellIdx(maxs, true);
+				const vec3i minsIdx = grid->GetCellIdx(selectionBounds3D[0], true);
+				const vec3i maxsIdx = grid->GetCellIdx(selectionBounds3D[1], true);
 
 				// visit the grid-cells within the bounding-box
 				for (int i = minsIdx.x; i <= maxsIdx.x; i++) {
@@ -163,26 +163,10 @@ void SimObjectSelector::DrawSelection() {
 		glPopAttrib();
 
 
-		/*
-		camera->ApplyViewProjTransform();
-
-		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-			glEnable(GL_BLEND);
-			glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
-			glBegin(GL_QUADS);
-				glVertex3f(selectionCoors3D[0].x, selectionBounds3D[1].y + 100.0f, selectionCoors3D[0].z);
-				glVertex3f(selectionCoors3D[1].x, selectionBounds3D[1].y + 100.0f, selectionCoors3D[1].z);
-				glVertex3f(selectionCoors3D[2].x, selectionBounds3D[1].y + 100.0f, selectionCoors3D[2].z);
-				glVertex3f(selectionCoors3D[3].x, selectionBounds3D[1].y + 100.0f, selectionCoors3D[3].z);
-			glEnd();
-		glPopAttrib();
-		*/
-
-
-		const vec3f p0 = camera->pos + selectionDirs3D[0] * selectionDists[0];
-		const vec3f p1 = camera->pos + selectionDirs3D[1] * selectionDists[1];
-		const vec3f p2 = camera->pos + selectionDirs3D[2] * selectionDists[2];
-		const vec3f p3 = camera->pos + selectionDirs3D[3] * selectionDists[3];
+		const vec3f& p0 = selectionCoors3D[0];
+		const vec3f& p1 = selectionCoors3D[1];
+		const vec3f& p2 = selectionCoors3D[2];
+		const vec3f& p3 = selectionCoors3D[3];
 
 		// draw the quad between the four WS positions (FIXME)
 		camera->ApplyViewProjTransform();
@@ -193,6 +177,11 @@ void SimObjectSelector::DrawSelection() {
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
 			glBegin(GL_QUADS);
+				glVertex3f(p0.x, p0.y, p0.z);
+				glVertex3f(p1.x, p1.y, p1.z);
+				glVertex3f(p2.x, p2.y, p2.z);
+				glVertex3f(p3.x, p3.y, p3.z);
+
 				glVertex3f(p0.x, p0.y, p0.z);
 				glVertex3f(p1.x, p1.y, p1.z);
 				glVertex3f(p2.x, p2.y, p2.z);
