@@ -107,11 +107,11 @@ void SimObjectSelector::DrawSelection() {
 			glDisable(GL_DEPTH_TEST);
 			glColor3f(1.0f, 0.0f, 0.0f);
 			glLineWidth(5.0f);
-			glBegin(GL_QUADS);
-				glVertex3f(blxc / WIN->GetViewPortSizeX(), camera->zNearDistance + 1.0f, blyc / WIN->GetViewPortSizeY());
-				glVertex3f(brxc / WIN->GetViewPortSizeX(), camera->zNearDistance + 1.0f, bryc / WIN->GetViewPortSizeY());
-				glVertex3f(trxc / WIN->GetViewPortSizeX(), camera->zNearDistance + 1.0f, tryc / WIN->GetViewPortSizeY());
-				glVertex3f(tlxc / WIN->GetViewPortSizeX(), camera->zNearDistance + 1.0f, tlyc / WIN->GetViewPortSizeY());
+			glBegin(GL_LINES);
+				glVertex2f(tlxc / WIN->GetViewPortSizeX(), tlyc / WIN->GetViewPortSizeY());
+				glVertex2f(trxc / WIN->GetViewPortSizeX(), tryc / WIN->GetViewPortSizeY());
+				glVertex2f(brxc / WIN->GetViewPortSizeX(), bryc / WIN->GetViewPortSizeY());
+				glVertex2f(blxc / WIN->GetViewPortSizeX(), blyc / WIN->GetViewPortSizeY());
 			glEnd();
 		glPopAttrib();
 
