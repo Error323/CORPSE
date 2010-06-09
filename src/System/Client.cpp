@@ -130,6 +130,8 @@ void CClient::Update() {
 	mInputHandler->Update();
 	mRenderThread->Update();
 	mUI->Update();
+
+	SDL_GL_SwapBuffers();
 }
 
 

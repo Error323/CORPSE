@@ -10,7 +10,7 @@ class SimObject;
 
 struct SimObjectSelector {
 public:
-	SimObjectSelector(): inSelection(false), activeSelection(false) {
+	SimObjectSelector(): haveSelection(false), activeSelection(false) {
 	}
 
 	void ClearSelection();

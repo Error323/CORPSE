@@ -133,7 +133,6 @@ void CRenderThread::Update() {
 		glPopMatrix();
 
 		PostFrameState();
-		SDL_GL_SwapBuffers();
 
 		frame += 1;
 	}
