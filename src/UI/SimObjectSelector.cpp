@@ -46,20 +46,20 @@ void SimObjectSelector::UpdateSelection(int x, int y) {
 		const int w = selectionSquareSize2D.x;
 		const int h = selectionSquareSize2D.y;
 
-		selectionDirs[0] = camera->GetPixelDir(x,     y    );
-		selectionDirs[1] = camera->GetPixelDir(x + w, y    );
-		selectionDirs[2] = camera->GetPixelDir(x + w, y + h);
-		selectionDirs[3] = camera->GetPixelDir(x,     y + h);
+		selectionDirs3D[0] = camera->GetPixelDir(x,     y    );
+		selectionDirs3D[1] = camera->GetPixelDir(x + w, y    );
+		selectionDirs3D[2] = camera->GetPixelDir(x + w, y + h);
+		selectionDirs3D[3] = camera->GetPixelDir(x,     y + h);
 
-		selectionDists[0] = ground->LineGroundCol(camera->pos, camera->pos + selectionDirs[0] * camera->zFarDistance);
-		selectionDists[1] = ground->LineGroundCol(camera->pos, camera->pos + selectionDirs[1] * camera->zFarDistance);
-		selectionDists[2] = ground->LineGroundCol(camera->pos, camera->pos + selectionDirs[2] * camera->zFarDistance);
-		selectionDists[3] = ground->LineGroundCol(camera->pos, camera->pos + selectionDirs[3] * camera->zFarDistance);
+		selectionDists[0] = ground->LineGroundCol(camera->pos, camera->pos + selectionDirs3D[0] * camera->zFarDistance);
+		selectionDists[1] = ground->LineGroundCol(camera->pos, camera->pos + selectionDirs3D[1] * camera->zFarDistance);
+		selectionDists[2] = ground->LineGroundCol(camera->pos, camera->pos + selectionDirs3D[2] * camera->zFarDistance);
+		selectionDists[3] = ground->LineGroundCol(camera->pos, camera->pos + selectionDirs3D[3] * camera->zFarDistance);
 
-		selectionCoors3D[0] = camera->pos + selectionDirs[0] * selectionDists[0];
-		selectionCoors3D[1] = camera->pos + selectionDirs[1] * selectionDists[1];
-		selectionCoors3D[2] = camera->pos + selectionDirs[2] * selectionDists[2];
-		selectionCoors3D[3] = camera->pos + selectionDirs[3] * selectionDists[3];
+		selectionCoors3D[0] = camera->pos + selectionDirs3D[0] * selectionDists[0];
+		selectionCoors3D[1] = camera->pos + selectionDirs3D[1] * selectionDists[1];
+		selectionCoors3D[2] = camera->pos + selectionDirs3D[2] * selectionDists[2];
+		selectionCoors3D[3] = camera->pos + selectionDirs3D[3] * selectionDists[3];
 	}
 }
 
@@ -156,10 +156,10 @@ void SimObjectSelector::DrawSelection() {
 		*/
 
 
-		const vec3f p0 = camera->pos + selectionDirs[0] * selectionDists[0];
-		const vec3f p1 = camera->pos + selectionDirs[1] * selectionDists[1];
-		const vec3f p2 = camera->pos + selectionDirs[2] * selectionDists[2];
-		const vec3f p3 = camera->pos + selectionDirs[3] * selectionDists[3];
+		const vec3f p0 = camera->pos + selectionDirs3D[0] * selectionDists[0];
+		const vec3f p1 = camera->pos + selectionDirs3D[1] * selectionDists[1];
+		const vec3f p2 = camera->pos + selectionDirs3D[2] * selectionDists[2];
+		const vec3f p3 = camera->pos + selectionDirs3D[3] * selectionDists[3];
 
 		// draw the quad between the four WS positions (FIXME)
 		camera->ApplyViewProjTransform();

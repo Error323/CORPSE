@@ -26,7 +26,7 @@ private:
 	vec3f selectionSquareSize2D;
 
 	float selectionDists[4];
-	vec3f selectionDirs[4];
+	vec3f selectionDirs3D[4];
 	vec3f selectionCoors3D[4];
 	vec3f selectionBounds3D[2];
 
