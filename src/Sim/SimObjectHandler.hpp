@@ -34,6 +34,7 @@ public:
 	bool IsValidSimObjectID(unsigned int id) const { return ((id < GetMaxSimObjects()) && (simObjects[id] != NULL)); }
 
 	SimObject* GetSimObject(unsigned int id) const { return simObjects[id]; }
+	SimObjectGrid<const SimObject*>* GetSimObjectGrid() const { return mSimObjectGrid; }
 
 private:
 	void AddObject(SimObject*, bool);

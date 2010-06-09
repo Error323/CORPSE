@@ -8,6 +8,7 @@
 #include "../Renderer/CameraController.hpp"
 #include "../Renderer/Camera.hpp"
 #include "../Sim/SimObjectHandler.hpp"
+#include "../Sim/SimObjectGrid.hpp"
 #include "../System/EngineAux.hpp"
 
 void SimObjectSelector::ClearSelection() {
