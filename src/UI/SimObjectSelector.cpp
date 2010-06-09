@@ -46,10 +46,10 @@ void SimObjectSelector::UpdateSelection(int x, int y) {
 		const int w = selectionSquareSize2D.x;
 		const int h = selectionSquareSize2D.y;
 
-		selectionDirs3D[0] = camera->GetPixelDir(x,     y    );
-		selectionDirs3D[1] = camera->GetPixelDir(x + w, y    );
-		selectionDirs3D[2] = camera->GetPixelDir(x + w, y + h);
-		selectionDirs3D[3] = camera->GetPixelDir(x,     y + h);
+		selectionDirs3D[0] = camera->GetPixelDir(x - w, y - h); // top-left SS corner
+		selectionDirs3D[1] = camera->GetPixelDir(x    , y - h); // top-right SS corner
+		selectionDirs3D[2] = camera->GetPixelDir(x    , y    ); // bottom-right SS corner
+		selectionDirs3D[3] = camera->GetPixelDir(x - w, y    ); // bottom-left SS corner
 
 		selectionDists[0] = ground->LineGroundCol(camera->pos, camera->pos + selectionDirs3D[0] * camera->zFarDistance);
 		selectionDists[1] = ground->LineGroundCol(camera->pos, camera->pos + selectionDirs3D[1] * camera->zFarDistance);
