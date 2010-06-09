@@ -4,7 +4,7 @@
 #include "./SMFGroundTextures.hpp"
 
 #include "../../Renderer/Camera.hpp"
-#include "../../Renderer/SprVertexArray.hpp"
+#include "../../Renderer/VertexArray.hpp"
 #include "../../Renderer/Shaders/ShaderHandler.hpp"
 #include "../../Renderer/Env/ShadowHandler.hpp"
 #include "../MapInfo.hpp"
@@ -35,7 +35,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm):
 
 	heightData = rm->heightmap;
 	map = rm;
-	va = new SprVertexArray();
+	va = new VertexArray();
 	textures = new CSMFGroundTextures(map);
 
 	// we need a multiple of 2

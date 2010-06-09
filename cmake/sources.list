@@ -73,8 +73,8 @@ SET(CORPSE_SOURCE
 	src/Renderer/Shaders/Shader.hpp
 	src/Renderer/SMFRenderer.cpp
 	src/Renderer/SMFRenderer.hpp
-	src/Renderer/SprVertexArray.cpp
-	src/Renderer/SprVertexArray.hpp
+	src/Renderer/VertexArray.cpp
+	src/Renderer/VertexArray.hpp
 	src/Renderer/Textures/BitMap.cpp
 	src/Renderer/Textures/BitMap.hpp
 	src/Renderer/Textures/NVDDS.cpp

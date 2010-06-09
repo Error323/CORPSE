@@ -263,6 +263,7 @@ void CSMFRenderer::DrawSquare(RSquare& q, const vec3f& v, const CReadMap* rm, co
 		}
 
 		va.Initialize();
+		va.EnlargeArrays(numQuads * 4, 0, VA_SIZE_N);
 
 		// note: LESS OR EQUAL, so that when {x, z}lod == squareSize{X, Z}
 		// four vertices (two in each direction) are added instead of one
@@ -271,7 +272,7 @@ void CSMFRenderer::DrawSquare(RSquare& q, const vec3f& v, const CReadMap* rm, co
 				vec3f tl(q.tlp.x + x, 0.0f, q.tlp.z + z); tl.y = GetHeight(hm, tl.x, tl.z);
 				vec3f nv = GetVertexNormal(hm, q, tl, rm->maxxpos, rm->maxzpos, x, xlod, z, zlod);
 
-				va.AddVertex(tl, nv, NVECf);
+				va.AddVertexN(tl, nv);
 
 				// the bottom- and right-most row and column
 				// of vertices do not define any new quads
@@ -287,7 +288,9 @@ void CSMFRenderer::DrawSquare(RSquare& q, const vec3f& v, const CReadMap* rm, co
 			}
 		}
 
-		va.Draw(numQuads, indices);
+		/// FIXME: add indexed drawing to VA class
+		/// va.Draw(numQuads, indices);
+		va.DrawArrayN(GL_QUADS);
 
 		if (!q.hasDisLst && wantList) {
 			q.hasDisLst = true;

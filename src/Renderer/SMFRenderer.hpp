@@ -1,7 +1,8 @@
 #ifndef SMF_RENDERER_HDR
 #define SMF_RENDERER_HDR
 
-#include "./GLObjects.hpp"
+#include <vector>
+#include "./VertexArray.hpp"
 
 class CReadMap;
 struct Camera;
@@ -42,7 +43,8 @@ class CSMFRenderer {
 		std::vector<Square> squares;
 		std::vector<int> lodDists;
 		std::vector<int> indices;
-		GL::VertexArray va;
+
+		VertexArray va;
 };
 
 #endif

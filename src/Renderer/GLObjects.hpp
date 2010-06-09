@@ -49,46 +49,6 @@ namespace GL {
 	struct PixelBufferObject: public IBufferObject {};
 	struct FrameBufferObject: public IBufferObject {};
 	struct RenderBufferObject: public IBufferObject {};
-
-
-
-	// used by the custom SMF renderer
-	struct VertexArray {
-	public:
-		VertexArray();
-
-		void Initialize();
-		void Enlarge();
-
-		void AddVertex(float, float, float, float, float, float, float, float);
-		void AddVertex(const vec3f&, const vec3f& n = YVECf, const vec3f& tc = NVECf);
-
-		void Draw(int, const std::vector<int>&);
-		
-		vec3f GetVertex(int) const;
-		vec3f GetNormal(int) const;
-
-	private:
-		std::vector<float> verts;
-		std::vector<float> txcrs;
-		std::vector<float> norms;
-		unsigned int vDrawIdx;
-		unsigned int tDrawIdx;
-		unsigned int nDrawIdx;
-	};
-
-	struct VertexArrayManager {
-	public:
-		VertexArrayManager();
-		~VertexArrayManager();
-
-		VertexArray* GetVertexArray();
-
-	private:
-		VertexArray* va0;	// primary buffer
-		VertexArray* va1;	// secondary buffer
-		VertexArray* va;	// currently active buffer
-	};
 };
 
 #endif

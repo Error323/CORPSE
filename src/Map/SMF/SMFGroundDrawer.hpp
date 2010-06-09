@@ -5,7 +5,7 @@
 #include "../BaseGroundDrawer.hpp"
 #include "../../Math/vec3fwd.hpp"
 
-class SprVertexArray;
+class VertexArray;
 struct Camera;
 class CSMFReadMap;
 class CSMFGroundTextures;
@@ -22,7 +22,7 @@ class CSMFGroundDrawer: public CBaseGroundDrawer {
 
 		CSMFReadMap* map;
 		CSMFGroundTextures* textures;
-		SprVertexArray* va;
+		VertexArray* va;
 
 		const int bigSquareSize;
 		const int numBigTexX;

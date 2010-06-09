@@ -8,6 +8,7 @@
 #include "../Renderer/RenderThread.hpp"
 #include "../Renderer/CameraController.hpp"
 #include "../Renderer/Camera.hpp"
+#include "../Renderer/VertexArray.hpp"
 #include "../Renderer/Models/ModelReaderBase.hpp"
 #include "../Sim/SimObjectHandler.hpp"
 #include "../Sim/SimObjectGrid.hpp"
@@ -32,6 +33,8 @@ void SimObjectSelector::StartSelection(int x, int y) {
 
 		selectionStartPos2D.x = x; selectionFinishPos2D.x = x;
 		selectionStartPos2D.y = y; selectionFinishPos2D.y = y;
+		selectionSquareSize2D.x = 0.0f;
+		selectionSquareSize2D.y = 0.0f;
 
 		haveSelection = true;
 		activeSelection = true;
@@ -179,16 +182,28 @@ void SimObjectSelector::DrawSelection() {
 		const float brxc = selectionStartPos2D.x + w - hvpsx, bryc = (selectionStartPos2D.y + h - hvpsy) * -1.0f;
 		const float blxc = selectionStartPos2D.x     - hvpsx, blyc = (selectionStartPos2D.y + h - hvpsy) * -1.0f;
 
+		VertexArray va;
+		va.Initialize();
+
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LINE_BIT);
 			glDisable(GL_DEPTH_TEST);
 			glColor3f(1.0f, 0.0f, 0.0f);
 			glLineWidth(2.0f);
+
 			glBegin(GL_LINE_LOOP);
 				glVertex2f(tlxc / hvpsx, tlyc / hvpsy);
 				glVertex2f(trxc / hvpsx, tryc / hvpsy);
 				glVertex2f(brxc / hvpsx, bryc / hvpsy);
 				glVertex2f(blxc / hvpsx, blyc / hvpsy);
 			glEnd();
+
+			/*
+			va.AddVertex0(tlxc / hvpsx, 0.0f, tlyc / hvpsy);
+			va.AddVertex0(trxc / hvpsx, 0.0f, tryc / hvpsy);
+			va.AddVertex0(brxc / hvpsx, 0.0f, bryc / hvpsy);
+			va.AddVertex0(blxc / hvpsx, 0.0f, blyc / hvpsy);
+			va.DrawArray0(GL_LINE_LOOP);
+			*/
 		glPopAttrib();
 
 
