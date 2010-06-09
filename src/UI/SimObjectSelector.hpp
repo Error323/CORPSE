@@ -26,7 +26,7 @@ private:
 	vec3f selectionStartPos2D;
 	vec3f selectionFinishPos2D;
 
-	std::list<SimObject*> selectedObjects;
+	std::list<const SimObject*> selectedObjects;
 };
 
 #endif

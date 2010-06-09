@@ -98,20 +98,23 @@ void SimObjectSelector::DrawSelection() {
 		const int w = int(selectionFinishPos2D.x - selectionStartPos2D.x);
 		const int h = int(selectionFinishPos2D.y - selectionStartPos2D.y);
 
-		const float tlxc = selectionStartPos2D.x,     tlyc = selectionStartPos2D.y;
-		const float trxc = selectionStartPos2D.x + w, tryc = selectionStartPos2D.y;
-		const float brxc = selectionStartPos2D.x + w, bryc = selectionStartPos2D.y + h;
-		const float blxc = selectionStartPos2D.x,     blyc = selectionStartPos2D.y + h;
+		const unsigned int hvpsx = (WIN->GetViewPortSizeX() >> 1);
+		const unsigned int hvpsy = (WIN->GetViewPortSizeY() >> 1);
+
+		const float tlxc = selectionStartPos2D.x     - hvpsx, tlyc = (selectionStartPos2D.y     - hvpsy) * -1.0f;
+		const float trxc = selectionStartPos2D.x + w - hvpsx, tryc = (selectionStartPos2D.y     - hvpsy) * -1.0f;
+		const float brxc = selectionStartPos2D.x + w - hvpsx, bryc = (selectionStartPos2D.y + h - hvpsy) * -1.0f;
+		const float blxc = selectionStartPos2D.x     - hvpsx, blyc = (selectionStartPos2D.y + h - hvpsy) * -1.0f;
 
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LINE_BIT);
 			glDisable(GL_DEPTH_TEST);
 			glColor3f(1.0f, 0.0f, 0.0f);
 			glLineWidth(2.0f);
 			glBegin(GL_LINE_LOOP);
-				glVertex2f(tlxc / WIN->GetViewPortSizeX(), tlyc / WIN->GetViewPortSizeY());
-				glVertex2f(trxc / WIN->GetViewPortSizeX(), tryc / WIN->GetViewPortSizeY());
-				glVertex2f(brxc / WIN->GetViewPortSizeX(), bryc / WIN->GetViewPortSizeY());
-				glVertex2f(blxc / WIN->GetViewPortSizeX(), blyc / WIN->GetViewPortSizeY());
+				glVertex2f(tlxc / hvpsx, tlyc / hvpsy);
+				glVertex2f(trxc / hvpsx, tryc / hvpsy);
+				glVertex2f(brxc / hvpsx, bryc / hvpsy);
+				glVertex2f(blxc / hvpsx, blyc / hvpsy);
 			glEnd();
 		glPopAttrib();
 
@@ -120,6 +123,8 @@ void SimObjectSelector::DrawSelection() {
 	} else {
 		if (haveSelection) {
 			// draw marker squares around selected objects
+			for (std::list<const SimObject*>::const_iterator it = selectedObjects.begin(); it != selectedObjects.end(); ++it) {
+			}
 		}
 	}
 }
