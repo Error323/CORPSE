@@ -47,6 +47,8 @@ public:
 	virtual void HStrafe(int, float) {}
 	virtual void VStrafe(int, float) {}
 
+	virtual bool Active() const { return false; }
+
 	const float* GetViewMatrix();
 	const float* GetProjMatrix();
 	void ApplyViewProjTransform();
@@ -117,6 +119,8 @@ struct FPSCamera: public Camera {
 	void RotateX(float angle, bool b);
 	void RotateY(float angle, bool b);
 	void RotateZ(float angle, bool b);
+
+	bool Active() const { return true; }
 };
 
 struct OrbitCamera: public Camera {
@@ -136,8 +140,10 @@ public:
 	void HStrafe(int sign, float sens);
 	void VStrafe(int sign, float sens);
 
+	bool Active() const { return active; }
+
 private:
-	bool canOrbit;
+	bool active;
 
 	float distance, cDistance;      // world-space distance from <pos> to <cen>
 	float rotation, cRotation;      // in degrees (hor. rot. is wrt. world x-axis)

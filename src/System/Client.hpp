@@ -10,6 +10,8 @@ class CInputHandler;
 class CSimThread;
 class CRenderThread;
 
+class UI;
+
 class CNetMessageBuffer;
 struct NetMessage;
 
@@ -54,6 +56,7 @@ private:
 	bool UpdateWindowInfo();
 
 	SDL_Surface* mScreen;
+	UI* mUI;
 
 	CInputHandler* mInputHandler;
 	CSimThread* mSimThread;

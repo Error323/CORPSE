@@ -122,6 +122,10 @@ SET(CORPSE_SOURCE
 	src/System/Server.cpp
 	src/System/Server.hpp
 	src/System/VFSModes.h
+	src/UI/UI.cpp
+	src/UI/UI.hpp
+	src/UI/SimObjectSelector.cpp
+	src/UI/SimObjectSelector.hpp
 )
 
 SET(PATHMODULE_SOURCE

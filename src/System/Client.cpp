@@ -19,6 +19,7 @@
 #include "../System/Logger.hpp"
 #include "../Math/vec3.hpp"
 #include "../Math/Trig.hpp"
+#include "../UI/UI.hpp"
 #include "./Client.hpp"
 #include "./NetMessageBuffer.hpp"
 #include "./ScopedTimer.hpp"
@@ -60,6 +61,8 @@ CClient::CClient(int argc, char** argv): clientID(0) {
 	// "pseudo-threads" (updated sequentially)
 	mSimThread    = CSimThread::GetInstance();
 	mRenderThread = CRenderThread::GetInstance();
+
+	mUI = UI::GetInstance();
 }
 
 CClient::~CClient() {
@@ -68,8 +71,9 @@ CClient::~CClient() {
 		<< ScopedTimer::GetTaskTime("[CClient::Update]")
 		<< "ms\n";
 
-	CSimThread::FreeInstance(mSimThread);
+	UI::FreeInstance(mUI);
 	CRenderThread::FreeInstance(mRenderThread);
+	CSimThread::FreeInstance(mSimThread);
 	CInputHandler::FreeInstance(mInputHandler);
 
 	SDL_Quit();
@@ -125,6 +129,7 @@ void CClient::Update() {
 
 	mInputHandler->Update();
 	mRenderThread->Update();
+	mUI->Update();
 }
 
 
@@ -214,8 +219,8 @@ void CClient::WindowExposed() {
 
 
 void CClient::SetWindowSize(int w, int h) {
-	WIN->SetWindowSizeX(w);
-	WIN->SetWindowSizeY(h);
+	WIN->SetWindowSizeX(w); WIN->SetViewPortSizeX(w);
+	WIN->SetWindowSizeY(h); WIN->SetViewPortSizeY(h);
 
 	SetSDLWindowVideoMode();
 	SetOGLViewPortGeometry();
@@ -293,7 +298,6 @@ void CClient::SetSDLWindowVideoMode() {
 
 
 
-// called on resize
 void CClient::SetOGLViewPortGeometry() {
 	UpdateViewPortDimensions();
 

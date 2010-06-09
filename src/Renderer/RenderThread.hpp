@@ -28,4 +28,6 @@ private:
 	unsigned int frame;
 };
 
+#define renderThread (CRenderThread::GetInstance())
+
 #endif

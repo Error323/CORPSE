@@ -483,7 +483,7 @@ void OrbitCamera::Init(const vec3f& p, const vec3f& t) {
 	rotation  = cRotation  = (v.z > 0.0f)? 180.0f + r: 180.0f - r;
 	cen       = t;
 
-	canOrbit = false;
+	active = false;
 }
 
 vec3f OrbitCamera::GetOrbitPos() const {
@@ -511,11 +511,11 @@ vec3f OrbitCamera::GetOrbitPos() const {
 	return vec3f(cx, cy, cz);
 }
 
-void OrbitCamera::KeyPressed(int key, bool) { canOrbit = (key == SDLK_SPACE); }
-void OrbitCamera::KeyReleased(int key) { canOrbit = canOrbit && (key != SDLK_SPACE); }
+void OrbitCamera::KeyPressed(int key, bool) { active = (key == SDLK_SPACE); }
+void OrbitCamera::KeyReleased(int key) { active = active && (key != SDLK_SPACE); }
 
 void OrbitCamera::MousePressed(int, int, int, bool repeat) {
-	if (!canOrbit) {
+	if (!active) {
 		return;
 	}
 
@@ -527,7 +527,7 @@ void OrbitCamera::MousePressed(int, int, int, bool repeat) {
 }
 
 void OrbitCamera::MouseMoved(int x, int y, int dx, int dy) {
-	if (!canOrbit) {
+	if (!active) {
 		return;
 	}
 
