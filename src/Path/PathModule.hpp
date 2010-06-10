@@ -19,8 +19,9 @@ public:
 
 	bool WantsEvent(int eventType) const {
 		return
-			 eventType == EVENT_SIMOBJECT_CREATED ||
-			 eventType == EVENT_SIMOBJECT_DESTROYED;
+			(eventType == EVENT_SIMOBJECT_CREATED) ||
+			(eventType == EVENT_SIMOBJECT_DESTROYED) ||
+			(eventType == EVENT_SIMOBJECT_MOVEORDER);
 	}
 	void OnEvent(const IEvent*);
 

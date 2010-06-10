@@ -37,6 +37,8 @@ void EventHandler::AddReceiver(IEventReceiver* r) {
 
 		if (evtReceivers[type].find(r->GetPriority()) == evtReceivers[type].end()) {
 			evtReceivers[type][r->GetPriority()] = r;
+		} else {
+			assert(false);
 		}
 	}
 }
@@ -49,6 +51,8 @@ void EventHandler::DelReceiver(IEventReceiver* r) {
 
 		if (evtReceivers[type].find(r->GetPriority()) != evtReceivers[type].end()) {
 			evtReceivers[type].erase(r->GetPriority());
+		} else {
+			assert(false);
 		}
 	}
 }

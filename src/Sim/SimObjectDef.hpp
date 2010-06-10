@@ -3,9 +3,11 @@
 
 #include <string>
 
+struct ModelBase;
 class SimObjectDef {
 public:
 	SimObjectDef(unsigned int objID): id(objID) {
+		model                = NULL;
 		maxForwardSpeed      = 0.0f;
 		maxTurningRate       = 0.0f;
 		maxAccelerationRate  = 0.0f;
@@ -17,6 +19,8 @@ public:
 
 	void SetModelName(const std::string& m) { modelName = m; }
 	const std::string& GetModelName() const { return modelName; }
+	void SetModel(ModelBase* mdl) { model = mdl; }
+	ModelBase* GetModel() const { return model; }
 
 	void SetMaxForwardSpeed(float f) { maxForwardSpeed = f; }
 	void SetMaxTurningRate(float f) { maxTurningRate = f; }
@@ -33,6 +37,7 @@ private:
 	unsigned int id;
 
 	std::string modelName;
+	ModelBase* model;
 
 	float maxForwardSpeed;       // must be specified in units per second, converted to units per frame
 	float maxTurningRate;        // must be specified in degrees per second, converted to degrees per frame

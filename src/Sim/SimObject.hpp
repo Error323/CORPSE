@@ -25,10 +25,13 @@ public:
 
 	const mat44f& GetMat() const { return physicalState.mat; }
 	void SetMat(const mat44f& m) { physicalState.mat = m; }
-	const vec3f& GetPos() const {  return (physicalState.mat).GetPos(); }
+	const vec3f& GetPos() const {  return (physicalState.mat).GetPos(); } // wrapper
 
 	float GetCurrentForwardSpeed() const { return physicalState.currentForwardSpeed; }
 
+	float GetWantedForwardSpeed() const { return physicalState.wantedForwardSpeed; }
+	const vec3f& GetWantedPosition() const { return physicalState.wantedPos; }
+	const vec3f& GetWantedDirection() const { return physicalState.wantedDir; }
 	void SetWantedForwardSpeed(float f) { physicalState.wantedForwardSpeed = f; }
 	void SetWantedPosition(const vec3f& pos) { physicalState.wantedPos = pos; }
 	void SetWantedDirection(const vec3f& dir) { physicalState.wantedDir = dir; }

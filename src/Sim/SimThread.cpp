@@ -42,6 +42,7 @@ CSimThread::CSimThread(): frame(0) {
 	mReadMap = CReadMap::GetInstance(generalTable->GetStrVal("mapsDir", "data/maps/") + mapTable->GetStrVal("smf", "map.smf"));
 
 	mPathModule = GetPathModuleInstance(CallOutHandler::GetInstance());
+	mPathModule->SetPriority(123);
 	eventHandler->AddReceiver(mPathModule);
 
 	// create objects after path-module is loaded

@@ -3,17 +3,23 @@
 
 #include <list>
 
+#include "../System/IEvent.hpp"
+#include "../System/IEventReceiver.hpp"
+
 class CSMFRenderer;
 class CSkyBox;
 struct Camera;
 struct LocalModel;
 
-class CScene {
+class CScene: public IEventReceiver {
 public:
 	CScene();
 	~CScene();
 
 	void Draw(Camera*);
+
+	bool WantsEvent(int) const;
+	void OnEvent(const IEvent*);
 
 private:
 	void DrawModels(Camera*, bool);

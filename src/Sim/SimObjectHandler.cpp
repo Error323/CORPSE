@@ -116,6 +116,7 @@ void SimObjectHandler::AddObject(unsigned int defID, const vec3f& pos, const vec
 		SimObjectDef* sod = mSimObjectDefHandler->GetDef(defID);
 		SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
 			so->SetMat(mat);
+			so->SetWantedPosition(mat.GetPos());
 			so->SetWantedDirection(mat.GetZDir());
 
 		AddObject(so, inConstructor);

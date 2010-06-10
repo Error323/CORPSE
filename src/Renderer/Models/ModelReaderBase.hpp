@@ -54,9 +54,9 @@ struct PieceBase {
 // structures deriving from this, instead <type> serves as
 // the runtime identifier
 struct ModelBase {
-	~ModelBase() {
-		DelPiece(rootPiece);
-	}
+public:
+	ModelBase(): shaderProObj(NULL) {}
+	~ModelBase() { DelPiece(rootPiece); }
 
 	void DelPiece(PieceBase* p) {
 		for (unsigned int i = 0; i < p->children.size(); i++) {
@@ -84,21 +84,24 @@ struct ModelBase {
 	PieceBase* rootPiece;
 	CModelDrawerBase* drawer;
 	CTextureHandlerBase* texturer;
+
+	void SetShaderProgramObj(const Shader::IProgramObject* obj) { shaderProObj = obj; }
+	const Shader::IProgramObject* GetShaderProgramObj() const { return shaderProObj; }
+
+private:
+	const Shader::IProgramObject* shaderProObj;
+
 };
 
 
 
 struct LocalModel {
 public:
-	LocalModel(const ModelBase* _m): m(_m), shaderProObj(NULL) {}
+	LocalModel(const ModelBase* _m): m(_m) {}
 	const ModelBase* GetModelBase() const { return m; }
-
-	void SetShaderProgramObj(const Shader::IProgramObject* obj) { shaderProObj = obj; }
-	const Shader::IProgramObject* GetShaderProgramObj() const { return shaderProObj; }
 
 private:
 	const ModelBase* m;
-	const Shader::IProgramObject* shaderProObj;
 };
 
 

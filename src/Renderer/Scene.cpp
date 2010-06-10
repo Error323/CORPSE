@@ -6,10 +6,12 @@
 #include "../Math/mat44fwd.hpp"
 
 #include "../System/EngineAux.hpp"
+#include "../System/EventHandler.hpp"
 #include "../System/LuaParser.hpp"
 #include "../System/Logger.hpp"
 #include "../System/Server.hpp"
 
+#include "../Sim/SimObjectDefHandler.hpp"
 #include "../Sim/SimObjectHandler.hpp"
 #include "../Sim/SimObjectDef.hpp"
 #include "../Sim/SimObject.hpp"
@@ -57,75 +59,81 @@ CScene::CScene() {
 	const std::string modelDir = generalTable->GetStrVal("modelsDir", "data/models/");
 	const std::string shaderDir = generalTable->GetStrVal("shadersDir", "data/shaders/");
 
+	for (unsigned int n = 0; n < simObjectDefHandler->GetNumDefs(); n++) {
+		SimObjectDef* def = simObjectDefHandler->GetDef(n);
+
+		ModelBase* modelBase = def->GetModel();
+		CModelReaderBase* modelReader = NULL;
+
+		assert(modelBase == NULL);
+
+		std::string mdlName    = def->GetModelName();
+		std::string mdlFile    = modelDir + mdlName;
+		std::string mdlFileExt = &mdlFile.data()[mdlFile.size() - 3];
+
+		if (mdlFileExt == "s3o") { modelReader = readerS3O; }
+		if (mdlFileExt == "3do") { modelReader = reader3DO; }
+
+		assert(modelReader != NULL);
+		modelBase = modelReader->Load(mdlFile);
+
+		{
+			const LuaTable* mdlTable = modelsTable->GetTblVal(mdlName);
+
+			// load the model shader program
+			const std::string vShaderFileS3O = mdlTable->GetStrVal("vShader", "");
+			const std::string fShaderFileS3O = mdlTable->GetStrVal("fShader", "");
+			const std::string vShaderPathS3O = shaderDir + vShaderFileS3O;
+			const std::string fShaderPathS3O = shaderDir + fShaderFileS3O;
+
+			if (!vShaderFileS3O.empty() || !fShaderFileS3O.empty()) {
+				if (!vShaderFileS3O.empty()) { LOG << "[CScene] loading vert. shader " << vShaderPathS3O << " for model " << mdlFile << "\n"; }
+				if (!fShaderFileS3O.empty()) { LOG << "[CScene] loading frag. shader " << fShaderPathS3O << " for model " << mdlFile << "\n"; }
+
+				Shader::IProgramObject* pObj = shaderHandler->CreateProgramObject("[S3O]", "S3OShader", vShaderPathS3O, "", fShaderPathS3O, "", false);
+
+				LOG << "[CScene] shader program object info\n";
+				LOG << "\tpObj->GetObjID(): " << pObj->GetObjID() << "\n";
+				LOG << "\tpObj->IsValid():  " << pObj->IsValid() << "\n";
+
+				if (pObj->IsValid()) {
+					modelBase->SetShaderProgramObj(pObj);
+					pObj->SetUniformLocation("diffuseMap"); // idx 0
+					pObj->SetUniformLocation("shadowMap");  // idx 1
+					pObj->SetUniformLocation("shadowMat");  // idx 2
+					pObj->SetUniformLocation("viewMat");    // idx 3
+
+					pObj->Enable();
+					pObj->SetUniform1i(0, 0);               // (idx 0, texunit 0)
+					pObj->SetUniform1i(1, 7);               // (idx 1, texunit 7)
+					pObj->Disable();
+				} else {
+					assert(false);
+				}
+
+				LOG << "\n";
+				LOG << "\tpObj.GetLog():\n";
+				LOG << pObj->GetLog() << "\n";
+
+				const std::vector<const Shader::IShaderObject*>& sObjs = pObj->GetAttachedShaderObjs();
+
+				for (std::vector<const Shader::IShaderObject*>::const_iterator it = sObjs.begin(); it != sObjs.end(); it++) {
+					LOG << "\n" << ((*it)->GetLog()) << "\n";
+				}
+			}
+		}
+
+		def->SetModel(modelBase);
+	}
+
+
+	// load models for the initial objects
 	const std::set<unsigned int>& simObjectIDs = simObjectHandler->GetSimObjectUsedIDs();
 
 	for (std::set<unsigned int>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
 		SimObject* obj = simObjectHandler->GetSimObject(*it);
 
-		std::string mdlName    = obj->GetDef()->GetModelName();
-		std::string mdlFile    = modelDir + mdlName;
-		std::string mdlFileExt = &mdlFile.data()[mdlFile.size() - 3];
-
-		ModelType mdlType = MODELTYPE_OTHER;
-
-		if (mdlFileExt == "s3o") { mdlType = MODELTYPE_S3O; }
-		if (mdlFileExt == "3do") { mdlType = MODELTYPE_3DO; }
-
-		switch (mdlType) {
-			case MODELTYPE_S3O: {
-				LocalModel* localMdl = new LocalModel(readerS3O->Load(mdlFile));
-
-				const LuaTable* mdlTable = modelsTable->GetTblVal(mdlName);
-
-				// load the model shader program
-				const std::string vShaderFileS3O = mdlTable->GetStrVal("vShader", "");
-				const std::string fShaderFileS3O = mdlTable->GetStrVal("fShader", "");
-				const std::string vShaderPathS3O = shaderDir + vShaderFileS3O;
-				const std::string fShaderPathS3O = shaderDir + fShaderFileS3O;
-
-				if (!vShaderFileS3O.empty() || !fShaderFileS3O.empty()) {
-					if (!vShaderFileS3O.empty()) { LOG << "[CScene] loading vert. shader " << vShaderPathS3O << " for model " << mdlFile << "\n"; }
-					if (!fShaderFileS3O.empty()) { LOG << "[CScene] loading frag. shader " << fShaderPathS3O << " for model " << mdlFile << "\n"; }
-
-					Shader::IProgramObject* pObj = shaderHandler->CreateProgramObject("[S3O]", "S3OShader", vShaderPathS3O, "", fShaderPathS3O, "", false);
-
-					LOG << "[CScene] shader program object info\n";
-					LOG << "\tpObj->GetObjID(): " << pObj->GetObjID() << "\n";
-					LOG << "\tpObj->IsValid():  " << pObj->IsValid() << "\n";
-
-					if (pObj->IsValid()) {
-						localMdl->SetShaderProgramObj(pObj);
-						pObj->SetUniformLocation("diffuseMap"); // idx 0
-						pObj->SetUniformLocation("shadowMap");  // idx 1
-						pObj->SetUniformLocation("shadowMat");  // idx 2
-						pObj->SetUniformLocation("viewMat");    // idx 3
-
-						pObj->Enable();
-						pObj->SetUniform1i(0, 0);               // (idx 0, texunit 0)
-						pObj->SetUniform1i(1, 7);               // (idx 1, texunit 7)
-						pObj->Disable();
-					} else {
-						assert(false);
-					}
-
-					LOG << "\n";
-					LOG << "\tpObj.GetLog():\n";
-					LOG << pObj->GetLog() << "\n";
-
-					const std::vector<const Shader::IShaderObject*>& sObjs = pObj->GetAttachedShaderObjs();
-
-					for (std::vector<const Shader::IShaderObject*>::const_iterator it = sObjs.begin(); it != sObjs.end(); it++) {
-						LOG << "\n" << ((*it)->GetLog()) << "\n";
-					}
-				}
-
-				obj->SetModel(localMdl);
-			} break;
-			case MODELTYPE_3DO: {
-				obj->SetModel(new LocalModel(reader3DO->Load(mdlFile)));
-			} break;
-			default: break;
-		}
+		obj->SetModel(new LocalModel(obj->GetDef()->GetModel()));
 	}
 
 
@@ -146,9 +154,14 @@ CScene::CScene() {
 	sun->DisableInput();
 
 	InitLight();
+
+	this->SetPriority(456);
+	eventHandler->AddReceiver(this);
 }
 
 CScene::~CScene() {
+	eventHandler->DelReceiver(this);
+
 	#ifdef CUSTOM_SMF_RENDERER
 	delete smfRenderer; smfRenderer = NULL;
 	#endif
@@ -164,6 +177,36 @@ CScene::~CScene() {
 }
 
 
+
+bool CScene::WantsEvent(int eventType) const {
+	return (eventType == EVENT_SIMOBJECT_CREATED || eventType == EVENT_SIMOBJECT_DESTROYED);
+}
+
+void CScene::OnEvent(const IEvent* e) {
+	switch (e->GetType()) {
+		case EVENT_SIMOBJECT_CREATED: {
+			const SimObjectCreatedEvent* ee = dynamic_cast<const SimObjectCreatedEvent*>(e);
+			const unsigned int objectID = ee->GetObjectID();
+
+			// all object-defs are loaded at this point
+			SimObject* obj = simObjectHandler->GetSimObject(objectID);
+			obj->SetModel(new LocalModel(obj->GetDef()->GetModel()));
+		} break;
+
+		case EVENT_SIMOBJECT_DESTROYED: {
+			const SimObjectDestroyedEvent* ee = dynamic_cast<const SimObjectDestroyedEvent*>(e);
+			const unsigned int objectID = ee->GetObjectID();
+
+			SimObject* obj = simObjectHandler->GetSimObject(objectID);
+			delete (obj->GetModel());
+			obj->SetModel(NULL);
+		} break;
+
+		default: {
+			assert(false);
+		}
+	}
+}
 
 void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 	glPushAttrib(GL_POLYGON_BIT);
@@ -196,7 +239,7 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 			const vec3f rPos = mat.GetPos() + (mat.GetZDir() * obj->GetCurrentForwardSpeed() * server->GetLastTickDeltaRatio());
 			const mat44f rMat(rPos, mat.GetXDir(), mat.GetYDir(), mat.GetZDir());
 
-			Shader::IProgramObject* shObj = const_cast<Shader::IProgramObject*>(lm->GetShaderProgramObj());
+			Shader::IProgramObject* shObj = const_cast<Shader::IProgramObject*>(mb->GetShaderProgramObj());
 
 			if (!inShadowPass) {
 				shObj->Enable();

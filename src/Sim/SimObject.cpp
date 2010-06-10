@@ -2,19 +2,13 @@
 #include "./SimObjectDef.hpp"
 #include "../Math/Trig.hpp"
 #include "../Map/Ground.hpp"
-#include "../Renderer/Models/ModelReaderBase.hpp"
 
 SimObject::SimObject(SimObjectDef* d, unsigned int i): def(d), id(i) {
 	physicalState.currentForwardSpeed = 0.0f;
-	physicalState.wantedForwardSpeed = def->GetMaxForwardSpeed();
+	physicalState.wantedForwardSpeed = 0.0f;
 }
 
 SimObject::~SimObject() {
-	// need to clean this up elsewhere
-	// (possibly have the renderer wait
-	// for SimObjectDestroyed events?)
-	delete mdl;
-
 	mdl = 0;
 	def = 0;
 }

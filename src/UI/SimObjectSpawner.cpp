@@ -59,7 +59,7 @@ void SimObjectSpawner::SpawnObject(int x, int y) {
 				m <<    0.0f;
 				m << -dir.z;
 
-				// client->SendNetMessage(m);
+				client->SendNetMessage(m);
 			}
 		}
 	}

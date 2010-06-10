@@ -3,6 +3,7 @@
 #include "./PathModule.hpp"
 #include "../Math/vec3.hpp"
 #include "../Ext/ICallOutHandler.hpp"
+#include "../Sim/SimObjectDef.hpp"
 
 void PathModule::OnEvent(const IEvent* e) {
 	std::cout << "[PathModule::OnEvent] " << e->str() << std::endl;
@@ -32,6 +33,7 @@ void PathModule::OnEvent(const IEvent* e) {
 
 				coh->SetSimObjectWantedPosition(*it, goalPos);
 				coh->SetSimObjectWantedDirection(*it, (goalPos - coh->GetSimObjectPosition(*it)).norm());
+				coh->SetSimObjectWantedForwardSpeed(*it, simObjectIDs[*it]->GetMaxForwardSpeed());
 			}
 		} break;
 
@@ -45,10 +47,11 @@ void PathModule::Init() {
 }
 
 void PathModule::Update() {
+	// steer the objects around the map
 	for (std::map<unsigned int, const SimObjectDef*>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
-		const vec3f& pos = coh->GetSimObjectPosition(it->first);
-		const vec3f& dir = coh->GetSimObjectDirection(it->first);
+		const vec3f vec = coh->GetSimObjectWantedPosition(it->first) - coh->GetSimObjectPosition(it->first);
 
+		/*
 		const bool b0 = (pos.x > ((coh->GetHeightMapSizeX() * coh->GetSquareSize()) * 0.9f));
 		const bool b1 = (pos.x < ((coh->GetHeightMapSizeX() * coh->GetSquareSize()) * 0.1f));
 		const bool b2 = (pos.z > ((coh->GetHeightMapSizeZ() * coh->GetSquareSize()) * 0.9f));
@@ -58,6 +61,14 @@ void PathModule::Update() {
 		if (b0 && b3) { coh->SetSimObjectWantedDirection(it->first, -XVECf); } // top-right
 		if (b1 && b2) { coh->SetSimObjectWantedDirection(it->first,  XVECf); } // bottom-left
 		if (b1 && b3) { coh->SetSimObjectWantedDirection(it->first,  ZVECf); } // top-left
+		*/
+
+		if (vec.sqLen3D() > (coh->GetSquareSize() * coh->GetSquareSize())) {
+			coh->SetSimObjectWantedDirection(it->first, vec.norm());
+		} else {
+			printf("object ID %u at goal %s!\n", it->first, (coh->GetSimObjectWantedPosition(it->first)).str().c_str());
+			coh->SetSimObjectWantedForwardSpeed(it->first, 0.0f);
+		}
 	}
 }
 

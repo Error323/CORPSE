@@ -132,20 +132,26 @@ float CallOutHandler::GetSimObjectCurrentForwardSpeed(unsigned int id) const {
 
 
 
+float CallOutHandler::GetSimObjectWantedForwardSpeed(unsigned int id) const {
+	if (IsValidSimObjectID(id)) { return ((simObjectHandler->GetSimObject(id))->GetWantedForwardSpeed()); }
+}
+
+const vec3f& CallOutHandler::GetSimObjectWantedPosition(unsigned int id) const {
+	if (IsValidSimObjectID(id)) { return ((simObjectHandler->GetSimObject(id))->GetWantedPosition()); }
+}
+
+const vec3f& CallOutHandler::GetSimObjectWantedDirection(unsigned int id) const {
+	if (IsValidSimObjectID(id)) { return ((simObjectHandler->GetSimObject(id))->GetWantedDirection()); }
+}
+
 void CallOutHandler::SetSimObjectWantedForwardSpeed(unsigned int id, float spd) const {
-	if (IsValidSimObjectID(id)) {
-		simObjectHandler->GetSimObject(id)->SetWantedForwardSpeed(spd);
-	}
+	if (IsValidSimObjectID(id)) { (simObjectHandler->GetSimObject(id))->SetWantedForwardSpeed(spd); }
 }
 
 void CallOutHandler::SetSimObjectWantedPosition(unsigned int id, const vec3f& pos) const {
-	if (IsValidSimObjectID(id)) {
-		simObjectHandler->GetSimObject(id)->SetWantedPosition(pos);
-	}
+	if (IsValidSimObjectID(id)) { (simObjectHandler->GetSimObject(id))->SetWantedPosition(pos); }
 }
 
 void CallOutHandler::SetSimObjectWantedDirection(unsigned int id, const vec3f& dir) const {
-	if (IsValidSimObjectID(id)) {
-		simObjectHandler->GetSimObject(id)->SetWantedDirection(dir);
-	}
+	if (IsValidSimObjectID(id)) { (simObjectHandler->GetSimObject(id))->SetWantedDirection(dir); }
 }

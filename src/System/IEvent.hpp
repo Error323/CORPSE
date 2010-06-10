@@ -9,9 +9,9 @@
 enum EventType {
 	EVENT_BASE                = -1,
 	EVENT_SIMOBJECT_CREATED   =  0,
-	EVENT_SIMOBJECT_DESTROYED =  2,
-	EVENT_SIMOBJECT_MOVEORDER =  3,
-	EVENT_LAST                =  4,
+	EVENT_SIMOBJECT_DESTROYED =  1,
+	EVENT_SIMOBJECT_MOVEORDER =  2,
+	EVENT_LAST                =  3,
 };
 
 struct IEvent {
