@@ -69,6 +69,11 @@ void SimObjectSelector::UpdateSelection(int x, int y) {
 		selectionDists[2] = ground->LineGroundCol(camera->pos, camera->pos + selectionDirs3D[2] * camera->zFarDistance);
 		selectionDists[3] = ground->LineGroundCol(camera->pos, camera->pos + selectionDirs3D[3] * camera->zFarDistance);
 
+		if (selectionDists[0] < 0.0f) { selectionDists[0] = camera->zFarDistance; }
+		if (selectionDists[1] < 0.0f) { selectionDists[1] = camera->zFarDistance; }
+		if (selectionDists[2] < 0.0f) { selectionDists[2] = camera->zFarDistance; }
+		if (selectionDists[3] < 0.0f) { selectionDists[3] = camera->zFarDistance; }
+
 		selectionCoors3D[0] = camera->pos + selectionDirs3D[0] * selectionDists[0];
 		selectionCoors3D[1] = camera->pos + selectionDirs3D[1] * selectionDists[1];
 		selectionCoors3D[2] = camera->pos + selectionDirs3D[2] * selectionDists[2];
@@ -110,47 +115,45 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 		if (selectionSquareSize2D.x >= -5 && selectionSquareSize2D.x <= 5) { ClearSelection(); return; }
 		if (selectionSquareSize2D.y >= -5 && selectionSquareSize2D.y <= 5) { ClearSelection(); return; }
 
-		if (selectionDists[0] > 0.0f && selectionDists[1] > 0.0f && selectionDists[2] > 0.0f && selectionDists[3] > 0.0f) {
-			// all four rays must have intersected the ground
-			SimObjectGrid<const SimObject*>* grid = simObjectHandler->GetSimObjectGrid();
+		// all four rays must have intersected the ground
+		SimObjectGrid<const SimObject*>* grid = simObjectHandler->GetSimObjectGrid();
 
-			const vec3i& minsIdx = grid->GetCellIdx(selectionBounds3D[0], true);
-			const vec3i& maxsIdx = grid->GetCellIdx(selectionBounds3D[1], true);
+		const vec3i& minsIdx = grid->GetCellIdx(selectionBounds3D[0], true);
+		const vec3i& maxsIdx = grid->GetCellIdx(selectionBounds3D[1], true);
 
-			const vec3f selectionEdgeDirs[4] = {
-				(selectionCoors3D[1] - selectionCoors3D[0]).norm(),
-				(selectionCoors3D[2] - selectionCoors3D[1]).norm(),
-				(selectionCoors3D[3] - selectionCoors3D[2]).norm(),
-				(selectionCoors3D[0] - selectionCoors3D[3]).norm(),
-			};
-			const vec3f avgSelectionCoor3D =
-				(selectionCoors3D[0] * 0.25f) +
-				(selectionCoors3D[1] * 0.25f) +
-				(selectionCoors3D[2] * 0.25f) +
-				(selectionCoors3D[3] * 0.25f);
+		const vec3f selectionEdgeDirs[4] = {
+			(selectionCoors3D[1] - selectionCoors3D[0]).norm(),
+			(selectionCoors3D[2] - selectionCoors3D[1]).norm(),
+			(selectionCoors3D[3] - selectionCoors3D[2]).norm(),
+			(selectionCoors3D[0] - selectionCoors3D[3]).norm(),
+		};
+		const vec3f avgSelectionCoor3D =
+			(selectionCoors3D[0] * 0.25f) +
+			(selectionCoors3D[1] * 0.25f) +
+			(selectionCoors3D[2] * 0.25f) +
+			(selectionCoors3D[3] * 0.25f);
 
-			// visit the grid-cells within the bounding-box
-			for (int i = minsIdx.x; i <= maxsIdx.x; i++) {
-				for (int j = minsIdx.z; j <= maxsIdx.z; j++) {
-					const SimObjectGrid<const SimObject*>::GridCell& cell = grid->GetCell(vec3i(i, 0, j));
-					const std::list<const SimObject*> objects = cell.GetObjects();
+		// visit the grid-cells within the bounding-box
+		for (int i = minsIdx.x; i <= maxsIdx.x; i++) {
+			for (int j = minsIdx.z; j <= maxsIdx.z; j++) {
+				const SimObjectGrid<const SimObject*>::GridCell& cell = grid->GetCell(vec3i(i, 0, j));
+				const std::list<const SimObject*> objects = cell.GetObjects();
 
-					for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it) {
-						const vec3f& pos = (*it)->GetPos();
+				for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it) {
+					const vec3f& pos = (*it)->GetPos();
 
-						// assumes the quad is convex
-						if (geom::PointInTriangle(selectionCoors3D[0], selectionCoors3D[1], avgSelectionCoor3D, pos)) {
-							selectedObjectIDs.push_back((*it)->GetID()); continue;
-						}
-						if (geom::PointInTriangle(selectionCoors3D[1], selectionCoors3D[2], avgSelectionCoor3D, pos)) {
-							selectedObjectIDs.push_back((*it)->GetID()); continue;
-						}
-						if (geom::PointInTriangle(selectionCoors3D[2], selectionCoors3D[3], avgSelectionCoor3D, pos)) {
-							selectedObjectIDs.push_back((*it)->GetID()); continue;
-						}
-						if (geom::PointInTriangle(selectionCoors3D[3], selectionCoors3D[0], avgSelectionCoor3D, pos)) {
-							selectedObjectIDs.push_back((*it)->GetID()); continue;
-						}
+					// assumes the quad is convex
+					if (geom::PointInTriangle(selectionCoors3D[0], selectionCoors3D[1], avgSelectionCoor3D, pos)) {
+						selectedObjectIDs.push_back((*it)->GetID()); continue;
+					}
+					if (geom::PointInTriangle(selectionCoors3D[1], selectionCoors3D[2], avgSelectionCoor3D, pos)) {
+						selectedObjectIDs.push_back((*it)->GetID()); continue;
+					}
+					if (geom::PointInTriangle(selectionCoors3D[2], selectionCoors3D[3], avgSelectionCoor3D, pos)) {
+						selectedObjectIDs.push_back((*it)->GetID()); continue;
+					}
+					if (geom::PointInTriangle(selectionCoors3D[3], selectionCoors3D[0], avgSelectionCoor3D, pos)) {
+						selectedObjectIDs.push_back((*it)->GetID()); continue;
 					}
 				}
 			}
