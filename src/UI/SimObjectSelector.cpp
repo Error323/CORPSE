@@ -4,6 +4,7 @@
 
 #include "./SimObjectSelector.hpp"
 #include "../Map/Ground.hpp"
+#include "../Math/Geom.hpp"
 #include "../Renderer/RenderThread.hpp"
 #include "../Renderer/CameraController.hpp"
 #include "../Renderer/Camera.hpp"
@@ -122,6 +123,11 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 				(selectionCoors3D[3] - selectionCoors3D[2]).norm(),
 				(selectionCoors3D[0] - selectionCoors3D[3]).norm(),
 			};
+			const vec3f avgSelectionCoor3D =
+				(selectionCoors3D[0] * 0.25f) +
+				(selectionCoors3D[1] * 0.25f) +
+				(selectionCoors3D[2] * 0.25f) +
+				(selectionCoors3D[3] * 0.25f);
 
 			// visit the grid-cells within the bounding-box
 			for (int i = minsIdx.x; i <= maxsIdx.x; i++) {
@@ -132,25 +138,18 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 					for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it) {
 						const vec3f& pos = (*it)->GetPos();
 
-						const float
-							edgeDot0 = selectionEdgeDirs[0].dot3D((pos - selectionCoors3D[0]).norm()),
-							edgeDot1 = selectionEdgeDirs[1].dot3D((pos - selectionCoors3D[1]).norm()),
-							edgeDot2 = selectionEdgeDirs[2].dot3D((pos - selectionCoors3D[2]).norm()),
-							edgeDot3 = selectionEdgeDirs[3].dot3D((pos - selectionCoors3D[3]).norm());
-
-						/*
-						const float
-							edgeDist0 = geom::PointLineDistance(selectionCoors3D[1], selectionCoors3D[0], pos),
-							edgeDist1 = geom::PointLineDistance(selectionCoors3D[2], selectionCoors3D[1], pos),
-							edgeDist2 = geom::PointLineDistance(selectionCoors3D[3], selectionCoors3D[2], pos),
-							edgeDist3 = geom::PointLineDistance(selectionCoors3D[0], selectionCoors3D[3], pos);
-
-						const bool b0 = (edgeDist0 < 0.0f && edgeDist1 < 0.0f && edgeDist2 < 0.0f && edgeDist3 < 0.0f);
-						const bool b1 = (edgeDist0 > 0.0f && edgeDist1 > 0.0f && edgeDist2 > 0.0f && edgeDist3 > 0.0f);
-						*/
-
-						if (edgeDot0 > 0.0f && edgeDot1 > 0.0f && edgeDot2 > 0.0f && edgeDot3 > 0.0f) {
-							selectedObjectIDs.push_back((*it)->GetID());
+						// assumes the quad is convex
+						if (geom::PointInTriangle(selectionCoors3D[0], selectionCoors3D[1], avgSelectionCoor3D, pos)) {
+							selectedObjectIDs.push_back((*it)->GetID()); continue;
+						}
+						if (geom::PointInTriangle(selectionCoors3D[1], selectionCoors3D[2], avgSelectionCoor3D, pos)) {
+							selectedObjectIDs.push_back((*it)->GetID()); continue;
+						}
+						if (geom::PointInTriangle(selectionCoors3D[2], selectionCoors3D[3], avgSelectionCoor3D, pos)) {
+							selectedObjectIDs.push_back((*it)->GetID()); continue;
+						}
+						if (geom::PointInTriangle(selectionCoors3D[3], selectionCoors3D[0], avgSelectionCoor3D, pos)) {
+							selectedObjectIDs.push_back((*it)->GetID()); continue;
 						}
 					}
 				}
