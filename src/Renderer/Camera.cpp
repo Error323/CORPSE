@@ -7,8 +7,6 @@
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
 
-#define SDL_BUTTON_WHEEL 8
-
 Camera::Camera(const vec3f& p, const vec3f& t, int movementMode, int projectionMode):
 	mat(p, XVECf, YVECf, ZVECf),
 	vrp(t),
@@ -296,7 +294,7 @@ void Camera::ApplyViewProjTransform() {
 
 
 
-vec3f Camera::MouseToWorldCoors(int mx, int my) {
+vec3f Camera::ScreenToWorldCoors(int mx, int my) {
 	// gluUnProject() expects double*'s
 	static double wcoors[3]   = {0.0, 0.0, 0.0};
 	static double viewMat[16] = {0.0};
@@ -514,9 +512,28 @@ vec3f OrbitCamera::GetOrbitPos() const {
 void OrbitCamera::KeyPressed(int key, bool) { active = (key == SDLK_SPACE); }
 void OrbitCamera::KeyReleased(int key) { active = active && (key != SDLK_SPACE); }
 
-void OrbitCamera::MousePressed(int, int, int, bool repeat) {
+void OrbitCamera::MousePressed(int button, int, int, bool repeat) {
 	if (!active) {
 		return;
+	}
+
+	switch (button) {
+		case SDL_BUTTON_WHEELDOWN: {
+			distance = std::min(zFarDistance, distance + 100.0f);
+
+			pos = cen - (zdir * distance);
+			vrp = pos + zdir;
+
+			mat.SetPos(pos);
+		} break;
+		case SDL_BUTTON_WHEELUP: {
+			distance = std::max(zNearDistance, distance - 100.0f);
+
+			pos = cen - (zdir * distance);
+			vrp = pos + zdir;
+
+			mat.SetPos(pos);
+		} break;
 	}
 
 	if (!repeat) {
@@ -564,13 +581,14 @@ void OrbitCamera::MouseMoved(int x, int y, int dx, int dy) {
 			mat.SetPos(pos);
 			mat.SetYDir(ydir);
 		} break;
+
 		case SDL_BUTTON_RIGHT: {
 			pos = cen - (zdir * distance);
 			vrp = pos + zdir;
 
 			mat.SetPos(pos);
 		} break;
-		case SDL_BUTTON_WHEEL:
+
 		case SDL_BUTTON_MIDDLE: {
 			const int xsign = (dx > 0)?  1:  1;
 			const int ysign = (dy > 0)? -1: -1;

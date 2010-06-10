@@ -53,7 +53,7 @@ public:
 	const float* GetProjMatrix();
 	void ApplyViewProjTransform();
 
-	vec3f MouseToWorldCoors(int, int);
+	vec3f ScreenToWorldCoors(int, int);
 
 
 	protected: mat44f mat;    // shadow copy of (pos, xdir, ydir, zdir)

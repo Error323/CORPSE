@@ -79,6 +79,8 @@ public:
 		void SetLastMouseCoors(int x, int y) { lastMouseX = x; lastMouseY = y; }
 		void SetLastMouseButton(int b) { lastMouseButton = b; }
 
+		int GetCurrMouseX() const { return currMouseX; }
+		int GetCurrMouseY() const { return currMouseY; }
 		int GetLastMouseX() const { return lastMouseX; }
 		int GetLastMouseY() const { return lastMouseY; }
 		int GetLastMouseButton() const { return lastMouseButton; }

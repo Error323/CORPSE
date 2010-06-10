@@ -262,23 +262,45 @@ void SimObjectSelector::DrawSelection() {
 		glPopAttrib();
 	} else {
 		if (haveSelection) {
+			const vec3f& dir = camera->GetPixelDir(INP->GetCurrMouseX(), INP->GetCurrMouseY());
+			const float dst = ground->LineGroundCol(camera->pos, camera->pos + dir * camera->zFarDistance);
+			const vec3f pos = camera->pos + dir * dst;
+
+
+			static int stipplePattern = 0x0000F0F0;
+			static int stippleShift = 4;
+
+			{
+				if ((renderThread->GetFrame() % 16) == 0) {
+					stipplePattern >>= stippleShift;
+
+					if ((stipplePattern & 0x0000FF00) == 0) {
+						stipplePattern |= 0x0000F000;
+					}
+				}
+			}
+
+
 			camera->ApplyViewProjTransform();
 
-			glPushAttrib(GL_CURRENT_BIT | GL_LINE_BIT);
+			glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
 				glEnable(GL_BLEND);
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
+				glEnable(GL_LINE_STIPPLE);
+				glLineWidth(4.0f);
 
 				// draw marker squares around selected objects
 				for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
 					if (simObjectHandler->IsValidSimObjectID(*it)) {
 						const SimObject* obj = simObjectHandler->GetSimObject(*it);
-						const mat44f& mat = obj->GetMat();
+						const mat44f& objMat = obj->GetMat();
+						const vec3f& objPos = objMat.GetPos();
 						const ModelBase* mdl = obj->GetModel()->GetModelBase();
 						const vec3f size = mdl->maxs - mdl->mins;
 
 						glPushMatrix();
-							glMultMatrixf(mat.m);
+							glMultMatrixf(objMat.m);
+							glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
 							glBegin(GL_QUADS);
 								glVertex3f(-size.x * 0.5f, 0.0f, -size.z * 0.5f);
 								glVertex3f( size.x * 0.5f, 0.0f, -size.z * 0.5f);
@@ -286,6 +308,16 @@ void SimObjectSelector::DrawSelection() {
 								glVertex3f(-size.x * 0.5f, 0.0f,  size.z * 0.5f);
 							glEnd();
 						glPopMatrix();
+
+
+						if (dst > 0.0f) {
+							glLineStipple(3, stipplePattern);
+
+							glBegin(GL_LINES);
+								glColor4f(1.0f, 0.0f, 0.0f, 0.75f); glVertex3f(objPos.x, objPos.y, objPos.z);
+								glColor4f(0.0f, 1.0f, 0.0f, 0.75f); glVertex3f(pos.x, pos.y, pos.z);
+							glEnd();
+						}
 					}
 				}
 
