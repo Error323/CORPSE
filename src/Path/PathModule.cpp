@@ -66,7 +66,6 @@ void PathModule::Update() {
 		if (vec.sqLen3D() > (coh->GetSquareSize() * coh->GetSquareSize())) {
 			coh->SetSimObjectWantedDirection(it->first, vec.norm());
 		} else {
-			printf("object ID %u at goal %s!\n", it->first, (coh->GetSimObjectWantedPosition(it->first)).str().c_str());
 			coh->SetSimObjectWantedForwardSpeed(it->first, 0.0f);
 		}
 	}
