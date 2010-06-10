@@ -28,6 +28,7 @@ void PathModule::OnEvent(const IEvent* e) {
 			const std::list<unsigned int>& objectIDs = ee->GetObjectIDs();
 			const vec3f& goalPos = ee->GetGoalPos();
 
+			// TODO: group management
 			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
 				assert(coh->IsValidSimObjectID(*it));
 
@@ -47,21 +48,9 @@ void PathModule::Init() {
 }
 
 void PathModule::Update() {
-	// steer the objects around the map
+	// steer the sim-objects around the map based on user commands
 	for (std::map<unsigned int, const SimObjectDef*>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
 		const vec3f vec = coh->GetSimObjectWantedPosition(it->first) - coh->GetSimObjectPosition(it->first);
-
-		/*
-		const bool b0 = (pos.x > ((coh->GetHeightMapSizeX() * coh->GetSquareSize()) * 0.9f));
-		const bool b1 = (pos.x < ((coh->GetHeightMapSizeX() * coh->GetSquareSize()) * 0.1f));
-		const bool b2 = (pos.z > ((coh->GetHeightMapSizeZ() * coh->GetSquareSize()) * 0.9f));
-		const bool b3 = (pos.z < ((coh->GetHeightMapSizeZ() * coh->GetSquareSize()) * 0.1f));
-
-		if (b0 && b2) { coh->SetSimObjectWantedDirection(it->first, -ZVECf); } // bottom-right
-		if (b0 && b3) { coh->SetSimObjectWantedDirection(it->first, -XVECf); } // top-right
-		if (b1 && b2) { coh->SetSimObjectWantedDirection(it->first,  XVECf); } // bottom-left
-		if (b1 && b3) { coh->SetSimObjectWantedDirection(it->first,  ZVECf); } // top-left
-		*/
 
 		if (vec.sqLen3D() > (coh->GetSquareSize() * coh->GetSquareSize())) {
 			coh->SetSimObjectWantedDirection(it->first, vec.norm());
