@@ -120,7 +120,7 @@ struct FPSCamera: public Camera {
 	void RotateY(float angle, bool b);
 	void RotateZ(float angle, bool b);
 
-	bool Active() const { return true; }
+	bool Active() const;
 };
 
 struct OrbitCamera: public Camera {

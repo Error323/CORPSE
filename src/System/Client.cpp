@@ -197,8 +197,8 @@ void CClient::KeyPressed(int sdlKeyCode, bool repeat) {
 
 			case SDLK_m: {
 				// note: auto-{en, dis}able when switching to/from FPS mode?
-				ENG->ToggleMouseLook();
-				SDL_ShowCursor(ENG->GetMouseLook()? SDL_DISABLE: SDL_ENABLE);
+				AUX->ToggleMouseLook();
+				SDL_ShowCursor(AUX->GetMouseLook()? SDL_DISABLE: SDL_ENABLE);
 			} break;
 
 			case SDLK_n: {
@@ -261,32 +261,32 @@ void CClient::InitSDL(const char* caption) {
 
 void CClient::SetSDLWindowVideoMode() {
 	// set the video mode (32 bits per pixel, etc)
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,      (ENG->GetBitsPerPixel() >> 2));
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,    (ENG->GetBitsPerPixel() >> 2));
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,     (ENG->GetBitsPerPixel() >> 2));
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE,    (ENG->GetBitsPerPixel() >> 2));
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,      (AUX->GetBitsPerPixel() >> 2));
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,    (AUX->GetBitsPerPixel() >> 2));
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,     (AUX->GetBitsPerPixel() >> 2));
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE,    (AUX->GetBitsPerPixel() >> 2));
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,                          1);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,    ENG->GetDepthBufferBits());
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,    AUX->GetDepthBufferBits());
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE,                          1);
 
 	// this needs to be done prior to calling SetVideoMode()
-	if (ENG->GetUseFSAA()) {
-		ENG->SetUseFSAA(EnableMultiSampling());
-		ENG->SetFSAALevel((ENG->GetUseFSAA()? ENG->GetFSAALevel(): 0));
-		ENG->SetUseFSAA(VerifyMultiSampling());
-		ENG->SetFSAALevel((ENG->GetUseFSAA()? ENG->GetFSAALevel(): 0));
+	if (AUX->GetUseFSAA()) {
+		AUX->SetUseFSAA(EnableMultiSampling());
+		AUX->SetFSAALevel((AUX->GetUseFSAA()? AUX->GetFSAALevel(): 0));
+		AUX->SetUseFSAA(VerifyMultiSampling());
+		AUX->SetFSAALevel((AUX->GetUseFSAA()? AUX->GetFSAALevel(): 0));
 	}
 
 	mScreen = SDL_SetVideoMode(
 		WIN->GetWindowSizeX(),
 		WIN->GetWindowSizeY(),
-		ENG->GetBitsPerPixel(),
+		AUX->GetBitsPerPixel(),
 		SDL_OPENGL |
 		SDL_RESIZABLE |
 		SDL_HWSURFACE |
 		SDL_DOUBLEBUF |
-		(ENG->GetFullScreen()? SDL_FULLSCREEN: 0)
+		(AUX->GetFullScreen()? SDL_FULLSCREEN: 0)
 	);
 
 	if (mScreen == NULL) {
@@ -374,7 +374,7 @@ bool CClient::UpdateWindowInfo() {
 void CClient::UpdateViewPortDimensions() {
 	UpdateWindowInfo();
 
-	if (!ENG->GetDualScreen()) {
+	if (!AUX->GetDualScreen()) {
 		WIN->SetViewPortSizeX(WIN->GetViewPortSizeX());
 		WIN->SetViewPortSizeY(WIN->GetViewPortSizeY());
 		WIN->SetViewPortPosX(0);
@@ -383,7 +383,7 @@ void CClient::UpdateViewPortDimensions() {
 		WIN->SetViewPortSizeX(WIN->GetViewPortSizeX() >> 1);
 		WIN->SetViewPortSizeY(WIN->GetViewPortSizeY() >> 0);
 
-		if (ENG->GetDualScreenMapLeft()) {
+		if (AUX->GetDualScreenMapLeft()) {
 			WIN->SetViewPortPosX(WIN->GetViewPortSizeX() >> 1);
 			WIN->SetViewPortPosY(0);
 		} else {
@@ -404,7 +404,7 @@ bool CClient::EnableMultiSampling(void) {
 	}
 
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, ENG->GetFSAALevel());
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, AUX->GetFSAALevel());
 	glEnable(GL_MULTISAMPLE);
 
 	return true;

@@ -67,11 +67,11 @@ inline static void PreFrameState() {
 
 		glPolygonMode(GL_FRONT, GL_FILL);
 
-		if (ENG->GetLineSmoothing()) {
+		if (AUX->GetLineSmoothing()) {
 			glEnable(GL_LINE_SMOOTH);
 			glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 		}
-		if (ENG->GetPointSmoothing()) {
+		if (AUX->GetPointSmoothing()) {
 			glEnable(GL_POINT_SMOOTH);
 			glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
 		}
@@ -79,7 +79,7 @@ inline static void PreFrameState() {
 		// poor-man's FSAA (unused)
 		// glEnable(GL_POLYGON_SMOOTH);
 
-		if (ENG->GetUseFSAA()) {
+		if (AUX->GetUseFSAA()) {
 			glEnable(GL_MULTISAMPLE_ARB);
 		}
 
@@ -102,7 +102,7 @@ inline static void PostFrameState() {
 		postDL = glGenLists(1);
 		glNewList(postDL, GL_COMPILE);
 
-		if (ENG->GetUseFSAA()) {
+		if (AUX->GetUseFSAA()) {
 			glDisable(GL_MULTISAMPLE_ARB);
 		}
 
@@ -121,7 +121,7 @@ inline static void PostFrameState() {
 }
 
 void CRenderThread::Update() {
-	if (ENG->GetWantDraw()) {
+	if (AUX->GetWantDraw()) {
 		PreFrameState();
 
 		glMatrixMode(GL_MODELVIEW);

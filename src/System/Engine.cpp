@@ -31,7 +31,7 @@ void CEngine::FreeInstance(CEngine* e) {
 
 
 CEngine::CEngine(int argc, char** argv) {
-	EngineAux::Init(argc, argv);
+	mEngineAux = EngineAux::GetInstance(argc, argv);
 
 	mEventHandler = EventHandler::GetInstance();
 
@@ -51,10 +51,11 @@ CEngine::~CEngine() {
 	CClient::FreeInstance(mClient);
 
 	EventHandler::FreeInstance(mEventHandler);
+	EngineAux::FreeInstance(mEngineAux);
 }
 
 void CEngine::Run() {
-	while (!ENG->GetWantQuit()) {
+	while (!AUX->GetWantQuit()) {
 		mServer->Update();
 		mClient->Update();
 	}

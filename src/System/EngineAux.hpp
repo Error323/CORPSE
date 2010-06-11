@@ -10,98 +10,33 @@ class CLogger;
 
 struct EngineAux {
 public:
-	EngineAux();
+	EngineAux(int, char**);
 	~EngineAux();
 
-	static void Init(int, char**);
-	static EngineAux* GetInstance();
+	static EngineAux* GetInstance(int, char**);
+	static void FreeInstance(EngineAux*);
 
 	LuaParser* GetLuaParser() { return luaParser; }
 	CLogger* GetLogger() { return logger; }
 	const char* GetCWD() const { return cwd; }
 
-	struct EngineState;
-	struct WindowState;
-	struct InputState;
-	EngineState* GetEngState() { return &engState; }
-	WindowState* GetWinState() { return &winState; }
-	InputState* GetInpState() { return &inpState; }
-
-
-	struct EngineState {
-	public:
-		EngineState(): wantQuit(false), wantDraw(true) {}
-		void Init(LuaParser*);
-
-		bool GetWantQuit() const { return wantQuit; }
-		void SetWantQuit(bool b) { wantQuit = b; }
-		void SetWantDraw(bool b) { wantDraw = b; }
-		bool GetWantDraw() const { return wantDraw; }
-		bool GetMouseLook() const { return mouseLook; }
-		void ToggleMouseLook() { mouseLook = !mouseLook; }
-		bool GetFullScreen() const { return fullScreen; }
-		bool GetDualScreen() const { return dualScreen; }
-		bool GetDualScreenMapLeft() const { return dualScreenMapLeft; }
-		unsigned int GetBitsPerPixel() const { return bitsPerPixel; }
-		unsigned int GetDepthBufferBits() const { return depthBufferBits; }
-		unsigned int GetFSAALevel() const { return FSAALevel; }
-		bool GetUseFSAA() const { return useFSAA; }
-		void SetUseFSAA(bool b) { useFSAA = b; }
-		void SetFSAALevel(unsigned int n) { FSAALevel = n; }
-		bool GetLineSmoothing() const { return lineSmoothing; }
-		bool GetPointSmoothing() const { return pointSmoothing; }
-
-	private:
-		bool wantQuit;
-		bool wantDraw;
-
-		bool useFSAA;
-		bool mouseLook;                 // if true/false, control FPS camera with mouse/keyboard
-
-		bool fullScreen;
-		bool dualScreen;
-		bool dualScreenMapLeft;         // dualScreen? "DualScreenMMapLeft": false;
-		bool lineSmoothing;
-		bool pointSmoothing;
-
-		unsigned int bitsPerPixel;
-		unsigned int depthBufferBits;
-		unsigned int FSAALevel;         // anti-aliasing level; should be even number in [0, 8]
-	};
-
-
-	struct InputState {
-	public:
-		void Init(LuaParser*);
-
-		void SetLastInputTick(unsigned int t) { lastInputTick = t; }
-		void SetCurrMouseCoors(int x, int y) { currMouseX = x; currMouseY = y; }
-		void SetLastMouseCoors(int x, int y) { lastMouseX = x; lastMouseY = y; }
-		void SetLastMouseButton(int b) { lastMouseButton = b; }
-
-		int GetCurrMouseX() const { return currMouseX; }
-		int GetCurrMouseY() const { return currMouseY; }
-		int GetLastMouseX() const { return lastMouseX; }
-		int GetLastMouseY() const { return lastMouseY; }
-		int GetLastMouseButton() const { return lastMouseButton; }
-
-		unsigned int GetLastInputTick() { return lastInputTick; }
-		unsigned int GetInputFrameRate() { return inputFrameRate; }
-		unsigned int GetInputFrameTime() { return inputFrameTime; }
-
-		float GetKeySens() const { return keySens; }
-		float GetMouseSens() const { return mouseSens; }
-
-	private:
-		int currMouseX, lastMouseX;
-		int currMouseY, lastMouseY;
-		int lastMouseButton;
-		unsigned int lastInputTick;
-		unsigned int inputFrameRate;
-		unsigned int inputFrameTime;
-		float keySens;
-		float mouseSens;
-	};
+	bool GetWantQuit() const { return wantQuit; }
+	void SetWantQuit(bool b) { wantQuit = b; }
+	void SetWantDraw(bool b) { wantDraw = b; }
+	bool GetWantDraw() const { return wantDraw; }
+	bool GetMouseLook() const { return mouseLook; }
+	void ToggleMouseLook() { mouseLook = !mouseLook; }
+	bool GetFullScreen() const { return fullScreen; }
+	bool GetDualScreen() const { return dualScreen; }
+	bool GetDualScreenMapLeft() const { return dualScreenMapLeft; }
+	unsigned int GetBitsPerPixel() const { return bitsPerPixel; }
+	unsigned int GetDepthBufferBits() const { return depthBufferBits; }
+	unsigned int GetFSAALevel() const { return FSAALevel; }
+	bool GetUseFSAA() const { return useFSAA; }
+	void SetUseFSAA(bool b) { useFSAA = b; }
+	void SetFSAALevel(unsigned int n) { FSAALevel = n; }
+	bool GetLineSmoothing() const { return lineSmoothing; }
+	bool GetPointSmoothing() const { return pointSmoothing; }
 
 
 	struct WindowState {
@@ -152,24 +87,39 @@ public:
 		std::string title;
 	};
 
+	WindowState* GetWinState() { return &winState; }
+
 private:
 	lua_State* luaState;
 
 	LuaParser* luaParser;
 	CLogger* logger;
 
-	EngineState engState;
 	WindowState winState;
-	InputState inpState;
 
 	static int argc;
 	static char** argv;
 	static char cwd[1024];
+
+	bool wantQuit;
+	bool wantDraw;
+
+	bool useFSAA;
+	bool mouseLook;                 // if true/false, control FPS camera with mouse/keyboard
+
+	bool fullScreen;
+	bool dualScreen;
+	bool dualScreenMapLeft;         // dualScreen? "DualScreenMMapLeft": false;
+	bool lineSmoothing;
+	bool pointSmoothing;
+
+	unsigned int bitsPerPixel;
+	unsigned int depthBufferBits;
+	unsigned int FSAALevel;         // anti-aliasing level; should be even number in [0, 8]
 };
 
-#define engAux EngineAux::GetInstance()
-#define ENG (engAux->GetEngState())
-#define INP (engAux->GetInpState())
+#define engAux EngineAux::GetInstance(0, NULL)
+#define AUX (engAux)
 #define WIN (engAux->GetWinState())
 #define LUA (engAux->GetLuaParser())
 #define LOG *(engAux->GetLogger())

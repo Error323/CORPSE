@@ -3,6 +3,7 @@
 #include <GL/gl.h>
 
 #include "./SimObjectSelector.hpp"
+#include "../Input/InputHandler.hpp"
 #include "../Map/Ground.hpp"
 #include "../Math/Geom.hpp"
 #include "../Renderer/RenderThread.hpp"
@@ -265,7 +266,7 @@ void SimObjectSelector::DrawSelection() {
 		glPopAttrib();
 	} else {
 		if (haveSelection) {
-			const vec3f& cursorDir = camera->GetPixelDir(INP->GetCurrMouseX(), INP->GetCurrMouseY());
+			const vec3f& cursorDir = camera->GetPixelDir((inputHandler->GetCurrMouseCoors()).x, (inputHandler->GetCurrMouseCoors()).y);
 			const float cursorDst = ground->LineGroundCol(camera->pos, camera->pos + cursorDir * camera->zFarDistance);
 			const vec3f cursorPos = camera->pos + cursorDir * cursorDst;
 

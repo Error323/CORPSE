@@ -6,6 +6,7 @@ class EventHandler;
 class CClient;
 class CServer;
 
+struct EngineAux;
 class CEngine {
 public:
 	static CEngine* GetInstance(int, char**);
@@ -19,6 +20,7 @@ private:
 
 	EventHandler* mEventHandler;
 
+	EngineAux* mEngineAux;
 	CClient* mClient;
 	CServer* mServer;
 };

@@ -332,35 +332,37 @@ vec3f Camera::ScreenToWorldCoors(int mx, int my) {
 
 
 
+bool FPSCamera::Active() const { return (AUX->GetMouseLook()); }
+
 void FPSCamera::KeyPressed(int key, bool repeat) {
 	if (repeat) {
-		if (key == SDLK_LALT)  { VStrafe( 1, INP->GetKeySens() * 2.000f); }
-		if (key == SDLK_LCTRL) { VStrafe(-1, INP->GetKeySens() * 2.000f); }
+		if (key == SDLK_LALT)  { VStrafe( 1, inputHandler->GetKeySensitivity()); }
+		if (key == SDLK_LCTRL) { VStrafe(-1, inputHandler->GetKeySensitivity()); }
 
-		if (key == SDLK_w) { Move(    1, INP->GetKeySens() * 2.000f); }
-		if (key == SDLK_s) { Move(   -1, INP->GetKeySens() * 2.000f); }
-		if (key == SDLK_a) { HStrafe(-1, INP->GetKeySens() * 2.000f); }
-		if (key == SDLK_d) { HStrafe( 1, INP->GetKeySens() * 2.000f); }
-		if (key == SDLK_q) { Roll(   -1, INP->GetKeySens() * 0.005f); }
-		if (key == SDLK_e) { Roll(    1, INP->GetKeySens() * 0.005f); }
+		if (key == SDLK_w) { Move(    1, inputHandler->GetKeySensitivity()); }
+		if (key == SDLK_s) { Move(   -1, inputHandler->GetKeySensitivity()); }
+		if (key == SDLK_a) { HStrafe(-1, inputHandler->GetKeySensitivity()); }
+		if (key == SDLK_d) { HStrafe( 1, inputHandler->GetKeySensitivity()); }
+		if (key == SDLK_q) { Roll(   -1, inputHandler->GetKeySensitivity() * 0.005f); }
+		if (key == SDLK_e) { Roll(    1, inputHandler->GetKeySensitivity() * 0.005f); }
 
-		if (!ENG->GetMouseLook()) {
-			if (key == SDLK_UP   ) { Pitch(-1, INP->GetKeySens() * 0.005f); }
-			if (key == SDLK_DOWN ) { Pitch( 1, INP->GetKeySens() * 0.005f); }
-			if (key == SDLK_LEFT ) { Yaw(  -1, INP->GetKeySens() * 0.005f); }
-			if (key == SDLK_RIGHT) { Yaw(   1, INP->GetKeySens() * 0.005f); }
+		if (!AUX->GetMouseLook()) {
+			if (key == SDLK_UP   ) { Pitch(-1, inputHandler->GetKeySensitivity() * 0.005f); }
+			if (key == SDLK_DOWN ) { Pitch( 1, inputHandler->GetKeySensitivity() * 0.005f); }
+			if (key == SDLK_LEFT ) { Yaw(  -1, inputHandler->GetKeySensitivity() * 0.005f); }
+			if (key == SDLK_RIGHT) { Yaw(   1, inputHandler->GetKeySensitivity() * 0.005f); }
 		}
 	}
 }
 
 void FPSCamera::MousePressed(int b, int, int, bool repeat) {
 	if (repeat) {
-		if (b == SDL_BUTTON_LEFT)  { Move( 1, INP->GetMouseSens()); }
-		if (b == SDL_BUTTON_RIGHT) { Move(-1, INP->GetMouseSens()); }
+		if (b == SDL_BUTTON_LEFT)  { Move( 1, inputHandler->GetMouseSensitivity()); }
+		if (b == SDL_BUTTON_RIGHT) { Move(-1, inputHandler->GetMouseSensitivity()); }
 	}
 }
 void FPSCamera::MouseMoved(int, int, int dx, int dy) {
-	if (ENG->GetMouseLook()) {
+	if (AUX->GetMouseLook()) {
 		const int xsign =  (dx > 0)?  1: -1;
 		const int ysign =  (dy > 0)? -1:  1;
 		const float rdx = ((dx > 0)? dx: -dx) / hFOVdeg;
@@ -548,19 +550,19 @@ void OrbitCamera::MouseMoved(int x, int y, int dx, int dy) {
 		return;
 	}
 
-	switch (INP->GetLastMouseButton()) {
+	switch (inputHandler->GetLastMouseButton()) {
 		case SDL_BUTTON_LEFT: {
 			// we want translation wrt. coors of last press
-			dx = INP->GetLastMouseX() - x;
-			dy = INP->GetLastMouseY() - y;
+			dx = (inputHandler->GetLastMouseCoors()).x - x;
+			dy = (inputHandler->GetLastMouseCoors()).y - y;
 
 			// orbit change does not affect distance
 			rotation  = cRotation  - (dx * 0.25f);
 			elevation = cElevation - (dy * 0.25f);
 		} break;
 		case SDL_BUTTON_RIGHT: {
-			dx = INP->GetLastMouseX() - x;
-			dy = INP->GetLastMouseY() - y;
+			dx = (inputHandler->GetLastMouseCoors()).x - x;
+			dy = (inputHandler->GetLastMouseCoors()).y - y;
 
 			// distance change does not affect orbit
 			distance = cDistance - (dy * 0.5f * 10.0f);
@@ -571,7 +573,7 @@ void OrbitCamera::MouseMoved(int x, int y, int dx, int dy) {
 	if (elevation < -89.0f) elevation = -89.0f;
 	if (distance  <   1.0f) distance  =   1.0f;
 
-	switch (INP->GetLastMouseButton()) {
+	switch (inputHandler->GetLastMouseButton()) {
 		case SDL_BUTTON_LEFT: {
 			pos  = cen + GetOrbitPos();
 			vrp  = pos + ((cen - pos).inorm());
