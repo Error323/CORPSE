@@ -52,6 +52,33 @@ CScene::CScene() {
 	reader3DO = new CModelReader3DO();
 	readerS3O = new CModelReaderS3O();
 
+	SetBoundingRadius();
+	LoadObjectModels();
+	shadowHandler->GenDepthTextureFBO();
+	InitLight();
+
+	this->SetPriority(456);
+	eventHandler->AddReceiver(this);
+}
+
+CScene::~CScene() {
+	eventHandler->DelReceiver(this);
+
+	#ifdef CUSTOM_SMF_RENDERER
+	delete smfRenderer; smfRenderer = NULL;
+	#endif
+
+	delete skyBox; skyBox = NULL;
+
+	delete reader3DO; reader3DO = NULL;
+	delete readerS3O; readerS3O = NULL;
+
+	delete sun;
+
+	shaderHandler->ReleaseProgramObjects("[S3O]");
+}
+
+void CScene::LoadObjectModels() {
 	const LuaTable* rootTable = LUA->GetRoot();
 	const LuaTable* generalTable = rootTable->GetTblVal("general");
 	const LuaTable* modelsTable = rootTable->GetTblVal("models");
@@ -135,45 +162,6 @@ CScene::CScene() {
 
 		obj->SetModel(new LocalModel(obj->GetDef()->GetModel()));
 	}
-
-
-	shadowHandler->GenDepthTextureFBO();
-
-	// sun-dir points toward map-origin, not map-center
-	boundingRadiusSq =
-		(readMap->mapx * readMap->mapx * 0.5f * 0.5f * readMap->SQUARE_SIZE * readMap->SQUARE_SIZE) +
-		(readMap->mapy * readMap->mapy * 0.5f * 0.5f * readMap->SQUARE_SIZE * readMap->SQUARE_SIZE);
-	boundingRadius = fastmath::sqrt1(boundingRadiusSq);
-
-	// note: the sun-cam does not get registered with the camera
-	// controller, but is present in the input-receiver list so
-	// we disable it here
-	sun = new FPSCamera(mapInfo->light.sunDir * (boundingRadius * 2.0f) * 1.25f, ZVECf, Camera::CAM_PROJ_MODE_ORTHO);
-	sun->DisableInput();
-	sun->zNearDistance = 2.0f;
-	sun->zFarDistance *= 2.0f;
-
-	InitLight();
-
-	this->SetPriority(456);
-	eventHandler->AddReceiver(this);
-}
-
-CScene::~CScene() {
-	eventHandler->DelReceiver(this);
-
-	#ifdef CUSTOM_SMF_RENDERER
-	delete smfRenderer; smfRenderer = NULL;
-	#endif
-
-	delete skyBox; skyBox = NULL;
-
-	delete reader3DO; reader3DO = NULL;
-	delete readerS3O; readerS3O = NULL;
-
-	delete sun;
-
-	shaderHandler->ReleaseProgramObjects("[S3O]");
 }
 
 
@@ -369,4 +357,25 @@ void CScene::InitLight(void) {
 		glLightfv(GL_LIGHT0, GL_SPECULAR, specularLightCol);
 		glLightfv(GL_LIGHT0, GL_POSITION, lightDir);
 	glPopMatrix();
+
+
+	// sun-dir initially points toward map-origin, not map-center
+	const vec3f sunVRP = vec3f((readMap->mapx * readMap->SQUARE_SIZE) * 0.5f, 0.0f, (readMap->mapy * readMap->SQUARE_SIZE) * 0.5f);
+	const vec3f sunPos = (mapInfo->light.sunDir * (boundingRadius * 2.0f) * 1.25f) + sunVRP;
+
+	sun = new FPSCamera(sunPos, sunVRP, Camera::CAM_PROJ_MODE_ORTHO);
+	sun->zNearDistance = 2.0f;
+	sun->zFarDistance *= 2.0f;
+
+	// note: the sun-cam does not get registered with the camera
+	// controller, but is present in the input-receiver list so
+	// we disable it here
+	sun->DisableInput();
+}
+
+void CScene::SetBoundingRadius() {
+	boundingRadiusSq =
+		(readMap->mapx * readMap->mapx * 0.5f * 0.5f * readMap->SQUARE_SIZE * readMap->SQUARE_SIZE) +
+		(readMap->mapy * readMap->mapy * 0.5f * 0.5f * readMap->SQUARE_SIZE * readMap->SQUARE_SIZE);
+	boundingRadius = fastmath::sqrt1(boundingRadiusSq);
 }

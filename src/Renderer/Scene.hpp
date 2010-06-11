@@ -22,8 +22,10 @@ public:
 	void OnEvent(const IEvent*);
 
 private:
+	void LoadObjectModels();
 	void DrawModels(Camera*, bool);
 	void DrawMapAndModels(Camera*, bool);
+	void SetBoundingRadius();
 	void InitLight();
 
 	Camera* sun;
