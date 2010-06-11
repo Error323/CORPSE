@@ -316,7 +316,7 @@ void CScene::DrawMapAndModels(Camera* eye, bool shadows) {
 						#else
 						readMap->GetGroundDrawer()->Draw(sun, true);
 						#endif
-						DrawModels(eye, true);
+						DrawModels(sun, true);
 					glPopMatrix();
 				shadowHandler->UnBindDepthTextureFBO();
 
