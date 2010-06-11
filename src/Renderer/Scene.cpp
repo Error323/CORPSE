@@ -148,10 +148,10 @@ CScene::CScene() {
 	// note: the sun-cam does not get registered with the camera
 	// controller, but is present in the input-receiver list so
 	// we disable it here
-	// however, because parts of eye are copied to sun (and eye
-	// DOES receive input), sun will react to mouse movements
-	sun = new FPSCamera(mapInfo->light.sunDir * (boundingRadius * 2.0f) * 1.25f, ZVECf, Camera::CAM_PROJ_MODE_PERSP);
+	sun = new FPSCamera(mapInfo->light.sunDir * (boundingRadius * 2.0f) * 1.25f, ZVECf, Camera::CAM_PROJ_MODE_ORTHO);
 	sun->DisableInput();
+	sun->zNearDistance = 2.0f;
+	sun->zFarDistance *= 2.0f;
 
 	InitLight();
 
@@ -292,15 +292,6 @@ void CScene::DrawMapAndModels(Camera* eye, bool shadows) {
 
 		DrawModels(eye, false);
 	} else {
-		// copy the FOV / AR / Z parameters only
-		// (pos, *dir, and vrp are overwritten)
-		sun->SetState(eye);
-			sun->pos = mapInfo->light.sunDir * (boundingRadius * 2.0f) * 1.25f;
-			sun->vrp = ZVECf;
-			sun->zNearDistance = 1536.0f;
-		sun->Update();
-
-
 		glPushAttrib(GL_ENABLE_BIT);
 			// for the shadow pass, don't want to
 			// have lighting or texturing enabled
@@ -312,8 +303,6 @@ void CScene::DrawMapAndModels(Camera* eye, bool shadows) {
 			glDisable(GL_COLOR_MATERIAL);
 
 			// first pass, draw everything into the depth-buffer
-			// note: should use an orthographic projection
-			// because the sun is a directional light-source
 			sun->ApplyViewProjTransform();
 				shadowHandler->GenShadowProjectionMatrix(sun);
 				shadowHandler->BindDepthTextureFBO();

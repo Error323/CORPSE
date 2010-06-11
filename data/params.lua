@@ -77,7 +77,7 @@ params = {
 		-- sun camera, otherwise passed to OGL directly
 		-- the sun's light direction is the opposite of
 		-- the vector to its position!
-		sunDir = {5, 1, 5, 0.0 * 100.0},
+		sunDir = {5.0, 1.0, 5.0, 0.0 * 100.0},
 		sunType = 0.0 * 100.0,
 
 		viewRadius = 128.0,
