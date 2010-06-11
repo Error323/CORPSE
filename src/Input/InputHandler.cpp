@@ -200,7 +200,7 @@ void CInputHandler::MouseMoved(SDL_Event* e) {
 		// re-center the mouse and eat the event it generates
 		// note: this can also eat MouseReleased() events and
 		// cause auto-move unless WE update the mouse state
-		SDL_WarpMouse(WIN->GetWindowSizeX() >> 1, WIN->GetWindowSizeY() >> 1);
+		SDL_WarpMouse(WIN->GetWindowSize().x >> 1, WIN->GetWindowSize().y >> 1);
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {}
 	}

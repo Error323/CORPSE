@@ -210,8 +210,8 @@ void SimObjectSelector::DrawSelection() {
 		const int h = selectionSquareSize2D.y;
 
 		// we need the half-sizes to map screen-space coordinates to [-1, 1]
-		const unsigned int hvpsx = (WIN->GetViewPortSizeX() >> 1);
-		const unsigned int hvpsy = (WIN->GetViewPortSizeY() >> 1);
+		const unsigned int hvpsx = (WIN->GetViewPortSize().x >> 1);
+		const unsigned int hvpsy = (WIN->GetViewPortSize().y >> 1);
 
 		// convert from [0, vps*] to [-hvps*, hvps*]; convert SDL-y to OGL-y
 		const float tlxc = selectionStartPos2D.x     - hvpsx, tlyc = (selectionStartPos2D.y     - hvpsy) * -1.0f;

@@ -97,17 +97,22 @@ void EngineAux::WindowState::Init(LuaParser* p) {
 	const LuaTable* windowTable = rootTable->GetTblVal("window");
 	const LuaTable* vportTable = rootTable->GetTblVal("viewport");
 
-	desktopSizeX  = desktopSizeY  = 0;
-	windowSizeX   = windowSizeY   = 0;
-	windowPosX    = windowPosY    = 0;
-	viewPortSizeX = viewPortSizeY = 0;
-	viewPortPosX  = viewPortPosY  = 0;
-	pixelSizeX    = pixelSizeY    = 0.0f;
+	desktopSize.x =
+	desktopSize.y = 0;
 
-	viewPortSizeX = vportTable->GetFltVal("xsize", 800);
-	viewPortSizeY = vportTable->GetFltVal("ysize", 600);
-	windowSizeX = windowTable->GetFltVal("xsize", 800);
-	windowSizeY = windowTable->GetFltVal("ysize", 600);
+	windowPos.x   =
+	windowPos.y   = 0;
+
+	viewPortPos.x =
+	viewPortPos.y = 0;
+
+	pixelSize.x   =
+	pixelSize.y   = 0.0f;
+
+	viewPortSize.x = vportTable->GetFltVal("xsize", 800);
+	viewPortSize.y = vportTable->GetFltVal("ysize", 600);
+	windowSize.x   = windowTable->GetFltVal("xsize", 800);
+	windowSize.y   = windowTable->GetFltVal("ysize", 600);
 
 	title = windowTable->GetStrVal("title", "") + " " + HUMAN_NAME;
 }

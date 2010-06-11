@@ -82,8 +82,8 @@ CClient::~CClient() {
 
 void CClient::ParseArgs(int argc, char** argv) {
 	bool resize = false;
-	int  xres   = WIN->GetWindowSizeX();
-	int  yres   = WIN->GetWindowSizeY();
+	int  xres   = WIN->GetWindowSize().x;
+	int  yres   = WIN->GetWindowSize().y;
 
 	for (int i = 1; i < argc; i++) {
 		std::string s(argv[i]);
@@ -109,7 +109,7 @@ void CClient::Init() {
 	LOG << "[CClient::Init] [1]\n";
 
 	InitSDL((WIN->GetTitle()).c_str());
-	SetWindowSize(WIN->GetWindowSizeX(), WIN->GetWindowSizeY());
+	SetWindowSize(WIN->GetWindowSize().x, WIN->GetWindowSize().y);
 
 	const std::string glVersion( (const char*) glGetString(GL_VERSION) );
 	const std::string glVendor(  (const char*) glGetString(GL_VENDOR)  );
@@ -226,8 +226,8 @@ void CClient::WindowExposed() {
 
 
 void CClient::SetWindowSize(int w, int h) {
-	WIN->SetWindowSizeX(w); WIN->SetViewPortSizeX(w);
-	WIN->SetWindowSizeY(h); WIN->SetViewPortSizeY(h);
+	WIN->SetWindowSize(vec3i(w, h, 0));
+	WIN->SetViewPortSize(vec3i(w, h, 0));
 
 	SetSDLWindowVideoMode();
 	SetOGLViewPortGeometry();
@@ -279,8 +279,8 @@ void CClient::SetSDLWindowVideoMode() {
 	}
 
 	mScreen = SDL_SetVideoMode(
-		WIN->GetWindowSizeX(),
-		WIN->GetWindowSizeY(),
+		WIN->GetWindowSize().x,
+		WIN->GetWindowSize().y,
 		AUX->GetBitsPerPixel(),
 		SDL_OPENGL |
 		SDL_RESIZABLE |
@@ -309,10 +309,10 @@ void CClient::SetOGLViewPortGeometry() {
 	UpdateViewPortDimensions();
 
 	glViewport(
-		WIN->GetViewPortPosX(),
-		WIN->GetViewPortPosY(),
-		WIN->GetViewPortSizeX(),
-		WIN->GetViewPortSizeY()
+		WIN->GetViewPortPos().x,
+		WIN->GetViewPortPos().y,
+		WIN->GetViewPortSize().x,
+		WIN->GetViewPortSize().y
 	);
 
 	glMatrixMode(GL_PROJECTION);
@@ -338,11 +338,9 @@ bool CClient::UpdateWindowInfo() {
 	if (!SDL_GetWMInfo(&info)) {
 		// we can't get information, so assume desktop
 		// has dimensions <screenWidth, screenHeight>
-		WIN->SetDesktopSizeX(WIN->GetWindowSizeX());
-		WIN->SetDesktopSizeY(WIN->GetWindowSizeY());
+		WIN->SetDesktopSize(vec3i(WIN->GetWindowSize().x, WIN->GetWindowSize().y, 0));
+		WIN->SetWindowPos(vec3i(0, 0, 0));
 
-		WIN->SetWindowPosX(0);
-		WIN->SetWindowPosY(0);
 		return false;
 	}
 
@@ -354,20 +352,19 @@ bool CClient::UpdateWindowInfo() {
 	XWindowAttributes attrs;
 	XGetWindowAttributes(display, window, &attrs);
 
-	WIN->SetDesktopSizeX(WidthOfScreen(attrs.screen));
-	WIN->SetDesktopSizeY(HeightOfScreen(attrs.screen));
-	// note: why do we need this when SDL tells us
-	// the new windowSizeX and windowSizeY already?
-	WIN->SetWindowSizeX(attrs.width);
-	WIN->SetWindowSizeY(attrs.height);
+	WIN->SetDesktopSize(vec3i(WidthOfScreen(attrs.screen), HeightOfScreen(attrs.screen), 0));
+	// note: why do we need this when SDL
+	// tells us the new windowSize already?
+	WIN->SetWindowSize(vec3i(attrs.width, attrs.height, 0));
 
-	Window tmp;
 	int xp, yp;
-	XTranslateCoordinates(display, window, attrs.root, 0, 0, &xp, &yp, &tmp);
 
-	WIN->SetWindowPosX(xp);
-	WIN->SetWindowPosY(WIN->GetDesktopSizeY() - WIN->GetWindowSizeY() - yp);
+	{
+		Window tmp;
+		XTranslateCoordinates(display, window, attrs.root, 0, 0, &xp, &yp, &tmp);
+	}
 
+	WIN->SetWindowPos(vec3i(xp, (WIN->GetDesktopSize().y - WIN->GetWindowSize().y - yp), 0));
 	return true;
 }
 
@@ -375,25 +372,19 @@ void CClient::UpdateViewPortDimensions() {
 	UpdateWindowInfo();
 
 	if (!AUX->GetDualScreen()) {
-		WIN->SetViewPortSizeX(WIN->GetViewPortSizeX());
-		WIN->SetViewPortSizeY(WIN->GetViewPortSizeY());
-		WIN->SetViewPortPosX(0);
-		WIN->SetViewPortPosY(0);
+		WIN->SetViewPortSize(vec3i(WIN->GetViewPortSize().x, WIN->GetViewPortSize().y, 0));
+		WIN->SetViewPortPos(vec3i(0, 0, 0));
 	} else {
-		WIN->SetViewPortSizeX(WIN->GetViewPortSizeX() >> 1);
-		WIN->SetViewPortSizeY(WIN->GetViewPortSizeY() >> 0);
+		WIN->SetViewPortSize(vec3i(WIN->GetViewPortSize().x >> 1, WIN->GetViewPortSize().y >> 0, 0));
 
 		if (AUX->GetDualScreenMapLeft()) {
-			WIN->SetViewPortPosX(WIN->GetViewPortSizeX() >> 1);
-			WIN->SetViewPortPosY(0);
+			WIN->SetViewPortPos(vec3i(WIN->GetViewPortSize().x >> 1, 0, 0));
 		} else {
-			WIN->SetViewPortPosX(0);
-			WIN->SetViewPortPosY(0);
+			WIN->SetViewPortPos(vec3i(0, 0, 0));
 		}
 	}
 
-	WIN->SetPixelSizeX(1.0f / float(WIN->GetViewPortSizeX()));
-	WIN->SetPixelSizeY(1.0f / float(WIN->GetViewPortSizeY()));
+	WIN->SetPixelSize(vec3f(1.0f / WIN->GetViewPortSize().x, 1.0f / WIN->GetViewPortSize().y, 0.0f));
 }
 
 

@@ -4,6 +4,9 @@
 #include <cassert>
 #include <string>
 
+#include "../Math/vec3fwd.hpp"
+#include "../Math/vec3.hpp"
+
 struct lua_State;
 struct LuaParser;
 class CLogger;
@@ -43,46 +46,33 @@ public:
 	public:
 		void Init(LuaParser*);
 
-		void SetWindowPosX(unsigned int x) { windowPosX = x; }
-		void SetWindowPosY(unsigned int y) { windowPosY = y; }
-		void SetWindowSizeX(unsigned int w) { windowSizeX = w; }
-		void SetWindowSizeY(unsigned int h) { windowSizeY = h; }
-		unsigned int GetWindowSizeX() { return windowSizeX; }
-		unsigned int GetWindowSizeY() { return windowSizeY; }
-		void SetViewPortPosX(unsigned int x) { viewPortPosX = x; }
-		void SetViewPortPosY(unsigned int y) { viewPortPosY = y; }
-		void SetViewPortSizeX(unsigned int w) { viewPortSizeX = w; }
-		void SetViewPortSizeY(unsigned int h) { viewPortSizeY = h; }
-		unsigned int GetViewPortPosX() { return viewPortPosX; }
-		unsigned int GetViewPortPosY() { return viewPortPosY; }
-		unsigned int GetViewPortSizeX() { return viewPortSizeX; }
-		unsigned int GetViewPortSizeY() { return viewPortSizeY; }
-		void SetDesktopSizeX(unsigned int w) { desktopSizeX = w; }
-		void SetDesktopSizeY(unsigned int h) { desktopSizeY = h; }
-		unsigned int GetDesktopSizeX() { return desktopSizeX; }
-		unsigned int GetDesktopSizeY() { return desktopSizeY; }
-		void SetPixelSizeX(float w) { pixelSizeX = w; }
-		void SetPixelSizeY(float h) { pixelSizeY = h; }
+		void SetViewPortPos(const vec3i& xy) { viewPortPos = xy; }
+		void SetViewPortSize(const vec3i& xy) { viewPortSize = xy; }
+		void SetWindowPos(const vec3i& xy) { windowPos = xy; }
+		void SetWindowSize(const vec3i& xy) { windowSize = xy; }
+		void SetDesktopSize(const vec3i& xy) { desktopSize = xy; }
+
+		const vec3i& GetViewPortPos() const { return viewPortPos; }
+		const vec3i& GetViewPortSize() const { return viewPortSize; }
+		const vec3i& GetWindowPos() const { return windowPos; }
+		const vec3i& GetWindowSize() const { return windowSize; }
+		const vec3i& GetDesktopSize() { return desktopSize; }
+
+		const vec3f& GetPixelSize() const { return pixelSize; }
+		void SetPixelSize(const vec3f& xy) { pixelSize = xy; }
 
 		const std::string GetTitle() const { return title; }
 
 	private:
-		unsigned int desktopSizeX;      // width of entire desktop in pixels (screen resolution, screenSizeX)
-		unsigned int desktopSizeY;      // height of entire desktop in pixels (screen resolution, screenSizeY)
-		unsigned int windowSizeX;       // width of SDL/OGL window in pixels (resolution, winSizeX)
-		unsigned int windowSizeY;       // height of SDL/OGL window in pixels (resolution, winSizeY)
-		unsigned int windowPosX;        // x-pos relative to bottom-left corner of desktop (winPosX)
-		unsigned int windowPosY;        // y-pos relative to bottom-left corner of desktop (winPosY)
-		unsigned int viewPortSizeX;     // OGL viewport width in pixels (viewSizeX)
-		unsigned int viewPortSizeY;     // OGL viewport height in pixels (viewSizeY)
-		int viewPortPosX;               // x-pos relative to bottom-left corner of SDL/OGL window (viewPosX)
-		int viewPortPosY;               // y-pos relative to bottom-left corner of SDL/OGL window (viewPosY)
+		vec3i desktopSize;      // dims of entire desktop in pixels (screen resolution, screenSizeXY)
+		vec3i windowSize;       // dims of SDL/OGL window in pixels (resolution, winSizeXY)
+		vec3i windowPos;        // xy-pos relative to bottom-left corner of desktop (winPosXY)
+		vec3i viewPortSize;     // OGL viewport dims in pixels (viewSizeXY)
+		vec3i viewPortPos;      // xy-pos relative to bottom-left corner of SDL/OGL window (viewPosXY)
 
-		float pixelSizeX;               // width of one pixel in viewport coordinates, 1 / viewPortSizeX
-		float pixelSizeY;               // height of one pixel in viewport coordinates, 1 / viewPortSizeY
+		vec3f pixelSize;        // dims of one pixel in viewport coordinates, 1 / viewPortSizeXY
 
-		// int screenW;                 // game screen width (REDUNDANT, winSizeX)
-		// int screenH;                 // game screen height (REDUNDANT, winSizeY)
+		// int screenWH;        // game screen width (REDUNDANT, winSizeXY)
 
 		std::string title;
 	};
