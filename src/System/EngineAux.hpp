@@ -108,10 +108,9 @@ private:
 	unsigned int FSAALevel;         // anti-aliasing level; should be even number in [0, 8]
 };
 
-#define engAux EngineAux::GetInstance(0, NULL)
-#define AUX (engAux)
-#define WIN (engAux->GetWinState())
-#define LUA (engAux->GetLuaParser())
-#define LOG *(engAux->GetLogger())
+#define AUX EngineAux::GetInstance(0, NULL)
+#define WIN (AUX->GetWinState())
+#define LUA (AUX->GetLuaParser())
+#define LOG *(AUX->GetLogger())
 
 #endif
