@@ -40,7 +40,7 @@ private:
 	void ReadNetMessages();
 
 	void InitSDL();
-	void InitStencilBuffer();
+	void KillSDL();
 
 	IWindow* mWindow;
 	UI* mUI;

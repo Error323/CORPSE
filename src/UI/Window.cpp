@@ -65,13 +65,13 @@ SDLWindow::SDLWindow() {
 void SDLWindow::SetWindowSize(const vec3i& xy) {
 	IWindow::SetWindowSize(xy);
 
-	SetSDLWindowVideoMode();
+	SetSDLVideoMode();
 	UpdateViewPorts();
 }
 
 
 
-void SDLWindow::SetSDLWindowVideoMode() {
+void SDLWindow::SetSDLVideoMode() {
 	// set the video mode (32 bits per pixel, etc)
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,      (GetBitsPerPixel() >> 2));
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,    (GetBitsPerPixel() >> 2));
@@ -100,13 +100,10 @@ void SDLWindow::SetSDLWindowVideoMode() {
 	);
 
 	if (mScreen == NULL) {
-		LOG << "[SDLWindow::SetSDLWindowVideoMode]\n";
+		LOG << "[SDLWindow::SetSDLVideoMode]\n";
 		LOG << "\tSDL video mode error " << SDL_GetError() << "\n";
 		assert(false);
 	}
-
-	// this should not have to be done when resizing
-	// InitStencilBuffer();
 
 	// these should be equal to our bitsPerPixel value
 	// SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
@@ -114,7 +111,7 @@ void SDLWindow::SetSDLWindowVideoMode() {
 }
 
 void SDLWindow::UpdateViewPorts() {
-	UpdateWindowGeometry();
+	UpdateGeometry();
 
 	int n = 0;
 
@@ -134,16 +131,19 @@ void SDLWindow::UpdateViewPorts() {
 		n++;
 	}
 
-
 	glViewport(GetViewPort().pos.x, GetViewPort().pos.y, GetViewPort().size.x, GetViewPort().size.y);
 
 	glMatrixMode(GL_PROJECTION); glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+
+	glClearStencil(0);
+	// glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
+	// glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
 }
 
 
 
-bool SDLWindow::UpdateWindowGeometry() {
+bool SDLWindow::UpdateGeometry() {
 	#ifndef WIN32
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
@@ -168,7 +168,8 @@ bool SDLWindow::UpdateWindowGeometry() {
 	desktopSize.x = WidthOfScreen(xattrs.screen);
 	desktopSize.y = HeightOfScreen(xattrs.screen);
 	// note: why do we need this when SDL
-	// tells us the new windowSize already?
+	// tells us the new windowSize already
+	// via WindowResized?
 	windowSize.x = xattrs.width;
 	windowSize.y = xattrs.height;
 

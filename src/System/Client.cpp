@@ -73,12 +73,11 @@ CClient::~CClient() {
 		<< "ms\n";
 
 	UI::FreeInstance(mUI);
-	SDLWindow::FreeInstance(mWindow);
 	CRenderThread::FreeInstance(mRenderThread);
 	CSimThread::FreeInstance(mSimThread);
 	CInputHandler::FreeInstance(mInputHandler);
 
-	SDL_Quit();
+	KillSDL();
 }
 
 
@@ -177,17 +176,10 @@ void CClient::WindowResized(int nx, int ny) {
 }
 
 void CClient::WindowExposed() {
-	InitStencilBuffer();
 	mWindow->UpdateViewPorts();
 }
 
 
-
-void CClient::InitStencilBuffer() {
-	glClearStencil(0);
-	glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
-	glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
-}
 
 void CClient::InitSDL() {
 	LOG << "[CClient::InitSDL]\n";
@@ -212,4 +204,9 @@ void CClient::InitSDL() {
 	LOG << "\n";
 	LOG << "\tcompiled major, minor, patch: " << hdr.major << ", " << hdr.minor << ", " << hdr.patch << "\n";
 	LOG << "\tlinked major, minor, patch: " << lib.major << ", " << lib.minor << ", " << lib.patch << "\n";
+}
+
+void CClient::KillSDL() {
+	SDLWindow::FreeInstance(mWindow);
+	SDL_Quit();
 }

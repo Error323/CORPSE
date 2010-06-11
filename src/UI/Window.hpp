@@ -12,6 +12,7 @@ public:
 	static IWindow* GetInstance();
 	static void FreeInstance(IWindow*);
 
+	IWindow() {}
 	virtual void Update() {}
 
 	virtual const vec3i& GetWindowPos() const { return windowPos; }
@@ -24,7 +25,7 @@ public:
 	struct ViewPort {
 		vec3i pos;  // top-left corner pixel, relative to window (viewPosXY)
 		vec3i size; // dimensions in pixels, must be <= window size (viewSizeXY)
-		vec3f pxl;  // size of one pixel in viewport coordinates, 1 / viewPortSizeXY
+		vec3f pxl;  // size of one pixel in viewport space, 1 / viewPortSizeXY
 	};
 
 	virtual void AddViewPort() { viewPorts.push_back(ViewPort()); }
@@ -34,6 +35,7 @@ public:
 	virtual const std::list<ViewPort>& GetViewPorts() const { return viewPorts; }
 
 	virtual void UpdateViewPorts() {}
+	virtual bool UpdateGeometry() { return false; }
 
 
 	virtual bool GetFullScreen() const { return fullScreen; }
@@ -46,8 +48,8 @@ public:
 	virtual void SetUseFSAA(bool b) { useFSAA = b; }
 	virtual void SetFSAALevel(unsigned int n) { FSAALevel = n; }
 
-	const std::string GetIcon() const { return icon; }
-	const std::string GetTitle() const { return title; }
+	virtual const std::string GetIcon() const { return icon; }
+	virtual const std::string GetTitle() const { return title; }
 
 protected:
 	virtual ~IWindow() {}
@@ -79,23 +81,19 @@ class SDLWindow: public IWindow {
 public:
 	SDLWindow();
 
-	void Update() {}
-
-	bool EnableMultiSampling();
-	bool VerifyMultiSampling();
-
 	void SetWindowSize(const vec3i&);
-	void SetSDLWindowVideoMode();
 
 	void UpdateViewPorts();
-
-	// helper for UpdateViewPorts()
-	bool UpdateWindowGeometry();
+	bool UpdateGeometry();
 
 protected:
 	~SDLWindow() {}
 
 private:
+	void SetSDLVideoMode();
+	bool EnableMultiSampling();
+	bool VerifyMultiSampling();
+
 	SDL_Surface* mScreen;
 };
 
