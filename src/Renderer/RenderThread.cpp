@@ -79,7 +79,7 @@ inline static void PreFrameState() {
 		// poor-man's FSAA (unused)
 		// glEnable(GL_POLYGON_SMOOTH);
 
-		if (AUX->GetUseFSAA()) {
+		if (WIN->GetUseFSAA()) {
 			glEnable(GL_MULTISAMPLE_ARB);
 		}
 
@@ -102,7 +102,7 @@ inline static void PostFrameState() {
 		postDL = glGenLists(1);
 		glNewList(postDL, GL_COMPILE);
 
-		if (AUX->GetUseFSAA()) {
+		if (WIN->GetUseFSAA()) {
 			glDisable(GL_MULTISAMPLE_ARB);
 		}
 

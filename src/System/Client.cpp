@@ -261,32 +261,32 @@ void CClient::InitSDL(const char* caption) {
 
 void CClient::SetSDLWindowVideoMode() {
 	// set the video mode (32 bits per pixel, etc)
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,      (AUX->GetBitsPerPixel() >> 2));
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,    (AUX->GetBitsPerPixel() >> 2));
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,     (AUX->GetBitsPerPixel() >> 2));
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE,    (AUX->GetBitsPerPixel() >> 2));
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,      (WIN->GetBitsPerPixel() >> 2));
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,    (WIN->GetBitsPerPixel() >> 2));
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,     (WIN->GetBitsPerPixel() >> 2));
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE,    (WIN->GetBitsPerPixel() >> 2));
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,                          1);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,    AUX->GetDepthBufferBits());
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,    WIN->GetDepthBufferBits());
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE,                          1);
 
 	// this needs to be done prior to calling SetVideoMode()
-	if (AUX->GetUseFSAA()) {
-		AUX->SetUseFSAA(EnableMultiSampling());
-		AUX->SetFSAALevel((AUX->GetUseFSAA()? AUX->GetFSAALevel(): 0));
-		AUX->SetUseFSAA(VerifyMultiSampling());
-		AUX->SetFSAALevel((AUX->GetUseFSAA()? AUX->GetFSAALevel(): 0));
+	if (WIN->GetUseFSAA()) {
+		WIN->SetUseFSAA(EnableMultiSampling());
+		WIN->SetFSAALevel((WIN->GetUseFSAA()? WIN->GetFSAALevel(): 0));
+		WIN->SetUseFSAA(VerifyMultiSampling());
+		WIN->SetFSAALevel((WIN->GetUseFSAA()? WIN->GetFSAALevel(): 0));
 	}
 
 	mScreen = SDL_SetVideoMode(
 		WIN->GetWindowSize().x,
 		WIN->GetWindowSize().y,
-		AUX->GetBitsPerPixel(),
+		WIN->GetBitsPerPixel(),
 		SDL_OPENGL |
 		SDL_RESIZABLE |
 		SDL_HWSURFACE |
 		SDL_DOUBLEBUF |
-		(AUX->GetFullScreen()? SDL_FULLSCREEN: 0)
+		(WIN->GetFullScreen()? SDL_FULLSCREEN: 0)
 	);
 
 	if (mScreen == NULL) {
@@ -371,13 +371,13 @@ bool CClient::UpdateWindowInfo() {
 void CClient::UpdateViewPortDimensions() {
 	UpdateWindowInfo();
 
-	if (!AUX->GetDualScreen()) {
+	if (!WIN->GetDualScreen()) {
 		WIN->SetViewPortSize(vec3i(WIN->GetViewPortSize().x, WIN->GetViewPortSize().y, 0));
 		WIN->SetViewPortPos(vec3i(0, 0, 0));
 	} else {
 		WIN->SetViewPortSize(vec3i(WIN->GetViewPortSize().x >> 1, WIN->GetViewPortSize().y >> 0, 0));
 
-		if (AUX->GetDualScreenMapLeft()) {
+		if (WIN->GetDualScreenMapLeft()) {
 			WIN->SetViewPortPos(vec3i(WIN->GetViewPortSize().x >> 1, 0, 0));
 		} else {
 			WIN->SetViewPortPos(vec3i(0, 0, 0));
@@ -395,7 +395,7 @@ bool CClient::EnableMultiSampling(void) {
 	}
 
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, AUX->GetFSAALevel());
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, WIN->GetFSAALevel());
 	glEnable(GL_MULTISAMPLE);
 
 	return true;

@@ -61,7 +61,6 @@ EngineAux::EngineAux(int argCnt, char** argVec) {
 	} else {
 		const LuaTable* rootTable = luaParser->GetRoot();
 		const LuaTable* generalTable = rootTable->GetTblVal("general");
-		const LuaTable* windowTable = rootTable->GetTblVal("window");
 
 		mouseLook       = bool(int(generalTable->GetFltVal("mouseLook", 1)));
 		lineSmoothing   = bool(int(generalTable->GetFltVal("lineSmoothing", 1)));
@@ -69,14 +68,6 @@ EngineAux::EngineAux(int argCnt, char** argVec) {
 
 		wantDraw        = true;
 		wantQuit        = false;
-
-		fullScreen      = bool(int(windowTable->GetFltVal("fullScreen", 0)));
-		dualScreen      = bool(int(windowTable->GetFltVal("dualScreen", 0)));
-
-		bitsPerPixel    = unsigned(windowTable->GetFltVal("bitsPerPixel", 32));
-		depthBufferBits = unsigned(windowTable->GetFltVal("depthBufferBits", 24));
-		useFSAA         = bool(unsigned(windowTable->GetFltVal("useFSAA", 1)));
-		FSAALevel       = unsigned(windowTable->GetFltVal("FSAALevel", 4));
 
 		winState.Init(luaParser);
 
@@ -115,6 +106,14 @@ void EngineAux::WindowState::Init(LuaParser* p) {
 	viewPortSize.y = vportTable->GetFltVal("ysize", 600);
 	windowSize.x   = windowTable->GetFltVal("xsize", 800);
 	windowSize.y   = windowTable->GetFltVal("ysize", 600);
+
+	fullScreen      = bool(int(windowTable->GetFltVal("fullScreen", 0)));
+	dualScreen      = bool(int(windowTable->GetFltVal("dualScreen", 0)));
+
+	bitsPerPixel    = unsigned(windowTable->GetFltVal("bitsPerPixel", 32));
+	depthBufferBits = unsigned(windowTable->GetFltVal("depthBufferBits", 24));
+	useFSAA         = bool(unsigned(windowTable->GetFltVal("useFSAA", 1)));
+	FSAALevel       = unsigned(windowTable->GetFltVal("FSAALevel", 4));
 
 	title = windowTable->GetStrVal("title", "") + " " + HUMAN_NAME;
 }
