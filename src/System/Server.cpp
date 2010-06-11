@@ -1,3 +1,4 @@
+#include <iostream>
 #include <SDL/SDL_timer.h>
 
 #include "./Server.hpp"
@@ -54,11 +55,13 @@ CServer::CServer() {
 
 void CServer::AddNetMessageBuffer(unsigned int clientID) {
 	netBufs[clientID] = new CNetMessageBuffer();
+	clientFrames[clientID] = 0;
 }
 
 void CServer::DelNetMessageBuffer(unsigned int clientID) {
 	delete netBufs[clientID];
 	netBufs.erase(clientID);
+	clientFrames.erase(clientID);
 }
 
 
@@ -67,6 +70,21 @@ void CServer::ChangeSpeed(uint mult) {
 	if ((mult > 0) && ((1000 / (simFrameRate * mult)) > 0)) {
 		simFrameMult = mult;
 		simFrameTime = 1000 / (simFrameRate * simFrameMult);
+
+		std::cout << "[CServer::ChangeSpeed][frame=" << frame << "]";
+		std::cout << " speed-multiplier set to " << simFrameMult;
+		std::cout << " (frame-rate: " << (simFrameRate * simFrameMult) << "fps";
+		std::cout << ", frame-time: " << (simFrameTime               ) << "ms)";
+		std::cout << std::endl;
+
+		/*
+		// clients cannot fall behind the server yet
+		// (since they are part of the same process)
+		for (unsigned int i = 0; i < GetNumClients(); i++) {
+			std::cout << "\tclient " << i << " is at sim-frame " << clientFrames[i];
+			std::cout << " (lag: " << (frame - clientFrames[i]) << " frames)" << std::endl;
+		}
+		*/
 	}
 }
 
@@ -94,9 +112,18 @@ void CServer::ReadNetMessages() {
 					ChangeSpeed(simFrameMult - 1);
 				} break;
 
+				case CLIENT_MSG_SIMFRAME: {
+					unsigned int clientID;
+
+					m.SetPos(0);
+					m >> clientID;
+
+					clientFrames[clientID] += 1;
+				} break;
+
 				case CLIENT_MSG_SIMCOMMAND: {
 					SendNetMessage(m); // broadcast
-				}
+				} break;
 			}
 		}
 	}
@@ -117,10 +144,6 @@ bool CServer::Update() {
 	bool updated = false;
 
 	if (frameDelta <= 0 || missedFrames > 0 /*|| gameTime < realTime*/) {
-		// previous frame took longer than simFrameTime or it is
-		// time to execute a new one; if we missed any "scheduled"
-		// frames due to some unusually long frameTime, catch up by
-		// creating a new one too
 		if (!paused) {
 			SendNetMessage(NetMessage(SERVER_MSG_SIMFRAME, 0));
 
@@ -153,10 +176,8 @@ bool CServer::Update() {
 			prevRealTime = realTime;
 		}
 	} else {
-		// last frame took less than FRAMETIME, if it is time for a
-		// new one then reset frameDelta to 0 so next Update() call
-		// will create one
 		if (SDL_GetTicks() >= (lastTick + frameDelta)) {
+			// time for a new frame
 			frameDelta = 0;
 		}
 	}

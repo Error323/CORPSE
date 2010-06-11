@@ -144,6 +144,10 @@ void CClient::ReadNetMessages() {
 		switch (m.GetID()) {
 			case SERVER_MSG_SIMFRAME: {
 				mSimThread->Update();
+
+				NetMessage r(CLIENT_MSG_SIMFRAME, sizeof(unsigned int));
+					r << clientID;
+				SendNetMessage(r);
 			} break;
 
 			case CLIENT_MSG_SIMCOMMAND: {
@@ -152,7 +156,7 @@ void CClient::ReadNetMessages() {
 
 			default: {
 				assert(false);
-			}
+			} break;
 		}
 	}
 }

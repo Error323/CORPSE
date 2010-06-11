@@ -56,6 +56,7 @@ private:
 	unsigned int simFrameTime;              // ideal maximum amount of time a single sim-frame may take at current speed (ms)
 	unsigned int simFrameMult;              // simulation speed multiplier
 
+	std::map<unsigned int, unsigned int> clientFrames;
 	std::map<unsigned int, CNetMessageBuffer*> netBufs;
 };
 

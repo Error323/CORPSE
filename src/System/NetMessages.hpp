@@ -10,7 +10,8 @@ enum ClientMessageIDs {
 	CLIENT_MSG_PAUSE       =  1,
 	CLIENT_MSG_INCSIMSPEED =  2,
 	CLIENT_MSG_DECSIMSPEED =  3,
-	CLIENT_MSG_SIMCOMMAND  =  4,
+	CLIENT_MSG_SIMFRAME    =  4,
+	CLIENT_MSG_SIMCOMMAND  =  5,
 };
 
 // messages originating from server
