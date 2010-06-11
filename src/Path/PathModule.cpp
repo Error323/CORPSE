@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 
 #include "./PathModule.hpp"
@@ -20,6 +21,15 @@ void PathModule::OnEvent(const IEvent* e) {
 			const unsigned int objectID = ee->GetObjectID();
 
 			simObjectIDs.erase(objectID);
+			DelObjectFromGroup(objectID);
+
+			if (simObjectIDs.empty()) {
+				assert(objectGroupIDs.empty());
+				assert(objectGroups.empty());
+
+				// reset the group counter
+				numGroupIDs = 0;
+			}
 		} break;
 
 		case EVENT_SIMOBJECT_MOVEORDER: {
@@ -28,13 +38,20 @@ void PathModule::OnEvent(const IEvent* e) {
 			const std::list<unsigned int>& objectIDs = ee->GetObjectIDs();
 			const vec3f& goalPos = ee->GetGoalPos();
 
-			// TODO: group management
-			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
-				assert(coh->IsValidSimObjectID(*it));
+			// create a new group
+			const unsigned int groupID = numGroupIDs++;
 
-				coh->SetSimObjectWantedPosition(*it, goalPos);
-				coh->SetSimObjectWantedDirection(*it, (goalPos - coh->GetSimObjectPosition(*it)).norm());
-				coh->SetSimObjectWantedForwardSpeed(*it, simObjectIDs[*it]->GetMaxForwardSpeed());
+			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
+				const unsigned int objID = *it;
+
+				assert(coh->IsValidSimObjectID(objID));
+
+				coh->SetSimObjectWantedPosition(objID, goalPos);
+				coh->SetSimObjectWantedDirection(objID, (goalPos - coh->GetSimObjectPosition(objID)).norm());
+				coh->SetSimObjectWantedForwardSpeed(objID, simObjectIDs[objID]->GetMaxForwardSpeed());
+
+				DelObjectFromGroup(objID);
+				AddObjectToGroup(objID, groupID);
 			}
 		} break;
 
@@ -62,4 +79,34 @@ void PathModule::Update() {
 
 void PathModule::Kill() {
 	std::cout << "[PathModule::Kill]" << std::endl;
+}
+
+
+
+void PathModule::AddObjectToGroup(unsigned int objID, unsigned int groupID) {
+	if (objectGroups.find(groupID) == objectGroups.end()) {
+		objectGroups[groupID] = std::set<unsigned int>();
+	}
+
+	objectGroupIDs[objID] = groupID;
+	objectGroups[groupID].insert(objID);
+}
+
+bool PathModule::DelObjectFromGroup(unsigned int objID) {
+	if (objectGroupIDs.find(objID) != objectGroupIDs.end()) {
+		const unsigned int groupID = objectGroupIDs[objID];
+
+		objectGroupIDs.erase(objID);
+		objectGroups[groupID].erase(objID);
+
+		if (objectGroups[groupID].empty()) {
+			// old group is now empty, delete it
+			objectGroups.erase(groupID);
+		}
+
+		return true;
+	}
+
+	// object was not in a group
+	return false;
 }

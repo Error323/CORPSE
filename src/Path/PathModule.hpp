@@ -2,6 +2,7 @@
 #define PFFG_PATH_MODULE_HDR
 
 #include <map>
+#include <set>
 
 #include "./IPathModule.hpp"
 #include "../System/IEvent.hpp"
@@ -15,6 +16,7 @@ public:
 		//    do not use call-outs here or in destructor,
 		//    SimObjectHandler does not exist yet or is
 		//    already deleted
+		numGroupIDs = 0;
 	}
 
 	bool WantsEvent(int eventType) const {
@@ -30,7 +32,14 @@ public:
 	void Kill();
 
 private:
-	std::map<unsigned int, const SimObjectDef*> simObjectIDs;
+	void AddObjectToGroup(unsigned int, unsigned int);
+	bool DelObjectFromGroup(unsigned int);
+
+	unsigned int numGroupIDs;
+
+	std::map<unsigned int, const SimObjectDef*> simObjectIDs;     // object ID ==> object def
+	std::map<unsigned int, unsigned int> objectGroupIDs;          // object ID ==> group ID
+	std::map<unsigned int, std::set<unsigned int> > objectGroups; // group ID ==> object IDs
 };
 
 IPathModule* CALL_CONV GetPathModuleInstance(ICallOutHandler* icoh) { return (new PathModule(icoh)); }
