@@ -6,25 +6,29 @@ params = {
 		shadersDir      = "./data/shaders/",
 		texturesDir     = "./data/textures/",
 		logDir          = "./data/logs/",
-		simFrameRate    = 25,
-		simRateMult     =  1,
-		useFSAA         =  1,
-		FSAALevel       =  4,
 
 		-- only meaningful in FPS mode
 		mouseLook       =  0,
 
-		fullScreen      =  0,
-		dualScreen      =  0,
 		lineSmoothing   =  1,
 		pointSmoothing  =  1,
-		bitsPerPixel    = 32,
-		depthBufferBits = 24,
+	},
+
+	["server"] = {
+		simFrameRate    = 25,
+		simRateMult     =  1,
 	},
 
 	["window"] = {
-		xsize = 1024,
-		ysize =  768,
+		xsize           = 1024,
+		ysize           =  768,
+
+		useFSAA         =  1,
+		FSAALevel       =  4,
+		fullScreen      =  0,
+		dualScreen      =  0,
+		bitsPerPixel    = 32,
+		depthBufferBits = 24,
 	},
 	["viewport"] = {
 		xsize = 1024,

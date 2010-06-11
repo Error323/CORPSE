@@ -102,6 +102,7 @@ public:
 
 	inline vec3f square2pos(int x, int z) { return vec3f(x * SQUARE_SIZE, centerheightmap[z * mapx + x], z * SQUARE_SIZE); }
 	inline int pos2square(const vec3f& pos) { return ((int(pos.z / SQUARE_SIZE) * (mapx + 1)) + int(pos.x / SQUARE_SIZE)); }
+	inline bool PosInBounds(const vec3f& pos) const { return ((pos.x >= 0.0f && pos.x <= maxxpos) && (pos.z >= 0.0f && pos.z <= maxzpos)); }
 	inline void SetPosInBounds(vec3f& pos) {
 		pos.x = std::max(0.0f, std::min(float(maxxpos), pos.x));
 		pos.z = std::max(0.0f, std::min(float(maxzpos), pos.z));
