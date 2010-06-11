@@ -3,6 +3,7 @@
 #include <SDL/SDL.h>
 
 #include "./Camera.hpp"
+#include "../UI/Window.hpp"
 #include "../Input/InputHandler.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
@@ -65,9 +66,9 @@ bool Camera::InView(const vec3f& p, float radius) const {
 }
 
 vec3f Camera::GetPixelDir(int x, int y) const {
-	const int vppx = WIN->GetViewPortPos().x;
-	const int vpsx = WIN->GetViewPortSize().x;
-	const int vpsy = WIN->GetViewPortSize().y;
+	const int vppx = gWindow->GetViewPort().pos.x;
+	const int vpsx = gWindow->GetViewPort().size.x;
+	const int vpsy = gWindow->GetViewPort().size.y;
 
 	const float dx = ((x - vppx - vpsx * 0.5f) / vpsy) * (thvFOVrad * 2.0f);
 	const float dy = ((y - vpsy        * 0.5f) / vpsy) * (thvFOVrad * 2.0f);
@@ -79,8 +80,8 @@ void Camera::SetInternalParameters() {
 	const LuaTable* rootTable = LUA->GetRoot();
 	const LuaTable* cameraTable = rootTable->GetTblVal("camera");
 
-	hAspectRatio = float(WIN->GetViewPortSize().x) / float(WIN->GetViewPortSize().y);
-	vAspectRatio = float(WIN->GetViewPortSize().y) / float(WIN->GetViewPortSize().x);
+	hAspectRatio = float(gWindow->GetViewPort().size.x) / float(gWindow->GetViewPort().size.y);
+	vAspectRatio = float(gWindow->GetViewPort().size.y) / float(gWindow->GetViewPort().size.x);
 
 	vFOVdeg = cameraTable->GetFltVal("vFOV", 45.0f);
 	vFOVrad = DEG2RAD(vFOVdeg);
@@ -249,10 +250,10 @@ const float* Camera::GetProjMatrixPersp() {
 // world units (in which vertices are specified)
 // note: eliminate scaling if we leave VM at identity?
 const float* Camera::GetProjMatrixOrtho() {
-	const float t =  1.0f * WIN->GetViewPortSize().y;
-	const float b = -1.0f * WIN->GetViewPortSize().y;
-	const float l = -1.0f * WIN->GetViewPortSize().x;
-	const float r =  1.0f * WIN->GetViewPortSize().x;
+	const float t =  1.0f * gWindow->GetViewPort().size.y;
+	const float b = -1.0f * gWindow->GetViewPort().size.y;
+	const float l = -1.0f * gWindow->GetViewPort().size.x;
+	const float r =  1.0f * gWindow->GetViewPort().size.x;
 
 	const float tx = -((r + l) / (r - l));
 	const float ty = -((t + b) / (t - b));

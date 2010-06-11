@@ -4,6 +4,7 @@
 #include "../../System/EngineAux.hpp"
 #include "../../System/LuaParser.hpp"
 #include "../../System/Logger.hpp"
+#include "../../UI/Window.hpp"
 #include "../Shaders/ShaderHandler.hpp"
 #include "../Camera.hpp"
 #include "./ShadowHandler.hpp"
@@ -25,8 +26,8 @@ CShadowHandler* CShadowHandler::GetInstance() {
 }
 
 void CShadowHandler::GenDepthTextureFBO() {
-	const int shadowMapWidth = WIN->GetViewPortSize().x * SIZE_MULT_X;
-	const int shadowMapHeight = WIN->GetViewPortSize().y * SIZE_MULT_Y;
+	const int shadowMapWidth = gWindow->GetViewPort().size.x * SIZE_MULT_X;
+	const int shadowMapHeight = gWindow->GetViewPort().size.y * SIZE_MULT_Y;
 
 	glGenTextures(1, &texID);
 	glBindTexture(GL_TEXTURE_2D, texID);
@@ -135,10 +136,10 @@ void CShadowHandler::BindDepthTextureFBO() {
 	// if we render the shadowmap in higher res.,
 	// the viewport must be modified accordingly
 	glViewport(
-		WIN->GetViewPortPos().x,
-		WIN->GetViewPortPos().y,
-		WIN->GetViewPortSize().x * SIZE_MULT_X,
-		WIN->GetViewPortSize().y * SIZE_MULT_Y
+		gWindow->GetViewPort().pos.x,
+		gWindow->GetViewPort().pos.y,
+		gWindow->GetViewPort().size.x * SIZE_MULT_X,
+		gWindow->GetViewPort().size.y * SIZE_MULT_Y
 	);
 
 	// clear previous frame values
@@ -156,10 +157,10 @@ void CShadowHandler::UnBindDepthTextureFBO() {
 
 	// reset the viewport
 	glViewport(
-		WIN->GetViewPortPos().x,
-		WIN->GetViewPortPos().y,
-		WIN->GetViewPortSize().x,
-		WIN->GetViewPortSize().y
+		gWindow->GetViewPort().pos.x,
+		gWindow->GetViewPort().pos.y,
+		gWindow->GetViewPort().size.x,
+		gWindow->GetViewPort().size.y
 	);
 
 	// re-enable color write

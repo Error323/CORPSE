@@ -2,6 +2,7 @@
 
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
+#include "../UI/Window.hpp"
 #include "./InputHandler.hpp"
 #include "./InputReceiver.hpp"
 
@@ -200,7 +201,7 @@ void CInputHandler::MouseMoved(SDL_Event* e) {
 		// re-center the mouse and eat the event it generates
 		// note: this can also eat MouseReleased() events and
 		// cause auto-move unless WE update the mouse state
-		SDL_WarpMouse(WIN->GetWindowSize().x >> 1, WIN->GetWindowSize().y >> 1);
+		SDL_WarpMouse(gWindow->GetWindowSize().x >> 1, gWindow->GetWindowSize().y >> 1);
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {}
 	}

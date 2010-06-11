@@ -10,6 +10,7 @@ class CInputHandler;
 class CSimThread;
 class CRenderThread;
 
+class IWindow;
 class UI;
 
 class CNetMessageBuffer;
@@ -26,7 +27,6 @@ public:
 	void SetNetMessageBuffer(CNetMessageBuffer* buf) { mNetBuf = buf; }
 	void SendNetMessage(const NetMessage&);
 
-	void ParseArgs(int, char**);
 	void Update();
 
 	void KeyPressed(int, bool);
@@ -39,23 +39,10 @@ private:
 
 	void ReadNetMessages();
 
-	void Init();
-	void InitSDL(const char*);
-
-	bool EnableMultiSampling();
-	bool VerifyMultiSampling();
-
+	void InitSDL();
 	void InitStencilBuffer();
-	void SetWindowSize(int, int);
 
-	void SetSDLWindowVideoMode();
-	void SetOGLViewPortGeometry();
-
-	// helper functions for SetOGLViewPortGeometry()
-	void UpdateViewPortDimensions();
-	bool UpdateWindowInfo();
-
-	SDL_Surface* mScreen;
+	IWindow* mWindow;
 	UI* mUI;
 
 	CInputHandler* mInputHandler;

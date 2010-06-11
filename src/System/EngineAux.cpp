@@ -7,8 +7,6 @@
 #include "./LuaParser.hpp"
 #include "./Logger.hpp"
 
-#include "CORPSE.hpp"
-
 int    EngineAux::argc      = 0;
 char** EngineAux::argv      = NULL;
 char   EngineAux::cwd[1024] = {'\0'};
@@ -62,14 +60,12 @@ EngineAux::EngineAux(int argCnt, char** argVec) {
 		const LuaTable* rootTable = luaParser->GetRoot();
 		const LuaTable* generalTable = rootTable->GetTblVal("general");
 
-		mouseLook       = bool(int(generalTable->GetFltVal("mouseLook", 1)));
-		lineSmoothing   = bool(int(generalTable->GetFltVal("lineSmoothing", 1)));
-		pointSmoothing  = bool(int(generalTable->GetFltVal("pointSmoothing", 1)));
-
 		wantDraw        = true;
 		wantQuit        = false;
 
-		winState.Init(luaParser);
+		mouseLook       = bool(int(generalTable->GetFltVal("mouseLook", 1)));
+		lineSmoothing   = bool(int(generalTable->GetFltVal("lineSmoothing", 1)));
+		pointSmoothing  = bool(int(generalTable->GetFltVal("pointSmoothing", 1)));
 
 		logger = new CLogger(luaParser);
 		logger->Log("[EngineAux::EngineAux] current working-directory: " + std::string(EngineAux::cwd));
@@ -81,39 +77,4 @@ EngineAux::~EngineAux() {
 
 	delete luaParser; luaParser = NULL;
 	delete logger;    logger    = NULL;
-}
-
-
-
-void EngineAux::WindowState::Init(LuaParser* p) {
-	const LuaTable* rootTable = p->GetRoot();
-	const LuaTable* windowTable = rootTable->GetTblVal("window");
-	const LuaTable* vportTable = rootTable->GetTblVal("viewport");
-
-	desktopSize.x =
-	desktopSize.y = 0;
-
-	windowPos.x   =
-	windowPos.y   = 0;
-
-	viewPortPos.x =
-	viewPortPos.y = 0;
-
-	pixelSize.x   =
-	pixelSize.y   = 0.0f;
-
-	viewPortSize.x = vportTable->GetFltVal("xsize", 800);
-	viewPortSize.y = vportTable->GetFltVal("ysize", 600);
-	windowSize.x   = windowTable->GetFltVal("xsize", 800);
-	windowSize.y   = windowTable->GetFltVal("ysize", 600);
-
-	fullScreen      = bool(int(windowTable->GetFltVal("fullScreen", 0)));
-	dualScreen      = bool(int(windowTable->GetFltVal("dualScreen", 0)));
-
-	bitsPerPixel    = unsigned(windowTable->GetFltVal("bitsPerPixel", 32));
-	depthBufferBits = unsigned(windowTable->GetFltVal("depthBufferBits", 24));
-	useFSAA         = bool(unsigned(windowTable->GetFltVal("useFSAA", 1)));
-	FSAALevel       = unsigned(windowTable->GetFltVal("FSAALevel", 4));
-
-	title = windowTable->GetStrVal("title", "") + " " + HUMAN_NAME;
 }

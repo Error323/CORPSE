@@ -10,7 +10,7 @@
 #include "../Math/vec3.hpp"
 #include "../Math/Trig.hpp"
 #include "../System/EngineAux.hpp"
-#include "../System/Logger.hpp"
+#include "../UI/Window.hpp"
 
 CRenderThread* CRenderThread::GetInstance() {
 	static CRenderThread* rt = NULL;
@@ -79,7 +79,7 @@ inline static void PreFrameState() {
 		// poor-man's FSAA (unused)
 		// glEnable(GL_POLYGON_SMOOTH);
 
-		if (WIN->GetUseFSAA()) {
+		if (gWindow->GetUseFSAA()) {
 			glEnable(GL_MULTISAMPLE_ARB);
 		}
 
@@ -102,7 +102,7 @@ inline static void PostFrameState() {
 		postDL = glGenLists(1);
 		glNewList(postDL, GL_COMPILE);
 
-		if (WIN->GetUseFSAA()) {
+		if (gWindow->GetUseFSAA()) {
 			glDisable(GL_MULTISAMPLE_ARB);
 		}
 

@@ -11,6 +11,7 @@
 #include "../Camera.hpp"
 #include "../Textures/BitMap.hpp"
 #include "../../Math/vec3.hpp"
+#include "../../UI/Window.hpp"
 #include "../../System/EngineAux.hpp"
 #include "../../System/FileHandler.hpp"
 #include "../../System/LuaParser.hpp"
@@ -73,8 +74,8 @@ void CSkyBox::Draw(const Camera* cam) {
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		const uint vpsx = WIN->GetViewPortSize().x;
-		const uint vpsy = WIN->GetViewPortSize().y;
+		const uint vpsx = gWindow->GetViewPort().size.x;
+		const uint vpsy = gWindow->GetViewPort().size.y;
 		const vec3f v1 = cam->GetPixelDir(   0,    0), tl = cam->pos + v1 * (0.125f + 100);
 		const vec3f v2 = cam->GetPixelDir(vpsx,    0), tr = cam->pos + v2 * (0.125f + 100);
 		const vec3f v3 = cam->GetPixelDir(vpsx, vpsy), br = cam->pos + v3 * (0.125f + 100);
