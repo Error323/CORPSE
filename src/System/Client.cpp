@@ -161,7 +161,7 @@ void CClient::KeyPressed(int sdlKeyCode, bool repeat) {
 				SDL_ShowCursor(AUX->GetMouseLook()? SDL_DISABLE: SDL_ENABLE);
 			} break;
 
-			case SDLK_n: {
+			case SDLK_c: {
 				// switch camera mode
 				mRenderThread->GetCamCon()->SwitchCams();
 			} break;
