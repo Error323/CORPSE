@@ -27,132 +27,104 @@ void CGround::FreeInstance(CGround* g) {
 
 
 
-float CGround::LineGroundCol(vec3f from, vec3f to) {
-	float savedLength = 0.0f;
+float CGround::LineGroundCol(const vec3f& from, const vec3f& to) {
+	const float xmax = readMap->maxxpos;
+	const float zmax = readMap->maxzpos;
+	const int maxIdx = ((readMap->mapx + 1) * (readMap->mapy + 1)) - 1;
+	const float* hm = readMap->GetHeightmap();
 
-	if (from.z > readMap->maxzpos && to.z < readMap->maxzpos) {
-		// special case: origin outside map, destination inside
-		const vec3f dir = (to - from).norm();
+	// test whether the ray can intersect at all
+	if (from.x < 0.0f && to.x < 0.0f) { return -1.0f; }
+	if (from.z < 0.0f && to.z < 0.0f) { return -1.0f; }
 
-		savedLength = -(from.z - readMap->maxzpos) / dir.z;
-		from += dir * savedLength;
+	if (from.x > xmax && to.x > xmax) { return -1.0f; }
+	if (from.z > zmax && to.z > zmax) { return -1.0f; }
+
+	// segment (squared) length and direction
+	const float len = (to - from).sqLen3D();
+	const vec3f dir = (to - from).norm();
+
+	// position being stepped, (squared) distance travelled
+	vec3f pos = from;
+	float dst = 0.0f;
+
+	// test whether the ray can potentially intersect
+	// (if so, adjust the segment's starting position
+	// to the nearest map-edge)
+	while (!readMap->PosInBounds(pos)) {
+		if (pos.x < 0.0f) {
+			if (dir.x <= 0.0f) {
+				return -1.0f;
+			} else {
+				dst = -pos.x / dir.x;            // distance to x=0 line
+				pos += (dir * dst);
+			}
+		}
+		else if (pos.x > xmax) {
+			if (dir.x >= 0.0f) {
+				return -1.0f;
+			} else {
+				dst = (pos.x - xmax) / -dir.x;   // distance to x=xmax line
+				pos += (dir * dst);
+			}
+		}
+
+		if (pos.z < 0.0f) {
+			if (dir.z <= 0.0f) {
+				return -1.0f;
+			} else {
+				dst = -pos.z / dir.z;            // distance to z=0 line
+				pos += (dir * dst);
+			}
+		}
+		else if (pos.z > zmax) {
+			if (dir.z >= 0.0f) {
+				return -1.0f;
+			} else {
+				dst = (pos.z - zmax) / -dir.z;   // distance to z=zmax line
+				pos += (dir * dst);
+			}
+		}
+
+		// reset
+		dst = 0.0f;
 	}
 
-	readMap->SetPosInBounds(from);
 
-	vec3f dir = to - from;
-	float maxLength = dir.len3D();
-	dir /= maxLength;
+	bool haveIntersection = false;
+	// heightmap-index of current position
+	int idx = readMap->pos2square(pos);
 
-	if ((from.x + dir.x * maxLength) < 1.0f)
-		maxLength = (1.0f - from.x) / dir.x;
-	else if ((from.x + dir.x * maxLength) > readMap->maxxpos)
-		maxLength = (readMap->maxxpos - from.x) / dir.x;
+	// <pos> is guaranteed to be in-bounds at this
+	// point, so the index should never be illegal
+	assert(idx >= 0 && idx <= maxIdx);
 
-	if ((from.z + dir.z * maxLength) < 1.0f)
-		maxLength = (1.0f - from.z) / dir.z;
-	else if ((from.z + dir.z * maxLength) > readMap->maxzpos)
-		maxLength = (readMap->maxzpos - from.z) / dir.z;
+	// if, after shifting the segment start-position to the
+	// edge of the map, we are already below the terrain at
+	// that point, no intersection can happen
+	if (pos.y < hm[idx]) {
+		return -1.0f;
+	}
 
-	to = from + dir * maxLength;
+	while (!haveIntersection) {
+		if (dst > len) { break; }
+		if (idx < 0 || idx > maxIdx) { break; }
+		if (pos.x < 0.0f || pos.x > xmax) { break; }
+		if (pos.z < 0.0f || pos.z > zmax) { break; }
 
-	const float dx = to.x - from.x;
-	const float dz = to.z - from.z;
-	float xp = from.x;
-	float zp = from.z;
-	float ret;
-	float xn, zn;
-
-	bool keepgoing = true;
-	const int sqSz = readMap->SQUARE_SIZE;
-
-	if ((floor(from.x / sqSz) == floor(to.x / sqSz)) && (floor(from.z / sqSz) == floor(to.z / sqSz))) {
-		ret = LineGroundSquareCol(from, to, int(floor(from.x / sqSz)), int(floor(from.z / sqSz)));
-
-		if (ret >= 0.0f) {
-			return ret;
-		}
-	} else if (floor(from.x / sqSz) == floor(to.x / sqSz)) {
-		while (keepgoing) {
-			ret = LineGroundSquareCol(from, to, (int) floor(xp / sqSz), (int) floor(zp / sqSz));
-			if (ret >= 0.0f) {
-				return ret + savedLength;
-			}
-
-			keepgoing = (fabs(zp - from.z) < fabs(dz));
-
-			if (dz > 0.0f) {
-				zp += sqSz;
-			} else {
-				zp -= sqSz;
-			}
-		}
-	} else if (floor(from.z / sqSz) == floor(to.z / sqSz)) {
-		while (keepgoing) {
-			ret = LineGroundSquareCol(from, to, (int) floor(xp / sqSz), (int) floor(zp / sqSz));
-			if (ret >= 0.0f) {
-				return ret + savedLength;
-			}
-
-			keepgoing = (fabs(xp - from.x) < fabs(dx));
-
-			if (dx > 0.0f) {
-				xp += sqSz;
-			} else {
-				xp -= sqSz;
-			}
-		}
-	} else {
-		while (keepgoing) {
-			float xs, zs;
-
-			// Push value just over the edge of the square
-			// This is the best accuracy we can get with floats:
-			// add one digit and (xp*constant) reduces to xp itself
-			// This accuracy means that at (16384,16384) (lower right of 32x32 map)
-			// 1 in every 1/(16384*1e-7f/8)=4883 clicks on the map will be ignored.
-			if (dx > 0.0f) { xs = floor(xp * 1.0000001f / sqSz); }
-			else           { xs = floor(xp * 0.9999999f / sqSz); }
-			if (dz > 0.0f) { zs = floor(zp * 1.0000001f / sqSz); }
-			else           { zs = floor(zp * 0.9999999f / sqSz); }
-
-			ret = LineGroundSquareCol(from, to, (int) xs, (int) zs);
-			if (ret >= 0.0f) {
-				return ret + savedLength;
-			}
-
-			keepgoing = (fabs(xp - from.x) < fabs(dx) && fabs(zp - from.z) < fabs(dz));
-
-			if (dx > 0.0f) {
-				// distance xp to right edge of square (xs,zs) divided by dx, xp += xn*dx puts xp on the right edge
-				xn = (xs * sqSz + sqSz - xp) / dx;
-			} else {
-				// distance xp to left edge of square (xs,zs) divided by dx, xp += xn*dx puts xp on the left edge
-				xn = (xs * sqSz - xp) / dx;
-			}
-			if (dz > 0.0f) {
-				// distance zp to bottom edge of square (xs,zs) divided by dz, zp += zn*dz puts zp on the bottom edge
-				zn = (zs * sqSz + sqSz - zp) / dz;
-			} else {
-				// distance zp to top edge of square (xs,zs) divided by dz, zp += zn*dz puts zp on the top edge
-				zn = (zs * sqSz - zp) / dz;
-			}
-
-			// xn and zn are always positive, minus signs are divided out above
-
-			// this puts (xp,zp) exactly on the first edge you see if you look from (xp,zp) in the (dx,dz) direction
-			if (xn < zn) {
-				xp += xn * dx;
-				zp += xn * dz;
-			} else {
-				xp += zn * dx;
-				zp += zn * dz;
-			}
+		if (pos.y <= hm[idx]) {
+			haveIntersection = true;
+		} else {
+			pos += (dir * readMap->SQUARE_SIZE);
+			dst = (pos - from).sqLen3D();
+			idx = readMap->pos2square(pos);
 		}
 	}
 
-	return -1.0f;
+	return ((haveIntersection)? fastmath::sqrt2(dst): -1.0f);
 }
+
+
 
 float CGround::LineGroundSquareCol(const vec3f& from, const vec3f& to, int xs, int ys) {
 	if ((xs < 0) || (ys < 0) || (xs > readMap->maxxpos) || (ys > readMap->maxzpos)) {

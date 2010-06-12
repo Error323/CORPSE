@@ -15,7 +15,7 @@ public:
 	float GetOrigHeight(float x, float y);
 	vec3f& GetNormal(float x, float y);
 	vec3f GetSmoothNormal(float x, float y);
-	float LineGroundCol(vec3f from, vec3f to);
+	float LineGroundCol(const vec3f& from, const vec3f& to);
 	float TrajectoryGroundCol(vec3f&, const vec3f&, float, float, float);
 	int GetSquare(const vec3f&);
 
