@@ -344,14 +344,14 @@ void FPSCamera::KeyPressed(int key, bool repeat) {
 		if (key == SDLK_s) { Move(   -1, inputHandler->GetKeySensitivity()); }
 		if (key == SDLK_a) { HStrafe(-1, inputHandler->GetKeySensitivity()); }
 		if (key == SDLK_d) { HStrafe( 1, inputHandler->GetKeySensitivity()); }
-		if (key == SDLK_q) { Roll(   -1, inputHandler->GetKeySensitivity() * 0.005f); }
-		if (key == SDLK_e) { Roll(    1, inputHandler->GetKeySensitivity() * 0.005f); }
+		if (key == SDLK_q) { Roll(   -1, inputHandler->GetKeySensitivity() * DEG2RAD(0.5f)); }
+		if (key == SDLK_e) { Roll(    1, inputHandler->GetKeySensitivity() * DEG2RAD(0.5f)); }
 
 		if (!AUX->GetMouseLook()) {
-			if (key == SDLK_UP   ) { Pitch(-1, inputHandler->GetKeySensitivity() * 0.005f); }
-			if (key == SDLK_DOWN ) { Pitch( 1, inputHandler->GetKeySensitivity() * 0.005f); }
-			if (key == SDLK_LEFT ) { Yaw(  -1, inputHandler->GetKeySensitivity() * 0.005f); }
-			if (key == SDLK_RIGHT) { Yaw(   1, inputHandler->GetKeySensitivity() * 0.005f); }
+			if (key == SDLK_UP   ) { Pitch(-1, inputHandler->GetKeySensitivity() * DEG2RAD(0.5f)); }
+			if (key == SDLK_DOWN ) { Pitch( 1, inputHandler->GetKeySensitivity() * DEG2RAD(0.5f)); }
+			if (key == SDLK_LEFT ) { Yaw(  -1, inputHandler->GetKeySensitivity() * DEG2RAD(0.5f)); }
+			if (key == SDLK_RIGHT) { Yaw(   1, inputHandler->GetKeySensitivity() * DEG2RAD(0.5f)); }
 		}
 	}
 }
@@ -375,7 +375,7 @@ void FPSCamera::MouseMoved(int, int, int dx, int dy) {
 }
 
 void FPSCamera::Yaw(int sign, float sens) {
-	const vec3f tmp = vrp + (xdir * sign * sens * 0.5f);
+	const vec3f tmp = vrp + (xdir * sign * sens);
 
 	// keep rotations level in xz-plane
 	ydir = YVECf;
@@ -388,7 +388,7 @@ void FPSCamera::Yaw(int sign, float sens) {
 	mat.SetXDir(xdir);
 }
 void FPSCamera::Pitch(int sign, float sens) {
-	const vec3f tmp = vrp + (ydir * sign * sens * 0.5f);
+	const vec3f tmp = vrp + (ydir * sign * sens);
 
 	zdir = (tmp - pos).inorm();
 	ydir = (xdir.cross(zdir)).inorm();
