@@ -81,7 +81,6 @@ void CSimThread::SimCommand(NetMessage& m) {
 	vec3f objectPos;
 	vec3f objectDir;
 
-	m.SetPos(0);
 	m >> simCommandID;
 
 	switch (simCommandID) {

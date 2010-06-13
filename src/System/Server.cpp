@@ -96,7 +96,7 @@ void CServer::ReadNetMessages() {
 		NetMessage m;
 
 		while (clientMsgBuf->PopClientToServerMessage(&m)) {
-			switch (m.GetID()) {
+			switch (m.GetMessageID()) {
 				case CLIENT_MSG_PAUSE: {
 					paused = !paused;
 
@@ -113,12 +113,7 @@ void CServer::ReadNetMessages() {
 				} break;
 
 				case CLIENT_MSG_SIMFRAME: {
-					unsigned int clientID;
-
-					m.SetPos(0);
-					m >> clientID;
-
-					clientFrames[clientID] += 1;
+					clientFrames[m.GetSenderID()] += 1;
 				} break;
 
 				case CLIENT_MSG_SIMCOMMAND: {
@@ -145,7 +140,7 @@ bool CServer::Update() {
 
 	if (frameDelta <= 0 || missedFrames > 0 /*|| gameTime < realTime*/) {
 		if (!paused) {
-			SendNetMessage(NetMessage(SERVER_MSG_SIMFRAME, 0));
+			SendNetMessage(NetMessage(SERVER_MSG_SIMFRAME, 0xDEADF00D, 0));
 
 			gameTime      = frame / simFrameRate;           // game-time is based on number of elapsed frames
 			frame        += 1;                              // update the server's internal frame number

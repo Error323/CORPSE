@@ -39,7 +39,7 @@ void SimObjectSpawner::SpawnObject(int x, int y) {
 			}
 
 			if (closestObject != NULL) {
-				NetMessage m(CLIENT_MSG_SIMCOMMAND, (2 * sizeof(unsigned int)));
+				NetMessage m(CLIENT_MSG_SIMCOMMAND, client->GetClientID(), (2 * sizeof(unsigned int)));
 
 				// destroy an object
 				m << COMMAND_DESTROY_SIMOBJECT;
@@ -47,7 +47,7 @@ void SimObjectSpawner::SpawnObject(int x, int y) {
 
 				client->SendNetMessage(m);
 			} else {
-				NetMessage m(CLIENT_MSG_SIMCOMMAND, (2 * sizeof(unsigned int)) + (6 * sizeof(float)));
+				NetMessage m(CLIENT_MSG_SIMCOMMAND, client->GetClientID(), (2 * sizeof(unsigned int)) + (6 * sizeof(float)));
 
 				// create an object
 				m << COMMAND_CREATE_SIMOBJECT;

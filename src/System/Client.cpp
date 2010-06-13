@@ -101,12 +101,11 @@ void CClient::ReadNetMessages() {
 	NetMessage m;
 
 	while (mNetBuf->PopServerToClientMessage(&m))  {
-		switch (m.GetID()) {
+		switch (m.GetMessageID()) {
 			case SERVER_MSG_SIMFRAME: {
 				mSimThread->Update();
 
-				NetMessage r(CLIENT_MSG_SIMFRAME, sizeof(unsigned int));
-					r << clientID;
+				NetMessage r(CLIENT_MSG_SIMFRAME, clientID, sizeof(unsigned int));
 				SendNetMessage(r);
 			} break;
 
@@ -138,14 +137,14 @@ void CClient::KeyPressed(int sdlKeyCode, bool repeat) {
 			} break;
 
 			case SDLK_PAUSE: {
-				SendNetMessage(NetMessage(CLIENT_MSG_PAUSE, 0));
+				SendNetMessage(NetMessage(CLIENT_MSG_PAUSE, clientID, 0));
 			} break;
 
 			case SDLK_EQUALS: {
-				SendNetMessage(NetMessage(CLIENT_MSG_INCSIMSPEED, 0));
+				SendNetMessage(NetMessage(CLIENT_MSG_INCSIMSPEED, clientID, 0));
 			} break;
 			case SDLK_MINUS: {
-				SendNetMessage(NetMessage(CLIENT_MSG_DECSIMSPEED, 0));
+				SendNetMessage(NetMessage(CLIENT_MSG_DECSIMSPEED, clientID, 0));
 			} break;
 
 			case SDLK_g: {
