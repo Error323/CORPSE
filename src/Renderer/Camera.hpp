@@ -22,16 +22,16 @@ public:
 	};
 
 	enum {
-		CAM_MOVE_MODE_FPS = 0, 
-		CAM_MOVE_MODE_ORBIT = 1, 
+		CAM_MOVE_MODE_FPS      = 0, 
+		CAM_MOVE_MODE_ORBIT    = 1, 
 		CAM_MOVE_MODE_OVERHEAD = 2, 
-		CAM_MOVE_MODE_LAST = 3
+		CAM_MOVE_MODE_LAST     = 3
 	};
 
 	enum {
 		CAM_PROJ_MODE_PERSP = 0, 
 		CAM_PROJ_MODE_ORTHO = 1,
-		CAM_PROJ_MODE_LAST = 2
+		CAM_PROJ_MODE_LAST  = 2
 	};
 
 	Camera(const vec3f&, const vec3f&, int, int);
@@ -163,17 +163,17 @@ private:
 };
 
 
-// A standard rts overhead target-camera
+// A standard RTS overhead target-camera
 struct OverheadCamera: public Camera {
-	OverheadCamera(const vec3f& p, const vec3f& t, int projectionMode): Camera(p, t, CAM_MOVE_MODE_FPS, projectionMode) {
+	OverheadCamera(const vec3f& p, const vec3f& t, int projectionMode): Camera(p, t, CAM_MOVE_MODE_OVERHEAD, projectionMode) {
 	}
+
 	void Init(const vec3f& p, const vec3f& t);
 
 	void KeyPressed(int, bool);
 	void KeyReleased(int);
 	void MousePressed(int, int, int, bool);
 	void MouseMoved(int, int, int, int);
-
 
 	void ScrollNorthSouth(int sign, float sens);
 	void ScrollEastWest(int sign, float sens);
@@ -182,7 +182,7 @@ struct OverheadCamera: public Camera {
 	float sensMultiplier;
 	vec3f target;
 
-	//bool Active() const;
+	// bool Active() const;
 };
 
 #endif

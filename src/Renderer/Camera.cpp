@@ -631,7 +631,7 @@ void OverheadCamera::Init(const vec3f& p, const vec3f& t) {
 }
 
 void OverheadCamera::KeyPressed(int key, bool) {
-	const float scrollSpeed = inputHandler->GetKeySensitivity()*2.0f*sensMultiplier;
+	const float scrollSpeed = inputHandler->GetKeySensitivity() * 2.0f * sensMultiplier;
 
 	if (key == SDLK_LSHIFT || key == SDLK_RSHIFT)
 		sensMultiplier = 5.0f;
@@ -647,8 +647,8 @@ void OverheadCamera::KeyReleased(int key) {
 	if (key == SDLK_LSHIFT || key == SDLK_RSHIFT)
 		sensMultiplier = 1.0f;
 }
-void OverheadCamera::MousePressed(int button, int, int, bool repeat) {
-	const float zoomSpeed = inputHandler->GetKeySensitivity()*10.0f*sensMultiplier;
+void OverheadCamera::MousePressed(int button, int, int, bool) {
+	const float zoomSpeed = inputHandler->GetKeySensitivity() * 10.0f * sensMultiplier;
 
 	switch (button) {
 		case SDL_BUTTON_WHEELDOWN: { Zoom( 1, zoomSpeed); } break;
@@ -678,4 +678,3 @@ void OverheadCamera::Zoom(int sign, float sens) {
 
 	mat.SetPos(pos);
 }
-
