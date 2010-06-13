@@ -20,8 +20,19 @@ public:
 		CAM_HSTRAFE = 4,
 		CAM_VSTRAFE = 5
 	};
-	enum {CAM_MOVE_MODE_FPS = 0, CAM_MOVE_MODE_ORBIT = 1, CAM_MOVE_MODE_LAST = 2};
-	enum {CAM_PROJ_MODE_PERSP = 0, CAM_PROJ_MODE_ORTHO = 1, CAM_PROJ_MODE_LAST = 2};
+
+	enum {
+		CAM_MOVE_MODE_FPS = 0, 
+		CAM_MOVE_MODE_ORBIT = 1, 
+		CAM_MOVE_MODE_OVERHEAD = 2, 
+		CAM_MOVE_MODE_LAST = 3
+	};
+
+	enum {
+		CAM_PROJ_MODE_PERSP = 0, 
+		CAM_PROJ_MODE_ORTHO = 1,
+		CAM_PROJ_MODE_LAST = 2
+	};
 
 	Camera(const vec3f&, const vec3f&, int, int);
 	virtual ~Camera();
@@ -96,7 +107,6 @@ protected:
 };
 
 
-
 struct FPSCamera: public Camera {
 	FPSCamera(const vec3f& p, const vec3f& t, int projectionMode): Camera(p, t, CAM_MOVE_MODE_FPS, projectionMode) {
 	}
@@ -150,6 +160,24 @@ private:
 	float elevation, cElevation;    // in degrees
 
 	vec3f cen;                      // world-space position that we orbit
+};
+
+
+// A standard rts overhead target-camera
+struct OverheadCamera: public Camera {
+	OverheadCamera(const vec3f& p, const vec3f& t, int projectionMode): Camera(p, t, CAM_MOVE_MODE_FPS, projectionMode) {
+	}
+
+	void KeyPressed(int, bool);
+	void MousePressed(int, int, int, bool);
+	void MouseMoved(int, int, int, int);
+
+	void Reset();
+	void ScrollNorthSouth(int sign, float sens);
+	void ScrollEastWest(int sign, float sens);
+	void Zoom(int sign, float sens);
+
+	bool Active() const;
 };
 
 #endif

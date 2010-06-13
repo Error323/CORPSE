@@ -617,3 +617,28 @@ void OrbitCamera::VStrafe(int sign, float sens) {
 
 	mat.SetPos(pos);
 }
+
+
+
+void OverheadCamera::KeyPressed(int key, bool) {
+	
+}
+
+void OverheadCamera::ScrollNorthSouth(int sign, float sens) {
+	pos += (ydir * sign * sens);
+	vrp += (ydir * sign * sens);
+
+	mat.SetPos(pos);
+}
+void OverheadCamera::ScrollEastWest(int sign, float sens) {
+	pos += (xdir * sign * sens);
+	vrp += (xdir * sign * sens);
+
+	mat.SetPos(pos);
+}
+void OverheadCamera::Zoom(int sign, float sens) {
+	pos += (zdir * sign * sens);
+
+	mat.SetPos(pos);
+}
+
