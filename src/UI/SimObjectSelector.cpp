@@ -165,6 +165,7 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 void SimObjectSelector::GiveSelectionOrder(int x, int y) {
 	if (activeSelection) { return; }
 	if (!haveSelection) { return; }
+	if (selectedObjectIDs.empty()) { return; }
 
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
