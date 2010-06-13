@@ -178,7 +178,7 @@ void SimObjectSelector::GiveSelectionOrder(int x, int y) {
 			(selectedObjectIDs.size() * sizeof(unsigned int));
 
 		if (dst > 0.0f) {
-			NetMessage m(CLIENT_MSG_SIMCOMMAND, msgSize);
+			NetMessage m(CLIENT_MSG_SIMCOMMAND, client->GetClientID(), msgSize);
 
 			m << COMMAND_MOVE_SIMOBJECT;
 			m << pos.x;
