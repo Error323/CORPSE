@@ -25,6 +25,11 @@ CCameraController::CCameraController(): currCam(NULL) {
 			currCam->Init(currCam->pos, currCam->pos + currCam->zdir);
 			cameras[Camera::CAM_MOVE_MODE_ORBIT] = currCam;
 		} break;
+		case Camera::CAM_MOVE_MODE_OVERHEAD: {
+			currCam = new OverheadCamera(camPos, camVRP, projMode);
+			currCam->Init(currCam->pos, currCam->pos + currCam->zdir);
+			cameras[Camera::CAM_MOVE_MODE_OVERHEAD] = currCam;
+		} break;
 		default: {
 			assert(false);
 		} break;
@@ -61,7 +66,7 @@ void CCameraController::SwitchCams() {
 			// disable the old camera so it
 			// does not react to input until
 			// we switch back to it
-			cameras[Camera::CAM_MOVE_MODE_ORBIT] = nextCam;
+			cameras[Camera::CAM_MOVE_MODE_OVERHEAD] = nextCam;
 		} break;
 
 		case Camera::CAM_MOVE_MODE_ORBIT: {
@@ -74,6 +79,18 @@ void CCameraController::SwitchCams() {
 			}
 
 			cameras[Camera::CAM_MOVE_MODE_FPS] = nextCam;
+		} break;
+
+		case Camera::CAM_MOVE_MODE_OVERHEAD: {
+			std::map<int, Camera*>::iterator it = cameras.find(Camera::CAM_MOVE_MODE_OVERHEAD);
+
+			if (it == cameras.end()) {
+				nextCam = new OverheadCamera(currCam->pos, currCam->vrp, Camera::CAM_PROJ_MODE_PERSP);
+			} else {
+				nextCam = dynamic_cast<OverheadCamera*>(it->second);
+			}
+
+			cameras[Camera::CAM_MOVE_MODE_ORBIT] = nextCam;
 		} break;
 
 		default: {

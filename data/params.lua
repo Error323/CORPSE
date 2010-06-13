@@ -49,7 +49,7 @@ params = {
 	},
 
 	["camera"] = {
-		moveMode = 1, -- orbit
+		moveMode = 2, -- overhead
 		projMode = 0, -- perspective
 
 		-- set the vertical FOV to 22.5 degrees
@@ -60,8 +60,8 @@ params = {
 		zNearDist =    16.0,
 		zFarDist  = 16384.0,
 
-		pos = {   0.0, 256.0,    0.0},
-		vrp = {1024.0, 256.0, 1024.0},
+		pos = {2048.0,   4096.0, 0.0},
+		vrp = {2048.0,   0.0   , 2048.0},
 	},
 
 	["map"] = {

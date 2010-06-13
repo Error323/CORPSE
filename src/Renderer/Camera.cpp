@@ -624,9 +624,40 @@ void OrbitCamera::VStrafe(int sign, float sens) {
 }
 
 
+void OverheadCamera::Init(const vec3f& p, const vec3f& t) {
+	pos = p;
+	vrp = t;
+	sensMultiplier = 1.0f;
+}
 
 void OverheadCamera::KeyPressed(int key, bool) {
-	
+	const float scrollSpeed = inputHandler->GetKeySensitivity()*2.0f*sensMultiplier;
+
+	if (key == SDLK_LSHIFT || key == SDLK_RSHIFT)
+		sensMultiplier = 5.0f;
+
+	switch (key) {
+		case SDLK_w: { ScrollNorthSouth( 1, scrollSpeed); } break;
+		case SDLK_s: { ScrollNorthSouth(-1, scrollSpeed); } break;
+		case SDLK_a: { ScrollEastWest(  -1, scrollSpeed); } break;
+		case SDLK_d: { ScrollEastWest(   1, scrollSpeed); } break;
+	}
+}
+void OverheadCamera::KeyReleased(int key) {
+	if (key == SDLK_LSHIFT || key == SDLK_RSHIFT)
+		sensMultiplier = 1.0f;
+}
+void OverheadCamera::MousePressed(int button, int, int, bool repeat) {
+	const float zoomSpeed = inputHandler->GetKeySensitivity()*10.0f*sensMultiplier;
+
+	switch (button) {
+		case SDL_BUTTON_WHEELDOWN: { Zoom( 1, zoomSpeed); } break;
+		case SDL_BUTTON_WHEELUP:   { Zoom(-1, zoomSpeed); } break;
+	}
+}
+void OverheadCamera::MouseMoved(int x, int y, int, int) {
+	target = ScreenToWorldCoors(x, y);
+	target.y = vrp.y;
 }
 
 void OverheadCamera::ScrollNorthSouth(int sign, float sens) {
@@ -643,6 +674,7 @@ void OverheadCamera::ScrollEastWest(int sign, float sens) {
 }
 void OverheadCamera::Zoom(int sign, float sens) {
 	pos += (zdir * sign * sens);
+	vrp += (zdir * sign * sens);
 
 	mat.SetPos(pos);
 }

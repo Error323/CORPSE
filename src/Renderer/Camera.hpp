@@ -167,17 +167,22 @@ private:
 struct OverheadCamera: public Camera {
 	OverheadCamera(const vec3f& p, const vec3f& t, int projectionMode): Camera(p, t, CAM_MOVE_MODE_FPS, projectionMode) {
 	}
+	void Init(const vec3f& p, const vec3f& t);
 
 	void KeyPressed(int, bool);
+	void KeyReleased(int);
 	void MousePressed(int, int, int, bool);
 	void MouseMoved(int, int, int, int);
 
-	void Reset();
+
 	void ScrollNorthSouth(int sign, float sens);
 	void ScrollEastWest(int sign, float sens);
 	void Zoom(int sign, float sens);
 
-	bool Active() const;
+	float sensMultiplier;
+	vec3f target;
+
+	//bool Active() const;
 };
 
 #endif
