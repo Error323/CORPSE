@@ -337,21 +337,26 @@ bool FPSCamera::Active() const { return (AUX->GetMouseLook()); }
 
 void FPSCamera::KeyPressed(int key, bool repeat) {
 	if (repeat) {
-		if (key == SDLK_LALT)  { VStrafe( 1, inputHandler->GetKeySensitivity()); }
-		if (key == SDLK_LCTRL) { VStrafe(-1, inputHandler->GetKeySensitivity()); }
+		const float keySens = inputHandler->GetKeySensitivity();
+		const bool mouseLook = AUX->GetMouseLook();
 
-		if (key == SDLK_w) { Move(    1, inputHandler->GetKeySensitivity()); }
-		if (key == SDLK_s) { Move(   -1, inputHandler->GetKeySensitivity()); }
-		if (key == SDLK_a) { HStrafe(-1, inputHandler->GetKeySensitivity()); }
-		if (key == SDLK_d) { HStrafe( 1, inputHandler->GetKeySensitivity()); }
-		if (key == SDLK_q) { Roll(   -1, inputHandler->GetKeySensitivity() * 0.005f); }
-		if (key == SDLK_e) { Roll(    1, inputHandler->GetKeySensitivity() * 0.005f); }
+		switch (key) {
+			case SDLK_LALT:  { VStrafe( 1, keySens); } break;
+			case SDLK_LCTRL: { VStrafe(-1, keySens); } break;
 
-		if (!AUX->GetMouseLook()) {
-			if (key == SDLK_UP   ) { Pitch(-1, inputHandler->GetKeySensitivity() * 0.005f); }
-			if (key == SDLK_DOWN ) { Pitch( 1, inputHandler->GetKeySensitivity() * 0.005f); }
-			if (key == SDLK_LEFT ) { Yaw(  -1, inputHandler->GetKeySensitivity() * 0.005f); }
-			if (key == SDLK_RIGHT) { Yaw(   1, inputHandler->GetKeySensitivity() * 0.005f); }
+			case SDLK_w: { Move(    1, keySens); } break;
+			case SDLK_s: { Move(   -1, keySens); } break;
+			case SDLK_a: { HStrafe(-1, keySens); } break;
+			case SDLK_d: { HStrafe( 1, keySens); } break;
+			case SDLK_q: { Roll(   -1, keySens * DEG2RAD(0.5f)); } break;
+			case SDLK_e: { Roll(    1, keySens * DEG2RAD(0.5f)); } break;
+
+			case SDLK_UP:    { if (!mouseLook) { Pitch(-1, keySens * DEG2RAD(0.5f)); } } break;
+			case SDLK_DOWN:  { if (!mouseLook) { Pitch( 1, keySens * DEG2RAD(0.5f)); } } break;
+			case SDLK_LEFT:  { if (!mouseLook) { Yaw(  -1, keySens * DEG2RAD(0.5f)); } } break;
+			case SDLK_RIGHT: { if (!mouseLook) { Yaw(   1, keySens * DEG2RAD(0.5f)); } } break;
+
+			default: {} break;
 		}
 	}
 }
@@ -375,7 +380,7 @@ void FPSCamera::MouseMoved(int, int, int dx, int dy) {
 }
 
 void FPSCamera::Yaw(int sign, float sens) {
-	const vec3f tmp = vrp + (xdir * sign * sens * 0.5f);
+	const vec3f tmp = vrp + (xdir * sign * sens);
 
 	// keep rotations level in xz-plane
 	ydir = YVECf;
@@ -388,7 +393,7 @@ void FPSCamera::Yaw(int sign, float sens) {
 	mat.SetXDir(xdir);
 }
 void FPSCamera::Pitch(int sign, float sens) {
-	const vec3f tmp = vrp + (ydir * sign * sens * 0.5f);
+	const vec3f tmp = vrp + (ydir * sign * sens);
 
 	zdir = (tmp - pos).inorm();
 	ydir = (xdir.cross(zdir)).inorm();

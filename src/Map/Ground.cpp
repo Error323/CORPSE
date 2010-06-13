@@ -40,6 +40,9 @@ float CGround::LineGroundCol(const vec3f& from, const vec3f& to) {
 	if (from.x > xmax && to.x > xmax) { return -1.0f; }
 	if (from.z > zmax && to.z > zmax) { return -1.0f; }
 
+	if (from.y < readMap->currMinHeight && to.y < readMap->currMinHeight) { return -1.0f; }
+	if (from.y > readMap->currMaxHeight && to.y > readMap->currMaxHeight) { return -1.0f; }
+
 	// segment (squared) length and direction
 	const float len = (to - from).sqLen3D();
 	const vec3f dir = (to - from).norm();
