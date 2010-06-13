@@ -271,16 +271,13 @@ void SimObjectSelector::DrawSelection() {
 			const vec3f cursorPos = camera->pos + cursorDir * cursorDst;
 
 
-			static int stipplePattern = 0x0000F0F0;
-			static int stippleShift = 4;
+			static int stipplePattern = 0x000000FF;
 
 			{
-				if ((renderThread->GetFrame() % 16) == 0) {
-					stipplePattern >>= stippleShift;
-
-					if ((stipplePattern & 0x0000FF00) == 0) {
-						stipplePattern |= 0x0000F000;
-					}
+				if ((renderThread->GetFrame() % 4) == 0) {
+					int lsb = (stipplePattern & 1);
+					stipplePattern >>= 1;
+					stipplePattern |= (lsb << 15);
 				}
 			}
 
@@ -316,10 +313,10 @@ void SimObjectSelector::DrawSelection() {
 
 						if (cursorDst > 0.0f) {
 							glEnable(GL_LINE_STIPPLE);
-							glLineStipple(3, stipplePattern);
+							glLineStipple(2, stipplePattern);
 							glBegin(GL_LINES);
-								glColor4f(1.0f, 0.0f, 0.0f, 0.75f); glVertex3f(objPos.x, objPos.y, objPos.z);
 								glColor4f(0.0f, 1.0f, 0.0f, 0.75f); glVertex3f(cursorPos.x, cursorPos.y, cursorPos.z);
+								glColor4f(1.0f, 0.0f, 0.0f, 0.75f); glVertex3f(objPos.x, objPos.y, objPos.z);
 							glEnd();
 							glDisable(GL_LINE_STIPPLE);
 						}
