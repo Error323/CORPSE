@@ -3,6 +3,9 @@
 
 #include "../Input/InputReceiver.hpp"
 
+class IFontManager;
+class FTFont;
+
 struct SimObjectSelector;
 struct SimObjectSpawner;
 
@@ -20,6 +23,9 @@ public:
 private:
 	UI();
 	~UI();
+
+	IFontManager* mFontManager;
+	FTFont* mFont;
 
 	SimObjectSelector* mSimObjectSelector;
 	SimObjectSpawner* mSimObjectSpawner;

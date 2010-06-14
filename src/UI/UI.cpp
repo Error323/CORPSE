@@ -3,9 +3,12 @@
 #include <SDL/SDL.h>
 
 #include "./UI.hpp"
+#include "./FontManager.hpp"
 #include "./SimObjectSelector.hpp"
 #include "./SimObjectSpawner.hpp"
 #include "../Input/InputHandler.hpp"
+#include "../System/EngineAux.hpp"
+#include "../System/LuaParser.hpp"
 
 UI* UI::GetInstance() {
 	static UI* ui = NULL;
@@ -29,15 +32,25 @@ void UI::FreeInstance(UI* ui) {
 
 
 UI::UI(): mSimObjectSelector(NULL) {
+	mFontManager = IFontManager::GetInstance();
 	mSimObjectSelector = new SimObjectSelector();
 	mSimObjectSpawner = new SimObjectSpawner();
 	inputHandler->AddReceiver(this);
+
+	const LuaTable* rootTable = LUA->GetRoot();
+	const LuaTable* uiTable = rootTable->GetTblVal("ui");
+
+	const std::string& fontName = uiTable->GetStrVal("fontName", "");
+	const int fontSize = uiTable->GetFltVal("fontSize", 72);
+
+	mFont = mFontManager->GetFont(fontName, fontSize);
 }
 
 UI::~UI() {
 	inputHandler->DelReceiver(this);
 	delete mSimObjectSelector;
 	delete mSimObjectSpawner;
+	IFontManager::FreeInstance(mFontManager);
 }
 
 void UI::Update() {

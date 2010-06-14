@@ -1,6 +1,7 @@
 params = {
 	["general"] = {
 		-- note: paths are wrt. the CWD
+		fontsDir        = "./data/fonts/",
 		mapsDir         = "./data/maps/",
 		modelsDir       = "./data/models/",
 		shadersDir      = "./data/shaders/",
@@ -12,6 +13,11 @@ params = {
 
 		lineSmoothing   =  1,
 		pointSmoothing  =  1,
+	},
+
+	["ui"] = {
+		fontName        = "Vera.ttf"
+		fontSize        = 72,
 	},
 
 	["server"] = {
