@@ -78,49 +78,47 @@ void SimObjectSpawner::Update() {
 	Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {
-		// return;
-	}
+		const SimObject* cursorObj = simObjectHandler->GetClosestSimObject(cursorPos, 64.0f);
 
-	const SimObject* cursorObj = simObjectHandler->GetClosestSimObject(cursorPos, 64.0f);
+		if (cursorObj != NULL && cursorObj->GetID() != cursorObjID) {
+			cursorObjID = cursorObj->GetID();
+		} else {
+			if (!simObjectHandler->IsValidSimObjectID(cursorObjID)) {
+				return;
+			}
+		}
 
-	if (cursorObj != NULL && cursorObj->GetID() != cursorObjID) {
-		cursorObjID = cursorObj->GetID();
-	} else {
-		if (!simObjectHandler->IsValidSimObjectID(cursorObjID)) {
+		const SimObject* obj = simObjectHandler->GetSimObject(cursorObjID);
+		const mat44f& objMat = obj->GetMat();
+		const ModelBase* objMdl = obj->GetModel()->GetModelBase();
+		const vec3f objSize = objMdl->maxs - objMdl->mins;
+
+		if ((obj->GetPos() - cursorPos).sqLen3D() > (64.0f * 64.0f)) {
 			return;
 		}
+
+		glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
+		glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
+
+		camera->ApplyViewProjTransform();
+
+		glPushMatrix();
+			glMultMatrixf(objMat.m);
+			glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
+				glDisable(GL_DEPTH_TEST);
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glColor4f(0.0f, 1.0f, 0.0f, 0.25f);
+				glBegin(GL_QUADS);
+					glVertex3f(-objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
+					glVertex3f( objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
+					glVertex3f( objSize.x * 0.5f, 0.0f,  objSize.z * 0.5f);
+					glVertex3f(-objSize.x * 0.5f, 0.0f,  objSize.z * 0.5f);
+				glEnd();
+			glPopAttrib();
+		glPopMatrix();
+
+		glMatrixMode(GL_PROJECTION); glPopMatrix();
+		glMatrixMode(GL_MODELVIEW); glPopMatrix();
 	}
-
-	const SimObject* obj = simObjectHandler->GetSimObject(cursorObjID);
-	const mat44f& objMat = obj->GetMat();
-	const ModelBase* objMdl = obj->GetModel()->GetModelBase();
-	const vec3f objSize = objMdl->maxs - objMdl->mins;
-
-	if ((obj->GetPos() - cursorPos).sqLen3D() > (64.0f * 64.0f)) {
-		return;
-	}
-
-	glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
-
-	camera->ApplyViewProjTransform();
-
-	glPushMatrix();
-		glMultMatrixf(objMat.m);
-		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
-			glDisable(GL_DEPTH_TEST);
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glColor4f(0.0f, 1.0f, 0.0f, 0.25f);
-			glBegin(GL_QUADS);
-				glVertex3f(-objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
-				glVertex3f( objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
-				glVertex3f( objSize.x * 0.5f, 0.0f,  objSize.z * 0.5f);
-				glVertex3f(-objSize.x * 0.5f, 0.0f,  objSize.z * 0.5f);
-			glEnd();
-		glPopAttrib();
-	glPopMatrix();
-
-	glMatrixMode(GL_PROJECTION); glPopMatrix();
-	glMatrixMode(GL_MODELVIEW); glPopMatrix();
 }

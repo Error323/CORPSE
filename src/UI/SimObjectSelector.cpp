@@ -198,13 +198,15 @@ void SimObjectSelector::OrderSelection(int x, int y) {
 			m << pos.y;
 			m << pos.z;
 
+			bool hasValidObject = false;
+
 			for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
 				if (simObjectHandler->IsValidSimObjectID(*it)) {
-					m << (*it);
+					m << (*it); hasValidObject = true;
 				}
 			}
 
-			if (m.GetPos() >= msgSize) {
+			if (hasValidObject) {
 				client->SendNetMessage(m);
 			}
 		}
