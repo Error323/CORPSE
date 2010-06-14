@@ -48,7 +48,10 @@ bool SimObjectDefHandler::LoadDefs() {
 			def->SetMaxTurningRate(objectDefTable->GetFltVal("maxTurningRate", 0.0f) / server->GetSimFrameRate());
 			def->SetMaxAccelerationRate(objectDefTable->GetFltVal("maxAccelerationRate", 0.0f) / server->GetSimFrameRate());
 			def->SetMaxDeccelerationRate(objectDefTable->GetFltVal("maxDeccelerationRate", 0.0f) / server->GetSimFrameRate());
+			def->SetMinSlopeAngleCosine(objectDefTable->GetFltVal("minSlopeAngleCosine", 0.0f));
 			def->SetMaxSlopeAngleCosine(objectDefTable->GetFltVal("maxSlopeAngleCosine", 1.0f));
+			def->SetMinTerrainHeight(objectDefTable->GetFltVal("minTerrainHeight", 0.0f));
+			def->SetMaxTerrainHeight(objectDefTable->GetFltVal("maxTerrainHeight", 0.0f));
 
 		objectDefsMap[*it] = def;
 		objectDefsVec[def->GetID()] = def;

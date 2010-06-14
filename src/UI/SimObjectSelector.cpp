@@ -203,6 +203,9 @@ void SimObjectSelector::OrderSelection(int x, int y) {
 			for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
 				if (simObjectHandler->IsValidSimObjectID(*it)) {
 					m << (*it); hasValidObject = true;
+				} else {
+					// fill up the message with invalid ID's
+					m << -1;
 				}
 			}
 

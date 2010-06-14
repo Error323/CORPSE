@@ -25,7 +25,7 @@ struct NetMessage {
 public:
 	NetMessage(): messageID(-1), senderID(-1), pos(-1), full(true) {}
 	NetMessage(unsigned int msgID, unsigned int sndID, unsigned int size): messageID(msgID), senderID(sndID), pos(0) {
-		data.resize(size); full = (size == 0);
+		data.resize(size, 0); full = (size == 0);
 	}
 	~NetMessage() {
 		data.clear();

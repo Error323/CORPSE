@@ -114,10 +114,10 @@ void CSimThread::SimCommand(NetMessage& m) {
 
 			while (!m.End()) {
 				m >> objectID;
-				e.AddObjectID(objectID);
 
-				assert(objectID < mSimObjectHandler->GetMaxSimObjects());
-				assert(mSimObjectHandler->GetSimObject(objectID) != NULL);
+				if (mSimObjectHandler->IsValidSimObjectID(objectID)) {
+					e.AddObjectID(objectID);
+				}
 			}
 
 			eventHandler->NotifyReceivers(&e);
