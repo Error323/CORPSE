@@ -38,12 +38,14 @@ UI::UI(): mSimObjectSelector(NULL) {
 	inputHandler->AddReceiver(this);
 
 	const LuaTable* rootTable = LUA->GetRoot();
+	const LuaTable* generalTable = rootTable->GetTblVal("general");
 	const LuaTable* uiTable = rootTable->GetTblVal("ui");
 
+	const std::string& fontsDir = generalTable->GetStrVal("fontsDir", "");
 	const std::string& fontName = uiTable->GetStrVal("fontName", "");
 	const int fontSize = uiTable->GetFltVal("fontSize", 72);
 
-	mFont = mFontManager->GetFont(fontName, fontSize);
+	mFont = mFontManager->GetFont(fontsDir + fontName, fontSize);
 }
 
 UI::~UI() {
