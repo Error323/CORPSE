@@ -11,14 +11,16 @@ public:
 	SimObjectSelector(): haveSelection(false), activeSelection(false) {
 	}
 
-	void ClearSelection();
-	void StartSelection(int, int);
-	void UpdateSelection(int, int);
-	void FinishSelection(int, int);
-	void GiveSelectionOrder(int, int);
-	void DrawSelection();
+	void MouseMoved(int, int, int, int);
+	void MousePressed(int, int, int);
+	void MouseReleased(int, int, int);
+	void Update();
 
 private:
+	void ClearSelection();
+	void FillSelection();
+	void OrderSelection(int, int);
+
 	bool haveSelection;
 	bool activeSelection;
 

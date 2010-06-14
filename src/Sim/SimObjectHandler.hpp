@@ -36,6 +36,8 @@ public:
 	SimObject* GetSimObject(unsigned int id) const { return simObjects[id]; }
 	SimObjectGrid<const SimObject*>* GetSimObjectGrid() const { return mSimObjectGrid; }
 
+	const SimObject* GetClosestSimObject(const vec3f&, float) const;
+
 private:
 	void AddObject(SimObject*, bool);
 	void DelObject(SimObject*, bool);

@@ -1,5 +1,6 @@
 #include <cassert>
 
+#include <SDL/SDL_mouse.h>
 #include <GL/gl.h>
 
 #include "./SimObjectSelector.hpp"
@@ -29,7 +30,11 @@ void SimObjectSelector::ClearSelection() {
 	activeSelection = false;
 }
 
-void SimObjectSelector::StartSelection(int x, int y) {
+void SimObjectSelector::MousePressed(int button, int x, int y) {
+	if (button != SDL_BUTTON_LEFT) {
+		return;
+	}
+
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {
@@ -45,7 +50,7 @@ void SimObjectSelector::StartSelection(int x, int y) {
 	}
 }
 
-void SimObjectSelector::UpdateSelection(int x, int y) {
+void SimObjectSelector::MouseMoved(int x, int y, int, int) {
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	if (!haveSelection) { return; }
@@ -100,7 +105,14 @@ void SimObjectSelector::UpdateSelection(int x, int y) {
 	}
 }
 
-void SimObjectSelector::FinishSelection(int x, int y) {
+void SimObjectSelector::MouseReleased(int button, int x, int y) {
+	switch (button) {
+		case SDL_BUTTON_LEFT: { FillSelection(); } break;
+		case SDL_BUTTON_RIGHT: { OrderSelection(x, y); } break;
+	}
+}
+
+void SimObjectSelector::FillSelection() {
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {
@@ -162,7 +174,7 @@ void SimObjectSelector::FinishSelection(int x, int y) {
 	}
 }
 
-void SimObjectSelector::GiveSelectionOrder(int x, int y) {
+void SimObjectSelector::OrderSelection(int x, int y) {
 	if (activeSelection) { return; }
 	if (!haveSelection) { return; }
 	if (selectedObjectIDs.empty()) { return; }
@@ -187,15 +199,19 @@ void SimObjectSelector::GiveSelectionOrder(int x, int y) {
 			m << pos.z;
 
 			for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
-				m << (*it);
+				if (simObjectHandler->IsValidSimObjectID(*it)) {
+					m << (*it);
+				}
 			}
 
-			client->SendNetMessage(m);
+			if (m.GetPos() >= msgSize) {
+				client->SendNetMessage(m);
+			}
 		}
 	}
 }
 
-void SimObjectSelector::DrawSelection() {
+void SimObjectSelector::Update() {
 	Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
@@ -297,17 +313,17 @@ void SimObjectSelector::DrawSelection() {
 						const mat44f& objMat = obj->GetMat();
 						const vec3f& objPos = objMat.GetPos();
 						const vec3f& dstPos = obj->GetWantedPosition();
-						const ModelBase* mdl = obj->GetModel()->GetModelBase();
-						const vec3f size = mdl->maxs - mdl->mins;
+						const ModelBase* objMdl = obj->GetModel()->GetModelBase();
+						const vec3f objSize = objMdl->maxs - objMdl->mins;
 
 						glPushMatrix();
 							glMultMatrixf(objMat.m);
 							glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
 							glBegin(GL_QUADS);
-								glVertex3f(-size.x * 0.5f, 0.0f, -size.z * 0.5f);
-								glVertex3f( size.x * 0.5f, 0.0f, -size.z * 0.5f);
-								glVertex3f( size.x * 0.5f, 0.0f,  size.z * 0.5f);
-								glVertex3f(-size.x * 0.5f, 0.0f,  size.z * 0.5f);
+								glVertex3f(-objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
+								glVertex3f( objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
+								glVertex3f( objSize.x * 0.5f, 0.0f,  objSize.z * 0.5f);
+								glVertex3f(-objSize.x * 0.5f, 0.0f,  objSize.z * 0.5f);
 							glEnd();
 						glPopMatrix();
 

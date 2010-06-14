@@ -57,7 +57,7 @@ public:
 	void GetObjects(const vec3f& pos, const vec3f& radii, std::list<T>& objects) {
 		const vec3i& cellIdx = GetCellIdx(pos, true);
 		const vec3f& cellSize = GetCellSize();
-		const vec3i numCells((radii.x / cellSize.x), (radii.y / cellSize.y), (radii.z / cellSize.z));
+		const vec3i numCells((radii.x / cellSize.x) + 1, (radii.y / cellSize.y) + 1, (radii.z / cellSize.z) + 1);
 
 		for (int x = cellIdx.x - numCells.x; x <= cellIdx.x + numCells.x; x++) {
 			for (int y = cellIdx.y - numCells.y; y <= cellIdx.y + numCells.y; y++) {

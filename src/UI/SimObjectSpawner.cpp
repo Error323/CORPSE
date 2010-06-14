@@ -1,10 +1,14 @@
 #include <cstdlib>
 
+#include <SDL/SDL_mouse.h>
+#include <GL/gl.h>
+
 #include "./SimObjectSpawner.hpp"
 #include "../Map/Ground.hpp"
 #include "../Renderer/RenderThread.hpp"
 #include "../Renderer/CameraController.hpp"
 #include "../Renderer/Camera.hpp"
+#include "../Renderer/Models/ModelReaderBase.hpp"
 #include "../Sim/SimCommands.hpp"
 #include "../Sim/SimObjectDefHandler.hpp"
 #include "../Sim/SimObjectHandler.hpp"
@@ -13,54 +17,109 @@
 #include "../System/Client.hpp"
 #include "../System/NetMessages.hpp"
 
-void SimObjectSpawner::SpawnObject(int x, int y) {
+void SimObjectSpawner::MouseReleased(int button, int x, int y) {
+	if (button != SDL_BUTTON_MIDDLE) {
+		return;
+	}
+
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {
-		SimObjectGrid<const SimObject*>* grid = simObjectHandler->GetSimObjectGrid();
+		if (simObjectHandler->IsValidSimObjectID(cursorObjID)) {
+			NetMessage m(CLIENT_MSG_SIMCOMMAND, client->GetClientID(), (2 * sizeof(unsigned int)));
 
-		const vec3f& dir = camera->GetPixelDir(x, y);
-		const float dst = ground->LineGroundCol(camera->pos, camera->pos + dir * camera->zFarDistance);
-		const vec3f pos = camera->pos + dir * dst;
+			// destroy an object
+			m << COMMAND_DESTROY_SIMOBJECT;
+			m << cursorObjID;
 
-		if (dst > 0.0f) {
-			const vec3i& idx = grid->GetCellIdx(pos, true);
+			client->SendNetMessage(m);
+		} else {
+			NetMessage m(CLIENT_MSG_SIMCOMMAND, client->GetClientID(), (2 * sizeof(unsigned int)) + (6 * sizeof(float)));
 
-			const SimObjectGrid<const SimObject*>::GridCell& cell = grid->GetCell(idx);
-			const std::list<const SimObject*> objects = cell.GetObjects();
-			const SimObject* closestObject = NULL;
+			// create an object
+			m << COMMAND_CREATE_SIMOBJECT;
+			m << (random() % simObjectDefHandler->GetNumDefs());
+			m << cursorPos.x;
+			m << cursorPos.y;
+			m << cursorPos.z;
+			m << -cursorDir.x;
+			m << 0.0f;
+			m << -cursorDir.z;
 
-			for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it) {
-				const vec3f& objPos = (*it)->GetPos();
-
-				if ((closestObject == NULL) || ((objPos - pos).sqLen3D() < (closestObject->GetPos() - pos).sqLen3D())) {
-					closestObject = *it;
-				}
-			}
-
-			if (closestObject != NULL) {
-				NetMessage m(CLIENT_MSG_SIMCOMMAND, client->GetClientID(), (2 * sizeof(unsigned int)));
-
-				// destroy an object
-				m << COMMAND_DESTROY_SIMOBJECT;
-				m << closestObject->GetID();
-
-				client->SendNetMessage(m);
-			} else {
-				NetMessage m(CLIENT_MSG_SIMCOMMAND, client->GetClientID(), (2 * sizeof(unsigned int)) + (6 * sizeof(float)));
-
-				// create an object
-				m << COMMAND_CREATE_SIMOBJECT;
-				m << (random() % simObjectDefHandler->GetNumDefs());
-				m << pos.x;
-				m << pos.y;
-				m << pos.z;
-				m << -dir.x;
-				m <<    0.0f;
-				m << -dir.z;
-
-				client->SendNetMessage(m);
-			}
+			client->SendNetMessage(m);
 		}
 	}
+}
+
+void SimObjectSpawner::MouseMoved(int x, int y, int, int) {
+	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+	const vec3f& dir = camera->GetPixelDir(x, y);
+	const float dst = ground->LineGroundCol(camera->pos, camera->pos + dir * camera->zFarDistance);
+	const vec3f pos = camera->pos + dir * dst;
+	const SimObject* obj = NULL;
+
+	cursorPos = pos;
+	cursorDir = dir;
+
+	if (dst < 0.0f) {
+		return;
+	}
+
+	obj = simObjectHandler->GetClosestSimObject(pos, 64.0f);
+
+	if (obj != NULL) {
+		cursorObjID = obj->GetID();
+	} else {
+		cursorObjID = -1;
+	}
+}
+
+void SimObjectSpawner::Update() {
+	Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+
+	if (!camera->Active()) {
+		// return;
+	}
+
+	const SimObject* cursorObj = simObjectHandler->GetClosestSimObject(cursorPos, 64.0f);
+
+	if (cursorObj != NULL && cursorObj->GetID() != cursorObjID) {
+		cursorObjID = cursorObj->GetID();
+	} else {
+		if (!simObjectHandler->IsValidSimObjectID(cursorObjID)) {
+			return;
+		}
+	}
+
+	const SimObject* obj = simObjectHandler->GetSimObject(cursorObjID);
+	const mat44f& objMat = obj->GetMat();
+	const ModelBase* objMdl = obj->GetModel()->GetModelBase();
+	const vec3f objSize = objMdl->maxs - objMdl->mins;
+
+	if ((obj->GetPos() - cursorPos).sqLen3D() > (64.0f * 64.0f)) {
+		return;
+	}
+
+	glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
+
+	camera->ApplyViewProjTransform();
+
+	glPushMatrix();
+		glMultMatrixf(objMat.m);
+		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
+			glDisable(GL_DEPTH_TEST);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glColor4f(0.0f, 1.0f, 0.0f, 0.25f);
+			glBegin(GL_QUADS);
+				glVertex3f(-objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
+				glVertex3f( objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
+				glVertex3f( objSize.x * 0.5f, 0.0f,  objSize.z * 0.5f);
+				glVertex3f(-objSize.x * 0.5f, 0.0f,  objSize.z * 0.5f);
+			glEnd();
+		glPopAttrib();
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION); glPopMatrix();
+	glMatrixMode(GL_MODELVIEW); glPopMatrix();
 }

@@ -159,3 +159,27 @@ void SimObjectHandler::DelObject(SimObject* o, bool inDestructor) {
 	simObjects[o->GetID()] = NULL;
 	delete o;
 }
+
+
+
+const SimObject* SimObjectHandler::GetClosestSimObject(const vec3f& pos, float radius) const {
+	const SimObject* closestObject = NULL;
+
+	std::list<const SimObject*> objects;
+	mSimObjectGrid->GetObjects(pos, vec3f(radius, 0.0f, radius), objects);
+
+	for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it) {
+		const vec3f& objPos = (*it)->GetPos();
+		const float objDst = (objPos - pos).sqLen3D();
+
+		if (objDst > (radius * radius)) {
+			continue;
+		}
+
+		if ((closestObject == NULL) || (objDst < (closestObject->GetPos() - pos).sqLen3D())) {
+			closestObject = *it;
+		}
+	}
+
+	return closestObject;
+}

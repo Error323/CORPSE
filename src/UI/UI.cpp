@@ -41,35 +41,25 @@ UI::~UI() {
 }
 
 void UI::Update() {
-	mSimObjectSelector->DrawSelection();
+	mSimObjectSelector->Update();
+	mSimObjectSpawner->Update();
 }
 
 
 
-void UI::MouseMoved(int x, int y, int, int) {
-	mSimObjectSelector->UpdateSelection(x, y);
+void UI::MouseMoved(int x, int y, int dx, int dy) {
+	mSimObjectSelector->MouseMoved(x, y, dx, dy);
+	mSimObjectSpawner->MouseMoved(x, y, dx, dy);
 }
 
 void UI::MousePressed(int button, int x, int y, bool repeat) {
-	switch (button) {
-		case SDL_BUTTON_LEFT: {
-			if (!repeat) {
-				mSimObjectSelector->StartSelection(x, y);
-			}
-		} break;
+	if (!repeat) {
+		mSimObjectSelector->MousePressed(button, x, y);
+		mSimObjectSpawner->MousePressed(button, x, y);
 	}
 }
 
 void UI::MouseReleased(int button, int x, int y) {
-	switch (button) {
-		case SDL_BUTTON_LEFT: {
-			mSimObjectSelector->FinishSelection(x, y);
-		} break;
-		case SDL_BUTTON_MIDDLE: {
-			mSimObjectSpawner->SpawnObject(x, y);
-		} break;
-		case SDL_BUTTON_RIGHT: {
-			mSimObjectSelector->GiveSelectionOrder(x, y);
-		}
-	}
+	mSimObjectSelector->MouseReleased(button, x, y);
+	mSimObjectSpawner->MouseReleased(button, x, y);
 }
