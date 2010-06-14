@@ -17,7 +17,7 @@
 #include "../System/Client.hpp"
 #include "../System/NetMessages.hpp"
 
-void SimObjectSpawner::MouseReleased(int button, int x, int y) {
+void SimObjectSpawner::MouseReleased(int button, int, int) {
 	if (button != SDL_BUTTON_MIDDLE) {
 		return;
 	}
