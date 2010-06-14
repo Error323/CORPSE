@@ -120,6 +120,7 @@ void SimObjectSpawner::Update() {
 			glEnd();
 		glPopAttrib();
 	glPopMatrix();
+
 	glMatrixMode(GL_PROJECTION); glPopMatrix();
 	glMatrixMode(GL_MODELVIEW); glPopMatrix();
 }
