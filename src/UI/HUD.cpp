@@ -65,7 +65,6 @@ void ui::HUD::Update(const vec3i& pos, const vec3i& size) {
 	glMatrixMode(GL_MODELVIEW);
 		glPushAttrib(GL_ENABLE_BIT);
 		glDisable(GL_DEPTH_TEST);
-		glEnable(GL_TEXTURE_2D);
 		glPushMatrix();
 			glLoadIdentity();
 			gUI->GetFont()->FaceSize(yoff * 0.5f);
