@@ -54,6 +54,7 @@ FIND_PACKAGE(GLEW REQUIRED)
 FIND_PACKAGE(Lua51 REQUIRED)
 FIND_PACKAGE(DevIL REQUIRED)
 FIND_PACKAGE(FTGL REQUIRED)
+FIND_PACKAGE(Freetype REQUIRED)
 
 INCLUDE_DIRECTORIES(
 	${GLUT_INCLUDE_DIR}
@@ -63,6 +64,7 @@ INCLUDE_DIRECTORIES(
 	${LUA_INCLUDE_DIR}
 	${IL_INCLUDE_DIR}
 	${FTGL_INCLUDE_DIR}
+	${FREETYPE_INCLUDE_DIRS}   ## needed for FTGL
 	)
 
 
@@ -76,10 +78,10 @@ TARGET_LINK_LIBRARIES(CORPSE
 	${OPENGL_LIBRARIES}
 	${GLEW_LIBRARIES}
 	${GLUT_LIBRARIES}
-	${IL_LIBRARY}       ## cmake-2.6 (Modules/FindDevIL.cmake)
-	${IL_LIBRARIES}     ## cmake 2.8 (Modules/FindDevIL.cmake)
-	${ILU_LIBRARY}      ## cmake-2.6
-	${ILU_LIBRARIES}    ## cmake 2.8
+	${IL_LIBRARY}              ## cmake-2.6 (Modules/FindDevIL.cmake)
+	${IL_LIBRARIES}            ## cmake 2.8 (Modules/FindDevIL.cmake)
+	${ILU_LIBRARY}             ## cmake-2.6
+	${ILU_LIBRARIES}           ## cmake 2.8
 	${LUA_LIBRARIES}
 	${FTGL_LIBRARIES}
 	PathModule
