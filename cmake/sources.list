@@ -126,6 +126,8 @@ SET(CORPSE_SOURCE
 	src/UI/Window.hpp
 	src/UI/UI.cpp
 	src/UI/UI.hpp
+	src/UI/HUD.cpp
+	src/UI/HUD.hpp
 	src/UI/FontManager.cpp
 	src/UI/FontManager.hpp
 	src/UI/SimObjectSelector.cpp

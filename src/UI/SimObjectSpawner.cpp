@@ -17,7 +17,7 @@
 #include "../System/Client.hpp"
 #include "../System/NetMessages.hpp"
 
-void SimObjectSpawner::MouseReleased(int button, int, int) {
+void ui::SimObjectSpawner::MouseReleased(int button, int, int) {
 	if (button != SDL_BUTTON_MIDDLE) {
 		return;
 	}
@@ -51,7 +51,7 @@ void SimObjectSpawner::MouseReleased(int button, int, int) {
 	}
 }
 
-void SimObjectSpawner::MouseMoved(int x, int y, int, int) {
+void ui::SimObjectSpawner::MouseMoved(int x, int y, int, int) {
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 	const vec3f& dir = camera->GetPixelDir(x, y);
 	const float dst = ground->LineGroundCol(camera->pos, camera->pos + dir * camera->zFarDistance);
@@ -74,7 +74,7 @@ void SimObjectSpawner::MouseMoved(int x, int y, int, int) {
 	}
 }
 
-void SimObjectSpawner::Update() {
+void ui::SimObjectSpawner::Update() {
 	Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {

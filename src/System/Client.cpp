@@ -19,7 +19,6 @@
 #include "../Math/vec3.hpp"
 #include "../Math/Trig.hpp"
 #include "../UI/Window.hpp"
-#include "../UI/UI.hpp"
 #include "./Client.hpp"
 #include "./NetMessageBuffer.hpp"
 #include "./ScopedTimer.hpp"
@@ -62,8 +61,6 @@ CClient::CClient(int argc, char** argv): clientID(0) {
 	// note: the map-loading code needs OpenGL
 	mSimThread    = CSimThread::GetInstance();
 	mRenderThread = CRenderThread::GetInstance();
-
-	mUI = UI::GetInstance();
 }
 
 CClient::~CClient() {
@@ -72,12 +69,11 @@ CClient::~CClient() {
 		<< ScopedTimer::GetTaskTime("[CClient::Update]")
 		<< "ms\n";
 
-	UI::FreeInstance(mUI);
+	KillSDL();
+
 	CRenderThread::FreeInstance(mRenderThread);
 	CSimThread::FreeInstance(mSimThread);
 	CInputHandler::FreeInstance(mInputHandler);
-
-	KillSDL();
 }
 
 
@@ -90,7 +86,6 @@ void CClient::Update() {
 	mInputHandler->Update();
 	mRenderThread->Update();
 	mWindow->Update();
-	mUI->Update();
 
 	SDL_GL_SwapBuffers();
 }
@@ -191,7 +186,7 @@ void CClient::InitSDL() {
 	SDL_version hdr; SDL_VERSION(&hdr);
 	SDL_version lib = *(SDL_Linked_Version());
 
-	mWindow = SDLWindow::GetInstance();
+	mWindow = ui::SDLWindow::GetInstance();
 
 	const std::string glVersion( (const char*) glGetString(GL_VERSION) );
 	const std::string glVendor(  (const char*) glGetString(GL_VENDOR)  );
@@ -206,6 +201,6 @@ void CClient::InitSDL() {
 }
 
 void CClient::KillSDL() {
-	SDLWindow::FreeInstance(mWindow);
+	ui::SDLWindow::FreeInstance(mWindow);
 	SDL_Quit();
 }

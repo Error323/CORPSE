@@ -5,13 +5,14 @@
 #include <GL/gl.h>
 
 #include "./Window.hpp"
+#include "./UI.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
 #include "../System/Logger.hpp"
 
 #include "CORPSE.hpp"
 
-IWindow* IWindow::GetInstance() {
+ui::IWindow* ui::IWindow::GetInstance() {
 	static IWindow* w = NULL;
 	static unsigned int depth = 0;
 
@@ -26,13 +27,13 @@ IWindow* IWindow::GetInstance() {
 	return w;
 }
 
-void IWindow::FreeInstance(IWindow* w) {
+void ui::IWindow::FreeInstance(IWindow* w) {
 	delete w;
 }
 
 
 
-SDLWindow::SDLWindow() {
+ui::SDLWindow::SDLWindow() {
 	const LuaTable* rootTable = LUA->GetRoot();
 	const LuaTable* windowTable = rootTable->GetTblVal("window");
 	const LuaTable* vportTable = rootTable->GetTblVal("viewport");
@@ -60,9 +61,19 @@ SDLWindow::SDLWindow() {
 	(viewPorts.front()).size.y = vportTable->GetFltVal("ysize", 600);
 	(viewPorts.front()).pxl.x  = 1.0f / (viewPorts.front()).size.x;
 	(viewPorts.front()).pxl.y  = 1.0f / (viewPorts.front()).size.y;
+
+	mUI = UI::GetInstance();
 }
 
-void SDLWindow::SetWindowSize(const vec3i& xy) {
+ui::SDLWindow::~SDLWindow() {
+	ui::UI::FreeInstance(mUI);
+}
+
+void ui::SDLWindow::Update() {
+	mUI->Update((viewPorts.front()).pos, (viewPorts.front()).size);
+}
+
+void ui::SDLWindow::SetWindowSize(const vec3i& xy) {
 	IWindow::SetWindowSize(xy);
 
 	SetSDLVideoMode();
@@ -71,7 +82,7 @@ void SDLWindow::SetWindowSize(const vec3i& xy) {
 
 
 
-void SDLWindow::SetSDLVideoMode() {
+void ui::SDLWindow::SetSDLVideoMode() {
 	// set the video mode (32 bits per pixel, etc)
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,      (GetBitsPerPixel() >> 2));
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,    (GetBitsPerPixel() >> 2));
@@ -110,7 +121,7 @@ void SDLWindow::SetSDLVideoMode() {
 	// SDL_PixelFormat* f = mScreen->format;
 }
 
-void SDLWindow::UpdateViewPorts() {
+void ui::SDLWindow::UpdateViewPorts() {
 	UpdateGeometry();
 
 	int n = 0;
@@ -143,7 +154,7 @@ void SDLWindow::UpdateViewPorts() {
 
 
 
-bool SDLWindow::UpdateGeometry() {
+bool ui::SDLWindow::UpdateGeometry() {
 	#ifndef WIN32
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
@@ -191,7 +202,7 @@ bool SDLWindow::UpdateGeometry() {
 
 
 
-bool SDLWindow::EnableMultiSampling(void) {
+bool ui::SDLWindow::EnableMultiSampling(void) {
 	if (!GL_ARB_multisample) {
 		return false;
 	}
@@ -203,7 +214,7 @@ bool SDLWindow::EnableMultiSampling(void) {
 	return true;
 }
 
-bool SDLWindow::VerifyMultiSampling(void) {
+bool ui::SDLWindow::VerifyMultiSampling(void) {
 	GLint buffers, samples;
 	glGetIntegerv(GL_SAMPLE_BUFFERS_ARB, &buffers);
 	glGetIntegerv(GL_SAMPLES_ARB, &samples);

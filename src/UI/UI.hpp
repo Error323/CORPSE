@@ -2,33 +2,42 @@
 #define PFFG_UI_HDR
 
 #include "../Input/InputReceiver.hpp"
+#include "../Math/vec3fwd.hpp"
 
-class IFontManager;
 class FTFont;
 
-struct SimObjectSelector;
-struct SimObjectSpawner;
+namespace ui {
+	class IFontManager;
+	struct SimObjectSelector;
+	struct SimObjectSpawner;
+	struct HUD;
 
-class UI: public CInputReceiver {
-public:
-	static UI* GetInstance();
-	static void FreeInstance(UI*);
+	class UI: public CInputReceiver {
+	public:
+		static UI* GetInstance();
+		static void FreeInstance(UI*);
 
-	void Update();
+		void Update(const vec3i&, const vec3i&);
 
-	void MouseMoved(int, int, int, int);
-	void MousePressed(int, int, int, bool);
-	void MouseReleased(int, int, int);
+		void MouseMoved(int, int, int, int);
+		void MousePressed(int, int, int, bool);
+		void MouseReleased(int, int, int);
 
-private:
-	UI();
-	~UI();
+		FTFont* GetFont() const { return mFont; }
 
-	IFontManager* mFontManager;
-	FTFont* mFont;
+	private:
+		UI();
+		~UI();
 
-	SimObjectSelector* mSimObjectSelector;
-	SimObjectSpawner* mSimObjectSpawner;
-};
+		IFontManager* mFontManager;
+		FTFont* mFont;
+
+		SimObjectSelector* mSimObjectSelector;
+		SimObjectSpawner* mSimObjectSpawner;
+		HUD* mHUD;
+	};
+}
+
+#define gUI (ui::UI::GetInstance())
 
 #endif

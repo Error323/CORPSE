@@ -5,7 +5,7 @@
 #include "../System/EngineAux.hpp"
 #include "../System/Logger.hpp"
 
-IFontManager* IFontManager::GetInstance() {
+ui::IFontManager* ui::IFontManager::GetInstance() {
 	static IFontManager* fm = NULL;
 	static unsigned int depth = 0;
 
@@ -20,13 +20,13 @@ IFontManager* IFontManager::GetInstance() {
 	return fm;
 }
 
-void IFontManager::FreeInstance(IFontManager* fm) {
+void ui::IFontManager::FreeInstance(IFontManager* fm) {
 	delete fm;
 }
 
 
 
-FTGLFontManager::~FTGLFontManager() {
+ui::FTGLFontManager::~FTGLFontManager() {
 	for (FontMapIt it = fonts.begin(); it != fonts.end(); ++it) {
 		delete it->second;
 	}
@@ -34,7 +34,7 @@ FTGLFontManager::~FTGLFontManager() {
 	fonts.clear();
 }
 
-FTFont* FTGLFontManager::GetFont(const std::string& fontName, int fontSize) {
+FTFont* ui::FTGLFontManager::GetFont(const std::string& fontName, int fontSize) {
 	FontMapIt it = fonts.find(fontName);
 
 	if (it != fonts.end()) {

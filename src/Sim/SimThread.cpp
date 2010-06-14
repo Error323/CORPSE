@@ -93,7 +93,9 @@ void CSimThread::SimCommand(NetMessage& m) {
 			assert(!m.End()); m >> objectDir.y;
 			assert(!m.End()); m >> objectDir.z;
 
-			mSimObjectHandler->AddObject(objectDefID, objectPos, objectDir, false);
+			if (readMap->PosInBounds(objectPos)) {
+				mSimObjectHandler->AddObject(objectDefID, objectPos, objectDir, false);
+			}
 		} break;
 
 		case COMMAND_DESTROY_SIMOBJECT: {

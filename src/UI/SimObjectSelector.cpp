@@ -20,7 +20,7 @@
 #include "../System/NetMessages.hpp"
 #include "../UI/Window.hpp"
 
-void SimObjectSelector::ClearSelection() {
+void ui::SimObjectSelector::ClearSelection() {
 	selectedObjectIDs.clear();
 
 	selectionStartPos2D.x = selectionFinishPos2D.x = -1.0f;
@@ -30,7 +30,7 @@ void SimObjectSelector::ClearSelection() {
 	activeSelection = false;
 }
 
-void SimObjectSelector::MousePressed(int button, int x, int y) {
+void ui::SimObjectSelector::MousePressed(int button, int x, int y) {
 	if (button != SDL_BUTTON_LEFT) {
 		return;
 	}
@@ -50,7 +50,7 @@ void SimObjectSelector::MousePressed(int button, int x, int y) {
 	}
 }
 
-void SimObjectSelector::MouseMoved(int x, int y, int, int) {
+void ui::SimObjectSelector::MouseMoved(int x, int y, int, int) {
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	if (!haveSelection) { return; }
@@ -105,14 +105,14 @@ void SimObjectSelector::MouseMoved(int x, int y, int, int) {
 	}
 }
 
-void SimObjectSelector::MouseReleased(int button, int x, int y) {
+void ui::SimObjectSelector::MouseReleased(int button, int x, int y) {
 	switch (button) {
 		case SDL_BUTTON_LEFT: { FillSelection(); } break;
 		case SDL_BUTTON_RIGHT: { OrderSelection(x, y); } break;
 	}
 }
 
-void SimObjectSelector::FillSelection() {
+void ui::SimObjectSelector::FillSelection() {
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {
@@ -174,7 +174,7 @@ void SimObjectSelector::FillSelection() {
 	}
 }
 
-void SimObjectSelector::OrderSelection(int x, int y) {
+void ui::SimObjectSelector::OrderSelection(int x, int y) {
 	if (activeSelection) { return; }
 	if (!haveSelection) { return; }
 	if (selectedObjectIDs.empty()) { return; }
@@ -216,7 +216,7 @@ void SimObjectSelector::OrderSelection(int x, int y) {
 	}
 }
 
-void SimObjectSelector::Update() {
+void ui::SimObjectSelector::Update() {
 	Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();

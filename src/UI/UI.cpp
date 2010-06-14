@@ -4,13 +4,14 @@
 
 #include "./UI.hpp"
 #include "./FontManager.hpp"
+#include "./HUD.hpp"
 #include "./SimObjectSelector.hpp"
 #include "./SimObjectSpawner.hpp"
 #include "../Input/InputHandler.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
 
-UI* UI::GetInstance() {
+ui::UI* ui::UI::GetInstance() {
 	static UI* ui = NULL;
 	static unsigned int depth = 0;
 
@@ -25,16 +26,18 @@ UI* UI::GetInstance() {
 	return ui;
 }
 
-void UI::FreeInstance(UI* ui) {
+void ui::UI::FreeInstance(UI* ui) {
 	delete ui;
 }
 
 
 
-UI::UI(): mSimObjectSelector(NULL) {
+ui::UI::UI(): mSimObjectSelector(NULL) {
 	mFontManager = IFontManager::GetInstance();
 	mSimObjectSelector = new SimObjectSelector();
 	mSimObjectSpawner = new SimObjectSpawner();
+	mHUD = new HUD();
+
 	inputHandler->AddReceiver(this);
 
 	const LuaTable* rootTable = LUA->GetRoot();
@@ -48,33 +51,35 @@ UI::UI(): mSimObjectSelector(NULL) {
 	mFont = mFontManager->GetFont(fontsDir + fontName, fontSize);
 }
 
-UI::~UI() {
+ui::UI::~UI() {
 	inputHandler->DelReceiver(this);
 	delete mSimObjectSelector;
 	delete mSimObjectSpawner;
+	delete mHUD;
 	IFontManager::FreeInstance(mFontManager);
 }
 
-void UI::Update() {
+void ui::UI::Update(const vec3i& pos, const vec3i& size) {
 	mSimObjectSelector->Update();
 	mSimObjectSpawner->Update();
+	mHUD->Update(pos, size);
 }
 
 
 
-void UI::MouseMoved(int x, int y, int dx, int dy) {
+void ui::UI::MouseMoved(int x, int y, int dx, int dy) {
 	mSimObjectSelector->MouseMoved(x, y, dx, dy);
 	mSimObjectSpawner->MouseMoved(x, y, dx, dy);
 }
 
-void UI::MousePressed(int button, int x, int y, bool repeat) {
+void ui::UI::MousePressed(int button, int x, int y, bool repeat) {
 	if (!repeat) {
 		mSimObjectSelector->MousePressed(button, x, y);
 		mSimObjectSpawner->MousePressed(button, x, y);
 	}
 }
 
-void UI::MouseReleased(int button, int x, int y) {
+void ui::UI::MouseReleased(int button, int x, int y) {
 	mSimObjectSelector->MouseReleased(button, x, y);
 	mSimObjectSpawner->MouseReleased(button, x, y);
 }

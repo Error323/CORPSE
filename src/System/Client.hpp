@@ -10,8 +10,10 @@ class CInputHandler;
 class CSimThread;
 class CRenderThread;
 
-class IWindow;
-class UI;
+namespace ui {
+	class IWindow;
+	class UI;
+}
 
 class CNetMessageBuffer;
 struct NetMessage;
@@ -42,8 +44,7 @@ private:
 	void InitSDL();
 	void KillSDL();
 
-	IWindow* mWindow;
-	UI* mUI;
+	ui::IWindow* mWindow;
 
 	CInputHandler* mInputHandler;
 	CSimThread* mSimThread;
