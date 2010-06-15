@@ -126,14 +126,15 @@ SET(CORPSE_SOURCE
 	src/UI/Window.hpp
 	src/UI/UI.cpp
 	src/UI/UI.hpp
-	src/UI/HUD.cpp
-	src/UI/HUD.hpp
+	src/UI/UIWidget.hpp
+	src/UI/HUDWidget.cpp
+	src/UI/HUDWidget.hpp
 	src/UI/FontManager.cpp
 	src/UI/FontManager.hpp
-	src/UI/SimObjectSelector.cpp
-	src/UI/SimObjectSelector.hpp
-	src/UI/SimObjectSpawner.cpp
-	src/UI/SimObjectSpawner.hpp
+	src/UI/SimObjectSelectorWidget.cpp
+	src/UI/SimObjectSelectorWidget.hpp
+	src/UI/SimObjectSpawnerWidget.cpp
+	src/UI/SimObjectSpawnerWidget.hpp
 )
 
 SET(PATHMODULE_SOURCE

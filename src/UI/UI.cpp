@@ -4,9 +4,9 @@
 
 #include "./UI.hpp"
 #include "./FontManager.hpp"
-#include "./HUD.hpp"
-#include "./SimObjectSelector.hpp"
-#include "./SimObjectSpawner.hpp"
+#include "./SimObjectSelectorWidget.hpp"
+#include "./SimObjectSpawnerWidget.hpp"
+#include "./HUDWidget.hpp"
 #include "../Input/InputHandler.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
@@ -32,11 +32,12 @@ void ui::UI::FreeInstance(UI* ui) {
 
 
 
-ui::UI::UI(): mSimObjectSelector(NULL) {
+ui::UI::UI() {
 	mFontManager = IFontManager::GetInstance();
-	mSimObjectSelector = new SimObjectSelector();
-	mSimObjectSpawner = new SimObjectSpawner();
-	mHUD = new HUD();
+
+	widgets.push_back(new SimObjectSelectorWidget());
+	widgets.push_back(new SimObjectSpawnerWidget());
+	widgets.push_back(new HUDWidget());
 
 	inputHandler->AddReceiver(this);
 
@@ -53,33 +54,38 @@ ui::UI::UI(): mSimObjectSelector(NULL) {
 
 ui::UI::~UI() {
 	inputHandler->DelReceiver(this);
-	delete mSimObjectSelector;
-	delete mSimObjectSpawner;
-	delete mHUD;
+
+	for (std::list<IUIWidget*>::iterator it = widgets.begin(); it != widgets.end(); ++it) {
+		delete *it;
+	}
+
 	IFontManager::FreeInstance(mFontManager);
 }
 
 void ui::UI::Update(const vec3i& pos, const vec3i& size) {
-	mSimObjectSelector->Update();
-	mSimObjectSpawner->Update();
-	mHUD->Update(pos, size);
+	for (std::list<IUIWidget*>::iterator it = widgets.begin(); it != widgets.end(); ++it) {
+		(*it)->Update(pos, size);
+	}
 }
 
 
 
 void ui::UI::MouseMoved(int x, int y, int dx, int dy) {
-	mSimObjectSelector->MouseMoved(x, y, dx, dy);
-	mSimObjectSpawner->MouseMoved(x, y, dx, dy);
+	for (std::list<IUIWidget*>::iterator it = widgets.begin(); it != widgets.end(); ++it) {
+		(*it)->MouseMoved(x, y, dx, dy);
+	}
 }
 
 void ui::UI::MousePressed(int button, int x, int y, bool repeat) {
 	if (!repeat) {
-		mSimObjectSelector->MousePressed(button, x, y);
-		mSimObjectSpawner->MousePressed(button, x, y);
+		for (std::list<IUIWidget*>::iterator it = widgets.begin(); it != widgets.end(); ++it) {
+			(*it)->MousePressed(button, x, y);
+		}
 	}
 }
 
 void ui::UI::MouseReleased(int button, int x, int y) {
-	mSimObjectSelector->MouseReleased(button, x, y);
-	mSimObjectSpawner->MouseReleased(button, x, y);
+	for (std::list<IUIWidget*>::iterator it = widgets.begin(); it != widgets.end(); ++it) {
+		(*it)->MouseReleased(button, x, y);
+	}
 }

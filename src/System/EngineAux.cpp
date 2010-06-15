@@ -40,7 +40,7 @@ EngineAux::EngineAux(int argCnt, char** argVec) {
 	}
 
 	srandom(time(NULL));
-	getcwd(EngineAux::cwd, 1024);
+	assert(getcwd(EngineAux::cwd, 1024) != NULL);
 
 	EngineAux::argc = argCnt;
 	EngineAux::argv = argVec;

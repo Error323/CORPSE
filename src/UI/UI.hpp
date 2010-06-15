@@ -1,6 +1,8 @@
 #ifndef PFFG_UI_HDR
 #define PFFG_UI_HDR
 
+#include <list>
+
 #include "../Input/InputReceiver.hpp"
 #include "../Math/vec3fwd.hpp"
 
@@ -8,9 +10,7 @@ class FTFont;
 
 namespace ui {
 	class IFontManager;
-	struct SimObjectSelector;
-	struct SimObjectSpawner;
-	struct HUD;
+	struct IUIWidget;
 
 	class UI: public CInputReceiver {
 	public:
@@ -32,9 +32,7 @@ namespace ui {
 		IFontManager* mFontManager;
 		FTFont* mFont;
 
-		SimObjectSelector* mSimObjectSelector;
-		SimObjectSpawner* mSimObjectSpawner;
-		HUD* mHUD;
+		std::list<IUIWidget*> widgets;
 	};
 }
 

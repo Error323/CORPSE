@@ -3,7 +3,7 @@
 #include <SDL/SDL_mouse.h>
 #include <GL/gl.h>
 
-#include "./SimObjectSpawner.hpp"
+#include "./SimObjectSpawnerWidget.hpp"
 #include "../Map/Ground.hpp"
 #include "../Renderer/RenderThread.hpp"
 #include "../Renderer/CameraController.hpp"
@@ -17,7 +17,7 @@
 #include "../System/Client.hpp"
 #include "../System/NetMessages.hpp"
 
-void ui::SimObjectSpawner::MouseReleased(int button, int, int) {
+void ui::SimObjectSpawnerWidget::MouseReleased(int button, int, int) {
 	if (button != SDL_BUTTON_MIDDLE) {
 		return;
 	}
@@ -51,7 +51,7 @@ void ui::SimObjectSpawner::MouseReleased(int button, int, int) {
 	}
 }
 
-void ui::SimObjectSpawner::MouseMoved(int x, int y, int, int) {
+void ui::SimObjectSpawnerWidget::MouseMoved(int x, int y, int, int) {
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 	const vec3f& dir = camera->GetPixelDir(x, y);
 	const float dst = ground->LineGroundCol(camera->pos, camera->pos + dir * camera->zFarDistance);
@@ -74,7 +74,7 @@ void ui::SimObjectSpawner::MouseMoved(int x, int y, int, int) {
 	}
 }
 
-void ui::SimObjectSpawner::Update() {
+void ui::SimObjectSpawnerWidget::Update(const vec3i&, const vec3i&) {
 	Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {

@@ -3,7 +3,7 @@
 #include <SDL/SDL_mouse.h>
 #include <GL/gl.h>
 
-#include "./SimObjectSelector.hpp"
+#include "./SimObjectSelectorWidget.hpp"
 #include "../Input/InputHandler.hpp"
 #include "../Map/Ground.hpp"
 #include "../Math/Geom.hpp"
@@ -20,7 +20,7 @@
 #include "../System/NetMessages.hpp"
 #include "../UI/Window.hpp"
 
-void ui::SimObjectSelector::ClearSelection() {
+void ui::SimObjectSelectorWidget::ClearSelection() {
 	selectedObjectIDs.clear();
 
 	selectionStartPos2D.x = selectionFinishPos2D.x = -1.0f;
@@ -30,7 +30,7 @@ void ui::SimObjectSelector::ClearSelection() {
 	activeSelection = false;
 }
 
-void ui::SimObjectSelector::MousePressed(int button, int x, int y) {
+void ui::SimObjectSelectorWidget::MousePressed(int button, int x, int y) {
 	if (button != SDL_BUTTON_LEFT) {
 		return;
 	}
@@ -50,7 +50,7 @@ void ui::SimObjectSelector::MousePressed(int button, int x, int y) {
 	}
 }
 
-void ui::SimObjectSelector::MouseMoved(int x, int y, int, int) {
+void ui::SimObjectSelectorWidget::MouseMoved(int x, int y, int, int) {
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	if (!haveSelection) { return; }
@@ -105,14 +105,14 @@ void ui::SimObjectSelector::MouseMoved(int x, int y, int, int) {
 	}
 }
 
-void ui::SimObjectSelector::MouseReleased(int button, int x, int y) {
+void ui::SimObjectSelectorWidget::MouseReleased(int button, int x, int y) {
 	switch (button) {
 		case SDL_BUTTON_LEFT: { FillSelection(); } break;
 		case SDL_BUTTON_RIGHT: { OrderSelection(x, y); } break;
 	}
 }
 
-void ui::SimObjectSelector::FillSelection() {
+void ui::SimObjectSelectorWidget::FillSelection() {
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {
@@ -165,7 +165,7 @@ void ui::SimObjectSelector::FillSelection() {
 	}
 }
 
-void ui::SimObjectSelector::OrderSelection(int x, int y) {
+void ui::SimObjectSelectorWidget::OrderSelection(int x, int y) {
 	if (activeSelection) { return; }
 	if (!haveSelection) { return; }
 	if (selectedObjectIDs.empty()) { return; }
@@ -207,7 +207,7 @@ void ui::SimObjectSelector::OrderSelection(int x, int y) {
 	}
 }
 
-void ui::SimObjectSelector::Update() {
+void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 	Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();

@@ -6,16 +6,19 @@
 #include "../Math/vec3fwd.hpp"
 #include "../Math/vec3.hpp"
 
+#include "./UIWidget.hpp"
+
 namespace ui {
-	struct SimObjectSelector {
+	struct SimObjectSelectorWidget: public IUIWidget {
 	public:
-		SimObjectSelector(): haveSelection(false), activeSelection(false) {
+		SimObjectSelectorWidget(): haveSelection(false), activeSelection(false) {
 		}
 
 		void MouseMoved(int, int, int, int);
 		void MousePressed(int, int, int);
 		void MouseReleased(int, int, int);
-		void Update();
+
+		void Update(const vec3i&, const vec3i&);
 
 	private:
 		void ClearSelection();
