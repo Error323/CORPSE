@@ -79,6 +79,7 @@ void ui::SDLWindow::SetWindowSize(const vec3i& xy) {
 	IWindow::SetWindowSize(xy);
 
 	SetSDLVideoMode();
+	UpdateGeometry();
 	UpdateViewPorts();
 }
 
@@ -98,8 +99,8 @@ void ui::SDLWindow::SetSDLVideoMode() {
 
 	{
 		#ifndef WIN32
-		const GLubyte* pf = reinterpret_cast<const GLubyte*>("glXSwapIntervalSGI");
-		const PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI = reinterpret_cast<PFNGLXSWAPINTERVALSGIPROC>(glXGetProcAddress(pf));
+		const GLubyte* glXSwapIntervalSGIs = reinterpret_cast<const GLubyte*>("glXSwapIntervalSGI");
+		const PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI = reinterpret_cast<PFNGLXSWAPINTERVALSGIPROC>(glXGetProcAddress(glXSwapIntervalSGIs));
 
 		// disable v-sync to try speeding up SDL_GL_SwapBuffers
 		if (glXSwapIntervalSGI != NULL) {
@@ -130,15 +131,11 @@ void ui::SDLWindow::SetSDLVideoMode() {
 		LOG << "\tSDL video mode error " << SDL_GetError() << "\n";
 		assert(false);
 	}
-
-	// these should be equal to our bitsPerPixel value
-	// SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
-	// SDL_PixelFormat* f = mScreen->format;
 }
 
-void ui::SDLWindow::UpdateViewPorts() {
-	UpdateGeometry();
 
+
+void ui::SDLWindow::UpdateViewPorts() {
 	int n = 0;
 
 	for (std::list<ViewPort>::iterator it = viewPorts.begin(); it != viewPorts.end(); ++it) {

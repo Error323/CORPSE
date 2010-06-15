@@ -101,10 +101,12 @@ void CCameraController::SwitchCams() {
 		} break;
 	}
 
-	// disable the old camera so it
-	// does not react to input until
-	// we switch back to it
+	// disable the old camera so it does not react to input until
+	// we switch back to it; also set the internal parameters of
+	// the next camera since the viewport might have been resized
+	// while it was inactive
 	nextCam->SetState(currCam);
+	nextCam->SetInternalParameters();
 	nextCam->Init(currCam->pos, currCam->pos + currCam->zdir);
 	nextCam->EnableInput();
 	currCam->DisableInput();

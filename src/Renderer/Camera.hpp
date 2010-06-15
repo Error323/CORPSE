@@ -12,6 +12,8 @@
 
 struct Camera: public CInputReceiver {
 public:
+	friend class CCameraController;
+
 	enum {
 		CAM_YAW     = 0,
 		CAM_PITCH   = 1,
@@ -40,9 +42,11 @@ public:
 	bool AABBInOriginPlane(const vec3f& plane, const vec3f& mins, const vec3f& maxs) const;
 	bool InView(const vec3f& mins, const vec3f& maxs) const;
 	bool InView(const vec3f& pos, float radius = 0.0f) const;
-	vec3f GetPixelDir(int x, int y) const;
 
-	void SetState(const Camera*);
+	vec3f GetPixelDir(int x, int y) const;
+	vec3f ScreenToWorldCoors(int, int);
+
+	void WindowResized(int, int);
 
 	virtual void Init(const vec3f&, const vec3f&) {}
 	virtual void Update();
@@ -64,18 +68,15 @@ public:
 	const float* GetProjMatrix();
 	void ApplyViewProjTransform();
 
-	vec3f ScreenToWorldCoors(int, int);
+	protected: mat44f mat;         // shadow copy of (pos, xdir, ydir, zdir)
+	public:    vec3f  vrp;         // point relative to pos determining zdir
+	public:    vec3f  pos;         // world-space camera ("eye") location
+	public:    vec3f  xdir;        // "right"   dir (vRi) in world-coors
+	public:    vec3f  ydir;        // "up"      dir (vUp) in world-coors
+	public:    vec3f  zdir;        // "forward" dir (vFo) in world-coors
 
-
-	protected: mat44f mat;    // shadow copy of (pos, xdir, ydir, zdir)
-	public:    vec3f  vrp;    // point relative to pos determining zdir
-	public:    vec3f  pos;    // world-space camera ("eye") location
-	public:    vec3f  xdir;   // "right"   dir (vRi) in world-coors
-	public:    vec3f  ydir;   // "up"      dir (vUp) in world-coors
-	public:    vec3f  zdir;   // "forward" dir (vFo) in world-coors
-
-	vec3f frustumL, frustumR;    // {left, right} view-frustrum plane
-	vec3f frustumB, frustumT;    // {bottom, top} view-frustrum plane
+	vec3f frustumL, frustumR;      // {left, right} view-frustrum plane
+	vec3f frustumB, frustumT;      // {bottom, top} view-frustrum plane
 
 	float    vFOVdeg,    hFOVdeg;  // {horizontal, vertical} FOV angle (in degrees)
 	float    hFOVrad,    vFOVrad;  // {horizontal, vertical} FOV angle (in radians)
@@ -83,8 +84,8 @@ public:
 	float  thhFOVrad,  thvFOVrad;  // tangent of {hhFOVrad, hvFOVrad} (side ratio, not "in radians")
 	float ithhFOVrad, ithvFOVrad;  // reciprocal of {thhFOVrad, thvFOVrad}
 
-	float hAspectRatio;   // horizontal viewport aspect ratio (W / H)
-	float vAspectRatio;   // vertical viewport aspect ratio (H / W)
+	float hAspectRatio;            // horizontal viewport aspect ratio (W / H)
+	float vAspectRatio;            // vertical viewport aspect ratio (H / W)
 
 	float zNearDistance;
 	float zFarDistance;
@@ -93,6 +94,7 @@ public:
 	int projMode;
 
 protected:
+	void SetState(const Camera*);
 	void SetInternalParameters();
 	void UpdateCoorSys();
 	void UpdateFrustum();

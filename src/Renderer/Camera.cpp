@@ -19,6 +19,7 @@ Camera::Camera(const vec3f& p, const vec3f& t, int movementMode, int projectionM
 	projMode(projectionMode) {
 
 	inputHandler->AddReceiver(this);
+
 	SetInternalParameters();
 	Update();
 }
@@ -101,6 +102,11 @@ void Camera::SetInternalParameters() {
 	// viewPlane.x = camVP.x;
 	// viewPlane.y = camVP.y;
 	// viewPlane.z = (camVP.y * 0.5f) / tanf(DEG2RAD(vFOVdeg * 0.5f));
+}
+
+void Camera::WindowResized(int, int) {
+	// recalculate the aspect- ratios
+	SetInternalParameters();
 }
 
 

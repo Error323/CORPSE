@@ -89,6 +89,9 @@ inline static void PreFrameState() {
 		glClearStencil(0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+		glMatrixMode(GL_PROJECTION); glLoadIdentity();
+		glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+
 		glEndList();
 	} else {
 		glCallList(preDL);
@@ -123,15 +126,8 @@ inline static void PostFrameState() {
 void CRenderThread::Update() {
 	if (AUX->GetWantDraw()) {
 		PreFrameState();
-
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-			glLoadIdentity();
-
-			camCon->Update();
-			scene->Draw(camCon->GetCurrCam());
-		glPopMatrix();
-
+		camCon->Update();
+		scene->Draw(camCon->GetCurrCam());
 		PostFrameState();
 
 		frame += 1;
