@@ -31,6 +31,10 @@ CONFIGURE_FILE(
 	)
 
 
+## NOTE: -O2 seems to break aspects of rendering
+set(CMAKE_CXX_FLAGS "-O1 -g -Wall -Wextra")
+
+
 #-------------------------------------------------------------------------------
 # Include sources
 #-------------------------------------------------------------------------------
