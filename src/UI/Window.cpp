@@ -2,6 +2,7 @@
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_syswm.h>
+#include <GL/glxew.h>
 #include <GL/gl.h>
 
 #include "./Window.hpp"
@@ -71,6 +72,7 @@ ui::SDLWindow::~SDLWindow() {
 
 void ui::SDLWindow::Update() {
 	mUI->Update((viewPorts.front()).pos, (viewPorts.front()).size);
+	SDL_GL_SwapBuffers();
 }
 
 void ui::SDLWindow::SetWindowSize(const vec3i& xy) {
@@ -92,6 +94,19 @@ void ui::SDLWindow::SetSDLVideoMode() {
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,                     1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,    GetDepthBufferBits());
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE,                     1);
+	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL,                     0);
+
+	{
+		#ifndef WIN32
+		const GLubyte* pf = reinterpret_cast<const GLubyte*>("glXSwapIntervalSGI");
+		const PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI = reinterpret_cast<PFNGLXSWAPINTERVALSGIPROC>(glXGetProcAddress(pf));
+
+		// disable v-sync to try speeding up SDL_GL_SwapBuffers
+		if (glXSwapIntervalSGI != NULL) {
+			glXSwapIntervalSGI(0);
+		}
+		#endif
+	}
 
 	// this needs to be done prior to calling SetVideoMode()
 	if (GetUseFSAA()) {
