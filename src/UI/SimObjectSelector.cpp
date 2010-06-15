@@ -121,9 +121,6 @@ void ui::SimObjectSelector::FillSelection() {
 		// current selection (if any) but not keep it active
 		activeSelection = false;
 
-		const int w = selectionSquareSize2D.x;
-		const int h = selectionSquareSize2D.y;
-
 		// ignore spurious selections
 		if (selectionSquareSize2D.x >= -5 && selectionSquareSize2D.x <= 5) { ClearSelection(); return; }
 		if (selectionSquareSize2D.y >= -5 && selectionSquareSize2D.y <= 5) { ClearSelection(); return; }
@@ -134,12 +131,6 @@ void ui::SimObjectSelector::FillSelection() {
 		const vec3i& minsIdx = grid->GetCellIdx(selectionBounds3D[0], true);
 		const vec3i& maxsIdx = grid->GetCellIdx(selectionBounds3D[1], true);
 
-		const vec3f selectionEdgeDirs[4] = {
-			(selectionCoors3D[1] - selectionCoors3D[0]).norm(),
-			(selectionCoors3D[2] - selectionCoors3D[1]).norm(),
-			(selectionCoors3D[3] - selectionCoors3D[2]).norm(),
-			(selectionCoors3D[0] - selectionCoors3D[3]).norm(),
-		};
 		const vec3f avgSelectionCoor3D =
 			(selectionCoors3D[0] * 0.25f) +
 			(selectionCoors3D[1] * 0.25f) +

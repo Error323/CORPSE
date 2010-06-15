@@ -12,7 +12,7 @@
 #include "../Sim/SimObjectHandler.hpp"
 #include "../System/EngineAux.hpp"
 
-void ui::HUD::Update(const vec3i& pos, const vec3i& size) {
+void ui::HUD::Update(const vec3i&, const vec3i& size) {
 	const Camera* c = renderThread->GetCamCon()->GetCurrCam();
 	const char* s1 = (c->projMode == Camera::CAM_PROJ_MODE_PERSP) ? "Persp.": "Ortho.";
 	const char* s2 = (c->Active()? "active": "inactive");

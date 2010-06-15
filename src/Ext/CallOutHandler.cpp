@@ -134,14 +134,17 @@ float CallOutHandler::GetSimObjectCurrentForwardSpeed(unsigned int id) const {
 
 float CallOutHandler::GetSimObjectWantedForwardSpeed(unsigned int id) const {
 	if (IsValidSimObjectID(id)) { return ((simObjectHandler->GetSimObject(id))->GetWantedForwardSpeed()); }
+	return 0.0f;
 }
 
 const vec3f& CallOutHandler::GetSimObjectWantedPosition(unsigned int id) const {
 	if (IsValidSimObjectID(id)) { return ((simObjectHandler->GetSimObject(id))->GetWantedPosition()); }
+	return NVECf;
 }
 
 const vec3f& CallOutHandler::GetSimObjectWantedDirection(unsigned int id) const {
 	if (IsValidSimObjectID(id)) { return ((simObjectHandler->GetSimObject(id))->GetWantedDirection()); }
+	return NVECf;
 }
 
 void CallOutHandler::SetSimObjectWantedForwardSpeed(unsigned int id, float spd) const {
