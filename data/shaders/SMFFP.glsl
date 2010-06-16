@@ -86,5 +86,5 @@ void main() {
 	gl_FragColor =
 		gl_LightSource[0].ambient +
 		gl_LightSource[0].diffuse * texture2D(diffuseMap, vertexDiffuseTexCoors) * cosAngleDiffuse * colorScalar +
-		gl_LightSource[0].specular * pow(cosAngleSpecular, specExp) * specMult;
+		gl_LightSource[0].specular * pow(cosAngleSpecular, specExp) * specMult * 0.1;
 }

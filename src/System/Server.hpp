@@ -32,8 +32,8 @@ public:
 	float GetLastTickDeltaRatio() const { return (GetLastTickDelta() / float(simFrameTime)); }
 
 	unsigned int GetSimFrameRate() const { return simFrameRate; }
-	unsigned int GetSimFrameTime() const { return simFrameTime; }
 	unsigned int GetSimFrameMult() const { return simFrameMult; }
+	unsigned int GetSimFrameTime() const { return simFrameTime; }
 
 private:
 	CServer();
@@ -45,9 +45,7 @@ private:
 	bool paused;
 
 	unsigned int frame;                     // current server frame
-	unsigned int frameTime;                 // time taken to calculate sim-frame <f> (millisecs)
 	int          frameDelta;                // time left over after calculating <f> (millisecs, should be > 0)
-	unsigned int totalFrameTime;            // total time taken by all frames between realTime and prevRealTime
 	unsigned int avgFrameTime;              // average time per frame, set every real-time second
 	unsigned int realTime;                  // number of real-time seconds elapsed so far
 	unsigned int prevRealTime;              // previous real-time snapshot

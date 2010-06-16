@@ -33,7 +33,6 @@ CServer::CServer() {
 	paused         = false;
 
 	frame          = 0;
-	frameTime      = 0;
 	frameDelta     = 0;
 	realTime       = 0;
 	prevRealTime   = 0;
@@ -46,8 +45,8 @@ CServer::CServer() {
 	const LuaTable* rootTable = LUA->GetRoot();
 	const LuaTable* serverTable = rootTable->GetTblVal("server");
 
-	simFrameRate = unsigned(serverTable->GetFltVal("simFrameRate", 5));
-	simFrameMult = unsigned(serverTable->GetFltVal("simRateMult", 5));
+	simFrameRate = unsigned(serverTable->GetFltVal("simFrameRate", 25));
+	simFrameMult = unsigned(serverTable->GetFltVal("simRateMult", 1));
 	simFrameTime = 1000 / (simFrameRate * simFrameMult);
 }
 
@@ -138,42 +137,27 @@ bool CServer::Update() {
 
 	bool updated = false;
 
-	if (frameDelta <= 0 || missedFrames > 0 /*|| gameTime < realTime*/) {
+	if (missedFrames > 0 /*|| gameTime < realTime*/) {
 		if (!paused) {
 			SendNetMessage(NetMessage(SERVER_MSG_SIMFRAME, 0xDEADF00D, 0));
 
 			gameTime      = frame / simFrameRate;           // game-time is based on number of elapsed frames
 			frame        += 1;                              // update the server's internal frame number
 			missedFrames  = MMAX(0, missedFrames - 1);      // we made up one frame of our backlog
-			missedFrames += (frameTime / simFrameTime);     // update how many frames we are still "behind"
 			updated       = true;
-		} else {
-			frameTime = 0;
 		}
 
-		lastTick        = SDL_GetTicks();
-		realTime        = (lastTick - startTime) / 1000;    // update the program's real running time (inc. pauses)
-		frameDelta      = simFrameTime - frameTime;         // how much time we had left to complete this frame
-		totalFrameTime += frameTime;                        // update the cumulative frame-time
+		lastTick = SDL_GetTicks();
+		realTime = (lastTick - startTime) / 1000;           // update the program's real running time (inc. pauses)
 
 		if ((realTime - prevRealTime) >= 1) {
 			// (at least) one real-time second's worth of sim-frames passed
-			// which together took <totalFrameTime> milliseconds to calculate;
-			// if framerate was not changed then simFPS will be APPROXIMATELY
-			// equal to <FRAMERATE>, but in general we do not know how many
-			// have been calculated between <prevRealTime> and <realTime>
-			// (so totalFrameTime cannot be divided by fixed <FRAMERATE>)
-			//
-			// note: checking if <totalFrameTime> >= 1000 is pointless since
-			// bigger framerate means totalFrameTime will increase faster (so
-			// correspondence with true running time <realTime> lost, updates
-			// will then occur every 1000 / <per-frame time> frames)
 			prevRealTime = realTime;
 		}
 	} else {
-		if (SDL_GetTicks() >= (lastTick + frameDelta)) {
+		if (SDL_GetTicks() >= (lastTick + simFrameTime)) {
 			// time for a new frame
-			frameDelta = 0;
+			missedFrames = 1;
 		}
 	}
 
