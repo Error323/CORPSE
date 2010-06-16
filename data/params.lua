@@ -21,8 +21,8 @@ params = {
 	},
 
 	["server"] = {
-		simFrameRate    = 25,
-		simRateMult     =  1,
+		simFrameRate    = 5,
+		simRateMult     = 5,
 	},
 
 	["window"] = {
