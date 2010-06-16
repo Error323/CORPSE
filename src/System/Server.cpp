@@ -45,7 +45,7 @@ CServer::CServer() {
 	const LuaTable* rootTable = LUA->GetRoot();
 	const LuaTable* serverTable = rootTable->GetTblVal("server");
 
-	simFrameRate = unsigned(serverTable->GetFltVal("simFrameRate", 25));
+	simFrameRate = unsigned(serverTable->GetFltVal("simFrameRate", 1));
 	simFrameMult = unsigned(serverTable->GetFltVal("simRateMult", 1));
 	simFrameTime = 1000 / (simFrameRate * simFrameMult);
 }

@@ -29,6 +29,9 @@ bool SimObjectDefHandler::LoadDefs() {
 	const LuaTable* rootTable = LUA->GetRoot();
 	const LuaTable* objectDefsTable = rootTable->GetTblVal("objectdefs");
 
+	// convert to units per frame
+	const float simFrameRate = server->GetSimFrameRate();
+
 	std::list<std::string> simObjectDefKeys;
 	objectDefsTable->GetStrTblKeys(&simObjectDefKeys);
 
@@ -41,13 +44,12 @@ bool SimObjectDefHandler::LoadDefs() {
 	for (std::list<std::string>::iterator it = simObjectDefKeys.begin(); it != simObjectDefKeys.end(); it++) {
 		const LuaTable* objectDefTable = objectDefsTable->GetTblVal(*it);
 
-		// convert to per-frame units
 		SimObjectDef* def = new SimObjectDef(objectDefsMap.size());
 			def->SetModelName(objectDefTable->GetStrVal("mdl", ""));
-			def->SetMaxForwardSpeed(objectDefTable->GetFltVal("maxForwardSpeed", 0.0f) / server->GetSimFrameRate());
-			def->SetMaxTurningRate(objectDefTable->GetFltVal("maxTurningRate", 0.0f) / server->GetSimFrameRate());
-			def->SetMaxAccelerationRate(objectDefTable->GetFltVal("maxAccelerationRate", 0.0f) / server->GetSimFrameRate());
-			def->SetMaxDeccelerationRate(objectDefTable->GetFltVal("maxDeccelerationRate", 0.0f) / server->GetSimFrameRate());
+			def->SetMaxForwardSpeed(objectDefTable->GetFltVal("maxForwardSpeed", 0.0f) / simFrameRate);
+			def->SetMaxTurningRate(objectDefTable->GetFltVal("maxTurningRate", 0.0f) / simFrameRate);
+			def->SetMaxAccelerationRate(objectDefTable->GetFltVal("maxAccelerationRate", 0.0f) / simFrameRate);
+			def->SetMaxDeccelerationRate(objectDefTable->GetFltVal("maxDeccelerationRate", 0.0f) / simFrameRate);
 			def->SetMinSlopeAngleCosine(objectDefTable->GetFltVal("minSlopeAngleCosine", 0.0f));
 			def->SetMaxSlopeAngleCosine(objectDefTable->GetFltVal("maxSlopeAngleCosine", 1.0f));
 			def->SetMinTerrainHeight(objectDefTable->GetFltVal("minTerrainHeight", 0.0f));

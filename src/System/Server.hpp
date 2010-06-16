@@ -25,11 +25,9 @@ public:
 	void Run();
 	#endif
 
-	// note:
-	//   these are only used for client-side interpolation
-	//   between sim-frames, so they do not require locking
-	unsigned int GetLastTickDelta() const;
-	float GetLastTickDeltaRatio() const { return (GetLastTickDelta() / float(simFrameTime)); }
+	// note: only used for client-side interpolation
+	// between frames, so it does not require locking
+	float GetLastTickDeltaRatio() const { return (GetLastTickDelta() / (1000.0f / simFrameRate)); }
 
 	unsigned int GetSimFrameRate() const { return simFrameRate; }
 	unsigned int GetSimFrameMult() const { return simFrameMult; }
@@ -41,6 +39,7 @@ private:
 
 	void ChangeSpeed(unsigned int);
 	void ReadNetMessages();
+	unsigned int GetLastTickDelta() const;
 
 	bool paused;
 
@@ -55,9 +54,9 @@ private:
 	unsigned int pauseTickDelta;            // snapshot of GetLastTickDelta() when simulation was last paused
 	int          missedFrames;              // num. of frames delayed (due to high frameTime) by the last frame
 
-	unsigned int simFrameRate;              // current simulation speed (number of simframes processed per real-time second)
-	unsigned int simFrameTime;              // ideal maximum amount of time a single sim-frame may take at current speed (ms)
+	unsigned int simFrameRate;              // current simulation speed (number of sim-frames per real-time second at speed=1)
 	unsigned int simFrameMult;              // simulation speed multiplier
+	unsigned int simFrameTime;              // ideal maximum amount of time a single sim-frame may take at current speed (ms)
 
 	std::map<unsigned int, unsigned int> clientFrames;
 	std::map<unsigned int, CNetMessageBuffer*> netBufs;
