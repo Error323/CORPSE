@@ -1,12 +1,33 @@
 #include <cassert>
+
+#ifndef PFFG_SERVER_NOTHREAD
+#include <boost/thread/mutex.hpp>
+#endif
+
 #include "./NetMessageBuffer.hpp"
+
+CNetMessageBuffer::CNetMessageBuffer() {
+	#ifndef PFFG_SERVER_NOTHREAD
+	msgMutex = new boost::mutex::mutex();
+	#endif
+}
 
 CNetMessageBuffer::~CNetMessageBuffer() {
 	clientServerMsgs.clear();
 	serverClientMsgs.clear();
+
+	#ifndef PFFG_SERVER_NOTHREAD
+	delete msgMutex;
+	#endif
 }
 
+
+
 bool CNetMessageBuffer::PopClientToServerMessage(NetMessage* m) {
+	#ifndef PFFG_SERVER_NOTHREAD
+	boost::mutex::scoped_lock lock(*msgMutex);
+	#endif
+
 	if (clientServerMsgs.empty()) {
 		return false;
 	} else {
@@ -16,6 +37,10 @@ bool CNetMessageBuffer::PopClientToServerMessage(NetMessage* m) {
 	}
 }
 bool CNetMessageBuffer::PopServerToClientMessage(NetMessage* m) {
+	#ifndef PFFG_SERVER_NOTHREAD
+	boost::mutex::scoped_lock lock(*msgMutex);
+	#endif
+
 	if (serverClientMsgs.empty()) {
 		return false;
 	} else {
@@ -27,6 +52,10 @@ bool CNetMessageBuffer::PopServerToClientMessage(NetMessage* m) {
 
 
 bool CNetMessageBuffer::PeekClientToServerMessage(NetMessage* m) const {
+	#ifndef PFFG_SERVER_NOTHREAD
+	boost::mutex::scoped_lock lock(*msgMutex);
+	#endif
+
 	if (clientServerMsgs.empty()) {
 		return false;
 	} else {
@@ -35,6 +64,10 @@ bool CNetMessageBuffer::PeekClientToServerMessage(NetMessage* m) const {
 	}
 }
 bool CNetMessageBuffer::PeekServerToClientMessage(NetMessage* m) const {
+	#ifndef PFFG_SERVER_NOTHREAD
+	boost::mutex::scoped_lock lock(*msgMutex);
+	#endif
+
 	if (serverClientMsgs.empty()) {
 		return false;
 	} else {
@@ -44,5 +77,15 @@ bool CNetMessageBuffer::PeekServerToClientMessage(NetMessage* m) const {
 }
 
 
-void CNetMessageBuffer::AddClientToServerMessage(const NetMessage& m) { clientServerMsgs.push_back(m); }
-void CNetMessageBuffer::AddServerToClientMessage(const NetMessage& m) { serverClientMsgs.push_back(m); }
+void CNetMessageBuffer::AddClientToServerMessage(const NetMessage& m) {
+	#ifndef PFFG_SERVER_NOTHREAD
+	boost::mutex::scoped_lock lock(*msgMutex);
+	#endif
+	clientServerMsgs.push_back(m);
+}
+void CNetMessageBuffer::AddServerToClientMessage(const NetMessage& m) {
+	#ifndef PFFG_SERVER_NOTHREAD
+	boost::mutex::scoped_lock lock(*msgMutex);
+	#endif
+	serverClientMsgs.push_back(m);
+}

@@ -42,9 +42,9 @@ private:
 	static char** argv;
 	static char cwd[1024];
 
-	bool wantQuit;
-	bool wantDraw;
-	bool mouseLook;                 // if true/false, control FPS camera with mouse/keyboard
+	volatile bool wantQuit;
+	volatile bool wantDraw;
+	volatile bool mouseLook;        // if true/false, control FPS camera with mouse/keyboard
 
 	bool lineSmoothing;
 	bool pointSmoothing;

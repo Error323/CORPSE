@@ -1,6 +1,11 @@
 #include <cstdlib>
 #include <ctime>
 
+#ifndef PFFG_SERVER_NOTHREAD
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+#endif
+
 #include "./Engine.hpp"
 #include "./EngineAux.hpp"
 #include "./LuaParser.hpp"
@@ -55,8 +60,18 @@ CEngine::~CEngine() {
 }
 
 void CEngine::Run() {
+	#ifndef PFFG_SERVER_NOTHREAD
+	boost::thread serverThread(boost::bind(&CServer::Run, mServer));
+
+	while (!AUX->GetWantQuit()) {
+		mClient->Update();
+	}
+
+	serverThread.join();
+	#else
 	while (!AUX->GetWantQuit()) {
 		mServer->Update();
 		mClient->Update();
 	}
+	#endif
 }

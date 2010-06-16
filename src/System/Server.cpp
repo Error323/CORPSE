@@ -180,6 +180,14 @@ bool CServer::Update() {
 	return updated;
 }
 
+#ifndef PFFG_SERVER_NOTHREAD
+void CServer::Run() {
+	while (!AUX->GetWantQuit()) {
+		Update();
+	}
+}
+#endif
+
 
 
 unsigned int CServer::GetLastTickDelta() const {

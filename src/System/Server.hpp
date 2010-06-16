@@ -14,16 +14,20 @@ public:
 	void AddNetMessageBuffer(unsigned int);
 	void DelNetMessageBuffer(unsigned int);
 
+	// note: these two are not thread-safe at run-time
 	unsigned int GetNumClients() const { return netBufs.size(); }
 	CNetMessageBuffer* GetNetMessageBuffer(unsigned int clientID) { return netBufs[clientID]; }
+
 	void SendNetMessage(const NetMessage&);
 
 	bool Update();
+	#ifndef PFFG_SERVER_NOTHREAD
+	void Run();
+	#endif
 
-	void ChangeSpeed(unsigned int);
-	bool IsPaused() const { return paused; }
-	void TogglePause() { paused = !paused; }
-
+	// note:
+	//   these are only used for client-side interpolation
+	//   between sim-frames, so they do not need locking
 	unsigned int GetLastTickDelta() const;
 	float GetLastTickDeltaRatio() const { return (GetLastTickDelta() / float(simFrameTime)); }
 
@@ -34,6 +38,10 @@ public:
 private:
 	CServer();
 	~CServer() {}
+
+	void ChangeSpeed(unsigned int);
+	bool IsPaused() const { return paused; }
+	void TogglePause() { paused = !paused; }
 
 	void ReadNetMessages();
 

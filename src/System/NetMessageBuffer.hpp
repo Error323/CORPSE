@@ -4,11 +4,17 @@
 #include <list>
 #include "./NetMessages.hpp"
 
+#ifndef PFFG_SERVER_NOTHREAD
+namespace boost {
+	 class mutex;
+};
+#endif
+
 typedef std::list<NetMessage> MsgQueue;
 
 class CNetMessageBuffer {
 public:
-	CNetMessageBuffer() {}
+	CNetMessageBuffer();
 	~CNetMessageBuffer();
 
 	bool PopClientToServerMessage(NetMessage*);
@@ -24,6 +30,10 @@ public:
 private:
 	MsgQueue clientServerMsgs;   // client-to-server
 	MsgQueue serverClientMsgs;   // server-to-client(s)
+
+	#ifndef PFFG_SERVER_NOTHREAD
+	boost::mutex* msgMutex;
+	#endif
 };
 
 #define netBuf (CNetMessageBuffer::GetInstance())

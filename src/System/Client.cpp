@@ -82,16 +82,17 @@ void CClient::Update() {
 	// [1] ~550K updates/sec ==> [2]  ~200K updates/sec
 	ScopedTimer t("[CClient::Update]");
 
-	// [2] ~200K updates/sec ==> [3]  ~190K updates/sec
+	// [2] ~200K updates/sec ==> [3A]  ~190K updates/sec (PFFG_SERVER_NOTHREAD true)
+	// [2] ~200K updates/sec ==> [3B]  ~300K updates/sec (PFFG_SERVER_NOTHREAD false) (?!)
 	ReadNetMessages();
 
-	// [3] ~190K updates/sec ==> [4]  ~145K updates/sec
+	// [3A] ~190K updates/sec ==> [4]  ~145K updates/sec
 	mInputHandler->Update();
-	// [4] ~145K updates/sec ==> [5]  ~280  updates/sec
+	// [4 ] ~145K updates/sec ==> [5]  ~280  updates/sec
 	mRenderThread->Update();
-	// [4] ~145K updates/sec ==> [6]  ~160 updates/sec (with UI-update, without buffer-swap)
-	// [1] ~550K updates/sec ==> [7]  ~160 updates/sec (with UI-update, with buffer-swap)
-	// [1] ~550K updates/sec ==> [8] ~2060 updates/sec (without UI-update, with buffer-swap)
+	// [4 ] ~145K updates/sec ==> [6]  ~160 updates/sec (with UI-update, without buffer-swap)
+	// [1 ] ~550K updates/sec ==> [7]  ~160 updates/sec (with UI-update, with buffer-swap)
+	// [1 ] ~550K updates/sec ==> [8] ~2060 updates/sec (without UI-update, with buffer-swap)
 	mWindow->Update();
 }
 
