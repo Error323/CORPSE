@@ -27,7 +27,7 @@ public:
 
 	// note:
 	//   these are only used for client-side interpolation
-	//   between sim-frames, so they do not need locking
+	//   between sim-frames, so they do not require locking
 	unsigned int GetLastTickDelta() const;
 	float GetLastTickDeltaRatio() const { return (GetLastTickDelta() / float(simFrameTime)); }
 
@@ -40,9 +40,6 @@ private:
 	~CServer() {}
 
 	void ChangeSpeed(unsigned int);
-	bool IsPaused() const { return paused; }
-	void TogglePause() { paused = !paused; }
-
 	void ReadNetMessages();
 
 	bool paused;
