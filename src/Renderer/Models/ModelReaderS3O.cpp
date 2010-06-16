@@ -140,6 +140,7 @@ PieceS3O* CModelReaderS3O::LoadPiece(ModelBase* model, PieceS3O* parent, unsigne
 
 	for (int a = 0; a < rawPiece->numVertices; ++a) {
 		VertexS3O v = *(VertexS3O*) &buf[vertexOffset];
+			v.normal.norm();
 		piece->vertices.push_back(v);
 
 		vertexOffset += sizeof(VertexS3O);
