@@ -667,14 +667,16 @@ void OverheadCamera::MouseMoved(int x, int y, int, int) {
 }
 
 void OverheadCamera::ScrollNorthSouth(int sign, float sens) {
-	pos += (ydir * sign * sens);
-	vrp += (ydir * sign * sens);
+	// translate in world-space
+	pos += (-ZVECf * sign * sens);
+	vrp += (-ZVECf * sign * sens);
 
 	mat.SetPos(pos);
 }
 void OverheadCamera::ScrollEastWest(int sign, float sens) {
-	pos += (xdir * sign * sens);
-	vrp += (xdir * sign * sens);
+	// translate in world-space
+	pos += (XVECf * sign * sens);
+	vrp += (XVECf * sign * sens);
 
 	mat.SetPos(pos);
 }
