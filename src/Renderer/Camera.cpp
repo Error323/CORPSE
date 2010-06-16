@@ -643,8 +643,8 @@ void OverheadCamera::KeyPressed(int key, bool) {
 		sensMultiplier = 5.0f;
 
 	switch (key) {
-		case SDLK_w: { ScrollNorthSouth( 1, scrollSpeed); } break;
-		case SDLK_s: { ScrollNorthSouth(-1, scrollSpeed); } break;
+		case SDLK_w: { ScrollNorthSouth(-1, scrollSpeed); } break;
+		case SDLK_s: { ScrollNorthSouth( 1, scrollSpeed); } break;
 		case SDLK_a: { ScrollEastWest(  -1, scrollSpeed); } break;
 		case SDLK_d: { ScrollEastWest(   1, scrollSpeed); } break;
 	}
@@ -668,8 +668,8 @@ void OverheadCamera::MouseMoved(int x, int y, int, int) {
 
 void OverheadCamera::ScrollNorthSouth(int sign, float sens) {
 	// translate in world-space
-	pos += (-ZVECf * sign * sens);
-	vrp += (-ZVECf * sign * sens);
+	pos += (ZVECf * sign * sens);
+	vrp += (ZVECf * sign * sens);
 
 	mat.SetPos(pos);
 }
