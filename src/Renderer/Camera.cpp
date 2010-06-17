@@ -673,7 +673,7 @@ void OverheadCamera::MousePressed(int button, int, int, bool) {
 			else
 				Zoom( 1, zoomSpeed); 
 		} break;
-		case SDL_BUTTON_WHEELUP:   { 
+		case SDL_BUTTON_WHEELUP: { 
 			if (ctrlPressed)
 				Rotate( 5.0f);
 			else
@@ -705,7 +705,6 @@ void OverheadCamera::Zoom(int sign, float sens) {
 	mat.SetPos(pos);
 }
 void OverheadCamera::Rotate(float alpha) {
-
 	vec3f tmp = pos - tar;
 
 	alpha = DEG2RAD(alpha);
