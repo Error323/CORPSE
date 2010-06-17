@@ -632,8 +632,6 @@ void OrbitCamera::VStrafe(int sign, float sens) {
 
 void OverheadCamera::Init(const vec3f&, const vec3f&) {
 	sensMultiplier = 1.0f;
-	vec3f tmp = pos - tar;
-	tmp = tmp.norm();
 }
 
 void OverheadCamera::KeyPressed(int key, bool) {
