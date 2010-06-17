@@ -167,7 +167,7 @@ bool CServer::Update() {
 #ifndef PFFG_SERVER_NOTHREAD
 void CServer::Run() {
 	while (!AUX->GetWantQuit()) {
-		Update();
+		Update(); usleep(500);
 	}
 }
 #endif
