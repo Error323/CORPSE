@@ -6,7 +6,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 #-------------------------------------------------------------------------------
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_MODULE_PATH "${CORPSE_SOURCE_DIR}/cmake/packages")
-
+SET(CMAKE_CXX_FLAGS "-O1 -g -Wall -Wextra") ## NOTE -O2 seems to break rendering
 
 #-------------------------------------------------------------------------------
 # Extract and set the version
@@ -22,17 +22,13 @@ IF(GIT_VERSION)
 	SET(VERSION ${GIT_VERSION})
 ELSE(NOT GIT_VERSION)
 	MESSAGE(WARNING "No git tag found, adding VERSION as option")
-	SET(VERSION "1.0.0" CACHE STRING "Define the build version." FORCE)
+	SET(VERSION "1.0.0" CACHE STRING "Define the build version.")
 ENDIF(GIT_VERSION)
 
 CONFIGURE_FILE(
 	"${CORPSE_SOURCE_DIR}/cmake/CORPSE.hpp.in"
 	"${CORPSE_BINARY_DIR}/CORPSE.hpp"
 	)
-
-
-## NOTE: -O2 seems to break aspects of rendering
-set(CMAKE_CXX_FLAGS "-O1 -g -Wall -Wextra")
 
 
 #-------------------------------------------------------------------------------
