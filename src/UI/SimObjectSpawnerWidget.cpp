@@ -38,7 +38,7 @@ void ui::SimObjectSpawnerWidget::MouseReleased(int button, int, int) {
 
 			// create an object
 			m << COMMAND_CREATE_SIMOBJECT;
-			m << (random() % simObjectDefHandler->GetNumDefs());
+			m << static_cast<unsigned int>(random() % simObjectDefHandler->GetNumDefs());
 			m << cursorPos.x;
 			m << cursorPos.y;
 			m << cursorPos.z;
