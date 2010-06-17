@@ -630,16 +630,22 @@ void OrbitCamera::VStrafe(int sign, float sens) {
 }
 
 
-void OverheadCamera::Init(const vec3f& p, const vec3f& t) {
-	pos = p;
-	vrp = t;
+void OverheadCamera::Init(const vec3f&, const vec3f&) {
 	sensMultiplier = 1.0f;
+	vec3f tmp = pos - tar;
+	tmp = tmp.norm();
 }
 
 void OverheadCamera::KeyPressed(int key, bool) {
 	const float scrollSpeed = inputHandler->GetKeySensitivity() * 2.0f * sensMultiplier;
 
 	if (key == SDLK_LSHIFT || key == SDLK_RSHIFT)
+		shiftPressed = true;
+
+	if (key == SDLK_LCTRL  || key == SDLK_RCTRL)
+		ctrlPressed = true;
+
+	if (shiftPressed)
 		sensMultiplier = 5.0f;
 
 	switch (key) {
@@ -651,25 +657,38 @@ void OverheadCamera::KeyPressed(int key, bool) {
 }
 void OverheadCamera::KeyReleased(int key) {
 	if (key == SDLK_LSHIFT || key == SDLK_RSHIFT)
+		shiftPressed = false;
+
+	if (key == SDLK_LCTRL || key == SDLK_RCTRL)
+		ctrlPressed = false;
+
+	if (!shiftPressed)
 		sensMultiplier = 1.0f;
 }
 void OverheadCamera::MousePressed(int button, int, int, bool) {
 	const float zoomSpeed = inputHandler->GetKeySensitivity() * 10.0f * sensMultiplier;
 
 	switch (button) {
-		case SDL_BUTTON_WHEELDOWN: { Zoom( 1, zoomSpeed); } break;
-		case SDL_BUTTON_WHEELUP:   { Zoom(-1, zoomSpeed); } break;
+		case SDL_BUTTON_WHEELDOWN: {
+			if (ctrlPressed)
+				Rotate(-5.0f);
+			else
+				Zoom( 1, zoomSpeed); 
+		} break;
+		case SDL_BUTTON_WHEELUP:   { 
+			if (ctrlPressed)
+				Rotate( 5.0f);
+			else
+				Zoom(-1, zoomSpeed);
+		} break;
 	}
-}
-void OverheadCamera::MouseMoved(int x, int y, int, int) {
-	target = ScreenToWorldCoors(x, y);
-	target.y = vrp.y;
 }
 
 void OverheadCamera::ScrollNorthSouth(int sign, float sens) {
 	// translate in world-space
 	pos += (ZVECf * sign * sens);
 	vrp += (ZVECf * sign * sens);
+	tar += (ZVECf * sign * sens);
 
 	mat.SetPos(pos);
 }
@@ -677,6 +696,7 @@ void OverheadCamera::ScrollEastWest(int sign, float sens) {
 	// translate in world-space
 	pos += (XVECf * sign * sens);
 	vrp += (XVECf * sign * sens);
+	tar += (XVECf * sign * sens);
 
 	mat.SetPos(pos);
 }
@@ -684,5 +704,20 @@ void OverheadCamera::Zoom(int sign, float sens) {
 	pos += (zdir * sign * sens);
 	vrp += (zdir * sign * sens);
 
+	mat.SetPos(pos);
+}
+void OverheadCamera::Rotate(float alpha) {
+
+	vec3f tmp = pos - tar;
+
+	alpha = DEG2RAD(alpha);
+	tmp   = tmp.rotateX(alpha);
+	zdir  = -tmp.norm();
+	ydir  = (xdir.cross(zdir));
+	pos   = tmp + tar;
+	vrp   = pos + zdir;
+
+	mat.SetZDir(zdir);
+	mat.SetYDir(ydir);
 	mat.SetPos(pos);
 }

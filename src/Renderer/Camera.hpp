@@ -168,6 +168,7 @@ private:
 // A standard RTS overhead target-camera
 struct OverheadCamera: public Camera {
 	OverheadCamera(const vec3f& p, const vec3f& t, int projectionMode): Camera(p, t, CAM_MOVE_MODE_OVERHEAD, projectionMode) {
+		tar = t;
 	}
 
 	void Init(const vec3f& p, const vec3f& t);
@@ -175,16 +176,16 @@ struct OverheadCamera: public Camera {
 	void KeyPressed(int, bool);
 	void KeyReleased(int);
 	void MousePressed(int, int, int, bool);
-	void MouseMoved(int, int, int, int);
 
 	void ScrollNorthSouth(int sign, float sens);
 	void ScrollEastWest(int sign, float sens);
 	void Zoom(int sign, float sens);
+	void Rotate(float angle); // in degrees
 
 	float sensMultiplier;
-	vec3f target;
-
-	// bool Active() const;
+	vec3f tar;
+	bool ctrlPressed;
+	bool shiftPressed;
 };
 
 #endif
