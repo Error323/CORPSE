@@ -212,6 +212,10 @@ unsigned int SimObjectHandler::CheckSimObjectCollisions() {
 		const ObjCell* cell = *cit;
 		const std::list<Obj> objects = cell->GetObjects();
 
+		if (objects.size() == 1) {
+			continue;
+		}
+
 		std::list<Obj>::const_iterator colliderIt = objects.begin();
 		std::list<Obj>::const_iterator collideeIt;
 
