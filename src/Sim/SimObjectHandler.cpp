@@ -39,7 +39,7 @@ SimObjectHandler::SimObjectHandler() {
 	const LuaTable* objectsTable = rootTable->GetTblVal("objects");
 
 	simObjects.resize(unsigned(objectsTable->GetFltVal("maxObjects", 10000)), NULL);
-	simObjectGridIts.resize(simObjects.size());
+	simObjectGridCells.resize(simObjects.size());
 
 	for (unsigned int i = 0; i < simObjects.size(); i++) {
 		simObjectFreeIDs.insert(i);
@@ -80,7 +80,7 @@ SimObjectHandler::~SimObjectHandler() {
 	simObjectFreeIDs.clear();
 	simObjectUsedIDs.clear();
 	simObjects.clear();
-	simObjectGridIts.clear();
+	simObjectGridCells.clear();
 
 	mSimObjectDefHandler->DelDefs();
 	SimObjectDefHandler::FreeInstance(mSimObjectDefHandler);
@@ -99,12 +99,11 @@ void SimObjectHandler::Update() {
 		SimObject* o = simObjects[*it];
 
 		// TODO: if old and new position are equal, don't delete & re-add
-		// TODO: register/remove object in all cells it overlaps in AddObject/DelObject
 		// vec3f p = o->GetPos();
 
-		mSimObjectGrid->DelObject( o, simObjectGridIts[o->GetID()] );
+		mSimObjectGrid->DelObject(o, simObjectGridCells[o->GetID()] );
 		o->Update();
-		simObjectGridIts[o->GetID()] = mSimObjectGrid->AddObject(o);
+		mSimObjectGrid->AddObject(o, simObjectGridCells[o->GetID()] );
 	}
 
 	CheckSimObjectCollisions();
@@ -143,7 +142,7 @@ void SimObjectHandler::AddObject(SimObject* o, bool inConstructor) {
 	simObjectUsedIDs.insert(o->GetID());
 	simObjectFreeIDs.erase(o->GetID());
 
-	simObjectGridIts[o->GetID()] = mSimObjectGrid->AddObject(o);
+	mSimObjectGrid->AddObject(o, simObjectGridCells[o->GetID()] );
 
 	SimObjectCreatedEvent e(((inConstructor)? 0: simThread->GetFrame()), o->GetID());
 	eventHandler->NotifyReceivers(&e);
@@ -156,8 +155,8 @@ void SimObjectHandler::DelObject(SimObject* o, bool inDestructor) {
 	simObjectUsedIDs.erase(o->GetID());
 	simObjectFreeIDs.insert(o->GetID());
 
-	mSimObjectGrid->DelObject( o, simObjectGridIts[o->GetID()] );
-	// simObjectGridIts[o->GetID()] = NULL;
+	mSimObjectGrid->DelObject( o, simObjectGridCells[o->GetID()] );
+	simObjectGridCells[o->GetID()].clear();
 
 	SimObjectDestroyedEvent e(((inDestructor)? -1: simThread->GetFrame()), o->GetID());
 	eventHandler->NotifyReceivers(&e);

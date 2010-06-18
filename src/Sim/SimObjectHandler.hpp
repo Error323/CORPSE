@@ -1,6 +1,7 @@
 #ifndef PFFG_SIMOBJECTHANDLER_HDR
 #define PFFG_SIMOBJECTHANDLER_HDR
 
+#include <map>
 #include <set>
 #include <list>
 #include <vector>
@@ -45,7 +46,10 @@ private:
 	unsigned int CheckSimObjectCollisions();
 
 	std::vector<SimObject*> simObjects;
-	std::vector< std::list<const SimObject*>::iterator > simObjectGridIts;
+	// for each object, keep track of the cells it occupies
+	// objectID: {cell index ==> cell object-list iterator}
+	std::vector<  std::map<unsigned int, std::list<const SimObject*>::iterator>  > simObjectGridCells;
+
 	std::set<unsigned int> simObjectFreeIDs;
 	std::set<unsigned int> simObjectUsedIDs;
 

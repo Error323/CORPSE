@@ -1,7 +1,6 @@
 #ifndef PFFG_OBJECT_GRID_HDR
 #define PFFG_OBJECT_GRID_HDR
 
-#include <list>
 #include <vector>
 
 #include "../Math/vec3fwd.hpp"
@@ -88,11 +87,20 @@ public:
 		}
 	}
 
-	typename std::list<T>::iterator AddObject(T object) {
+
+
+	void AddObject(T object, std::map< unsigned int, typename std::list<T>::iterator >& objCells) {
+		typedef typename std::list<T>::iterator ListIt;
+		typedef typename std::map<unsigned int, ListIt>::iterator MapListIt;
+
 		// for an object position outside the bounding-box,
 		// the cell indices must be computed WITH clamping
 		const vec3f& pos = object->GetPos();
 		const vec3i& idx = GetCellIdx(pos, !PosInBounds(pos));
+
+		const unsigned int idx1D = idx.z * (gsize.y * gsize.z) + idx.y * (gsize.y) + idx.x;
+		const MapListIt objCellsIt = objCells.find(idx1D);
+			assert(objCellsIt == objCells.end());
 
 		GridCell& cell = GetCell(idx);
 
@@ -101,12 +109,21 @@ public:
 			cell.SetListIt(--(nonEmptyCells.end()));
 		}
 
-		return (cell.AddObject(object));
+		// TODO: add object to all overlapped cells
+		objCells[idx1D] = cell.AddObject(object);
 	}
 
-	void DelObject(T object, const typename std::list<T>::iterator& objectIt) {
+	void DelObject(T object, std::map<unsigned int, typename std::list<T>::iterator>& objCells) {
+		typedef typename std::list<T>::iterator ListIt;
+		typedef typename std::map<unsigned int, ListIt>::iterator MapListIt;
+
 		const vec3f& pos = object->GetPos();
 		const vec3i& idx = GetCellIdx(pos, !PosInBounds(pos));
+
+		const unsigned int idx1D = idx.z * (gsize.y * gsize.z) + idx.y * (gsize.y) + idx.x;
+		const MapListIt objCellsIt = objCells.find(idx1D);
+			assert(objCellsIt != objCells.end());
+		const ListIt& objectIt = objCellsIt->second;
 
 		GridCell& cell = GetCell(idx);
 		cell.DelObject(objectIt);
@@ -114,6 +131,9 @@ public:
 		if (cell.IsEmpty()) {
 			nonEmptyCells.erase(cell.GetListIt());
 		}
+
+		// TODO: delete object from all overlapped cells
+		objCells.erase(idx1D);
 	}
 
 
