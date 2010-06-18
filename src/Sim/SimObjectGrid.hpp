@@ -17,14 +17,14 @@ public:
 		void DelObject(const typename std::list<T>::iterator& it) { objects.erase(it); }
 		const std::list<T>& GetObjects() const { return objects; }
 
-		void SetListIt(const typename std::list<GridCell>::iterator& it) { listIt = it; }
-		const typename std::list<GridCell>::iterator& GetListIt() const { return listIt; }
+		void SetListIt(const typename std::list<GridCell*>::iterator& it) { listIt = it; }
+		const typename std::list<GridCell*>::iterator& GetListIt() const { return listIt; }
 
 		unsigned int GetSize() const { return objects.size(); }
 		bool IsEmpty() const { return objects.empty(); }
 	private:
 		typename std::list<T> objects;
-		typename std::list<GridCell>::iterator listIt;
+		typename std::list<GridCell*>::iterator listIt;
 	};
 
 	static SimObjectGrid<T>* GetInstance(const vec3i& size, const vec3f& gmins, const vec3f& gmaxs) {
@@ -60,8 +60,9 @@ public:
 		nonEmptyCells.clear();
 	}
 
-	const std::list<GridCell>& GetNonEmptyCells() const { return nonEmptyCells; }
+	const std::list<GridCell*>& GetNonEmptyCells() const { return nonEmptyCells; }
 
+	// get all objects in the CUBE of cells within <radii> of <pos>
 	void GetObjects(const vec3f& pos, const vec3f& radii, std::list<T>& objects) {
 		const vec3i& cellIdx = GetCellIdx(pos, true);
 		const vec3f& cellSize = GetCellSize();
@@ -96,7 +97,7 @@ public:
 		GridCell& cell = GetCell(idx);
 
 		if (cell.IsEmpty()) {
-			nonEmptyCells.push_back(cell);
+			nonEmptyCells.push_back(&cell);
 			cell.SetListIt(--(nonEmptyCells.end()));
 		}
 
@@ -169,7 +170,7 @@ public:
 private:
 	std::vector<GridCell> cells;
 	// list of all currently non-empty cells
-	std::list<GridCell> nonEmptyCells;
+	std::list<GridCell*> nonEmptyCells;
 
 	// number of cells along each dimension
 	vec3i gsize;

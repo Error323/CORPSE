@@ -159,8 +159,10 @@ void CScene::LoadObjectModels() {
 
 	for (std::set<unsigned int>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
 		SimObject* obj = simObjectHandler->GetSimObject(*it);
+		ModelBase* objMdl = obj->GetDef()->GetModel();
 
-		obj->SetModel(new LocalModel(obj->GetDef()->GetModel()));
+		obj->SetModel(new LocalModel(objMdl));
+		obj->SetModelRadius(objMdl->radius);
 	}
 }
 

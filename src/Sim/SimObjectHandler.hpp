@@ -42,6 +42,8 @@ private:
 	void AddObject(SimObject*, bool);
 	void DelObject(SimObject*, bool);
 
+	unsigned int CheckSimObjectCollisions();
+
 	std::vector<SimObject*> simObjects;
 	std::vector< std::list<const SimObject*>::iterator > simObjectGridIts;
 	std::set<unsigned int> simObjectFreeIDs;

@@ -98,10 +98,16 @@ void SimObjectHandler::Update() {
 	for (std::set<unsigned int>::const_iterator it = simObjectUsedIDs.begin(); it != simObjectUsedIDs.end(); ++it) {
 		SimObject* o = simObjects[*it];
 
+		// TODO: if old and new position are equal, don't delete & re-add
+		// TODO: register/remove object in all cells it overlaps in AddObject/DelObject
+		// vec3f p = o->GetPos();
+
 		mSimObjectGrid->DelObject( o, simObjectGridIts[o->GetID()] );
 		o->Update();
 		simObjectGridIts[o->GetID()] = mSimObjectGrid->AddObject(o);
 	}
+
+	CheckSimObjectCollisions();
 }
 
 
@@ -162,6 +168,7 @@ void SimObjectHandler::DelObject(SimObject* o, bool inDestructor) {
 
 
 
+// get the single closest object within <radius> of <pos>
 const SimObject* SimObjectHandler::GetClosestSimObject(const vec3f& pos, float radius) const {
 	const SimObject* closestObject = NULL;
 
@@ -182,4 +189,56 @@ const SimObject* SimObjectHandler::GetClosestSimObject(const vec3f& pos, float r
 	}
 
 	return closestObject;
+}
+
+
+
+unsigned int SimObjectHandler::CheckSimObjectCollisions() {
+	typedef const SimObject* Obj;
+	typedef SimObjectGrid<Obj>::GridCell ObjCell;
+
+	unsigned int numCollisions = 0;
+
+	const std::list<ObjCell*>& cells = mSimObjectGrid->GetNonEmptyCells();
+
+	for (std::list<ObjCell*>::const_iterator cit = cells.begin(); cit != cells.end(); ++cit) {
+		const ObjCell* cell = *cit;
+		const std::list<Obj> objects = cell->GetObjects();
+
+		std::list<Obj>::const_iterator colliderIt = objects.begin();
+		std::list<Obj>::const_iterator collideeIt;
+
+		const SimObject* collider = NULL;
+		const SimObject* collidee = NULL;
+
+		float colliderRadius = 0.0f;
+		float collideeRadius = 0.0f;
+
+		float dstSq = 0.0f; // squared distance between positions
+		float radSq = 0.0f; // squared radius of both spheres
+
+		// within each cell, check only the unique pairs
+		for (; colliderIt != objects.end(); ++colliderIt) {
+			collideeIt = colliderIt; ++collideeIt;
+
+			collider = *colliderIt;
+			colliderRadius = collider->GetModelRadius();
+
+			for (; collideeIt != objects.end(); ++collideeIt) {
+				collidee = *collideeIt;
+				collideeRadius = collidee->GetModelRadius();
+
+				dstSq = (collider->GetPos() - collidee->GetPos()).sqLen3D();
+				radSq = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
+
+				if (dstSq < radSq) {
+					numCollisions += 1;
+					SimObjectCollisionEvent e(simThread->GetFrame(), (*colliderIt)->GetID(), (*collideeIt)->GetID());
+					eventHandler->NotifyReceivers(&e);
+				}
+			}
+		}
+	}
+
+	return numCollisions;
 }

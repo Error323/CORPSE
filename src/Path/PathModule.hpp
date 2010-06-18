@@ -23,7 +23,8 @@ public:
 		return
 			(eventType == EVENT_SIMOBJECT_CREATED) ||
 			(eventType == EVENT_SIMOBJECT_DESTROYED) ||
-			(eventType == EVENT_SIMOBJECT_MOVEORDER);
+			(eventType == EVENT_SIMOBJECT_MOVEORDER) ||
+			(eventType == EVENT_SIMOBJECT_COLLISION);
 	}
 	void OnEvent(const IEvent*);
 

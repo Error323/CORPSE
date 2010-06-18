@@ -23,6 +23,9 @@ public:
 	void SetModel(LocalModel* m) { mdl = m; }
 	LocalModel* GetModel() const { return mdl; }
 
+	void SetModelRadius(float f) { mdlRadius = f; }
+	float GetModelRadius() const { return mdlRadius; }
+
 	const mat44f& GetMat() const { return physicalState.mat; }
 	void SetMat(const mat44f& m) { physicalState.mat = m; }
 	const vec3f& GetPos() const {  return (physicalState.mat).GetPos(); } // wrapper
@@ -41,6 +44,7 @@ private:
 	const unsigned int id;
 
 	LocalModel* mdl;
+	float mdlRadius;
 
 	struct PhysicalState {
 		PhysicalState& operator = (const PhysicalState& state) {
