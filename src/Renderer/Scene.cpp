@@ -180,7 +180,10 @@ void CScene::OnEvent(const IEvent* e) {
 
 			// all object-defs are loaded at this point
 			SimObject* obj = simObjectHandler->GetSimObject(objectID);
-			obj->SetModel(new LocalModel(obj->GetDef()->GetModel()));
+			ModelBase* objMdl = obj->GetDef()->GetModel();
+
+			obj->SetModel(new LocalModel(objMdl));
+			obj->SetModelRadius(objMdl->radius);
 		} break;
 
 		case EVENT_SIMOBJECT_DESTROYED: {

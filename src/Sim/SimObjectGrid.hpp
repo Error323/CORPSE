@@ -93,6 +93,32 @@ public:
 		typedef typename std::list<T>::iterator ListIt;
 		typedef typename std::map<unsigned int, ListIt>::iterator MapListIt;
 
+		const vec3f& objPos = object->GetPos();
+		const float objRad = object->GetModelRadius();
+
+		const vec3f minPos(objPos.x - objRad, objPos.y - objRad, objPos.z - objRad);
+		const vec3f maxPos(objPos.x + objRad, objPos.y + objRad, objPos.z + objRad);
+
+		const vec3i minIdx = GetCellIdx(minPos, !PosInBounds(minPos));
+		const vec3i maxIdx = GetCellIdx(maxPos, !PosInBounds(maxPos));
+
+		// add object to all overlapped cells
+		for (int x = minIdx.x; x <= maxIdx.x; x++) {
+			for (int y = minIdx.y; y <= maxIdx.y; y++) {
+				for (int z = minIdx.z; z <= maxIdx.z; z++) {
+					GridCell& cell = GetCell(vec3i(x, y, z));
+
+					if (cell.IsEmpty()) {
+						nonEmptyCells.push_back(&cell);
+						cell.SetListIt(--(nonEmptyCells.end()));
+					}
+
+					objCells[ z * (gsize.y * gsize.z) + y * (gsize.y) + x ] = cell.AddObject(object);
+				}
+			}
+		}
+
+		/*
 		// for an object position outside the bounding-box,
 		// the cell indices must be computed WITH clamping
 		const vec3f& pos = object->GetPos();
@@ -109,14 +135,30 @@ public:
 			cell.SetListIt(--(nonEmptyCells.end()));
 		}
 
-		// TODO: add object to all overlapped cells
 		objCells[idx1D] = cell.AddObject(object);
+		*/
 	}
 
 	void DelObject(T object, std::map<unsigned int, typename std::list<T>::iterator>& objCells) {
 		typedef typename std::list<T>::iterator ListIt;
 		typedef typename std::map<unsigned int, ListIt>::iterator MapListIt;
 
+		// note: redundant
+		object = object;
+
+		// delete object from all overlapped cells
+		for (MapListIt it = objCells.begin(); it != objCells.end(); ++it) {
+			GridCell& cell = cells[it->first];
+			cell.DelObject(it->second);
+
+			if (cell.IsEmpty()) {
+				nonEmptyCells.erase(cell.GetListIt());
+			}
+
+			objCells.erase(it->first);
+		}
+
+		/*
 		const vec3f& pos = object->GetPos();
 		const vec3i& idx = GetCellIdx(pos, !PosInBounds(pos));
 
@@ -132,8 +174,8 @@ public:
 			nonEmptyCells.erase(cell.GetListIt());
 		}
 
-		// TODO: delete object from all overlapped cells
 		objCells.erase(idx1D);
+		*/
 	}
 
 
