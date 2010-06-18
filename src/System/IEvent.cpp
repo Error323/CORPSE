@@ -28,6 +28,6 @@ std::string SimObjectMoveOrderEvent::str() const {
 }
 
 std::string SimObjectCollisionEvent::str() const {
-	snprintf(s, 511, "[frame=%u][event=SimObjectCollisionEvent][objectAID=%u, objectBID=%u]", frame, objectAID, objectBID);
+	snprintf(s, 511, "[frame=%u][event=SimObjectCollisionEvent][colliderID=%u, collideeID=%u]", frame, colliderID, collideeID);
 	return std::string(s);
 }
