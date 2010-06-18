@@ -240,7 +240,7 @@ unsigned int SimObjectHandler::CheckSimObjectCollisions() {
 
 				if (dstSq < radSq) {
 					numCollisions += 1;
-					SimObjectCollisionEvent e(simThread->GetFrame(), (*colliderIt)->GetID(), (*collideeIt)->GetID());
+					SimObjectCollisionEvent e(simThread->GetFrame(), collider->GetID(), collidee->GetID());
 					eventHandler->NotifyReceivers(&e);
 				}
 			}
