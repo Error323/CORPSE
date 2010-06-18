@@ -26,3 +26,8 @@ std::string SimObjectMoveOrderEvent::str() const {
 	snprintf(s, 511, "[frame=%u][event=SimObjectMoveOrderEvent][goalPos=%s][numObjects=%u]", frame, (goalPos.str()).c_str(), objectIDs.size());
 	return std::string(s);
 }
+
+std::string SimObjectCollisionEvent::str() const {
+	snprintf(s, 511, "[frame=%u][event=SimObjectCollisionEvent][objectAID=%u, objectBID=%u]", frame, objectAID, objectBID);
+	return std::string(s);
+}

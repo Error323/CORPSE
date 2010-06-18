@@ -11,7 +11,8 @@ enum EventType {
 	EVENT_SIMOBJECT_CREATED   =  0,
 	EVENT_SIMOBJECT_DESTROYED =  1,
 	EVENT_SIMOBJECT_MOVEORDER =  2,
-	EVENT_LAST                =  3,
+	EVENT_SIMOBJECT_COLLISION =  3,
+	EVENT_LAST                =  4,
 };
 
 struct IEvent {
@@ -79,6 +80,25 @@ private:
 
 	// shared destination of all involved sim-objects
 	vec3f goalPos;
+};
+
+
+
+struct SimObjectCollisionEvent: public IEvent {
+public:
+	SimObjectCollisionEvent(unsigned int f, unsigned int a0, unsigned int a1): IEvent(EVENT_SIMOBJECT_COLLISION, f) {
+		colliderID = a0;
+		collideeID = a1;
+	}
+
+	unsigned int GetColliderID() const { return colliderID; }
+	unsigned int GetCollideeID() const { return collideeID; }
+
+	std::string str() const;
+
+private:
+	unsigned int colliderID;
+	unsigned int collideeID;
 };
 
 #endif

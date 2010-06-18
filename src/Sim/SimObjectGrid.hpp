@@ -16,10 +16,15 @@ public:
 		}
 		void DelObject(const typename std::list<T>::iterator& it) { objects.erase(it); }
 		const std::list<T>& GetObjects() const { return objects; }
+
+		void SetListIt(const typename std::list<GridCell>::iterator& it) { listIt = it; }
+		const typename std::list<GridCell>::iterator& GetListIt() const { return listIt; }
+
 		unsigned int GetSize() const { return objects.size(); }
 		bool IsEmpty() const { return objects.empty(); }
 	private:
-		std::list<T> objects;
+		typename std::list<T> objects;
+		typename std::list<GridCell>::iterator listIt;
 	};
 
 	static SimObjectGrid<T>* GetInstance(const vec3i& size, const vec3f& gmins, const vec3f& gmaxs) {
@@ -52,7 +57,10 @@ public:
 	}
 	~SimObjectGrid() {
 		cells.clear();
+		nonEmptyCells.clear();
 	}
+
+	const std::list<GridCell>& GetNonEmptyCells() const { return nonEmptyCells; }
 
 	void GetObjects(const vec3f& pos, const vec3f& radii, std::list<T>& objects) {
 		const vec3i& cellIdx = GetCellIdx(pos, true);
@@ -86,6 +94,12 @@ public:
 		const vec3i& idx = GetCellIdx(pos, !PosInBounds(pos));
 
 		GridCell& cell = GetCell(idx);
+
+		if (cell.IsEmpty()) {
+			nonEmptyCells.push_back(cell);
+			cell.SetListIt(--(nonEmptyCells.end()));
+		}
+
 		return (cell.AddObject(object));
 	}
 
@@ -95,6 +109,10 @@ public:
 
 		GridCell& cell = GetCell(idx);
 		cell.DelObject(objectIt);
+
+		if (cell.IsEmpty()) {
+			nonEmptyCells.erase(cell.GetListIt());
+		}
 	}
 
 
@@ -150,6 +168,8 @@ public:
 
 private:
 	std::vector<GridCell> cells;
+	// list of all currently non-empty cells
+	std::list<GridCell> nonEmptyCells;
 
 	// number of cells along each dimension
 	vec3i gsize;
