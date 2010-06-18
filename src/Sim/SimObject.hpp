@@ -23,8 +23,8 @@ public:
 	void SetModel(LocalModel* m) { mdl = m; }
 	LocalModel* GetModel() const { return mdl; }
 
-	void SetModelRadius(float f) { mdlRadius = f; }
-	float GetModelRadius() const { return mdlRadius; }
+	void SetRadius(float f) { mdlRadius = f; }
+	float GetRadius() const { return mdlRadius; }
 
 	const mat44f& GetMat() const { return physicalState.mat; }
 	void SetMat(const mat44f& m) { physicalState.mat = m; }

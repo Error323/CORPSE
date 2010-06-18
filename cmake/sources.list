@@ -53,13 +53,10 @@ SET(CORPSE_SOURCE
 	src/Renderer/GL.hpp
 	src/Renderer/GLObjects.cpp
 	src/Renderer/GLObjects.hpp
-	src/Renderer/Models/Format3DO.hpp
 	src/Renderer/Models/FormatS3O.hpp
 	src/Renderer/Models/ModelDrawerBase.hpp
 	src/Renderer/Models/ModelDrawerS3O.cpp
 	src/Renderer/Models/ModelDrawerS3O.hpp
-	src/Renderer/Models/ModelReader3DO.cpp
-	src/Renderer/Models/ModelReader3DO.hpp
 	src/Renderer/Models/ModelReaderBase.hpp
 	src/Renderer/Models/ModelReaderS3O.cpp
 	src/Renderer/Models/ModelReaderS3O.hpp

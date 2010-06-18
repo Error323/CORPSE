@@ -1,8 +1,6 @@
 // g++ -Wall -Wextra -g -o tst  TestModelLoader.cpp  ModelReaderS3O.cpp ../../System/FileHandler.cpp
 
-#include "./Format3DO.hpp"
 #include "./FormatS3O.hpp"
-#include "./ModelReader3DO.hpp"
 #include "./ModelReaderS3O.hpp"
 
 int main(int argc, char** argv) {

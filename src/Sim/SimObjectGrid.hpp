@@ -94,7 +94,7 @@ public:
 		typedef typename std::map<unsigned int, ListIt>::iterator MapListIt;
 
 		const vec3f& objPos = object->GetPos();
-		const float objRad = object->GetModelRadius();
+		const float objRad = object->GetRadius();
 
 		const vec3f minPos(objPos.x - objRad, objPos.y - objRad, objPos.z - objRad);
 		const vec3f maxPos(objPos.x + objRad, objPos.y + objRad, objPos.z + objRad);

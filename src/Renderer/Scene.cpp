@@ -33,7 +33,6 @@
 #include "./Env/ShadowHandler.hpp"
 
 #include "./Models/ModelReaderBase.hpp"
-#include "./Models/ModelReader3DO.hpp"
 #include "./Models/ModelReaderS3O.hpp"
 #include "./Models/ModelDrawerS3O.hpp"
 #include "./Shaders/ShaderHandler.hpp"
@@ -49,7 +48,6 @@ CScene::CScene() {
 	skyBox = new CSkyBox();
 
 	// the drawer and reader base classes are abstract
-	reader3DO = new CModelReader3DO();
 	readerS3O = new CModelReaderS3O();
 
 	SetBoundingRadius();
@@ -69,11 +67,9 @@ CScene::~CScene() {
 	#endif
 
 	delete skyBox; skyBox = NULL;
-
-	delete reader3DO; reader3DO = NULL;
-	delete readerS3O; readerS3O = NULL;
-
 	delete sun;
+
+	delete readerS3O; readerS3O = NULL;
 
 	shaderHandler->ReleaseProgramObjects("[S3O]");
 }
@@ -99,7 +95,7 @@ void CScene::LoadObjectModels() {
 		std::string mdlFileExt = &mdlFile.data()[mdlFile.size() - 3];
 
 		if (mdlFileExt == "s3o") { modelReader = readerS3O; }
-		if (mdlFileExt == "3do") { modelReader = reader3DO; }
+		if (mdlFileExt == "3do") { modelReader = NULL; }
 
 		assert(modelReader != NULL);
 		modelBase = modelReader->Load(mdlFile);
@@ -162,7 +158,7 @@ void CScene::LoadObjectModels() {
 		ModelBase* objMdl = obj->GetDef()->GetModel();
 
 		obj->SetModel(new LocalModel(objMdl));
-		obj->SetModelRadius(objMdl->radius);
+		obj->SetRadius(objMdl->radius);
 	}
 }
 
@@ -183,7 +179,7 @@ void CScene::OnEvent(const IEvent* e) {
 			ModelBase* objMdl = obj->GetDef()->GetModel();
 
 			obj->SetModel(new LocalModel(objMdl));
-			obj->SetModelRadius(objMdl->radius);
+			obj->SetRadius(objMdl->radius);
 		} break;
 
 		case EVENT_SIMOBJECT_DESTROYED: {

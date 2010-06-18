@@ -7,8 +7,6 @@
 #include "../Sim/SimObjectDef.hpp"
 
 void PathModule::OnEvent(const IEvent* e) {
-	std::cout << "[PathModule::OnEvent] " << e->str() << std::endl;
-
 	switch (e->GetType()) {
 		case EVENT_SIMOBJECT_CREATED: {
 			const SimObjectCreatedEvent* ee = dynamic_cast<const SimObjectCreatedEvent*>(e);
@@ -56,14 +54,16 @@ void PathModule::OnEvent(const IEvent* e) {
 		} break;
 
 		case EVENT_SIMOBJECT_COLLISION: {
+			/*
 			const SimObjectCollisionEvent* ee = dynamic_cast<const SimObjectCollisionEvent*>(e);
 
 			const unsigned int colliderID = ee->GetColliderID();
 			const unsigned int collideeID = ee->GetCollideeID();
 
-			// TODO: move the objects apart?
+			// TODO: react to this more intelligently
 			coh->SetSimObjectWantedForwardSpeed(colliderID, 0.0f);
 			coh->SetSimObjectWantedForwardSpeed(collideeID, 0.0f);
+			*/
 		} break;
 
 		default: {
@@ -78,12 +78,19 @@ void PathModule::Init() {
 void PathModule::Update() {
 	// steer the sim-objects around the map based on user commands
 	for (std::map<unsigned int, const SimObjectDef*>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
-		const vec3f vec = coh->GetSimObjectWantedPosition(it->first) - coh->GetSimObjectPosition(it->first);
+		const unsigned int objID = it->first;
+		const SimObjectDef* objDef = it->second;
 
-		if (vec.sqLen3D() > (coh->GetSquareSize() * coh->GetSquareSize())) {
-			coh->SetSimObjectWantedDirection(it->first, vec.norm());
+		const vec3f vec = coh->GetSimObjectWantedPosition(objID) - coh->GetSimObjectPosition(objID);
+		const float dst = vec.sqLen3D();
+
+		const float brakeTime = coh->GetSimObjectCurrentForwardSpeed(objID) / objDef->GetMaxDeccelerationRate();
+		const float brakeDist = coh->GetSimObjectCurrentForwardSpeed(objID) * brakeTime; // conservative
+
+		if ((brakeDist * brakeDist) >= dst) {
+			coh->SetSimObjectWantedForwardSpeed(objID, 0.0f);
 		} else {
-			coh->SetSimObjectWantedForwardSpeed(it->first, 0.0f);
+			coh->SetSimObjectWantedDirection(objID, vec / sqrtf(dst));
 		}
 	}
 }

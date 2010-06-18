@@ -90,6 +90,11 @@ ModelBase* CModelReaderS3O::Load(const std::string& name) {
 	model->height = header.height;
 	model->relMidPos = vec3f(header.midx, header.midy, header.midz);
 	model->relMidPos.y = std::max(model->relMidPos.y, 1.0f); // ?
+	model->radius =
+		(((model->maxs.x - model->mins.x) * 0.5f) * ((model->maxs.x - model->mins.x) * 0.5f)) +
+		(((model->maxs.y - model->mins.y) * 0.5f) * ((model->maxs.y - model->mins.y) * 0.5f)) +
+		(((model->maxs.z - model->mins.z) * 0.5f) * ((model->maxs.z - model->mins.z) * 0.5f));
+	model->radius = sqrtf(model->radius);
 
 	loadedModels[model->name] = model;
 	// create the display list tree
