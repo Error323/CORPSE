@@ -25,6 +25,10 @@ public:
 
 	unsigned int GetMaxSimObjects() const;
 	unsigned int GetNumSimObjects() const;
+
+	unsigned int GetObjectIDs(const vec3f&, const vec3f&, unsigned int*, unsigned int) const;
+	unsigned int GetClosestObjectID(const vec3f&, float) const;
+
 	unsigned int GetFreeSimObjectIDs(unsigned int*, unsigned int) const;
 	unsigned int GetUsedSimObjectIDs(unsigned int*, unsigned int) const;
 

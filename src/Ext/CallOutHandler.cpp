@@ -5,6 +5,7 @@
 #include "../Sim/SimObject.hpp"
 #include "../Sim/SimObjectHandler.hpp"
 #include "../Sim/SimObjectDefHandler.hpp"
+#include "../Sim/SimObjectGrid.hpp"
 
 CallOutHandler* CallOutHandler::GetInstance() {
 	static CallOutHandler* coh = NULL;
@@ -43,6 +44,34 @@ const SimObjectDef* CallOutHandler::GetRawSimObjectDef(unsigned int defID) const
 
 unsigned int CallOutHandler::GetMaxSimObjects() const { return simObjectHandler->GetMaxSimObjects(); }
 unsigned int CallOutHandler::GetNumSimObjects() const { return simObjectHandler->GetNumSimObjects(); }
+
+
+unsigned int CallOutHandler::GetObjectIDs(const vec3f& pos, const vec3f& radii, unsigned int* array, unsigned int size) const {
+	SimObjectGrid<const SimObject*>* grid = simObjectHandler->GetSimObjectGrid();
+
+	std::list<const SimObject*> objects;
+	grid->GetObjects(pos, radii, objects);
+
+	unsigned int n = 0;
+
+	// copy the object ID's
+	for (std::list<const SimObject*>::const_iterator it = objects.begin(); it != objects.end() && n < size; ++it) {
+		array[n++] = (*it)->GetID();
+	}
+
+	return n;
+}
+
+unsigned int CallOutHandler::GetClosestObjectID(const vec3f& pos, float radius) const {
+	const SimObject* o = simObjectHandler->GetClosestSimObject(pos, radius);
+
+	if (o == NULL) {
+		return -1;
+	} else {
+		return o->GetID();
+	}
+}
+
 
 unsigned int CallOutHandler::GetFreeSimObjectIDs(unsigned int* array, unsigned int size) const {
 	const std::set<unsigned int>& freeIDs = simObjectHandler->GetSimObjectFreeIDs();

@@ -23,6 +23,10 @@ public:
 
 	virtual unsigned int GetMaxSimObjects() const = 0;
 	virtual unsigned int GetNumSimObjects() const = 0;
+
+	virtual unsigned int GetObjectIDs(const vec3f& pos, const vec3f& radii, unsigned int* array, unsigned int size) const = 0;
+	virtual unsigned int GetClosestObjectID(const vec3f& pos, float radius) const = 0;
+
 	virtual unsigned int GetFreeSimObjectIDs(unsigned int* array, unsigned int size) const = 0;
 	virtual unsigned int GetUsedSimObjectIDs(unsigned int* array, unsigned int size) const = 0;
 
