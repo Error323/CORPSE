@@ -55,6 +55,17 @@ void PathModule::OnEvent(const IEvent* e) {
 			}
 		} break;
 
+		case EVENT_SIMOBJECT_COLLISION: {
+			const SimObjectCollisionEvent* ee = dynamic_cast<const SimObjectCollisionEvent*>(e);
+
+			const unsigned int colliderID = ee->GetColliderID();
+			const unsigned int collideeID = ee->GetCollideeID();
+
+			// TODO: move the objects apart?
+			coh->SetSimObjectWantedForwardSpeed(colliderID, 0.0f);
+			coh->SetSimObjectWantedForwardSpeed(collideeID, 0.0f);
+		} break;
+
 		default: {
 		} break;
 	}
