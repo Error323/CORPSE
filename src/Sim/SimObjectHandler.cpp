@@ -98,12 +98,20 @@ void SimObjectHandler::Update() {
 	for (std::set<unsigned int>::const_iterator it = simObjectUsedIDs.begin(); it != simObjectUsedIDs.end(); ++it) {
 		SimObject* o = simObjects[*it];
 
-		// TODO: if old and new position are equal, don't delete & re-add
-		// vec3f p = o->GetPos();
+		const unsigned int objectID = o->GetID();
+		const bool objectGridUpdate =
+			(o->GetCurrentForwardSpeed() > 0.0f) ||
+			(o->GetWantedForwardSpeed() > 0.0f);
 
-		mSimObjectGrid->DelObject(o, simObjectGridCells[o->GetID()] );
+		if (objectGridUpdate) {
+			mSimObjectGrid->DelObject(o, simObjectGridCells[objectID] );
+		}
+
 		o->Update();
-		mSimObjectGrid->AddObject(o, simObjectGridCells[o->GetID()] );
+
+		if (objectGridUpdate) {
+			mSimObjectGrid->AddObject(o, simObjectGridCells[objectID] );
+		}
 	}
 
 	CheckSimObjectCollisions();
