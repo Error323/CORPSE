@@ -68,7 +68,7 @@ CSimThread::~CSimThread() {
 }
 
 void CSimThread::Update() {
-	mSimObjectHandler->Update();
+	mSimObjectHandler->Update(frame);
 	mPathModule->Update();
 
 	frame += 1;

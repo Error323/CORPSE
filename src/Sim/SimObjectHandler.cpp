@@ -94,7 +94,7 @@ void SimObjectHandler::DelObjects() {
 	}
 }
 
-void SimObjectHandler::Update() {
+void SimObjectHandler::Update(unsigned int frame) {
 	for (std::set<unsigned int>::const_iterator it = simObjectUsedIDs.begin(); it != simObjectUsedIDs.end(); ++it) {
 		SimObject* o = simObjects[*it];
 
@@ -114,7 +114,7 @@ void SimObjectHandler::Update() {
 		}
 	}
 
-	CheckSimObjectCollisions();
+	CheckSimObjectCollisions(frame);
 }
 
 
@@ -200,7 +200,7 @@ const SimObject* SimObjectHandler::GetClosestSimObject(const vec3f& pos, float r
 
 
 
-unsigned int SimObjectHandler::CheckSimObjectCollisions() {
+unsigned int SimObjectHandler::CheckSimObjectCollisions(unsigned int frame) {
 	typedef const SimObject* Obj;
 	typedef SimObjectGrid<Obj>::GridCell ObjCell;
 
@@ -245,7 +245,7 @@ unsigned int SimObjectHandler::CheckSimObjectCollisions() {
 				if (dstSq < radSq) {
 					numCollisions += 1;
 
-					SimObjectCollisionEvent e(simThread->GetFrame(), collider->GetID(), collidee->GetID());
+					SimObjectCollisionEvent e(frame, collider->GetID(), collidee->GetID());
 					eventHandler->NotifyReceivers(&e);
 				}
 			}
@@ -253,4 +253,27 @@ unsigned int SimObjectHandler::CheckSimObjectCollisions() {
 	}
 
 	return numCollisions;
+}
+
+void SimObjectHandler::PredictSimObjectCollisions(unsigned int numFrames) {
+	static std::vector<SimObject::PhysicalState> states(simObjects.size());
+
+	// save the states
+	for (std::set<unsigned int>::const_iterator it = simObjectUsedIDs.begin(); it != simObjectUsedIDs.end(); ++it) {
+		states[*it] = simObjects[*it]->GetPhysicalState();
+	}
+
+	// advance the simulation
+	for (unsigned int n = 0; n < numFrames; n++) {
+		Update(simThread->GetFrame() + n);
+	}
+
+	// restore the states
+	//
+	// note that it is not necessary to "roll back" the object-grid, because
+	//   1) if an object was moving, then the next regular update will re-add it at its old position
+	//   2) if an object was not moving, then the prediction updates will not have moved it either
+	for (std::set<unsigned int>::const_iterator it = simObjectUsedIDs.begin(); it != simObjectUsedIDs.end(); ++it) {
+		simObjects[*it]->SetPhysicalState(states[*it]);
+	}
 }

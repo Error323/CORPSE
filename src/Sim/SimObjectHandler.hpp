@@ -20,7 +20,7 @@ public:
 	static SimObjectHandler* GetInstance();
 	static void FreeInstance(SimObjectHandler*);
 
-	void Update();
+	void Update(unsigned int);
 
 	void AddObjects();
 	void DelObjects();
@@ -43,7 +43,8 @@ private:
 	void AddObject(SimObject*, bool);
 	void DelObject(SimObject*, bool);
 
-	unsigned int CheckSimObjectCollisions();
+	unsigned int CheckSimObjectCollisions(unsigned int);
+	void PredictSimObjectCollisions(unsigned int);
 
 	std::vector<SimObject*> simObjects;
 	// for each object, keep track of the cells it occupies

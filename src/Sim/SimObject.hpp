@@ -39,13 +39,6 @@ public:
 	void SetWantedPosition(const vec3f& pos) { physicalState.wantedPos = pos; }
 	void SetWantedDirection(const vec3f& dir) { physicalState.wantedDir = dir; }
 
-private:
-	const SimObjectDef* def;
-	const unsigned int id;
-
-	LocalModel* mdl;
-	float mdlRadius;
-
 	struct PhysicalState {
 		PhysicalState& operator = (const PhysicalState& state) {
 			mat = state.mat;
@@ -104,6 +97,17 @@ private:
 		// speed-scale this object wants to be moving at
 		float wantedForwardSpeed;
 	};
+
+	const PhysicalState& GetPhysicalState() const { return physicalState; }
+	void SetPhysicalState(const PhysicalState& s) { physicalState = s; }
+
+private:
+	const SimObjectDef* def;
+	const unsigned int id;
+
+	LocalModel* mdl;
+	float mdlRadius;
+
 	PhysicalState physicalState;
 };
 
