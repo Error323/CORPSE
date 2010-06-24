@@ -127,9 +127,9 @@ void CClient::SendNetMessage(const NetMessage& m) {
 
 
 
-void CClient::KeyPressed(int sdlKeyCode, bool repeat) {
+void CClient::KeyPressed(int key, bool repeat) {
 	if (!repeat) {
-		switch (sdlKeyCode) {
+		switch (key) {
 			case SDLK_ESCAPE: {
 				SDL_Event e;
 					e.type = SDL_QUIT;

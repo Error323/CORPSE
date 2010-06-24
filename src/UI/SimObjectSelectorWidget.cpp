@@ -1,5 +1,6 @@
 #include <cassert>
 
+#include <SDL/SDL_keysym.h>
 #include <SDL/SDL_mouse.h>
 #include <GL/gl.h>
 
@@ -29,6 +30,16 @@ void ui::SimObjectSelectorWidget::ClearSelection() {
 	haveSelection = false;
 	activeSelection = false;
 }
+
+
+void ui::SimObjectSelectorWidget::KeyPressed(int key) {
+	shiftPressed = (key == SDLK_LSHIFT);
+}
+
+void ui::SimObjectSelectorWidget::KeyReleased(int key) {
+	shiftPressed = shiftPressed && (key != SDLK_LSHIFT);
+}
+
 
 void ui::SimObjectSelectorWidget::MousePressed(int button, int x, int y) {
 	if (button != SDL_BUTTON_LEFT) {
@@ -179,6 +190,7 @@ void ui::SimObjectSelectorWidget::OrderSelection(int x, int y) {
 		const unsigned int msgSize =
 			(1 * sizeof(unsigned int)) +
 			(3 * sizeof(float)) +
+			(1 * sizeof(bool)) +
 			(selectedObjectIDs.size() * sizeof(unsigned int));
 
 		if (dst > 0.0f) {
@@ -188,6 +200,7 @@ void ui::SimObjectSelectorWidget::OrderSelection(int x, int y) {
 			m << pos.x;
 			m << pos.y;
 			m << pos.z;
+			m << shiftPressed;
 
 			bool hasValidObject = false;
 
@@ -288,7 +301,7 @@ void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 
 			{
 				if ((renderThread->GetFrame() % 4) == 0) {
-					int lsb = (stipplePattern & 1);
+					const int lsb = (stipplePattern & 1);
 					stipplePattern >>= 1;
 					stipplePattern |= (lsb << 15);
 				}

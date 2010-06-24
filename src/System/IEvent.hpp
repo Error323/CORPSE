@@ -71,6 +71,9 @@ public:
 	void SetGoalPos(const vec3f& pos) { goalPos = pos; }
 	const vec3f& GetGoalPos() const { return goalPos; }
 
+	void SetQueued(bool b) { queued = b; }
+	bool GetQueued() const { return queued; }
+
 	std::string str() const;
 
 private:
@@ -80,6 +83,10 @@ private:
 
 	// shared destination of all involved sim-objects
 	vec3f goalPos;
+
+	// whether order should be added to each object's
+	// command queue rather than executed immediately
+	bool queued;
 };
 
 

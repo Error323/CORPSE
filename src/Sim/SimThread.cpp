@@ -78,6 +78,9 @@ void CSimThread::SimCommand(NetMessage& m) {
 	unsigned int simCommandID = 0;
 	unsigned int objectID     = 0;
 	unsigned int objectDefID  = 0;
+
+	bool queueCommand = false;
+
 	vec3f objectPos;
 	vec3f objectDir;
 
@@ -110,9 +113,11 @@ void CSimThread::SimCommand(NetMessage& m) {
 			assert(!m.End()); m >> objectPos.x;
 			assert(!m.End()); m >> objectPos.y;
 			assert(!m.End()); m >> objectPos.z;
+			assert(!m.End()); m >> queueCommand;
 			assert(!m.End());
 
 			e.SetGoalPos(objectPos);
+			e.SetQueued(queueCommand);
 
 			while (!m.End()) {
 				m >> objectID;

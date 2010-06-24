@@ -11,9 +11,11 @@
 namespace ui {
 	struct SimObjectSelectorWidget: public IUIWidget {
 	public:
-		SimObjectSelectorWidget(): haveSelection(false), activeSelection(false) {
+		SimObjectSelectorWidget(): haveSelection(false), activeSelection(false), shiftPressed(false) {
 		}
 
+		void KeyPressed(int);
+		void KeyReleased(int);
 		void MouseMoved(int, int, int, int);
 		void MousePressed(int, int, int);
 		void MouseReleased(int, int, int);
@@ -38,6 +40,8 @@ namespace ui {
 		vec3f selectionBounds3D[2];
 
 		std::list<unsigned int> selectedObjectIDs;
+
+		bool shiftPressed;
 	};
 }
 

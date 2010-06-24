@@ -70,6 +70,19 @@ void ui::UI::Update(const vec3i& pos, const vec3i& size) {
 
 
 
+void ui::UI::KeyPressed(int key, bool repeat) {
+	if (!repeat) {
+		for (std::list<IUIWidget*>::iterator it = widgets.begin(); it != widgets.end(); ++it) {
+			(*it)->KeyPressed(key);
+		}
+	}
+}
+void ui::UI::KeyReleased(int key) {
+	for (std::list<IUIWidget*>::iterator it = widgets.begin(); it != widgets.end(); ++it) {
+		(*it)->KeyReleased(key);
+	}
+}
+
 void ui::UI::MouseMoved(int x, int y, int dx, int dy) {
 	for (std::list<IUIWidget*>::iterator it = widgets.begin(); it != widgets.end(); ++it) {
 		(*it)->MouseMoved(x, y, dx, dy);

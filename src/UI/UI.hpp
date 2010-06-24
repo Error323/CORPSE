@@ -19,6 +19,8 @@ namespace ui {
 
 		void Update(const vec3i&, const vec3i&);
 
+		void KeyPressed(int, bool);
+		void KeyReleased(int);
 		void MouseMoved(int, int, int, int);
 		void MousePressed(int, int, int, bool);
 		void MouseReleased(int, int, int);
