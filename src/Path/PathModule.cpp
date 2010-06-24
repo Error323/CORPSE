@@ -89,8 +89,6 @@ void PathModule::Update() {
 
 		if ((brakeDist * brakeDist) >= dst) {
 			coh->SetSimObjectWantedForwardSpeed(objID, 0.0f);
-		} else {
-			coh->SetSimObjectWantedDirection(objID, vec / sqrtf(dst));
 		}
 	}
 }
