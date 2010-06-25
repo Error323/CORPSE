@@ -5,6 +5,7 @@
 #include "../Math/vec3fwd.hpp"
 
 class SimObjectDef;
+struct WantedPhysicalState;
 
 // exposes simulation state to libraries
 class ICallOutHandler {
@@ -36,14 +37,12 @@ public:
 	virtual const mat44f& GetSimObjectMatrix(unsigned int objID) const = 0;
 	virtual const vec3f& GetSimObjectPosition(unsigned int objID) const = 0;
 	virtual const vec3f& GetSimObjectDirection(unsigned int objID) const = 0;
-	virtual float GetSimObjectCurrentForwardSpeed(unsigned int objIDd) const = 0;
+	virtual float GetSimObjectCurrentForwardSpeed(unsigned int objID) const = 0;
 
-	virtual float GetSimObjectWantedForwardSpeed(unsigned int objID) const = 0;
-	virtual const vec3f& GetSimObjectWantedPosition(unsigned int objID) const = 0;
-	virtual const vec3f& GetSimObjectWantedDirection(unsigned int objID) const = 0;
-	virtual void SetSimObjectWantedForwardSpeed(unsigned int objID, float spd) const = 0;
-	virtual void SetSimObjectWantedPosition(unsigned int objID, const vec3f& pos) const = 0;
-	virtual void SetSimObjectWantedDirection(unsigned int objID, const vec3f& dir) const = 0;
+	virtual unsigned int GetNumWantedPhysicalStates(unsigned int objID) const = 0;
+	virtual bool PopWantedPhysicalStates(unsigned int objID, unsigned int numStates) const = 0;
+	virtual const WantedPhysicalState& GetSimObjectWantedPhysicalState(unsigned int objID) const = 0;
+	virtual void SetSimObjectWantedPhysicalState(unsigned int objID, const WantedPhysicalState& state, bool queued) const = 0;
 };
 
 #endif

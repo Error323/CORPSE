@@ -321,7 +321,7 @@ void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 						const SimObject* obj = simObjectHandler->GetSimObject(*it);
 						const mat44f& objMat = obj->GetMat();
 						const vec3f& objPos = objMat.GetPos();
-						const vec3f& dstPos = obj->GetWantedPosition();
+						const vec3f& dstPos = obj->GetWantedPhysicalState().wantedPos;
 						const ModelBase* objMdl = obj->GetModel()->GetModelBase();
 						const vec3f objSize = objMdl->maxs - objMdl->mins;
 

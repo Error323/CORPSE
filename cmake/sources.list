@@ -87,6 +87,8 @@ SET(CORPSE_SOURCE
 	src/Sim/SimObjectHandler.cpp
 	src/Sim/SimObjectHandler.hpp
 	src/Sim/SimObject.hpp
+	src/Sim/SimObjectState.cpp
+	src/Sim/SimObjectState.hpp
 	src/Sim/SimObjectGrid.hpp
 	src/Sim/SimThread.cpp
 	src/Sim/SimThread.hpp

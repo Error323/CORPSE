@@ -3,6 +3,7 @@
 #include "../Math/mat44.hpp"
 #include "../Math/vec3.hpp"
 #include "../Sim/SimObject.hpp"
+#include "../Sim/SimObjectDef.hpp"
 #include "../Sim/SimObjectHandler.hpp"
 #include "../Sim/SimObjectDefHandler.hpp"
 #include "../Sim/SimObjectGrid.hpp"
@@ -151,9 +152,9 @@ const vec3f& CallOutHandler::GetSimObjectDirection(unsigned int id) const {
 float CallOutHandler::GetSimObjectCurrentForwardSpeed(unsigned int id) const {
 	if (IsValidSimObjectID(id)) {
 		const SimObject* o = simObjectHandler->GetSimObject(id);
-		const float f = o->GetCurrentForwardSpeed();
+		const PhysicalState& ps = o->GetPhysicalState();
 
-		return f;
+		return ps.currentForwardSpeed;
 	}
 
 	return 0.0f;
@@ -161,29 +162,43 @@ float CallOutHandler::GetSimObjectCurrentForwardSpeed(unsigned int id) const {
 
 
 
-float CallOutHandler::GetSimObjectWantedForwardSpeed(unsigned int id) const {
-	if (IsValidSimObjectID(id)) { return ((simObjectHandler->GetSimObject(id))->GetWantedForwardSpeed()); }
-	return 0.0f;
+unsigned int CallOutHandler::GetNumWantedPhysicalStates(unsigned int id) const {
+	if (IsValidSimObjectID(id)) {
+		const SimObject* so = simObjectHandler->GetSimObject(id);
+		const std::list<WantedPhysicalState>& wpsl = so->GetWantedPhysicalStates();
+		return wpsl.size();
+	}
+
+	return 0;
 }
 
-const vec3f& CallOutHandler::GetSimObjectWantedPosition(unsigned int id) const {
-	if (IsValidSimObjectID(id)) { return ((simObjectHandler->GetSimObject(id))->GetWantedPosition()); }
-	return NVECf;
+bool CallOutHandler::PopWantedPhysicalStates(unsigned int id, unsigned int numStates) const {
+	if (IsValidSimObjectID(id)) {
+		SimObject* so = simObjectHandler->GetSimObject(id);
+		bool ret = so->PopWantedPhysicalStates(numStates);
+		return ret;
+	}
+
+	return false;
 }
 
-const vec3f& CallOutHandler::GetSimObjectWantedDirection(unsigned int id) const {
-	if (IsValidSimObjectID(id)) { return ((simObjectHandler->GetSimObject(id))->GetWantedDirection()); }
-	return NVECf;
+
+
+const WantedPhysicalState& CallOutHandler::GetSimObjectWantedPhysicalState(unsigned int objID) const {
+	static WantedPhysicalState swps;
+
+	if (IsValidSimObjectID(objID)) {
+		const SimObject* so = simObjectHandler->GetSimObject(objID);
+		const WantedPhysicalState& wps = so->GetWantedPhysicalState();
+		return wps;
+	}
+
+	return swps;
 }
 
-void CallOutHandler::SetSimObjectWantedForwardSpeed(unsigned int id, float spd) const {
-	if (IsValidSimObjectID(id)) { (simObjectHandler->GetSimObject(id))->SetWantedForwardSpeed(spd); }
-}
-
-void CallOutHandler::SetSimObjectWantedPosition(unsigned int id, const vec3f& pos) const {
-	if (IsValidSimObjectID(id)) { (simObjectHandler->GetSimObject(id))->SetWantedPosition(pos); }
-}
-
-void CallOutHandler::SetSimObjectWantedDirection(unsigned int id, const vec3f& dir) const {
-	if (IsValidSimObjectID(id)) { (simObjectHandler->GetSimObject(id))->SetWantedDirection(dir); }
+void CallOutHandler::SetSimObjectWantedPhysicalState(unsigned int objID, const WantedPhysicalState& state, bool queued) const {
+	if (IsValidSimObjectID(objID)) {
+		SimObject* so = simObjectHandler->GetSimObject(id);
+		so->PushWantedPhysicalState(state, queued);
+	}
 }

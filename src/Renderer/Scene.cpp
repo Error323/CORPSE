@@ -225,7 +225,7 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 			const ModelBase* mb = lm->GetModelBase();
 
 			// interpolate the draw-position between sim-frames
-			const vec3f rPos = mat.GetPos() + (mat.GetZDir() * obj->GetCurrentForwardSpeed() * server->GetLastTickDeltaRatio());
+			const vec3f rPos = mat.GetPos() + (mat.GetZDir() * obj->GetPhysicalState().currentForwardSpeed * server->GetLastTickDeltaRatio());
 			const mat44f rMat(rPos, mat.GetXDir(), mat.GetYDir(), mat.GetZDir());
 
 			Shader::IProgramObject* shObj = const_cast<Shader::IProgramObject*>(mb->GetShaderProgramObj());

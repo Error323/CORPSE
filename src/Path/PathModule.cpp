@@ -5,6 +5,7 @@
 #include "../Math/vec3.hpp"
 #include "../Ext/ICallOutHandler.hpp"
 #include "../Sim/SimObjectDef.hpp"
+#include "../Sim/SimObjectState.hpp"
 
 void PathModule::OnEvent(const IEvent* e) {
 	switch (e->GetType()) {
@@ -44,9 +45,12 @@ void PathModule::OnEvent(const IEvent* e) {
 
 				assert(coh->IsValidSimObjectID(objID));
 
-				coh->SetSimObjectWantedPosition(objID, goalPos);
-				coh->SetSimObjectWantedDirection(objID, (goalPos - coh->GetSimObjectPosition(objID)).norm());
-				coh->SetSimObjectWantedForwardSpeed(objID, simObjectIDs[objID]->GetMaxForwardSpeed());
+				// note: direction is based on our current position
+				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID);
+					wps.wantedPos = goalPos;
+					wps.wantedDir = (goalPos - coh->GetSimObjectPosition(objID)).norm();
+					wps.wantedForwardSpeed = simObjectIDs[objID]->GetMaxForwardSpeed();
+				coh->SetSimObjectWantedPhysicalState(objID, wps, ee->GetQueued());
 
 				DelObjectFromGroup(objID);
 				AddObjectToGroup(objID, groupID);
@@ -81,14 +85,23 @@ void PathModule::Update() {
 		const unsigned int objID = it->first;
 		const SimObjectDef* objDef = it->second;
 
-		const vec3f vec = coh->GetSimObjectWantedPosition(objID) - coh->GetSimObjectPosition(objID);
+		WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID);
+
+		const vec3f vec = wps.wantedPos - coh->GetSimObjectPosition(objID);
 		const float dst = vec.sqLen3D();
 
 		const float brakeTime = coh->GetSimObjectCurrentForwardSpeed(objID) / objDef->GetMaxDeccelerationRate();
 		const float brakeDist = coh->GetSimObjectCurrentForwardSpeed(objID) * brakeTime; // conservative
 
 		if ((brakeDist * brakeDist) >= dst) {
-			coh->SetSimObjectWantedForwardSpeed(objID, 0.0f);
+			if (coh->GetNumWantedPhysicalStates(objID) <= 1) {
+				wps.wantedForwardSpeed = 0.0f;
+			} else {
+				coh->PopWantedPhysicalStates(objID, 1);
+			}
+
+			// FIXME
+			coh->SetSimObjectWantedPhysicalState(objID, wps, false);
 		}
 	}
 }

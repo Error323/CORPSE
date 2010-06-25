@@ -100,8 +100,8 @@ void SimObjectHandler::Update(unsigned int frame) {
 
 		const unsigned int objectID = o->GetID();
 		const bool objectGridUpdate =
-			(o->GetCurrentForwardSpeed() > 0.0f) ||
-			(o->GetWantedForwardSpeed() > 0.0f);
+			(o->GetPhysicalState().currentForwardSpeed > 0.0f) ||
+			(o->GetWantedPhysicalState().wantedForwardSpeed > 0.0f);
 
 		if (objectGridUpdate) {
 			mSimObjectGrid->DelObject(o, simObjectGridCells[objectID] );
@@ -125,12 +125,14 @@ void SimObjectHandler::AddObject(unsigned int defID, const vec3f& pos, const vec
 			gpos.y = ground->GetHeight(pos.x, pos.z);
 		mat44f mat = mat44f(gpos, NVECf, NVECf, dir);
 			mat.SetYDirXZ(ground->GetSmoothNormal(gpos.x, gpos.z));
+		WantedPhysicalState wps;
+			wps.wantedPos = mat.GetPos();
+			wps.wantedDir = mat.GetZDir();
 
 		SimObjectDef* sod = mSimObjectDefHandler->GetDef(defID);
 		SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
 			so->SetMat(mat);
-			so->SetWantedPosition(mat.GetPos());
-			so->SetWantedDirection(mat.GetZDir());
+			so->PushWantedPhysicalState(wps, false);
 
 		AddObject(so, inConstructor);
 	}
@@ -256,7 +258,7 @@ unsigned int SimObjectHandler::CheckSimObjectCollisions(unsigned int frame) {
 }
 
 void SimObjectHandler::PredictSimObjectCollisions(unsigned int numFrames) {
-	static std::vector<SimObject::PhysicalState> states(simObjects.size());
+	static std::vector<PhysicalState> states(simObjects.size());
 
 	// save the states
 	for (std::set<unsigned int>::const_iterator it = simObjectUsedIDs.begin(); it != simObjectUsedIDs.end(); ++it) {
