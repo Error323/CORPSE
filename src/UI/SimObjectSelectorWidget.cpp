@@ -245,6 +245,7 @@ void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 		const float brxc = selectionStartPos2D.x + w - hvpsx, bryc = (selectionStartPos2D.y + h - hvpsy) * -1.0f;
 		const float blxc = selectionStartPos2D.x     - hvpsx, blyc = (selectionStartPos2D.y + h - hvpsy) * -1.0f;
 
+
 		VertexArray va;
 		va.Initialize();
 
@@ -260,13 +261,12 @@ void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 				glVertex2f(blxc / hvpsx, blyc / hvpsy);
 			glEnd();
 
-			/*
-			va.AddVertex0(tlxc / hvpsx, 0.0f, tlyc / hvpsy);
-			va.AddVertex0(trxc / hvpsx, 0.0f, tryc / hvpsy);
-			va.AddVertex0(brxc / hvpsx, 0.0f, bryc / hvpsy);
-			va.AddVertex0(blxc / hvpsx, 0.0f, blyc / hvpsy);
-			va.DrawArray0(GL_LINE_LOOP);
-			*/
+
+			// va.AddVertex0(tlxc / hvpsx, 0.0f, tlyc / hvpsy);
+			// va.AddVertex0(trxc / hvpsx, 0.0f, tryc / hvpsy);
+			// va.AddVertex0(brxc / hvpsx, 0.0f, bryc / hvpsy);
+			// va.AddVertex0(blxc / hvpsx, 0.0f, blyc / hvpsy);
+			// va.DrawArray0(GL_LINE_LOOP);
 		glPopAttrib();
 
 
@@ -312,7 +312,6 @@ void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 
 			glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
 				glEnable(GL_BLEND);
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				glLineWidth(4.0f);
 
 				// draw marker squares around selected objects
@@ -331,6 +330,7 @@ void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 
 					glPushMatrix();
 						glMultMatrixf(objMat.m);
+						glBlendFunc(GL_SRC_COLOR, GL_DST_ALPHA);
 						glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
 						glBegin(GL_QUADS);
 							glVertex3f(-objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
@@ -344,6 +344,7 @@ void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 					if (cursorDst > 0.0f) {
 						glEnable(GL_LINE_STIPPLE);
 						glLineStipple(2, stipplePattern);
+						glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 						glBegin(GL_LINES);
 							glColor4f(0.0f, 1.0f, 0.0f, 0.75f); glVertex3f(cursorPos.x, cursorPos.y, cursorPos.z);
 							glColor4f(1.0f, 0.0f, 0.0f, 0.75f); glVertex3f(objPos.x, objPos.y, objPos.z);
@@ -358,7 +359,6 @@ void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 							glColor4f(0.0f, 1.0f, 0.0f, 0.75f); glVertex3f((*wit).wantedPos.x, (*wit).wantedPos.y, (*wit).wantedPos.z);
 						}
 					glEnd();
-
 				}
 
 			glPopAttrib();

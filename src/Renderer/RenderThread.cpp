@@ -84,7 +84,7 @@ inline static void PreFrameState() {
 		}
 
 
-		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClearDepth(1.0f);
 		glClearStencil(0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);

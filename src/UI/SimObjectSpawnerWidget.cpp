@@ -107,7 +107,7 @@ void ui::SimObjectSpawnerWidget::Update(const vec3i&, const vec3i&) {
 			glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
 				glDisable(GL_DEPTH_TEST);
 				glEnable(GL_BLEND);
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glBlendFunc(GL_SRC_COLOR, GL_DST_ALPHA);
 				glColor4f(0.0f, 1.0f, 0.0f, 0.25f);
 				glBegin(GL_QUADS);
 					glVertex3f(-objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
