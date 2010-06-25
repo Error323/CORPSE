@@ -36,29 +36,42 @@ public:
 	const PhysicalState& GetPhysicalState() const { return physicalState; }
 	void SetPhysicalState(const PhysicalState& s) { physicalState = s; }
 
-	const WantedPhysicalState& GetWantedPhysicalState() const {
+	const WantedPhysicalState& GetWantedPhysicalState(bool front) const {
 		static WantedPhysicalState wps; // dummy
 
 		if (!wantedPhysicalStates.empty()) {
-			return wantedPhysicalStates.front();
+			if (front) {
+				return wantedPhysicalStates.front();
+			} else {
+				return wantedPhysicalStates.back();
+			}
 		}
 
 		return wps;
 	}
-	void PushWantedPhysicalState(const WantedPhysicalState& wps, bool queued) {
+
+	void PushWantedPhysicalState(const WantedPhysicalState& wps, bool queued, bool front) {
 		if (!queued) {
 			wantedPhysicalStates.clear();
 		}
 
-		wantedPhysicalStates.push_back(wps);
+		if (front) {
+			wantedPhysicalStates.push_front(wps);
+		} else {
+			wantedPhysicalStates.push_back(wps);
+		}
 	}
-	bool PopWantedPhysicalStates(unsigned int numStates) {
+	bool PopWantedPhysicalStates(unsigned int numStates, bool front) {
 		if (wantedPhysicalStates.size() < numStates) {
 			return false;
 		}
 
 		for (unsigned int n = 0; n < numStates; n++) {
-			wantedPhysicalStates.pop_front();
+			if (front) {
+				wantedPhysicalStates.pop_front();
+			} else {
+				wantedPhysicalStates.pop_back();
+			}
 		}
 
 		return true;

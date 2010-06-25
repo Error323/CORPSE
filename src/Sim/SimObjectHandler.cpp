@@ -101,7 +101,7 @@ void SimObjectHandler::Update(unsigned int frame) {
 		const unsigned int objectID = o->GetID();
 		const bool objectGridUpdate =
 			(o->GetPhysicalState().currentForwardSpeed > 0.0f) ||
-			(o->GetWantedPhysicalState().wantedForwardSpeed > 0.0f);
+			(o->GetWantedPhysicalState(true).wantedForwardSpeed > 0.0f);
 
 		if (objectGridUpdate) {
 			mSimObjectGrid->DelObject(o, simObjectGridCells[objectID] );
@@ -132,7 +132,7 @@ void SimObjectHandler::AddObject(unsigned int defID, const vec3f& pos, const vec
 		SimObjectDef* sod = mSimObjectDefHandler->GetDef(defID);
 		SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
 			so->SetMat(mat);
-			so->PushWantedPhysicalState(wps, false);
+			so->PushWantedPhysicalState(wps, false, false);
 
 		AddObject(so, inConstructor);
 	}

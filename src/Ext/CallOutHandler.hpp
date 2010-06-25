@@ -41,9 +41,9 @@ public:
 	float GetSimObjectCurrentForwardSpeed(unsigned int) const;
 
 	unsigned int GetSimObjectNumWantedPhysicalStates(unsigned int) const;
-	bool PopSimObjectWantedPhysicalStates(unsigned int, unsigned int) const;
-	const WantedPhysicalState& GetSimObjectWantedPhysicalState(unsigned int) const;
-	void SetSimObjectWantedPhysicalState(unsigned int, const WantedPhysicalState&, bool) const;
+	void PushSimObjectWantedPhysicalState(unsigned int, const WantedPhysicalState&, bool, bool) const;
+	bool PopSimObjectWantedPhysicalStates(unsigned int, unsigned int, bool) const;
+	const WantedPhysicalState& GetSimObjectWantedPhysicalState(unsigned int, bool) const;
 };
 
 #endif

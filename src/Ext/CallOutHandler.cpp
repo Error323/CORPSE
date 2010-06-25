@@ -172,10 +172,17 @@ unsigned int CallOutHandler::GetSimObjectNumWantedPhysicalStates(unsigned int id
 	return 0;
 }
 
-bool CallOutHandler::PopSimObjectWantedPhysicalStates(unsigned int id, unsigned int numStates) const {
+void CallOutHandler::PushSimObjectWantedPhysicalState(unsigned int objID, const WantedPhysicalState& state, bool queued, bool front) const {
+	if (IsValidSimObjectID(objID)) {
+		SimObject* so = simObjectHandler->GetSimObject(objID);
+		so->PushWantedPhysicalState(state, queued, front);
+	}
+}
+
+bool CallOutHandler::PopSimObjectWantedPhysicalStates(unsigned int id, unsigned int numStates, bool front) const {
 	if (IsValidSimObjectID(id)) {
 		SimObject* so = simObjectHandler->GetSimObject(id);
-		bool ret = so->PopWantedPhysicalStates(numStates);
+		bool ret = so->PopWantedPhysicalStates(numStates, front);
 		return ret;
 	}
 
@@ -184,21 +191,14 @@ bool CallOutHandler::PopSimObjectWantedPhysicalStates(unsigned int id, unsigned 
 
 
 
-const WantedPhysicalState& CallOutHandler::GetSimObjectWantedPhysicalState(unsigned int objID) const {
+const WantedPhysicalState& CallOutHandler::GetSimObjectWantedPhysicalState(unsigned int objID, bool front) const {
 	static WantedPhysicalState swps;
 
 	if (IsValidSimObjectID(objID)) {
 		const SimObject* so = simObjectHandler->GetSimObject(objID);
-		const WantedPhysicalState& wps = so->GetWantedPhysicalState();
+		const WantedPhysicalState& wps = so->GetWantedPhysicalState(front);
 		return wps;
 	}
 
 	return swps;
-}
-
-void CallOutHandler::SetSimObjectWantedPhysicalState(unsigned int objID, const WantedPhysicalState& state, bool queued) const {
-	if (IsValidSimObjectID(objID)) {
-		SimObject* so = simObjectHandler->GetSimObject(objID);
-		so->PushWantedPhysicalState(state, queued);
-	}
 }

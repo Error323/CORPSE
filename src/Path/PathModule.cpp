@@ -42,15 +42,16 @@ void PathModule::OnEvent(const IEvent* e) {
 
 			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
 				const unsigned int objID = *it;
+				const vec3f& objPos = coh->GetSimObjectPosition(objID);
 
 				assert(coh->IsValidSimObjectID(objID));
 
 				// note: direction is based on our current position
-				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID);
+				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID, true);
 					wps.wantedPos = goalPos;
-					wps.wantedDir = (goalPos - coh->GetSimObjectPosition(objID)).norm();
+					wps.wantedDir = (goalPos - objPos).norm();
 					wps.wantedForwardSpeed = simObjectIDs[objID]->GetMaxForwardSpeed();
-				coh->SetSimObjectWantedPhysicalState(objID, wps, ee->GetQueued());
+				coh->PushSimObjectWantedPhysicalState(objID, wps, ee->GetQueued(), false);
 
 				DelObjectFromGroup(objID);
 				AddObjectToGroup(objID, groupID);
@@ -85,25 +86,42 @@ void PathModule::Update() {
 		const unsigned int objID = it->first;
 		const SimObjectDef* objDef = it->second;
 
-		WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID);
+		// get the front-most wanted state
+		WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID, true);
 
-		const vec3f vec = wps.wantedPos - coh->GetSimObjectPosition(objID);
-		const float dst = vec.sqLen3D();
+		const vec3f& pos = coh->GetSimObjectPosition(objID);
+		const vec3f  vec = wps.wantedPos - pos;
+		const float  dst = vec.sqLen3D();
 
 		const float brakeTime = coh->GetSimObjectCurrentForwardSpeed(objID) / objDef->GetMaxDeccelerationRate();
 		const float brakeDist = coh->GetSimObjectCurrentForwardSpeed(objID) * brakeTime; // conservative
 
-		if ((brakeDist * brakeDist) >= dst) {
-			if (coh->GetSimObjectNumWantedPhysicalStates(objID) <= 1) {
+		// if only one waypoint left in queue:
+		//    set wanted speed to 0 and replace the front of the queue
+		// if more than one waypoint left in queue:
+		//    pop front waypoint in queue
+		//    update wanted direction of new front waypoint
+		//
+		if (coh->GetSimObjectNumWantedPhysicalStates(objID) <= 1) {
+			if ((brakeDist * brakeDist) >= dst) {
 				wps.wantedForwardSpeed = 0.0f;
 			} else {
 				wps.wantedDir = vec / dst;
-				coh->PopSimObjectWantedPhysicalStates(objID, 1);
+			}
+		} else {
+			if ((brakeDist * brakeDist) >= dst) {
+				coh->PopSimObjectWantedPhysicalStates(objID, 1, true);
 			}
 
-			// FIXME: destroys the queue
-			coh->SetSimObjectWantedPhysicalState(objID, wps, false);
+			const WantedPhysicalState& nwps = coh->GetSimObjectWantedPhysicalState(objID, true);
+
+			wps.wantedPos = (nwps.wantedPos);
+			wps.wantedDir = (nwps.wantedPos - pos).norm();
+			wps.wantedForwardSpeed = nwps.wantedForwardSpeed;
 		}
+
+		coh->PopSimObjectWantedPhysicalStates(objID, 1, true);
+		coh->PushSimObjectWantedPhysicalState(objID, wps, true, true);
 	}
 }
 

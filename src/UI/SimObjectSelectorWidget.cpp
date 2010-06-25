@@ -317,41 +317,50 @@ void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 
 				// draw marker squares around selected objects
 				for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
-					if (simObjectHandler->IsValidSimObjectID(*it)) {
-						const SimObject* obj = simObjectHandler->GetSimObject(*it);
-						const mat44f& objMat = obj->GetMat();
-						const vec3f& objPos = objMat.GetPos();
-						const vec3f& dstPos = obj->GetWantedPhysicalState().wantedPos;
-						const ModelBase* objMdl = obj->GetModel()->GetModelBase();
-						const vec3f objSize = objMdl->maxs - objMdl->mins;
-
-						glPushMatrix();
-							glMultMatrixf(objMat.m);
-							glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
-							glBegin(GL_QUADS);
-								glVertex3f(-objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
-								glVertex3f( objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
-								glVertex3f( objSize.x * 0.5f, 0.0f,  objSize.z * 0.5f);
-								glVertex3f(-objSize.x * 0.5f, 0.0f,  objSize.z * 0.5f);
-							glEnd();
-						glPopMatrix();
-
-
-						if (cursorDst > 0.0f) {
-							glEnable(GL_LINE_STIPPLE);
-							glLineStipple(2, stipplePattern);
-							glBegin(GL_LINES);
-								glColor4f(0.0f, 1.0f, 0.0f, 0.75f); glVertex3f(cursorPos.x, cursorPos.y, cursorPos.z);
-								glColor4f(1.0f, 0.0f, 0.0f, 0.75f); glVertex3f(objPos.x, objPos.y, objPos.z);
-							glEnd();
-							glDisable(GL_LINE_STIPPLE);
-						}
-
-						glBegin(GL_LINES);
-							glColor4f(1.0f, 0.0f, 0.0f, 0.75f); glVertex3f(objPos.x, objPos.y, objPos.z);
-							glColor4f(0.0f, 1.0f, 0.0f, 0.75f); glVertex3f(dstPos.x, dstPos.y, dstPos.z);
-						glEnd();
+					if (!simObjectHandler->IsValidSimObjectID(*it)) {
+						continue;
 					}
+
+					const SimObject* obj = simObjectHandler->GetSimObject(*it);
+					const mat44f& objMat = obj->GetMat();
+					const vec3f& objPos = objMat.GetPos();
+					const ModelBase* objMdl = obj->GetModel()->GetModelBase();
+					const vec3f objSize = objMdl->maxs - objMdl->mins;
+
+					/// const WantedPhysicalState& objState = obj->GetWantedPhysicalState(true);
+					/// const vec3f& dstPos = objState.wantedPos;
+					const std::list<WantedPhysicalState>& objStates = obj->GetWantedPhysicalStates();
+
+					glPushMatrix();
+						glMultMatrixf(objMat.m);
+						glColor4f(1.0f, 0.0f, 0.0f, 0.25f);
+						glBegin(GL_QUADS);
+							glVertex3f(-objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
+							glVertex3f( objSize.x * 0.5f, 0.0f, -objSize.z * 0.5f);
+							glVertex3f( objSize.x * 0.5f, 0.0f,  objSize.z * 0.5f);
+							glVertex3f(-objSize.x * 0.5f, 0.0f,  objSize.z * 0.5f);
+						glEnd();
+					glPopMatrix();
+
+
+					if (cursorDst > 0.0f) {
+						glEnable(GL_LINE_STIPPLE);
+						glLineStipple(2, stipplePattern);
+						glBegin(GL_LINES);
+							glColor4f(0.0f, 1.0f, 0.0f, 0.75f); glVertex3f(cursorPos.x, cursorPos.y, cursorPos.z);
+							glColor4f(1.0f, 0.0f, 0.0f, 0.75f); glVertex3f(objPos.x, objPos.y, objPos.z);
+						glEnd();
+						glDisable(GL_LINE_STIPPLE);
+					}
+
+					glBegin(GL_LINE_STRIP);
+						glColor4f(1.0f, 0.0f, 0.0f, 0.75f); glVertex3f(objPos.x, objPos.y, objPos.z);
+
+						for (std::list<WantedPhysicalState>::const_iterator wit = objStates.begin(); wit != objStates.end(); ++wit) {
+							glColor4f(0.0f, 1.0f, 0.0f, 0.75f); glVertex3f((*wit).wantedPos.x, (*wit).wantedPos.y, (*wit).wantedPos.z);
+						}
+					glEnd();
+
 				}
 
 			glPopAttrib();

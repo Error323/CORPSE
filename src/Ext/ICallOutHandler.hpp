@@ -40,9 +40,9 @@ public:
 	virtual float GetSimObjectCurrentForwardSpeed(unsigned int objID) const = 0;
 
 	virtual unsigned int GetSimObjectNumWantedPhysicalStates(unsigned int objID) const = 0;
-	virtual bool PopSimObjectWantedPhysicalStates(unsigned int objID, unsigned int numStates) const = 0;
-	virtual const WantedPhysicalState& GetSimObjectWantedPhysicalState(unsigned int objID) const = 0;
-	virtual void SetSimObjectWantedPhysicalState(unsigned int objID, const WantedPhysicalState& state, bool queued) const = 0;
+	virtual void PushSimObjectWantedPhysicalState(unsigned int objID, const WantedPhysicalState& state, bool queued, bool front) const = 0;
+	virtual bool PopSimObjectWantedPhysicalStates(unsigned int objID, unsigned int numStates, bool front) const = 0;
+	virtual const WantedPhysicalState& GetSimObjectWantedPhysicalState(unsigned int objID, bool front) const = 0;
 };
 
 #endif

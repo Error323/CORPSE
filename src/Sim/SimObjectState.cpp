@@ -5,12 +5,12 @@
 #include "../Map/Ground.hpp"
 
 void PhysicalState::Update(const SimObject* owner) {
-	if (owner->GetWantedPhysicalStates().empty()) {
+	if ((owner->GetWantedPhysicalStates()).empty()) {
 		return;
 	}
 
 	const SimObjectDef* def = owner->GetDef();
-	const WantedPhysicalState& wps = owner->GetWantedPhysicalState();
+	const WantedPhysicalState& wps = owner->GetWantedPhysicalState(true);
 	const vec3f& wantedDir = wps.wantedDir;
 
 	vec3f currentPos = mat.GetPos();
