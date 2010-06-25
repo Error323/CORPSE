@@ -39,8 +39,8 @@ public:
 	virtual const vec3f& GetSimObjectDirection(unsigned int objID) const = 0;
 	virtual float GetSimObjectCurrentForwardSpeed(unsigned int objID) const = 0;
 
-	virtual unsigned int GetNumWantedPhysicalStates(unsigned int objID) const = 0;
-	virtual bool PopWantedPhysicalStates(unsigned int objID, unsigned int numStates) const = 0;
+	virtual unsigned int GetSimObjectNumWantedPhysicalStates(unsigned int objID) const = 0;
+	virtual bool PopSimObjectWantedPhysicalStates(unsigned int objID, unsigned int numStates) const = 0;
 	virtual const WantedPhysicalState& GetSimObjectWantedPhysicalState(unsigned int objID) const = 0;
 	virtual void SetSimObjectWantedPhysicalState(unsigned int objID, const WantedPhysicalState& state, bool queued) const = 0;
 };

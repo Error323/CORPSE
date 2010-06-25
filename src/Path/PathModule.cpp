@@ -94,13 +94,14 @@ void PathModule::Update() {
 		const float brakeDist = coh->GetSimObjectCurrentForwardSpeed(objID) * brakeTime; // conservative
 
 		if ((brakeDist * brakeDist) >= dst) {
-			if (coh->GetNumWantedPhysicalStates(objID) <= 1) {
+			if (coh->GetSimObjectNumWantedPhysicalStates(objID) <= 1) {
 				wps.wantedForwardSpeed = 0.0f;
 			} else {
-				coh->PopWantedPhysicalStates(objID, 1);
+				wps.wantedDir = vec / dst;
+				coh->PopSimObjectWantedPhysicalStates(objID, 1);
 			}
 
-			// FIXME
+			// FIXME: destroys the queue
 			coh->SetSimObjectWantedPhysicalState(objID, wps, false);
 		}
 	}
