@@ -113,6 +113,7 @@ void PathModule::Update() {
 				coh->PopSimObjectWantedPhysicalStates(objID, 1, true);
 			}
 
+			// peek at the next wanted state
 			const WantedPhysicalState& nwps = coh->GetSimObjectWantedPhysicalState(objID, true);
 
 			wps.wantedPos = (nwps.wantedPos);

@@ -327,8 +327,6 @@ void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 					const ModelBase* objMdl = obj->GetModel()->GetModelBase();
 					const vec3f objSize = objMdl->maxs - objMdl->mins;
 
-					/// const WantedPhysicalState& objState = obj->GetWantedPhysicalState(true);
-					/// const vec3f& dstPos = objState.wantedPos;
 					const std::list<WantedPhysicalState>& objStates = obj->GetWantedPhysicalStates();
 
 					glPushMatrix();
