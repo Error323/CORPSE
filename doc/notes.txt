@@ -25,8 +25,6 @@ parameterized by direction!
 
 
 
-
-
 Continuum Crowds
 	"use a potential function to guide pedestrians (!) to their goal"
 	"use discomfort fields to handle geographical preferences"
@@ -332,3 +330,21 @@ Continuum Crowds
 
 			knownCellPositions = knownCellPositions + {minPotentialCellPos}
 			candidateCellPositions = candidateCellPositions + neighbors(minPotentialCellPos)
+
+
+
+
+	method described in paper for governing speed on slopes does not
+	consider per-unittype maxSlope restrictions; slope is calculated
+	"on the fly" by sampling heightfield in two? places along direction
+	a unit is moving
+
+	each group has its own unique potential-/speed-/discomfort-field?
+	(for heterogeneous groups, this means most restrictive constraints
+	on movement must be obeyed ==> group must move at speed of slowest
+	unit, etc)
+
+	what use is the velocity-field v? according to 4.3, this is the
+	speed-field multiplied by normalized gradient of potential-field,
+	but we do not need to compute it at all to update unit positions
+	via equation [6] ?
