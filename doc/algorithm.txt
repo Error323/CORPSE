@@ -1,0 +1,47 @@
+UpdateGroupPotentialField(IN goalCells, IN costField, OUT potField):
+	// heap of cells ordered by potential low to high
+	CANDIDATES = PriorityQueue 
+	KNOWN      = goalCells
+	UNKNOWN    = allCells - goalCells
+
+	for each cell in KNOWN:
+		potField[cell] = 0
+
+	for each cell in UNKNOWN:
+		potField[cell] = +inf
+
+	for each cell in KNOWN:
+		NEIGHBOURS = Neighbours(cell)
+		for each neighbour in NEIGHBOURS-KNOWN:
+			minPotCellHor = argmin(
+				potField[neighbour + <0, -1>] + costField[neighbour + <0, -1>],
+				potField[neighbour + <0,  1>] + costField[neighbour + <0,  1>]
+			)
+			minPotCellVer = argmin(
+				potField[neighbour + <-1, 0>] + costField[neighbour + <-1, 0>],
+				potField[neighbour + < 1, 0>] + costField[neighbour + < 1, 0>]
+			)
+			
+			// TODO: filter out cells with +inf potential
+			potField[neighbour] = Potential(neighbour, minPotCellHor, minPotCellVer)
+			// TODO: compute delta-potentials
+			Push(CANDIDATES, neighbour)
+
+	while (not Empty(CANDIDATES)):
+		cell = Pop(CANDIDATES)
+		Add(KNOWN, cell)
+		NEIGHBOURS = Neighbours(cell)
+		for each neighbour in NEIGHBOURS-KNOWN:
+			minPotCellHor = argmin(
+				potField[neighbour + <0, -1>] + costField[neighbour + <0, -1>],
+				potField[neighbour + <0,  1>] + costField[neighbour + <0,  1>]
+			)
+			minPotCellVer = argmin(
+				potField[neighbour + <-1, 0>] + costField[neighbour + <-1, 0>],
+				potField[neighbour + < 1, 0>] + costField[neighbour + < 1, 0>]
+			)
+			
+			// TODO: filter out cells with +inf potential
+			potField[neighbour] = Potential(neighbour, minPotCellHor, minPotCellVer)
+			// TODO: compute delta-potentials
+			Push(CANDIDATES, neighbour)
