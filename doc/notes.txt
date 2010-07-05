@@ -362,6 +362,9 @@ Continuum Crowds
 	potential-field (phi) needs
 		cost-field (C)
 
+	average-velocity-field (v-bar) needs
+		density-field (rho)
+
 	velocity-field (v) needs
 		speed-field (f)
 		potential-field gradient (delta-phi)
