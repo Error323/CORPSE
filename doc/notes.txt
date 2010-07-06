@@ -347,7 +347,8 @@ Continuum Crowds
 	what use is the velocity-field v? according to 4.3, this is the
 	speed-field multiplied by normalized gradient of potential-field,
 	but we do not need to compute it explicitly at all to update unit
-	positions via equation [6] ?
+	positions via equation [6] ? ==> not true, we need to (bilinearly)
+	interpolate vector values at corners
 
 
 	cost-field (C) needs
@@ -368,5 +369,3 @@ Continuum Crowds
 	velocity-field (v) needs
 		speed-field (f)
 		potential-field gradient (delta-phi)
-
-		NOTE: we do not have to construct v explicitly!
