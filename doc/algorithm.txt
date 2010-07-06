@@ -1,47 +1,66 @@
+## NOTES:
+## f[x, y] != f[y, x]
+## f{x, y} == f{y, x}
+
+###############################################################################
+## UpdateGroupPotentialField:
+###############################################################################
 UpdateGroupPotentialField(IN goalCells, IN costField, OUT potField):
-	// heap of cells ordered by potential low to high
-	CANDIDATES = PriorityQueue 
+	CANDIDATES = PriorityQueue # ordering low to high
 	KNOWN      = goalCells
 	UNKNOWN    = allCells - goalCells
 
-	for each cell in KNOWN:
+	foreach cell in KNOWN:
 		potField[cell] = 0
 
-	for each cell in UNKNOWN:
+	foreach cell in UNKNOWN:
 		potField[cell] = +inf
 
-	for each cell in KNOWN:
-		NEIGHBOURS = Neighbours(cell)
-		for each neighbour in NEIGHBOURS-KNOWN:
-			minPotCellHor = argmin(
-				potField[neighbour + <0, -1>] + costField[neighbour + <0, -1>],
-				potField[neighbour + <0,  1>] + costField[neighbour + <0,  1>]
-			)
-			minPotCellVer = argmin(
-				potField[neighbour + <-1, 0>] + costField[neighbour + <-1, 0>],
-				potField[neighbour + < 1, 0>] + costField[neighbour + < 1, 0>]
-			)
-			
-			// TODO: filter out cells with +inf potential
-			potField[neighbour] = Potential(neighbour, minPotCellHor, minPotCellVer)
-			// TODO: compute delta-potentials
-			Push(CANDIDATES, neighbour)
+	foreach cell in KNOWN:
+		UpdateCandidates(cell)
 
 	while (not Empty(CANDIDATES)):
 		cell = Pop(CANDIDATES)
 		Add(KNOWN, cell)
-		NEIGHBOURS = Neighbours(cell)
-		for each neighbour in NEIGHBOURS-KNOWN:
-			minPotCellHor = argmin(
-				potField[neighbour + <0, -1>] + costField[neighbour + <0, -1>],
-				potField[neighbour + <0,  1>] + costField[neighbour + <0,  1>]
-			)
-			minPotCellVer = argmin(
-				potField[neighbour + <-1, 0>] + costField[neighbour + <-1, 0>],
-				potField[neighbour + < 1, 0>] + costField[neighbour + < 1, 0>]
-			)
-			
-			// TODO: filter out cells with +inf potential
-			potField[neighbour] = Potential(neighbour, minPotCellHor, minPotCellVer)
-			// TODO: compute delta-potentials
-			Push(CANDIDATES, neighbour)
+		UpdateCandidates(cell)
+
+
+###############################################################################
+## UpdateCandidates:
+###############################################################################
+UpdateCandidates(IN cell):
+	NEIGHBOURS = Neighbours(cell)
+	foreach neighbour in NEIGHBOURS-KNOWN:
+		minPotCellHor = ArgMin(
+			potField[neighbour + WEST] + costField[neighbour, neighbour + WEST],
+			potField[neighbour + EAST] + costField[neighbour, neighbour + EAST]
+		)
+
+		minPotCellVer = ArgMin(
+			potField[neighbour + NORTH] + costField[neighbour, neighbour + NORTH],
+			potField[neighbour + SOUTH] + costField[neighbour, neighbour + SOUTH]
+		)
+		
+		# TODO: filter out cells with +inf potential, this will have
+		#       implications on the potential deltas
+		potField[neighbour] = Potential(neighbour, minPotCellHor, minPotCellVer)
+		potFieldDelta{neighbour, minPotCellHor} = potField[neighbour] - potField[minPotCellHor]
+		potFieldDelta{neighbour, minPotCellVer} = potField[neighbour] - potField[minPotCellVer]
+
+		Push(CANDIDATES, neighbour)
+
+
+###############################################################################
+## Potential:
+###############################################################################
+Potential(IN curCell, IN horCell, IN verCell):
+	potX = potField[horCell]
+	potY = potField[verCell]
+
+	b = 2*potX + 2*potY
+	d = -4*potX^2 + 4*potX*potY - 4*potY^2 
+		+ 8 * costField[curCell, horCell]^2 * costField[curCell, verCell]^2
+
+	solution1 = (-b + sqrt(d)) / 4
+	solution2 = (-b - sqrt(d)) / 4
+	return Max(solution1, solution2)
