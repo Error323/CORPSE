@@ -257,7 +257,7 @@ Continuum Crowds
 
 		knownCellPositions = {goalPos}
 		unknownCellPositions = {cellPos for each cellPos != goalPos}
-		candidateCellPositions = neighbors(unknownCellPositions)
+		candidateCellPositions = neighbors(knownCellPositions)
 
 		while (not all cell potentials updated):
 			minPotential = +INF
