@@ -87,23 +87,22 @@ Potential1(IN curCell, IN neighbourCell):
 ###############################################################################
 ## Potential2:
 ##
-## m = pot(M)
+## p = pot(M)
 ## x = pot(i), where i in {E, W}
 ## c1= cost(M, i)
 ## y = pot(j), where j in {N, S}
 ## c2= cost(M, j)
 ##
-## solve2 ((m-x)/c1)^2 + ((m-y)/c2)^2 = 1 for m:
-##   (m-x)^2/c1^2 + (m-y)^2/c2^2 = 1
-##   (((m^2 - 2*m*x + x^2)*c2) + ((m^2 - 2*m*y + y^2)*c1))/(c1^2 c2^2) = 1
-##   2*m^2 - (2*x + 2*y)*m + (x^2 + y^2) - (c1^2 * c2^2) = 0
+## solve ((p-x)/c1)^2 + ((p-y)/c2)^2 = 1 for p:
+##   (p-x)^2/c1^2 + (p-y)^2/c2^2 = 1
+##   (((p^2 - 2*p*x + x^2)*c2) + ((p^2 - 2*p*y + y^2)*c1))/(c1^2 c2^2) = 1
+##   2*p^2 - (2*x + 2*y)*p + (x^2 + y^2) - (c1^2 * c2^2) = 0
 ##
 ##   using abc-formula x = (-b +/- sqrt(b^2 - 4ac)) / 2a we get:
 ##   a = 2
 ##   b = (2b + 2d)
 ##   c = (b^2 + d^2) - (d^2 * e^2)
-##   m = max( (-b - sqrt(b^2 - 4ac))/2a, (-b + sqrt(b^2 - 4ac))/2a )
-##   
+##   p = max( (-b - sqrt(b^2 - 4ac))/2a, (-b + sqrt(b^2 - 4ac))/2a )
 ###############################################################################
 Potential2(IN curCell, IN horCell, IN verCell):
 	potX  = potField[horCell]
