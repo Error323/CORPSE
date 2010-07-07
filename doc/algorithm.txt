@@ -63,16 +63,16 @@ UpdateCandidates(IN cell):
 ###############################################################################
 ## Potential1:
 ##
-## a = pot(M)
-## b = pot(i), where i in {N,S,E,W}
+## p = pot(M)
+## d = pot(i), where i in {N,S,E,W} of M
 ## c = cost(M, i)
 ##
-## solve ((a-b)/c)^2 = 1 for a:
-##   (a-b)^2 / c^2 = 1
-##   (a-b)^2 = c^2
-##   |(a-b)| = c
-##   a-b = c, a-b = -c
-##   a = b - c, a = b + c
+## solve ((p - d)/c)^2 = 1 for p:
+##   (p - d)^2 / c^2 = 1
+##   (p - d)^2 = c^2
+##   |(p - d)| = c
+##   p - d = c, p - d = -c
+##   p = d - c, p = d + c
 ###############################################################################
 Potential1(IN curCell, IN neighbourCell):
 	pot  = potField[neighbourCell]
@@ -88,9 +88,9 @@ Potential1(IN curCell, IN neighbourCell):
 ## Potential2:
 ##
 ## p = pot(M)
-## x = pot(i), where i in {E, W}
+## x = pot(i), where i in {E, W} of M
 ## c1= cost(M, i)
-## y = pot(j), where j in {N, S}
+## y = pot(j), where j in {N, S} of M
 ## c2= cost(M, j)
 ##
 ## solve ((p-x)/c1)^2 + ((p-y)/c2)^2 = 1 for p:
