@@ -29,7 +29,6 @@ Debugger::Debugger(): mEnabled(false) {
 
 Debugger::~Debugger() {
 	mInputHandler->DelReceiver(this);
-	delete mKey;
 }
 
 void Debugger::Begin(const char* filename, int line) {
