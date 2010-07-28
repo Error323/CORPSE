@@ -96,8 +96,8 @@ SET(CORPSE_SOURCE
 	src/System/ByteOrder.hpp
 	src/System/Client.cpp
 	src/System/Client.hpp
-	src/System/Debug.cpp
-	src/System/Debug.hpp
+	src/System/Debugger.cpp
+	src/System/Debugger.hpp
 	src/System/EngineAux.cpp
 	src/System/EngineAux.hpp
 	src/System/Engine.cpp
