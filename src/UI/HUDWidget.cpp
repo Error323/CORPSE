@@ -61,6 +61,7 @@ void ui::HUDWidget::Update(const vec3i&, const vec3i& size) {
 	glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glLoadIdentity();
+		// text needs to be drawn in absolute coordinates
 		glOrtho(-size.x, size.x, -size.y, size.y, -100000.0, 100000.0);
 	glMatrixMode(GL_MODELVIEW);
 		glPushAttrib(GL_ENABLE_BIT);
