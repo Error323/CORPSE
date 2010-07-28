@@ -6,7 +6,7 @@
 ## UpdateGroupPotentialField:
 ###############################################################################
 UpdateGroupPotentialField(IN goalCells, IN costField, OUT potField):
-	CANDIDATES = PriorityQueue # ordering low to high
+	CANDIDATES = PriorityQueue # ordering on potential from low to high
 	KNOWN      = goalCells
 	UNKNOWN    = allCells - goalCells
 
@@ -31,36 +31,88 @@ UpdateGroupPotentialField(IN goalCells, IN costField, OUT potField):
 UpdateCandidates(IN cell):
 	NEIGHBOURS = Neighbours(cell)
 	foreach neighbour in NEIGHBOURS-KNOWN:
-		minPotCellHor = ArgMin(
-			potField[neighbour + WEST] + costField[neighbour, neighbour + WEST],
-			potField[neighbour + EAST] + costField[neighbour, neighbour + EAST]
-		)
+		costWest  = potField[neighbour + WEST ] + costField[neighbour, neighbour + WEST ]
+		costEast  = potField[neighbour + EAST ] + costField[neighbour, neighbour + EAST ]
+		costNorth = potField[neighbour + NORTH] + costField[neighbour, neighbour + NORTH]
+		costSouth = potField[neighbour + SOUTH] + costField[neighbour, neighbour + SOUTH]
 
-		minPotCellVer = ArgMin(
-			potField[neighbour + NORTH] + costField[neighbour, neighbour + NORTH],
-			potField[neighbour + SOUTH] + costField[neighbour, neighbour + SOUTH]
-		)
-		
-		# TODO: filter out cells with +inf potential, this will have
-		#       implications on the potential deltas
-		potField[neighbour] = Potential(neighbour, minPotCellHor, minPotCellVer)
-		potFieldDelta{neighbour, minPotCellHor} = potField[neighbour] - potField[minPotCellHor]
-		potFieldDelta{neighbour, minPotCellVer} = potField[neighbour] - potField[minPotCellVer]
+		## potential is undefined on x axis
+		if (costWest is +inf and costEast is +inf):
+			minPotCellVer = ArgMin_{cell}(costNorth, costSouth)
+			potField[neighbour] = Potential1(minPotCellVer)
+			potFieldDelta{neighbour, minPotCellVer} = potField[neighbour] - potField[minPotCellVer]
+
+		## potential is undefined on y axis
+		elif (costNorth is +inf and costSouth is +inf):
+			minPotCellHor = ArgMin_{cell}(costEast, costWest)
+			potField[neighbour] = Potential1(minPotCellHor)
+			potFieldDelta{neighbour, minPotCellHor} = potField[neighbour] - potField[minPotCellHor]
+
+		## potential defined on both axis
+		else:
+			minPotCellHor = ArgMin_{cell}(costEast, costWest)
+			minPotCellVer = ArgMin_{cell}(costNorth, costSouth)
+
+			potField[neighbour] = Potential2(neighbour, minPotCellHor, minPotCellVer)
+			potFieldDelta{neighbour, minPotCellHor} = potField[neighbour] - potField[minPotCellHor]
+			potFieldDelta{neighbour, minPotCellVer} = potField[neighbour] - potField[minPotCellVer]
 
 		Push(CANDIDATES, neighbour)
 
 
 ###############################################################################
-## Potential:
+## Potential1:
+##
+## p = pot(M)
+## d = pot(i), where i in {N,S,E,W} of M
+## c = cost(M, i)
+##
+## solve ((p - d)/c)^2 = 1 for p:
+##   (p - d)^2 / c^2 = 1
+##   (p - d)^2 = c^2
+##   |(p - d)| = c
+##   p - d = c, p - d = -c
+##   p = max(d - c, d + c)
 ###############################################################################
-Potential(IN curCell, IN horCell, IN verCell):
-	potX = potField[horCell]
-	potY = potField[verCell]
+Potential1(IN curCell, IN neighbourCell):
+	pot  = potField[neighbourCell]
+	cost = costField[curCell, neighbourCell]
+
+	solution1 = pot + cost
+	solution2 = pot - cost
+	return Max(solution1, solution2)
+
+
+
+###############################################################################
+## Potential2:
+##
+## p = pot(M)
+## x = pot(i), where i in {E, W} of M
+## c1= cost(M, i)
+## y = pot(j), where j in {N, S} of M
+## c2= cost(M, j)
+##
+## solve ((p-x)/c1)^2 + ((p-y)/c2)^2 = 1 for p:
+##   (p-x)^2/c1^2 + (p-y)^2/c2^2 = 1
+##   (((p^2 - 2*p*x + x^2)*c2) + ((p^2 - 2*p*y + y^2)*c1))/(c1^2 c2^2) = 1
+##   2*p^2 - (2*x + 2*y)*p + (x^2 + y^2) - (c1^2 * c2^2) = 0
+##
+##   using abc-formula x = (-b +/- sqrt(b^2 - 4ac)) / 2a we get:
+##   a = 2
+##   b = (2*x + 2*y)
+##   c = (x^2 + y^2) - (c1^2 * c2^2)
+##   p = max( (-b - sqrt(b^2 - 4ac))/2a, (-b + sqrt(b^2 - 4ac))/2a )
+###############################################################################
+Potential2(IN curCell, IN horCell, IN verCell):
+	potX  = potField[horCell]
+	potY  = potField[verCell]
+	costX = costField[curCell, horCell]
+	costY = costField[curCell, verCell]
 
 	b = 2*potX + 2*potY
-	d = -4*potX^2 + 4*potX*potY - 4*potY^2 
-		+ 8 * costField[curCell, horCell]^2 * costField[curCell, verCell]^2
+	d = sqrt(-4*potX^2 + 4*potX*potY - 4*potY^2  +  8 * costX^2 * costY^2)
 
-	solution1 = (-b + sqrt(d)) / 4
-	solution2 = (-b - sqrt(d)) / 4
+	solution1 = (-b + d) / 4
+	solution2 = (-b - d) / 4
 	return Max(solution1, solution2)
