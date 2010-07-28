@@ -7,6 +7,7 @@
 #include "./SimObjectSelectorWidget.hpp"
 #include "./SimObjectSpawnerWidget.hpp"
 #include "./HUDWidget.hpp"
+#include "./AssertWidget.hpp"
 #include "../Input/InputHandler.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
@@ -38,6 +39,7 @@ ui::UI::UI() {
 	widgets.push_back(new SimObjectSelectorWidget());
 	widgets.push_back(new SimObjectSpawnerWidget());
 	widgets.push_back(new HUDWidget());
+	widgets.push_back(AssertWidget::GetInstance());
 
 	inputHandler->AddReceiver(this);
 

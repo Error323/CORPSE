@@ -22,6 +22,7 @@
 #include "./Client.hpp"
 #include "./NetMessageBuffer.hpp"
 #include "./ScopedTimer.hpp"
+#include "./Debug.hpp"
 
 CClient* CClient::GetInstance(int argc, char** argv) {
 	static CClient* c = NULL;
