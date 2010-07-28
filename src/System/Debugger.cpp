@@ -1,4 +1,5 @@
 #include "./Debugger.hpp"
+#include "../Input/InputHandler.hpp"
 #include "../UI/Window.hpp"
 
 #include <cstdio>

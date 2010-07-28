@@ -5,7 +5,6 @@
 #include <string>
 
 #include "../Input/InputReceiver.hpp"
-#include "../Input/InputHandler.hpp"
 
 
 
@@ -49,6 +48,7 @@
 
 
 
+class InputHandler;
 class Debugger: public CInputReceiver {
 public:
 	Debugger();
