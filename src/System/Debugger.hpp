@@ -48,7 +48,7 @@
 
 
 
-class InputHandler;
+class CInputHandler;
 class Debugger: public CInputReceiver {
 public:
 	Debugger();
