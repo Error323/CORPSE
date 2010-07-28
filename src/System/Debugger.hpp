@@ -42,7 +42,7 @@
 #define FATAL(...) \
 	do {                                        \
 		char buffer[2048];                      \
-		sprintf(buffer, __VA_ARGS__);           \
+		snprintf(buffer, 2048, __VA_ARGS__);    \
 		Debugger::GetInstance()->Print(buffer); \
 	} while (0)
 

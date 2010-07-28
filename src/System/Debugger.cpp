@@ -33,7 +33,7 @@ Debugger::~Debugger() {
 }
 
 void Debugger::Begin(const char* filename, int line) {
-	sprintf(mKey, "%s:%d", filename, line);
+	snprintf(mKey, 1024, "%s:%d", filename, line);
 
 	std::map<char*, bool>::iterator i = mIgnoreForever.find(mKey);
 	if (i == mIgnoreForever.end()) {
