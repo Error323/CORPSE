@@ -5,6 +5,7 @@ class CNetMessageBuffer;
 class EventHandler;
 class CClient;
 class CServer;
+class Debugger;
 
 struct EngineAux;
 class CEngine {
@@ -23,6 +24,8 @@ private:
 	EngineAux* mEngineAux;
 	CClient* mClient;
 	CServer* mServer;
+
+	Debugger* mDebugger;
 };
 
 #endif

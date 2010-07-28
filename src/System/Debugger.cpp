@@ -1,37 +1,40 @@
-#include "./Debug.hpp"
-#include "../UI/AssertWidget.hpp"
+#include "./Debugger.hpp"
 #include "../UI/Window.hpp"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <SDL.h>
 
-Debug *Debug::mInstance = NULL;
-Debug *theDebugger = Debug::GetInstance();
+Debugger* Debugger::GetInstance() {
+	static Debugger* instance = NULL;
 
-Debug* Debug::GetInstance() {
-	if (mInstance == NULL)
-		mInstance = new Debug();
-	return mInstance;
+	if (instance == NULL) {
+		instance = new Debugger();
+	}
+
+	return instance;
 }
 
-void Debug::Init() {
+void Debugger::FreeInstance(Debugger* d) {
+	delete d;
+}
+
+
+
+Debugger::Debugger(): mEnabled(false) {
 	mInputHandler = CInputHandler::GetInstance();
 	mInputHandler->AddReceiver(this);
 }
 
-Debug::~Debug() {
+Debugger::~Debugger() {
+	mInputHandler->DelReceiver(this);
 	delete mKey;
 }
 
-void Debug::Pause() {
-}
-
-void Debug::Begin(const char *filename, int line) {
+void Debugger::Begin(const char* filename, int line) {
 	sprintf(mKey, "%s:%d", filename, line);
 
-	std::map<char*, bool>::iterator i;
-	i = mIgnoreForever.find(mKey);
+	std::map<char*, bool>::iterator i = mIgnoreForever.find(mKey);
 	if (i == mIgnoreForever.end()) {
 		mIgnoreForever[mKey] = false;
 	}
@@ -39,30 +42,26 @@ void Debug::Begin(const char *filename, int line) {
 	if (mIgnoreForever[mKey])
 		return;
 
-	using namespace ui;
-	AssertWidget *assertWidget = AssertWidget::GetInstance();
-	if (assertWidget != NULL)
-		assertWidget->Enable();
+	mEnabled = true;
+	mMessage.clear();
 }
 
-void Debug::Print(const char *msg) {
+void Debugger::Print(const char* msg) {
 	if (mIgnoreForever[mKey])
 		return;
 
-	using namespace ui;
-	AssertWidget *assertWidget = AssertWidget::GetInstance();
-	if (assertWidget != NULL)
-		assertWidget->SetText(msg);
+	mMessage += std::string(msg);
 	fprintf(stderr, msg);
 }
 
-bool Debug::End() {
+bool Debugger::End() {
 	bool breakPoint = false;
 
 	if (mIgnoreForever[mKey])
 		return breakPoint;
 
 	Print("\n\nPress LEFT for debugging, UP for ignore or DOWN for ignore forever");
+	/// FIXME
 	using namespace ui;
 	IWindow* window = IWindow::GetInstance();
 	if (window != NULL)
@@ -72,7 +71,7 @@ bool Debug::End() {
 	EnableInput();
 	bool input = true;
 	while (input) {
-		switch(mKeyReleased) {
+		switch (mKeyReleased) {
 			case SDLK_LEFT: 
 				input = false;
 				breakPoint = true;
@@ -93,14 +92,13 @@ bool Debug::End() {
 	}
 	mKeyReleased = 0;
 	DisableInput();
-	
-	AssertWidget *assertWidget = AssertWidget::GetInstance();
-	if (assertWidget != NULL)
-		assertWidget->Disable();
+
+	mEnabled = false;
+	mMessage.clear();
 
 	return breakPoint;
 }
 
-void Debug::KeyReleased(int key) {
+void Debugger::KeyReleased(int key) {
 	mKeyReleased = key;
 }

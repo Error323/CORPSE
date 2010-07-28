@@ -39,7 +39,7 @@ ui::UI::UI() {
 	widgets.push_back(new SimObjectSelectorWidget());
 	widgets.push_back(new SimObjectSpawnerWidget());
 	widgets.push_back(new HUDWidget());
-	widgets.push_back(AssertWidget::GetInstance());
+	widgets.push_back(new AssertWidget());
 
 	inputHandler->AddReceiver(this);
 

@@ -13,7 +13,7 @@
 #include "./Server.hpp"
 #include "./EventHandler.hpp"
 #include "./NetMessageBuffer.hpp"
-#include "./Debug.hpp"
+#include "./Debugger.hpp"
 
 CEngine* CEngine::GetInstance(int argc, char** argv) {
 	static CEngine* e = NULL;
@@ -44,7 +44,8 @@ CEngine::CEngine(int argc, char** argv) {
 	mServer = CServer::GetInstance();
 	mClient = CClient::GetInstance(argc, argv);
 
-	theDebugger->Init();
+	// needs to be initialized after mClient
+	mDebugger = Debugger::GetInstance();
 
 	mClient->SetClientID(mServer->GetNumClients());
 	mServer->AddNetMessageBuffer(mClient->GetClientID());
@@ -54,6 +55,8 @@ CEngine::CEngine(int argc, char** argv) {
 
 CEngine::~CEngine() {
 	mServer->DelNetMessageBuffer(mClient->GetClientID());
+
+	Debugger::FreeInstance(mDebugger);
 
 	CServer::FreeInstance(mServer);
 	CClient::FreeInstance(mClient);
