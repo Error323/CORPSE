@@ -3,10 +3,11 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 #-------------------------------------------------------------------------------
 # General Settings
+# NOTE: -O2 breaks rendering without -fno-strict-aliasing
 #-------------------------------------------------------------------------------
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_MODULE_PATH "${CORPSE_SOURCE_DIR}/cmake/packages")
-SET(CMAKE_CXX_FLAGS "-O1 -g -Wall -Wextra") ## NOTE -O2 seems to break rendering
+SET(CMAKE_CXX_FLAGS "-O2 -fno-strict-aliasing -g -Wall -Wextra")
 
 #-------------------------------------------------------------------------------
 # Extract and set the version
