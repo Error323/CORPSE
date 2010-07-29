@@ -1,8 +1,8 @@
-#include <cassert>
 #include "./SMFMapFile.hpp"
 #include "./SMFFormat.hpp"
 #include "../../System/EngineAux.hpp"
 #include "../../System/Logger.hpp"
+#include "../../System/Debugger.hpp"
 
 using std::string;
 
@@ -14,7 +14,7 @@ CSMFMapFile::CSMFMapFile(const string& mapname): ifs(mapname), featureFileOffset
 	if (!ifs.FileExists()) {
 		LOG << "[CSMFMapFile::CSMFMapFile]\n";
 		LOG << "\tCouldn't open map file " << mapname << "\n";
-		assert(false);
+		PFFG_ASSERT(false);
 	}
 
 	READPTR_MAPHEADER(header, (&ifs));
@@ -24,7 +24,7 @@ CSMFMapFile::CSMFMapFile(const string& mapname): ifs(mapname), featureFileOffset
 		header.texelPerSquare != 8 || header.squareSize != 8) {
 		LOG << "[CSMFMapFile::CSMFMapFile]\n";
 		LOG << "\tincorrect or corrupt map file " << mapname << "\n";
-		assert(false);
+		PFFG_ASSERT(false);
 	}
 }
 
@@ -83,7 +83,7 @@ void CSMFMapFile::ReadFeatureInfo() {
 
 
 void CSMFMapFile::ReadFeatureInfo(MapFeatureInfo* f) {
-	assert(featureFileOffset != 0);
+	PFFG_ASSERT(featureFileOffset != 0);
 	ifs.Seek(featureFileOffset);
 
 	for(int a = 0; a < featureHeader.numFeatures; ++a) {
@@ -98,7 +98,7 @@ void CSMFMapFile::ReadFeatureInfo(MapFeatureInfo* f) {
 
 
 const char* CSMFMapFile::GetFeatureType(int typeID) const {
-	assert(typeID >= 0 && typeID < featureHeader.numFeatureType);
+	PFFG_ASSERT(typeID >= 0 && typeID < featureHeader.numFeatureType);
 	return featureTypes[typeID].c_str();
 }
 
@@ -166,7 +166,7 @@ void CSMFMapFile::ReadGrassMap(void* data) {
 		}
 		else {
 			// assumes we can use data as scratch memory
-			assert(size - 8 <= header.mapx / 4 * header.mapy / 4);
+			PFFG_ASSERT(size - 8 <= header.mapx / 4 * header.mapy / 4);
 			ifs.Read(data, size - 8);
 		}
 	}

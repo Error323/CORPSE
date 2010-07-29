@@ -1,4 +1,3 @@
-#include <cassert>
 #include <GL/gl.h>
 
 #include "./RenderThread.hpp"
@@ -9,6 +8,7 @@
 #include "../Math/BitOps.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/Logger.hpp"
+#include "../System/Debugger.hpp"
 
 typedef CSMFRenderer::Square RSquare;
 
@@ -92,14 +92,14 @@ void CSMFRenderer::GetPotentiallyVisibleSquares(const vec3f& p0, const vec3f& p1
 
 
 inline static float GetHeight(const float* hm, float x, float z) {
-	// assert(readMap != NULL);
+	// PFFG_ASSERT(readMap != NULL);
 	const int hx = int(x / readMap->SQUARE_SIZE);
 	const int hz = int(z / readMap->SQUARE_SIZE);
 	const int hw = (readMap->mapx + 1);
 	// const int hh = (readMap->mapy + 1);
 	const int id = (hz * hw) + hx;
 
-	// assert(id >= 0 && id < (hw * hh));
+	// PFFG_ASSERT(id >= 0 && id < (hw * hh));
 	return hm[id];
 }
 
@@ -138,7 +138,7 @@ inline static const vec3f& GetVertexNormal(const float* /*hm*/, const RSquare& q
 		tr = vec3f(wxx - xlod, 0.0f, wzz); tr.y = GetHeight(hm, tr.x, tr.z);
 		e0 = tr - tl;
 	} else {
-		// assert((wxx + xlod <= maxx + 1));
+		// PFFG_ASSERT((wxx + xlod <= maxx + 1));
 		tr = vec3f(wxx + xlod, 0.0f, wzz); tr.y = GetHeight(hm, tr.x, tr.z);
 		e0 = tl - tr;
 	}
@@ -150,7 +150,7 @@ inline static const vec3f& GetVertexNormal(const float* /*hm*/, const RSquare& q
 		bl = vec3f(wxx, 0.0f, wzz - zlod); bl.y = GetHeight(hm, bl.x, bl.z);
 		e1 = bl - tl;
 	} else {
-		// assert((wzz + zlod <= maxz + 1));
+		// PFFG_ASSERT((wzz + zlod <= maxz + 1));
 		bl = vec3f(wxx, 0.0f, wzz + zlod); bl.y = GetHeight(hm, bl.x, bl.z);
 		e1 = tl - bl;
 	}

@@ -1,11 +1,11 @@
 #include <GL/glew.h>
-#include <cassert>
 
 #include "./ShaderHandler.hpp"
 #include "./Shader.hpp"
 #include "../../System/EngineAux.hpp"
 #include "../../System/FileHandler.hpp"
 #include "../../System/Logger.hpp"
+#include "../../System/Debugger.hpp"
 
 CShaderHandler* CShaderHandler::GetInstance() {
 	static CShaderHandler shaHandler;
@@ -83,7 +83,7 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(
 
 
 Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType) {
-	assert(!soName.empty());
+	PFFG_ASSERT(!soName.empty());
 
 	bool arbShader = false;
 
@@ -116,18 +116,18 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 	switch (soType) {
 		case GL_VERTEX_PROGRAM_ARB:
 		case GL_FRAGMENT_PROGRAM_ARB: {
-			assert(arbShader);
+			PFFG_ASSERT(arbShader);
 			so = new Shader::ARBShaderObject(soType, soSource);
 		} break;
 
 		case GL_VERTEX_SHADER:
 		case GL_FRAGMENT_SHADER: {
-			assert(!arbShader);
+			PFFG_ASSERT(!arbShader);
 			so = new Shader::GLSLShaderObject(soType, soSource);
 		} break;
 	}
 
-	assert(so != NULL);
+	PFFG_ASSERT(so != NULL);
 	so->Compile();
 
 	if (!so->IsValid()) {

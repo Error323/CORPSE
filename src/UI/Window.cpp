@@ -1,5 +1,3 @@
-#include <cassert>
-
 #include <SDL/SDL.h>
 #include <SDL/SDL_syswm.h>
 #include <GL/glxew.h>
@@ -10,6 +8,7 @@
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
 #include "../System/Logger.hpp"
+#include "../System/Debugger.hpp"
 
 #include "CORPSE.hpp"
 
@@ -18,7 +17,7 @@ ui::IWindow* ui::IWindow::GetInstance() {
 	static unsigned int depth = 0;
 
 	if (w == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		w = new SDLWindow();
@@ -129,7 +128,7 @@ void ui::SDLWindow::SetSDLVideoMode() {
 	if (mScreen == NULL) {
 		LOG << "[SDLWindow::SetSDLVideoMode]\n";
 		LOG << "\tSDL video mode error " << SDL_GetError() << "\n";
-		assert(false);
+		PFFG_ASSERT(false);
 	}
 }
 

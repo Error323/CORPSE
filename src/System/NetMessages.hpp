@@ -1,9 +1,10 @@
 #ifndef PFFG_NETMESSAGES_HDR
 #define PFFG_NETMESSAGES_HDR
 
-#include <cassert>
 #include <cstring>
 #include <vector> 
+
+#include "./Debugger.hpp"
 
 // messages originating from client
 enum ClientMessageIDs {
@@ -43,8 +44,8 @@ public:
 	}
 
 	template<typename T> NetMessage& operator << (T t) {
-		assert(!full);
-		assert((pos + sizeof(T)) <= data.size());
+		PFFG_ASSERT(!full);
+		PFFG_ASSERT((pos + sizeof(T)) <= data.size());
 		memcpy(&data[pos], reinterpret_cast<unsigned char*>(&t), sizeof(T));
 		pos += sizeof(T);
 		full = (pos >= data.size());
@@ -59,8 +60,8 @@ public:
 	}
 
 	template<typename T> NetMessage& operator >> (T& t) {
-		assert(full);
-		assert((pos + sizeof(T)) <= data.size());
+		PFFG_ASSERT(full);
+		PFFG_ASSERT((pos + sizeof(T)) <= data.size());
 		t = *(reinterpret_cast<T*>(&data[pos]));
 		pos += sizeof(T);
 		return *this;

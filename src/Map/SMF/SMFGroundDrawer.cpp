@@ -77,7 +77,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm):
 			pObj->SetUniform1i(1, 7);               // (idx 1, texunit 7)
 			pObj->Disable();
 		} else {
-			assert(false);
+			PFFG_ASSERT(false);
 		}
 
 		LOG << "\n";

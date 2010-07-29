@@ -16,8 +16,8 @@ EngineAux* EngineAux::GetInstance(int argCnt, char** argVec) {
 	static unsigned int depth = 0;
 
 	if (e == NULL) {
-		assert(argCnt != 0 && argVec != NULL);
-		assert(depth == 0);
+		PFFG_ASSERT(argCnt != 0 && argVec != NULL);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		e = new EngineAux(argCnt, argVec);
@@ -40,7 +40,7 @@ EngineAux::EngineAux(int argCnt, char** argVec) {
 	}
 
 	srandom(time(NULL));
-	assert(getcwd(EngineAux::cwd, 1024) != NULL);
+	PFFG_ASSERT(getcwd(EngineAux::cwd, 1024) != NULL);
 
 	EngineAux::argc = argCnt;
 	EngineAux::argv = argVec;

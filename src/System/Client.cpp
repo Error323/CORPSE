@@ -5,7 +5,6 @@
 #include <GL/glut.h>
 
 #include <cmath>
-#include <cassert>
 #include <iostream>
 
 #include "../Input/InputHandler.hpp"
@@ -13,23 +12,24 @@
 #include "../Renderer/RenderThread.hpp"
 #include "../Renderer/CameraController.hpp"
 #include "../Renderer/Camera.hpp"
-#include "../System/EngineAux.hpp"
-#include "../System/LuaParser.hpp"
-#include "../System/Logger.hpp"
 #include "../Math/vec3.hpp"
 #include "../Math/Trig.hpp"
 #include "../UI/Window.hpp"
 #include "./Client.hpp"
 #include "./NetMessageBuffer.hpp"
 #include "./ScopedTimer.hpp"
+#include "./EngineAux.hpp"
+#include "./LuaParser.hpp"
+#include "./Logger.hpp"
+#include "./Debugger.hpp"
 
 CClient* CClient::GetInstance(int argc, char** argv) {
 	static CClient* c = NULL;
 	static unsigned depth = 0;
 
 	if (c == NULL) {
-		assert(depth == 0);
-		assert(argc != 0 && argv != NULL);
+		PFFG_ASSERT(depth == 0);
+		PFFG_ASSERT(argc != 0 && argv != NULL);
 
 		depth += 1;
 		c = new CClient(argc, argv);
@@ -115,7 +115,7 @@ void CClient::ReadNetMessages() {
 			} break;
 
 			default: {
-				assert(false);
+				PFFG_ASSERT(false);
 			} break;
 		}
 	}
@@ -186,7 +186,7 @@ void CClient::InitSDL() {
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
 		LOG << "\tSDL initialization error " << SDL_GetError() << "\n";
-		assert(false);
+		PFFG_ASSERT(false);
 	}
 
 	SDL_version hdr; SDL_VERSION(&hdr);

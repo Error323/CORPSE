@@ -44,7 +44,7 @@ CBitMap::~CBitMap() {
 }
 
 CBitMap::CBitMap(const CBitMap& old) {
-	assert(old.type != BitmapTypeDDS);
+	PFFG_ASSERT(old.type != BitmapTypeDDS);
 	ddsimage = 0;
 	type = old.type;
 	xsize = old.xsize;
@@ -342,7 +342,7 @@ unsigned int CBitMap::CreateDDSTexture() {
 			}
 		} break;
 		default: {
-			assert(false);
+			PFFG_ASSERT(false);
 		} break;
 	}
 

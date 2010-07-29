@@ -10,7 +10,7 @@ ui::IFontManager* ui::IFontManager::GetInstance() {
 	static unsigned int depth = 0;
 
 	if (fm == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		fm = new FTGLFontManager();

@@ -1,5 +1,3 @@
-#include <cassert>
-
 #include <SDL/SDL.h>
 
 #include "./UI.hpp"
@@ -11,13 +9,14 @@
 #include "../Input/InputHandler.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
+#include "../System/Debugger.hpp"
 
 ui::UI* ui::UI::GetInstance() {
 	static UI* ui = NULL;
 	static unsigned int depth = 0;
 
 	if (ui == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		ui = new UI();

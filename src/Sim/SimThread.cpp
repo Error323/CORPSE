@@ -16,7 +16,7 @@ CSimThread* CSimThread::GetInstance() {
 	static unsigned int depth = 0;
 
 	if (st == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		st = new CSimThread();
@@ -88,13 +88,13 @@ void CSimThread::SimCommand(NetMessage& m) {
 
 	switch (simCommandID) {
 		case COMMAND_CREATE_SIMOBJECT: {
-			assert(!m.End()); m >> objectDefID;
-			assert(!m.End()); m >> objectPos.x;
-			assert(!m.End()); m >> objectPos.y;
-			assert(!m.End()); m >> objectPos.z;
-			assert(!m.End()); m >> objectDir.x;
-			assert(!m.End()); m >> objectDir.y;
-			assert(!m.End()); m >> objectDir.z;
+			PFFG_ASSERT(!m.End()); m >> objectDefID;
+			PFFG_ASSERT(!m.End()); m >> objectPos.x;
+			PFFG_ASSERT(!m.End()); m >> objectPos.y;
+			PFFG_ASSERT(!m.End()); m >> objectPos.z;
+			PFFG_ASSERT(!m.End()); m >> objectDir.x;
+			PFFG_ASSERT(!m.End()); m >> objectDir.y;
+			PFFG_ASSERT(!m.End()); m >> objectDir.z;
 
 			if (readMap->PosInBounds(objectPos)) {
 				mSimObjectHandler->AddObject(objectDefID, objectPos, objectDir, false);
@@ -102,7 +102,7 @@ void CSimThread::SimCommand(NetMessage& m) {
 		} break;
 
 		case COMMAND_DESTROY_SIMOBJECT: {
-			assert(!m.End()); m >> objectID;
+			PFFG_ASSERT(!m.End()); m >> objectID;
 
 			mSimObjectHandler->DelObject(objectID, false);
 		} break;
@@ -110,11 +110,11 @@ void CSimThread::SimCommand(NetMessage& m) {
 		case COMMAND_MOVE_SIMOBJECT: {
 			SimObjectMoveOrderEvent e(frame);
 
-			assert(!m.End()); m >> objectPos.x;
-			assert(!m.End()); m >> objectPos.y;
-			assert(!m.End()); m >> objectPos.z;
-			assert(!m.End()); m >> queueCommand;
-			assert(!m.End());
+			PFFG_ASSERT(!m.End()); m >> objectPos.x;
+			PFFG_ASSERT(!m.End()); m >> objectPos.y;
+			PFFG_ASSERT(!m.End()); m >> objectPos.z;
+			PFFG_ASSERT(!m.End()); m >> queueCommand;
+			PFFG_ASSERT(!m.End());
 
 			e.SetGoalPos(objectPos);
 			e.SetQueued(queueCommand);

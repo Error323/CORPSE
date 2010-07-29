@@ -205,9 +205,9 @@ CDDSImage::~CDDSImage() {
 }
 
 void CDDSImage::create_textureFlat(unsigned int format, unsigned int components, const CTexture &baseImage) {
-	assert(format != 0);
-	assert(components != 0);
-	assert(baseImage.get_depth() == 1);
+	PFFG_ASSERT(format != 0);
+	PFFG_ASSERT(components != 0);
+	PFFG_ASSERT(baseImage.get_depth() == 1);
 
 	// remove any existing images
 	clear();
@@ -222,9 +222,9 @@ void CDDSImage::create_textureFlat(unsigned int format, unsigned int components,
 }
 
 void CDDSImage::create_texture3D(unsigned int format, unsigned int components, const CTexture &baseImage) {
-	assert(format != 0);
-	assert(components != 0);
-	assert(baseImage.get_depth() > 1);
+	PFFG_ASSERT(format != 0);
+	PFFG_ASSERT(components != 0);
+	PFFG_ASSERT(baseImage.get_depth() > 1);
 
 	// remove any existing images
 	clear();
@@ -253,16 +253,16 @@ void CDDSImage::create_textureCubemap(unsigned int format, unsigned int componen
                                       const CTexture &positiveX, const CTexture &negativeX, 
                                       const CTexture &positiveY, const CTexture &negativeY, 
                                       const CTexture &positiveZ, const CTexture &negativeZ) {
-	assert(format != 0);
-	assert(components != 0);
-	assert(positiveX.get_depth() == 1);
+	PFFG_ASSERT(format != 0);
+	PFFG_ASSERT(components != 0);
+	PFFG_ASSERT(positiveX.get_depth() == 1);
 
 	// verify that all dimensions are the same 
-	assert(same_size(positiveX, negativeX));
-	assert(same_size(positiveX, positiveY));
-	assert(same_size(positiveX, negativeY));
-	assert(same_size(positiveX, positiveZ));
-	assert(same_size(positiveX, negativeZ));
+	PFFG_ASSERT(same_size(positiveX, negativeX));
+	PFFG_ASSERT(same_size(positiveX, positiveY));
+	PFFG_ASSERT(same_size(positiveX, negativeY));
+	PFFG_ASSERT(same_size(positiveX, positiveZ));
+	PFFG_ASSERT(same_size(positiveX, negativeZ));
 
 	// remove any existing images
 	clear();
@@ -287,7 +287,7 @@ void CDDSImage::create_textureCubemap(unsigned int format, unsigned int componen
 // filename - fully qualified name of DDS image
 // flipImage - specifies whether image is flipped on load, default is true
 bool CDDSImage::load(string filename, bool flipImage) {
-	assert(filename.length() != 0);
+	PFFG_ASSERT(filename.length() != 0);
 
 	// clear any previously loaded images
 	clear();
@@ -481,7 +481,7 @@ bool CDDSImage::load(string filename, bool flipImage) {
 }
 
 void CDDSImage::write_texture(const CTexture &texture, FILE *fp) {
-	assert(get_num_mipmaps() == texture.get_num_mipmaps());
+	PFFG_ASSERT(get_num_mipmaps() == texture.get_num_mipmaps());
 
 	size_t r = 0;
 	r = fwrite(texture, 1, texture.get_size(), fp);
@@ -493,8 +493,8 @@ void CDDSImage::write_texture(const CTexture &texture, FILE *fp) {
 }
 
 bool CDDSImage::save(std::string filename, bool flipImage) {
-	assert(m_valid);
-	assert(m_type != TextureNone);
+	PFFG_ASSERT(m_valid);
+	PFFG_ASSERT(m_type != TextureNone);
 
 	DDS_HEADER ddsh;
 	unsigned int headerSize = sizeof(DDS_HEADER);
@@ -580,7 +580,7 @@ bool CDDSImage::save(std::string filename, bool flipImage) {
 		if (flipImage) flip_texture(tex);
 		write_texture(tex, fp);
 	} else {
-		assert(m_images.size() == 6);
+		PFFG_ASSERT(m_images.size() == 6);
 
 		for (unsigned int i = 0; i < m_images.size(); i++) {
 			CTexture cubeFace;
@@ -617,13 +617,13 @@ void CDDSImage::clear() {
 ///////////////////////////////////////////////////////////////////////////////
 // uploads a compressed/uncompressed 1D texture
 bool CDDSImage::upload_texture1D() {
-	assert(m_valid);
-	assert(!m_images.empty());
+	PFFG_ASSERT(m_valid);
+	PFFG_ASSERT(!m_images.empty());
 
 	const CTexture &baseImage = m_images[0];
 
-	assert(baseImage.get_height() == 1);
-	assert(baseImage.get_width() > 0);
+	PFFG_ASSERT(baseImage.get_height() == 1);
+	PFFG_ASSERT(baseImage.get_width() > 0);
 
 	if (is_compressed()) {
 		// get function pointer if needed
@@ -683,16 +683,16 @@ bool CDDSImage::upload_texture1D() {
 //
 //              default: GL_TEXTURE_2D
 bool CDDSImage::upload_texture2D(unsigned int imageIndex, GLenum target) {
-	assert(m_valid);
-	assert(!m_images.empty());
-	assert(imageIndex < m_images.size());
-	assert(m_images[imageIndex]);
+	PFFG_ASSERT(m_valid);
+	PFFG_ASSERT(!m_images.empty());
+	PFFG_ASSERT(imageIndex < m_images.size());
+	PFFG_ASSERT(m_images[imageIndex]);
 
 	const CTexture &image = m_images[imageIndex];
 
-	assert(image.get_height() > 0);
-	assert(image.get_width() > 0);
-	assert(target == GL_TEXTURE_2D || target == GL_TEXTURE_RECTANGLE_NV ||
+	PFFG_ASSERT(image.get_height() > 0);
+	PFFG_ASSERT(image.get_width() > 0);
+	PFFG_ASSERT(target == GL_TEXTURE_2D || target == GL_TEXTURE_RECTANGLE_NV ||
 		(target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB && 
 		target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB));
     
@@ -746,13 +746,13 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, GLenum target) {
 ///////////////////////////////////////////////////////////////////////////////
 // uploads a compressed/uncompressed 3D texture
 bool CDDSImage::upload_texture3D() {
-	assert(m_valid);
-	assert(!m_images.empty());
-	assert(m_type == Texture3D);
+	PFFG_ASSERT(m_valid);
+	PFFG_ASSERT(!m_images.empty());
+	PFFG_ASSERT(m_type == Texture3D);
 
 	const CTexture &baseImage = m_images[0];
     
-	assert(baseImage.get_depth() >= 1);
+	PFFG_ASSERT(baseImage.get_depth() >= 1);
 
 	if (is_compressed()) {
 		// retrieve function pointer if needed
@@ -817,10 +817,10 @@ bool CDDSImage::upload_textureRectangle() {
 ///////////////////////////////////////////////////////////////////////////////
 // uploads a compressed/uncompressed cubemap texture
 bool CDDSImage::upload_textureCubemap() {
-	assert(m_valid);
-	assert(!m_images.empty());
-	assert(m_type == TextureCubemap);
-	assert(m_images.size() == 6);
+	PFFG_ASSERT(m_valid);
+	PFFG_ASSERT(!m_images.empty());
+	PFFG_ASSERT(m_type == TextureCubemap);
+	PFFG_ASSERT(m_images.size() == 6);
 
 	GLenum target;
 
@@ -873,7 +873,7 @@ void CDDSImage::flip(CSurface& surface) {
 	unsigned int offset;
 
 	if (!is_compressed()) {
-		assert(surface.get_depth() > 0);
+		PFFG_ASSERT(surface.get_depth() > 0);
 
 		unsigned int imagesize = surface.get_size()/surface.get_depth();
 		linesize = imagesize / surface.get_height();
@@ -1206,11 +1206,11 @@ CSurface::operator unsigned char*() const {
 ///////////////////////////////////////////////////////////////////////////////
 // creates an empty image
 void CSurface::create(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels) {
-	assert(w != 0);
-	assert(h != 0);
-	assert(d != 0);
-	assert(imgsize != 0);
-	assert(pixels);
+	PFFG_ASSERT(w != 0);
+	PFFG_ASSERT(h != 0);
+	PFFG_ASSERT(d != 0);
+	PFFG_ASSERT(imgsize != 0);
+	PFFG_ASSERT(pixels);
 
 	clear();
 

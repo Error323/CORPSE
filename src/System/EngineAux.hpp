@@ -1,9 +1,9 @@
 #ifndef PFFG_ENGINEAUX_HDR
 #define PFFG_ENGINEAUX_HDR
 
-#include <cassert>
 #include <string>
 
+#include "./Debugger.hpp"
 #include "../Math/vec3fwd.hpp"
 #include "../Math/vec3.hpp"
 

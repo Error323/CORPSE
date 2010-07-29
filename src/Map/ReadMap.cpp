@@ -1,9 +1,9 @@
 #include <cstdlib>
 #include <string>
-#include <cassert>
 
 #include "../Math/vec3.hpp"
 #include "../System/EngineAux.hpp"
+#include "../System/Debugger.hpp"
 #include "./ReadMap.hpp"
 #include "./MapInfo.hpp"
 #include "./SMF/SMFReadMap.hpp"
@@ -18,7 +18,7 @@ CReadMap* CReadMap::GetInstance(const std::string& mapname) {
 	if (rm == NULL) {
 		LOG << "[CReadMap::LoadMap] [1]\n";
 
-		assert(mapname.length() >= 3);
+		PFFG_ASSERT(mapname.length() >= 3);
 		std::string extension = mapname.substr(mapname.length() - 3);
 
 
@@ -27,7 +27,7 @@ CReadMap* CReadMap::GetInstance(const std::string& mapname) {
 
 		if (rm == NULL) {
 			LOG << "[CReadMap::LoadMap] corrupted map or unsupported map format\n";
-			assert(false);
+			PFFG_ASSERT(false);
 		}
 
 		LOG << "[CReadMap::LoadMap] [2]\n";
@@ -53,12 +53,12 @@ CReadMap* CReadMap::GetInstance(const std::string& mapname) {
 		LOG << "[CReadMap::LoadMap] [5]\n";
 
 		if (typemap && tbi.width == rm->width / 2 && tbi.height == rm->height / 2) {
-			assert(rm->hmapx == tbi.width && rm->hmapy == tbi.height);
+			PFFG_ASSERT(rm->hmapx == tbi.width && rm->hmapy == tbi.height);
 			rm->typemap = new unsigned char[tbi.width * tbi.height];
 			memcpy(rm->typemap, typemap, tbi.width * tbi.height);
 		} else {
 			LOG << "[CReadMap::LoadMap] bad or missing terrain type map\n";
-			assert(false);
+			PFFG_ASSERT(false);
 		}
 
 		LOG << "[CReadMap::LoadMap] [6]\n";

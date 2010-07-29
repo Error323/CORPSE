@@ -9,7 +9,7 @@ SimObjectDefHandler* SimObjectDefHandler::GetInstance() {
 	static unsigned int depth = 0;
 
 	if (sodh == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		sodh = new SimObjectDefHandler();
@@ -59,7 +59,7 @@ bool SimObjectDefHandler::LoadDefs() {
 		objectDefsVec[def->GetID()] = def;
 	}
 
-	assert(objectDefsMap.size() == objectDefsVec.size());
+	PFFG_ASSERT(objectDefsMap.size() == objectDefsVec.size());
 	return true;
 }
 

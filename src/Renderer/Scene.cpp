@@ -88,7 +88,7 @@ void CScene::LoadObjectModels() {
 		ModelBase* modelBase = def->GetModel();
 		CModelReaderBase* modelReader = NULL;
 
-		assert(modelBase == NULL);
+		PFFG_ASSERT(modelBase == NULL);
 
 		std::string mdlName    = def->GetModelName();
 		std::string mdlFile    = modelDir + mdlName;
@@ -97,7 +97,7 @@ void CScene::LoadObjectModels() {
 		if (mdlFileExt == "s3o") { modelReader = readerS3O; }
 		if (mdlFileExt == "3do") { modelReader = NULL; }
 
-		assert(modelReader != NULL);
+		PFFG_ASSERT(modelReader != NULL);
 		modelBase = modelReader->Load(mdlFile);
 
 		{
@@ -131,7 +131,7 @@ void CScene::LoadObjectModels() {
 					pObj->SetUniform1i(1, 7);               // (idx 1, texunit 7)
 					pObj->Disable();
 				} else {
-					assert(false);
+					PFFG_ASSERT(false);
 				}
 
 				LOG << "\n";
@@ -192,7 +192,7 @@ void CScene::OnEvent(const IEvent* e) {
 		} break;
 
 		default: {
-			assert(false);
+			PFFG_ASSERT(false);
 		}
 	}
 }

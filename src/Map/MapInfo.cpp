@@ -7,7 +7,7 @@ const CMapInfo* CMapInfo::GetInstance(const std::string& mapName) {
 	static unsigned int depth = 0;
 
 	if (mi == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		mi = new CMapInfo(mapName);

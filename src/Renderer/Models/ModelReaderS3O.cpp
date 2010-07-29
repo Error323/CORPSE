@@ -1,5 +1,4 @@
 #include <cstring>
-#include <cassert>
 #include <cmath>
 
 #include "./FormatS3O.hpp"
@@ -10,6 +9,7 @@
 #include "../../System/EngineAux.hpp"
 #include "../../System/FileHandler.hpp"
 #include "../../System/Logger.hpp"
+#include "../../System/Debugger.hpp"
 
 #define SWAP(x) (x)
 
@@ -47,7 +47,7 @@ ModelBase* CModelReaderS3O::Load(const std::string& name) {
 	if (!file.FileExists()) {
 		LOG << "[CModelReaderS3O::Load]\n";
 		LOG << "\tcould not open S3O \"" << name << "\"\n";
-		assert(false);
+		PFFG_ASSERT(false);
 		return NULL;
 	}
 
@@ -203,7 +203,7 @@ PieceS3O* CModelReaderS3O::LoadPiece(ModelBase* model, PieceS3O* parent, unsigne
 
 PieceBase* CModelReaderS3O::ClonePiece(PieceBase* src) const {
 	PieceS3O* dst = new PieceS3O();
-	assert(dst != NULL);
+	PFFG_ASSERT(dst != NULL);
 	dst->type = src->type;
 	dst->name = src->name;
 	dst->vertexCount = src->vertexCount;
@@ -215,7 +215,7 @@ PieceBase* CModelReaderS3O::ClonePiece(PieceBase* src) const {
 	dst->mins = src->mins;
 
 	PieceS3O* dsrc = dynamic_cast<PieceS3O*>(src);
-	assert(dsrc != NULL);
+	PFFG_ASSERT(dsrc != NULL);
 
 	for (unsigned int i = 0; i < dsrc->vertices.size(); i++) {
 		dst->vertices.push_back(dsrc->vertices[i]);
@@ -239,8 +239,8 @@ PieceBase* CModelReaderS3O::ClonePiece(PieceBase* src) const {
 
 ModelBase* CModelReaderS3O::CloneModel(const ModelBase* src) const {
 	ModelBase* dst = new ModelBase();
-	assert(src != NULL);
-	assert(dst != NULL);
+	PFFG_ASSERT(src != NULL);
+	PFFG_ASSERT(dst != NULL);
 
 	dst->drawer = src->drawer;
 	dst->texturer = src->texturer;

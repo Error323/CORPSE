@@ -7,7 +7,8 @@
 
 #include <string>
 #include <deque>
-#include <cassert>
+
+#include "../../System/Debugger.hpp"
 
 namespace nv_dds {
 	// surface description flags
@@ -139,8 +140,8 @@ namespace nv_dds {
 			void clear();
 
 			inline const CSurface &get_mipmap(unsigned int index) const {
-				assert(!m_mipmaps.empty());
-				assert(index < m_mipmaps.size());
+				PFFG_ASSERT(!m_mipmaps.empty());
+				PFFG_ASSERT(index < m_mipmaps.size());
 
 				return m_mipmaps[index];
 			}
@@ -153,8 +154,8 @@ namespace nv_dds {
 
 		protected:
 			inline CSurface &get_mipmap(unsigned int index) {
-				assert(!m_mipmaps.empty());
-				assert(index < m_mipmaps.size());
+				PFFG_ASSERT(!m_mipmaps.empty());
+				PFFG_ASSERT(index < m_mipmaps.size());
 
 				return m_mipmaps[index];
 			}
@@ -186,61 +187,61 @@ namespace nv_dds {
 			bool upload_textureCubemap();
 
 			inline operator unsigned char*() {
-				assert(m_valid);
-				assert(!m_images.empty());
+				PFFG_ASSERT(m_valid);
+				PFFG_ASSERT(!m_images.empty());
 
 				return m_images[0];
 			}
 
 			inline unsigned int get_width() {
-				assert(m_valid);
-				assert(!m_images.empty());
+				PFFG_ASSERT(m_valid);
+				PFFG_ASSERT(!m_images.empty());
 
 				return m_images[0].get_width();
 			}
 
 			inline unsigned int get_height() {
-				assert(m_valid);
-				assert(!m_images.empty());
+				PFFG_ASSERT(m_valid);
+				PFFG_ASSERT(!m_images.empty());
 
 				return m_images[0].get_height();
 			}
 
 			inline unsigned int get_depth() {
-				assert(m_valid);
-				assert(!m_images.empty());
+				PFFG_ASSERT(m_valid);
+				PFFG_ASSERT(!m_images.empty());
 
 				return m_images[0].get_depth();
 			}
 
 			inline unsigned int get_size() {
-				assert(m_valid);
-				assert(!m_images.empty());
+				PFFG_ASSERT(m_valid);
+				PFFG_ASSERT(!m_images.empty());
 
 				return m_images[0].get_size();
 			}
 
 			inline unsigned int get_num_mipmaps() {
-				assert(m_valid);
-				assert(!m_images.empty());
+				PFFG_ASSERT(m_valid);
+				PFFG_ASSERT(!m_images.empty());
 
 				return m_images[0].get_num_mipmaps();
 			}
 
 			inline const CSurface &get_mipmap(unsigned int index) const {
-				assert(m_valid);
-				assert(!m_images.empty());
-				assert(index < m_images[0].get_num_mipmaps());
+				PFFG_ASSERT(m_valid);
+				PFFG_ASSERT(!m_images.empty());
+				PFFG_ASSERT(index < m_images[0].get_num_mipmaps());
 
 				return m_images[0].get_mipmap(index);
 			}
 
 			inline const CTexture &get_cubemap_face(unsigned int face) const {
-				assert(m_valid);
-				assert(!m_images.empty());
-				assert(m_images.size() == 6);
-				assert(m_type == TextureCubemap);
-				assert(face < 6);
+				PFFG_ASSERT(m_valid);
+				PFFG_ASSERT(!m_images.empty());
+				PFFG_ASSERT(m_images.size() == 6);
+				PFFG_ASSERT(m_type == TextureCubemap);
+				PFFG_ASSERT(face < 6);
 
 				return m_images[face];
 			}
@@ -263,7 +264,7 @@ namespace nv_dds {
 			inline bool is_valid() { return m_valid; }
 
 			inline bool is_dword_aligned() {
-				assert(m_valid);
+				PFFG_ASSERT(m_valid);
 
 				int dwordLineSize = get_dword_aligned_linesize(get_width(), m_components*8);
 				int curLineSize = get_width() * m_components;

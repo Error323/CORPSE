@@ -34,7 +34,7 @@ CCameraController::CCameraController(): currCam(NULL) {
 		} break;
 
 		default: {
-			assert(false);
+			PFFG_ASSERT(false);
 		} break;
 	}
 }
@@ -97,7 +97,7 @@ void CCameraController::SwitchCams() {
 		} break;
 
 		default: {
-			assert(false);
+			PFFG_ASSERT(false);
 		} break;
 	}
 

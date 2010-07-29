@@ -1,10 +1,10 @@
-#include <cassert>
 #include <iostream>
 
 #include <boost/foreach.hpp>
 #include <lua5.1/lua.hpp>
 
 #include "./LuaParser.hpp"
+#include "./Debugger.hpp"
 
 bool LuaTable::operator == (const LuaTable& t) const {
 	return (
@@ -104,13 +104,13 @@ void LuaTable::Print(int depth) const {
 }
 
 void LuaTable::Parse(lua_State* luaState, int depth) {
-	assert(lua_istable(luaState, -1));
+	PFFG_ASSERT(lua_istable(luaState, -1));
 	lua_pushnil(luaState);
-	assert(lua_istable(luaState, -2));
+	PFFG_ASSERT(lua_istable(luaState, -2));
 
 
 	while (lua_next(luaState, -2) != 0) {
-		assert(lua_istable(luaState, -3));
+		PFFG_ASSERT(lua_istable(luaState, -3));
 
 		switch (lua_type(luaState, -2)) {
 			case LUA_TTABLE: {
@@ -184,7 +184,7 @@ void LuaTable::Parse(lua_State* luaState, int depth) {
 		}
 	}
 
-	assert(lua_istable(luaState, -1));
+	PFFG_ASSERT(lua_istable(luaState, -1));
 }
 
 
@@ -264,11 +264,11 @@ bool LuaParser::Execute(const std::string& file, const std::string& table) {
 			return false;
 		}
 
-		assert(lua_gettop(luaState) == 0);
+		PFFG_ASSERT(lua_gettop(luaState) == 0);
 		lua_getglobal(luaState, table.c_str());
 
 		if (lua_isnil(luaState, -1) == 0) {
-			assert(lua_istable(luaState, -1));
+			PFFG_ASSERT(lua_istable(luaState, -1));
 			tables[file] = new LuaTable();
 			tables[file]->Parse(luaState, 0);
 			root = tables[file];
@@ -283,7 +283,7 @@ bool LuaParser::Execute(const std::string& file, const std::string& table) {
 		}
 
 		lua_pop(luaState, 1);
-		assert(lua_gettop(luaState) == 0);
+		PFFG_ASSERT(lua_gettop(luaState) == 0);
 	} else {
 		ret = true;
 	}

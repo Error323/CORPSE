@@ -1,17 +1,17 @@
 #include <algorithm>
-#include <cassert>
 #include <cmath>
 
 #include "./Ground.hpp"
 #include "./ReadMap.hpp"
 #include "../Math/vec3.hpp"
+#include "../System/Debugger.hpp"
 
 CGround* CGround::GetInstance() {
 	static CGround* g = NULL;
 	static unsigned int depth = 0;
 
 	if (g == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		g = new CGround();
@@ -100,7 +100,7 @@ float CGround::LineGroundCol(const vec3f& from, const vec3f& to) {
 
 	// <pos> is guaranteed to be in-bounds at this
 	// point, so the index should never be illegal
-	assert(idx >= 0 && idx <= maxIdx);
+	PFFG_ASSERT(idx >= 0 && idx <= maxIdx);
 
 	// if, after shifting the segment start-position to the
 	// edge of the map, we are already below the terrain at

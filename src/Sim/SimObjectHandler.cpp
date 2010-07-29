@@ -1,5 +1,3 @@
-#include <cassert>
-
 #include "./SimObjectHandler.hpp"
 #include "./SimObject.hpp"
 #include "./SimObjectDef.hpp"
@@ -12,13 +10,14 @@
 #include "../System/LuaParser.hpp"
 #include "../System/IEvent.hpp"
 #include "../System/EventHandler.hpp"
+#include "../System/Debugger.hpp"
 
 SimObjectHandler* SimObjectHandler::GetInstance() {
 	static SimObjectHandler* soh = NULL;
 	static unsigned int depth = 0;
 
 	if (soh == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		soh = new SimObjectHandler();
@@ -145,8 +144,8 @@ void SimObjectHandler::DelObject(unsigned int objID, bool inDestructor) {
 }
 
 void SimObjectHandler::AddObject(SimObject* o, bool inConstructor) {
-	assert(o != NULL);
-	assert(simObjects[o->GetID()] == NULL);
+	PFFG_ASSERT(o != NULL);
+	PFFG_ASSERT(simObjects[o->GetID()] == NULL);
 
 	simObjects[o->GetID()] = o;
 	simObjectUsedIDs.insert(o->GetID());
@@ -159,8 +158,8 @@ void SimObjectHandler::AddObject(SimObject* o, bool inConstructor) {
 }
 
 void SimObjectHandler::DelObject(SimObject* o, bool inDestructor) {
-	assert(o != NULL);
-	assert(simObjects[o->GetID()] == o);
+	PFFG_ASSERT(o != NULL);
+	PFFG_ASSERT(simObjects[o->GetID()] == o);
 
 	simObjectUsedIDs.erase(o->GetID());
 	simObjectFreeIDs.insert(o->GetID());

@@ -20,7 +20,7 @@ CEngine* CEngine::GetInstance(int argc, char** argv) {
 	static unsigned int depth = 0;
 
 	if (e == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		e = new CEngine(argc, argv);

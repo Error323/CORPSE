@@ -1,5 +1,4 @@
 #include <GL/gl.h>
-#include <cassert>
 
 #include "./TextureHandlerS3O.hpp"
 #include "./BitMap.hpp"
@@ -8,6 +7,7 @@
 #include "../../System/FileHandler.hpp"
 #include "../../System/LuaParser.hpp"
 #include "../../System/Logger.hpp"
+#include "../../System/Debugger.hpp"
 
 CTextureHandlerS3O* textureHandlerS3O = 0x0;
 
@@ -56,7 +56,7 @@ void CTextureHandlerS3O::Load(ModelBase* model) {
 		LOG << model->name << "\n";
 
 		model->textureType = -1;
-		assert(false);
+		PFFG_ASSERT(false);
 		return;
 	}
 
@@ -81,7 +81,7 @@ void CTextureHandlerS3O::Load(ModelBase* model) {
 
 		texture2.Alloc(1, 1);
 		texture2.mem[3] = 255;
-		// assert(false);
+		// PFFG_ASSERT(false);
 		// return;
 	}
 

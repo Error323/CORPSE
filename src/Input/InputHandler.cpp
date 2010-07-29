@@ -11,7 +11,7 @@ CInputHandler* CInputHandler::GetInstance() {
 	static unsigned int depth = 0;
 
 	if (ih == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		ih = new CInputHandler();
@@ -282,7 +282,7 @@ void CInputHandler::WindowExposed(SDL_Event* e) {
 	}
 }
 void CInputHandler::WindowResized(SDL_Event* e) {
-	assert(e->type == SDL_VIDEORESIZE);
+	PFFG_ASSERT(e->type == SDL_VIDEORESIZE);
 
 	for (ReceiverIt it = inputReceivers.begin(); it != inputReceivers.end(); it++) {
 		if ((*it)->InputEnabled()) {

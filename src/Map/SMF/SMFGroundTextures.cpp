@@ -2,7 +2,6 @@
 #include <GL/gl.h>
 #include <SDL/SDL_timer.h>
 
-#include <cassert>
 
 #include "./SMFGroundTextures.hpp"
 
@@ -17,6 +16,7 @@
 #include "../../System/EngineAux.hpp"
 #include "../../System/LuaParser.hpp"
 #include "../../System/Logger.hpp"
+#include "../../System/Debugger.hpp"
 
 using std::string;
 using std::max;
@@ -96,7 +96,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm):
 
 		if (strcmp(tfh.magic, "spring tilefile") != 0 || tfh.version != 1 || tfh.tileSize != 32 || tfh.compressionType != 1) {
 			LOG << "\tcould not open tile-file \"" << name << "\"\n";
-			assert(false);
+			PFFG_ASSERT(false);
 		}
 
 		for (int b = 0; b < curTileSize; ++b) {

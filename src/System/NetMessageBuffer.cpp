@@ -1,10 +1,9 @@
-#include <cassert>
-
 #ifndef PFFG_SERVER_NOTHREAD
 #include <boost/thread/mutex.hpp>
 #endif
 
 #include "./NetMessageBuffer.hpp"
+#include "./Debugger.hpp"
 
 CNetMessageBuffer::CNetMessageBuffer() {
 	#ifndef PFFG_SERVER_NOTHREAD

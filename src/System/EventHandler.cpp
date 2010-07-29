@@ -1,16 +1,16 @@
-#include <cassert>
 #include <string>
 
 #include "./EventHandler.hpp"
 #include "./IEventReceiver.hpp"
 #include "./IEvent.hpp"
+#include "./Debugger.hpp"
 
 EventHandler* EventHandler::GetInstance() {
 	static EventHandler* eh = NULL;
 	static unsigned int depth = 0;
 
 	if (eh == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		eh = new EventHandler();
@@ -38,7 +38,7 @@ void EventHandler::AddReceiver(IEventReceiver* r) {
 		if (evtReceivers[type].find(r->GetPriority()) == evtReceivers[type].end()) {
 			evtReceivers[type][r->GetPriority()] = r;
 		} else {
-			assert(false);
+			PFFG_ASSERT(false);
 		}
 	}
 }
@@ -52,7 +52,7 @@ void EventHandler::DelReceiver(IEventReceiver* r) {
 		if (evtReceivers[type].find(r->GetPriority()) != evtReceivers[type].end()) {
 			evtReceivers[type].erase(r->GetPriority());
 		} else {
-			assert(false);
+			PFFG_ASSERT(false);
 		}
 	}
 }

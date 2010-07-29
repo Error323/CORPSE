@@ -13,7 +13,7 @@ CServer* CServer::GetInstance() {
 	static unsigned int depth = 0;
 
 	if (s == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		s = new CServer();

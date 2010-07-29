@@ -17,7 +17,7 @@ CRenderThread* CRenderThread::GetInstance() {
 	static unsigned int depth = 0;
 
 	if (rt == NULL) {
-		assert(depth == 0);
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		rt = new CRenderThread();

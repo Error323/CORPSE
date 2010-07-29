@@ -1,7 +1,6 @@
 #include <GL/gl.h>
 
 #include <vector>
-#include <cassert>
 #include <cstdlib>
 #include <sstream>
 
@@ -15,6 +14,7 @@
 #include "../../System/EngineAux.hpp"
 #include "../../System/FileHandler.hpp"
 #include "../../System/LuaParser.hpp"
+#include "../../System/Debugger.hpp"
 
 CSkyBox::CSkyBox() {
 	std::list<int> skyBoxKeys;
@@ -38,7 +38,7 @@ CSkyBox::CSkyBox() {
 		}
 	}
 
-	assert(!skyBoxNames.empty());
+	PFFG_ASSERT(!skyBoxNames.empty());
 	CBitMap skyBoxBM;
 
 	if (!skyBoxBM.Load( skyBoxNames[random() % skyBoxNames.size()] )) {

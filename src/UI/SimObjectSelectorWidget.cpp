@@ -1,5 +1,3 @@
-#include <cassert>
-
 #include <SDL/SDL_keysym.h>
 #include <SDL/SDL_mouse.h>
 #include <GL/gl.h>
@@ -19,6 +17,7 @@
 #include "../Sim/SimObject.hpp"
 #include "../System/Client.hpp"
 #include "../System/NetMessages.hpp"
+#include "../System/Debugger.hpp"
 #include "../UI/Window.hpp"
 
 void ui::SimObjectSelectorWidget::ClearSelection() {
@@ -127,7 +126,7 @@ void ui::SimObjectSelectorWidget::FillSelection() {
 	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {
-		assert(haveSelection);
+		PFFG_ASSERT(haveSelection);
 		// when releasing the mouse, we want to preserve the
 		// current selection (if any) but not keep it active
 		activeSelection = false;
