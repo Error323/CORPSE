@@ -1,7 +1,7 @@
 #ifndef PFFG_VERTEXARRAY_HDR
 #define PFFG_VERTEXARRAY_HDR
 
-/// #include <GL/glew.h>
+// #include <GL/glew.h>
 #include <GL/gl.h>
 #include "../Math/vec3fwd.hpp"
 #include "../Math/vec3.hpp"
@@ -98,7 +98,11 @@ protected:
 
 
 #ifdef DEBUG
-	#define ASSERT_SIZE(x) ASSERT(drawArraySize >= (drawArrayPos + x));
+	#ifdef PFFG_DEBUG
+		#define ASSERT_SIZE(x) ASSERT(drawArraySize >= (drawArrayPos + x));
+	#else
+		#define ASSERT_SIZE(x) assert(drawArraySize >= (drawArrayPos + x));
+	#endif
 #else
 	#define ASSERT_SIZE(x)
 #endif
@@ -325,7 +329,12 @@ unsigned int VertexArray::drawIndex() const {
 }
 
 void VertexArray::EndStripQ() {
+	#ifdef PFFG_DEBUG
 	ASSERT(stripArraySize >= stripArrayPos + 1);
+	#else
+	assert(stripArraySize >= stripArrayPos + 1);
+	#endif
+
 	*stripArrayPos++ = ((char*) drawArrayPos - (char*) drawArray);
 }
 

@@ -34,7 +34,11 @@ public:
 		static unsigned int depth = 0;
 
 		if (grid == NULL) {
+			#ifdef PFFG_DEBUG
 			ASSERT(depth == 0);
+			#else
+			assert(depth == 0);
+			#endif
 
 			depth += 1;
 			grid = new SimObjectGrid<T>(size, gmins, gmaxs);
@@ -53,9 +57,19 @@ public:
 	SimObjectGrid<T>(const vec3i& size, const vec3f& gmins, const vec3f& gmaxs): gsize(size), mins(gmins), maxs(gmaxs) {
 		cells.resize(gsize.x * gsize.y * gsize.z, GridCell());
 
-		ASSERT(gsize.x > 0); csize.x = (maxs.x - mins.x) / gsize.x;
-		ASSERT(gsize.y > 0); csize.y = (maxs.y - mins.y) / gsize.y;
-		ASSERT(gsize.z > 0); csize.z = (maxs.z - mins.z) / gsize.z;
+		#ifdef PFFG_DEBUG
+		ASSERT(gsize.x > 0);
+		ASSERT(gsize.y > 0);
+		ASSERT(gsize.z > 0);
+		#else
+		assert(gsize.x > 0);
+		assert(gsize.y > 0);
+		assert(gsize.z > 0);
+		#endif
+
+		csize.x = (maxs.x - mins.x) / gsize.x;
+		csize.y = (maxs.y - mins.y) / gsize.y;
+		csize.z = (maxs.z - mins.z) / gsize.z;
 	}
 	~SimObjectGrid() {
 		cells.clear();

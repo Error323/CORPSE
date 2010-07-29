@@ -70,6 +70,7 @@ bool Debugger::End() {
 	// handle input queries
 	EnableInput();
 	bool input = true;
+
 	while (input) {
 		switch (mKeyReleased) {
 			case SDLK_LEFT: 
@@ -90,6 +91,7 @@ bool Debugger::End() {
 		}
 		mInputHandler->Update();
 	}
+
 	mKeyReleased = 0;
 	DisableInput();
 
@@ -101,4 +103,25 @@ bool Debugger::End() {
 
 void Debugger::KeyReleased(int key) {
 	mKeyReleased = key;
+}
+
+void Debugger::DumpStack() {
+	#if (!defined(WIN32) && !defined(__powerpc64__))
+	void* addresses[16];
+	size_t size;
+	char** symbols;
+
+	size = backtrace(addresses, 16);
+	symbols = backtrace_symbols(addresses, size);
+
+	if (symbols != NULL) {
+		for (size_t i = 0; i < size; i++) {
+			Debugger::GetInstance()->Print(symbols[i]);
+			Debugger::GetInstance()->Print("\n");
+		}
+
+		free(symbols);
+	}
+
+	#endif
 }

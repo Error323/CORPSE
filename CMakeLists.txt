@@ -7,7 +7,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 #-------------------------------------------------------------------------------
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_MODULE_PATH "${CORPSE_SOURCE_DIR}/cmake/packages")
-SET(CMAKE_CXX_FLAGS "-O2 -fno-strict-aliasing -g -Wall -Wextra")
+SET(CMAKE_CXX_FLAGS "-O2 -fno-strict-aliasing -g -Wall -Wextra -rdynamic")
 
 #-------------------------------------------------------------------------------
 # Extract and set the version

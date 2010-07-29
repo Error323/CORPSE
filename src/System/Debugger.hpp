@@ -4,9 +4,14 @@
 #include <map>
 #include <string>
 
+#include <execinfo.h>
+#include <cstdlib>
+
 #include "../Input/InputReceiver.hpp"
 
 
+
+#ifdef PFFG_DEBUG
 
 #ifdef WIN32
 	#define BREAKPOINT __debugbreak()
@@ -18,12 +23,14 @@
 
 #define START() Debugger::GetInstance()->Begin(__FILE__, __LINE__)
 #define STOP() if (Debugger::GetInstance()->End()) BREAKPOINT
+#define BACKTRACE() Debugger::GetInstance()->DumpStack()
 
 #define ASSERT(cond)                                                                                                                             \
 	do {                                                                                                                                         \
 		if (!(cond)) {                                                                                                                           \
 			START();                                                                                                                             \
 			FATAL("***ASSERTION FAILED***\n\n\tfile: %s\n\tline: %d\n\tfunc: %s\n\tcond: %s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
+			BACKTRACE();                                                                                                                         \
 			STOP();                                                                                                                              \
 		}                                                                                                                                        \
 	} while (0)
@@ -35,6 +42,7 @@
 			FATAL("***ASSERTION FAILED***\n\n\tfile: %s\n\tline: %d\n\tfunc: %s\n\tcond: %s\n\ttext: ", __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
 			FATAL(__VA_ARGS__);                                                                                                                          \
 			FATAL("\n");                                                                                                                                 \
+			BACKTRACE();                                                                                                                                 \
 			STOP();                                                                                                                                      \
 		} \
 	} while (0)
@@ -45,6 +53,8 @@
 		snprintf(buffer, 2048, __VA_ARGS__);    \
 		Debugger::GetInstance()->Print(buffer); \
 	} while (0)
+
+#endif
 
 
 
@@ -57,6 +67,7 @@ public:
 	void Begin(const char*, int);
 	bool End();
 	void Print(const char*);
+	void DumpStack();
 
 	const std::string& GetMessage() const { return mMessage; }
 	bool IsEnabled() const { return mEnabled; }

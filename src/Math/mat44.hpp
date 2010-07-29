@@ -318,7 +318,7 @@ template<typename T> struct mat44 {
 	/*
 	inline vec3<T> GetDir(int i) const {
 		#ifdef PFFG_DEBUG
-		assert(i >= 0 && i <= 2);
+		ASSERT(i >= 0 && i <= 2);
 		#endif
 		return (vec3<T>(m[(i * 4) + 0], m[(i * 4) + 1], m[(i * 4) + 2]));
 	}
