@@ -35,7 +35,7 @@ void ui::AssertWidget::Update(const vec3i&, const vec3i& size) {
 			glColor3f(1.0f, 1.0f, 1.0f);
 			glLoadIdentity();
 			gUI->GetFont()->FaceSize(yoff * 0.5f);
-			glTranslatef(-size.x*0.6f, size.y*0.8f, 0.0f);
+			glTranslatef(-size.x*0.88f, size.y*0.8f, 0.0f);
 
 			int tabbedCount = 0;
 			const std::string msg = std::string(Debugger::GetInstance()->GetMessage());

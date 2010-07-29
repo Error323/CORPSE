@@ -113,6 +113,7 @@ void Debugger::DumpStack() {
 	size_t size = backtrace(addresses, 16);
 	char** symbols = backtrace_symbols(addresses, size);
 
+	Debugger::GetInstance()->Print("\n");
 	if (symbols != NULL) {
 		for (size_t i = 0; i < size; i++) {
 			Debugger::GetInstance()->Print(symbols[i]);
