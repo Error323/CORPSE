@@ -5,7 +5,9 @@
 
 #include "../Math/vec3fwd.hpp"
 #include "../Math/vec3.hpp"
+#ifdef PFFG_DEBUG
 #include "../System/Debugger.hpp"
+#endif
 
 template<typename T> class SimObjectGrid {
 public:

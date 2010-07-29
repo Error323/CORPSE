@@ -5,7 +5,9 @@
 #include <string>
 
 #include "./FastMath.hpp"
+#ifdef PFFG_DEBUG
 #include "../System/Debugger.hpp"
+#endif
 
 template<typename T> struct mat33;
 template<typename T> struct vec3 {

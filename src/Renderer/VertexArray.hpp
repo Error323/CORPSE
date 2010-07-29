@@ -5,7 +5,9 @@
 #include <GL/gl.h>
 #include "../Math/vec3fwd.hpp"
 #include "../Math/vec3.hpp"
+#ifdef PFFG_DEBUG
 #include "../System/Debugger.hpp"
+#endif
 
 #define VA_INIT_VERTICES 1000
 #define VA_INIT_STRIPS 100
