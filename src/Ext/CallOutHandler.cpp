@@ -7,13 +7,14 @@
 #include "../Sim/SimObjectHandler.hpp"
 #include "../Sim/SimObjectDefHandler.hpp"
 #include "../Sim/SimObjectGrid.hpp"
+#include "../System/Debugger.hpp"
 
 CallOutHandler* CallOutHandler::GetInstance() {
 	static CallOutHandler* coh = NULL;
 	static unsigned int depth = 0;
 
 	if (coh == NULL) {
-		assert(depth == 0);
+		ASSERT(depth == 0);
 
 		depth += 1;
 		coh = new CallOutHandler();

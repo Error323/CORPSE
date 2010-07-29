@@ -19,23 +19,23 @@
 #define START() Debugger::GetInstance()->Begin(__FILE__, __LINE__)
 #define STOP() if (Debugger::GetInstance()->End()) BREAKPOINT
 
-#define ASSERT(cond)                                                                                               \
-	do {                                                                                                           \
-		if (!(cond)) {                                                                                             \
-			START();                                                                                               \
-			FATAL("***Assertion Failed***\n\n\tfile = %s\n\tline = %d\n\tcond = %s\n", __FILE__, __LINE__, #cond); \
-			STOP();                                                                                                \
-		}                                                                                                          \
+#define ASSERT(cond)                                                                                                                             \
+	do {                                                                                                                                         \
+		if (!(cond)) {                                                                                                                           \
+			START();                                                                                                                             \
+			FATAL("***ASSERTION FAILED***\n\n\tfile: %s\n\tline: %d\n\tfunc: %s\n\tcond: %s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
+			STOP();                                                                                                                              \
+		}                                                                                                                                        \
 	} while (0)
 
 #define ASSERT_MSG(cond, ...) \
-	do {                                                                                                                \
-		if (!(cond)) {                                                                                                  \
-			START();                                                                                                    \
-			FATAL("***Assertion Failed***\n\n\tfile: %s\n\tline: %d\n\tcond: %s\n\ttext: ", __FILE__, __LINE__, #cond); \
-			FATAL(__VA_ARGS__);                                                                                         \
-			FATAL("\n");                                                                                                \
-			STOP();                                                                                                     \
+	do {                                                                                                                                                 \
+		if (!(cond)) {                                                                                                                                   \
+			START();                                                                                                                                     \
+			FATAL("***ASSERTION FAILED***\n\n\tfile: %s\n\tline: %d\n\tfunc: %s\n\tcond: %s\n\ttext: ", __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
+			FATAL(__VA_ARGS__);                                                                                                                          \
+			FATAL("\n");                                                                                                                                 \
+			STOP();                                                                                                                                      \
 		} \
 	} while (0)
 

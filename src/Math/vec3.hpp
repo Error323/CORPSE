@@ -1,11 +1,11 @@
 #ifndef PFFG_VEC3_HDR
 #define PFFG_VEC3_HDR
 
-#include <cassert>
 #include <cmath>
 #include <string>
 
 #include "./FastMath.hpp"
+#include "../System/Debugger.hpp"
 
 template<typename T> struct mat33;
 template<typename T> struct vec3 {
@@ -102,7 +102,7 @@ template<typename T> struct vec3 {
 
 	// normalize this vector
 	inline vec3<T> norm() const {
-		assert(x != T(0) || y != T(0) || z != T(0));
+		ASSERT(x != T(0) || y != T(0) || z != T(0));
 
 		T dp = sqLen3D();
 		T rt = (dp == T(1))?  dp:  T(1) / T(sqrtf(dp));
@@ -111,7 +111,7 @@ template<typename T> struct vec3 {
 	}
 	// normalize this vector (in-place)
 	inline vec3<T>& inorm() {
-		assert(x != T(0) || y != T(0) || z != T(0));
+		ASSERT(x != T(0) || y != T(0) || z != T(0));
 
 		T dp = sqLen3D();
 		T rt = (dp == T(1))?  dp:  T(1) / T(sqrtf(dp));
@@ -124,7 +124,7 @@ template<typename T> struct vec3 {
 	}
 	// normalize this vector quickly
 	inline vec3<T>& ifnorm() {
-		assert(x != T(0) || y != T(0) || z != T(0));
+		ASSERT(x != T(0) || y != T(0) || z != T(0));
 
 		T dp = sqLen3D();
 		T rt = (dp == T(1))?  dp:  T(fastmath::isqrt1(dp));

@@ -5,6 +5,7 @@
 
 #include "../Math/vec3fwd.hpp"
 #include "../Math/vec3.hpp"
+#include "../System/Debugger.hpp"
 
 template<typename T> class SimObjectGrid {
 public:
@@ -31,7 +32,7 @@ public:
 		static unsigned int depth = 0;
 
 		if (grid == NULL) {
-			assert(depth == 0);
+			ASSERT(depth == 0);
 
 			depth += 1;
 			grid = new SimObjectGrid<T>(size, gmins, gmaxs);
@@ -50,9 +51,9 @@ public:
 	SimObjectGrid<T>(const vec3i& size, const vec3f& gmins, const vec3f& gmaxs): gsize(size), mins(gmins), maxs(gmaxs) {
 		cells.resize(gsize.x * gsize.y * gsize.z, GridCell());
 
-		assert(gsize.x > 0); csize.x = (maxs.x - mins.x) / gsize.x;
-		assert(gsize.y > 0); csize.y = (maxs.y - mins.y) / gsize.y;
-		assert(gsize.z > 0); csize.z = (maxs.z - mins.z) / gsize.z;
+		ASSERT(gsize.x > 0); csize.x = (maxs.x - mins.x) / gsize.x;
+		ASSERT(gsize.y > 0); csize.y = (maxs.y - mins.y) / gsize.y;
+		ASSERT(gsize.z > 0); csize.z = (maxs.z - mins.z) / gsize.z;
 	}
 	~SimObjectGrid() {
 		cells.clear();
@@ -126,7 +127,7 @@ public:
 
 		const unsigned int idx1D = idx.z * (gsize.y * gsize.z) + idx.y * (gsize.y) + idx.x;
 		const MapListIt objCellsIt = objCells.find(idx1D);
-			assert(objCellsIt == objCells.end());
+			ASSERT(objCellsIt == objCells.end());
 
 		GridCell& cell = GetCell(idx);
 
@@ -164,7 +165,7 @@ public:
 
 		const unsigned int idx1D = idx.z * (gsize.y * gsize.z) + idx.y * (gsize.y) + idx.x;
 		const MapListIt objCellsIt = objCells.find(idx1D);
-			assert(objCellsIt != objCells.end());
+			ASSERT(objCellsIt != objCells.end());
 		const ListIt& objectIt = objCellsIt->second;
 
 		GridCell& cell = GetCell(idx);
