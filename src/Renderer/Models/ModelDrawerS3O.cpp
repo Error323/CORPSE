@@ -104,7 +104,7 @@ void CModelDrawerS3O::DrawPieceArrays(PieceBase* p) {
 
 
 
-	#ifdef PFFG_DEBUG_DRAW
+	#ifdef PFFG_DEBUG
 	glPushAttrib(GL_CURRENT_BIT | GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT);
 		glDisable(GL_LIGHTING);
 		glDisable(GL_TEXTURE_2D);
