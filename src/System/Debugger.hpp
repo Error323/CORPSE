@@ -2,7 +2,6 @@
 #define PFFG_DEBUGGER_HDR
 
 #ifdef PFFG_DEBUG
-	#include <cassert>
 	#include <cstdio>
 	#include <cstdlib>
 
