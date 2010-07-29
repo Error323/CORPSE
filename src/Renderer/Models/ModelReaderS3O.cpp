@@ -125,8 +125,8 @@ PieceS3O* CModelReaderS3O::LoadPiece(ModelBase* model, PieceS3O* parent, unsigne
 	for (unsigned int k = 0; k < depth; k++) {
 		tabs += "\t";
 	}
-	LOG << tabs + "[CModelReaderS3O::LoadPiece()" << std::endl;
-	LOG << tabs + "\tpiece offset:                  " << offset << std::endl;
+	LOG << tabs + "[CModelReaderS3O::LoadPiece()\n";
+	LOG << tabs + "\tpiece offset:                  " << offset << "\n";
 	LOG << tabs + "\t(raw piece) nameOffset:        " << rawPiece->nameOffset << "\n";
 	LOG << tabs + "\t(raw piece) numChildren:       " << rawPiece->numChildren << "\n";
 	LOG << tabs + "\t(raw piece) numVertices:       " << rawPiece->numVertices << "\n";

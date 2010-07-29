@@ -37,9 +37,8 @@ void Debugger::Begin(const char* filename, int line) {
 	mKey = std::string(gDebugMessageKey);
 	std::map<std::string, bool>::iterator i = mIgnoreForever.find(mKey);
 
-	if (i == mIgnoreForever.end()) {
+	if (i == mIgnoreForever.end())
 		mIgnoreForever[mKey] = false;
-	}
 
 	if (mIgnoreForever[mKey])
 		return;

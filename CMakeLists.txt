@@ -10,6 +10,15 @@ SET(CMAKE_MODULE_PATH "${CORPSE_SOURCE_DIR}/cmake/packages")
 SET(CMAKE_CXX_FLAGS "-O2 -fno-strict-aliasing -g -Wall -Wextra -rdynamic")
 
 #-------------------------------------------------------------------------------
+# Add custom compiler definitions
+#-------------------------------------------------------------------------------
+OPTION(PFFG_DEBUG "Enable pffg asserts" ON)
+
+IF(PFFG_DEBUG)
+	ADD_DEFINITIONS(-DPFFG_DEBUG)
+ENDIF(PFFG_DEBUG)
+
+#-------------------------------------------------------------------------------
 # Extract and set the version
 #-------------------------------------------------------------------------------
 EXECUTE_PROCESS(

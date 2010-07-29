@@ -1,4 +1,3 @@
-#include <cassert>
 #include <iostream>
 
 #include "./PathModule.hpp"
@@ -23,8 +22,8 @@ void PathModule::OnEvent(const IEvent* e) {
 			DelObjectFromGroup(objectID);
 
 			if (simObjectIDs.empty()) {
-				assert(objectGroupIDs.empty());
-				assert(objectGroups.empty());
+				PFFG_ASSERT(objectGroupIDs.empty());
+				PFFG_ASSERT(objectGroups.empty());
 
 				// reset the group counter
 				numGroupIDs = 0;
@@ -44,7 +43,7 @@ void PathModule::OnEvent(const IEvent* e) {
 				const unsigned int objID = *it;
 				const vec3f& objPos = coh->GetSimObjectPosition(objID);
 
-				assert(coh->IsValidSimObjectID(objID));
+				PFFG_ASSERT(coh->IsValidSimObjectID(objID));
 
 				// note: direction is based on our current position
 				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID, true);
