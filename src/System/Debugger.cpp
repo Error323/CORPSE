@@ -32,9 +32,11 @@ Debugger::~Debugger() {
 }
 
 void Debugger::Begin(const char* filename, int line) {
-	snprintf(mKey, 1024, "%s:%d", filename, line);
+	snprintf(gMsgBuf, 1024, "%s:%d", filename, line);
 
-	std::map<char*, bool>::iterator i = mIgnoreForever.find(mKey);
+	mKey = std::string(gMsgBuf);
+	std::map<std::string, bool>::iterator i = mIgnoreForever.find(mKey);
+
 	if (i == mIgnoreForever.end()) {
 		mIgnoreForever[mKey] = false;
 	}
@@ -108,11 +110,9 @@ void Debugger::KeyReleased(int key) {
 void Debugger::DumpStack() {
 	#if (!defined(WIN32) && !defined(__powerpc64__))
 	void* addresses[16];
-	size_t size;
-	char** symbols;
 
-	size = backtrace(addresses, 16);
-	symbols = backtrace_symbols(addresses, size);
+	size_t size = backtrace(addresses, 16);
+	char** symbols = backtrace_symbols(addresses, size);
 
 	if (symbols != NULL) {
 		for (size_t i = 0; i < size; i++) {
