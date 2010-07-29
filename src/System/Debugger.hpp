@@ -80,7 +80,7 @@
 		static void FreeInstance(Debugger*);
 
 	private:
-		static char gMsgBuf[1024];
+		static char gDebugMessageKey[1024];
 
 		std::string mKey;
 		std::map<std::string, bool> mIgnoreForever;

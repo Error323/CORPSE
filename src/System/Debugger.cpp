@@ -32,9 +32,9 @@ Debugger::~Debugger() {
 }
 
 void Debugger::Begin(const char* filename, int line) {
-	snprintf(gMsgBuf, 1024, "%s:%d", filename, line);
+	snprintf(gDebugMessageKey, 1024, "%s:%d", filename, line);
 
-	mKey = std::string(gMsgBuf);
+	mKey = std::string(gDebugMessageKey);
 	std::map<std::string, bool>::iterator i = mIgnoreForever.find(mKey);
 
 	if (i == mIgnoreForever.end()) {
