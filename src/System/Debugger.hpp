@@ -4,8 +4,10 @@
 #include <map>
 #include <string>
 
+#if (!defined(WIN32) && !defined(__powerpc64__))
 #include <execinfo.h>
 #include <cstdlib>
+#endif
 
 #include "../Input/InputReceiver.hpp"
 
