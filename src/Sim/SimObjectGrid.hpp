@@ -5,9 +5,7 @@
 
 #include "../Math/vec3fwd.hpp"
 #include "../Math/vec3.hpp"
-#ifdef PFFG_DEBUG
 #include "../System/Debugger.hpp"
-#endif
 
 template<typename T> class SimObjectGrid {
 public:
@@ -34,11 +32,7 @@ public:
 		static unsigned int depth = 0;
 
 		if (grid == NULL) {
-			#ifdef PFFG_DEBUG
-			ASSERT(depth == 0);
-			#else
-			assert(depth == 0);
-			#endif
+			PFFG_ASSERT(depth == 0);
 
 			depth += 1;
 			grid = new SimObjectGrid<T>(size, gmins, gmaxs);
@@ -57,15 +51,9 @@ public:
 	SimObjectGrid<T>(const vec3i& size, const vec3f& gmins, const vec3f& gmaxs): gsize(size), mins(gmins), maxs(gmaxs) {
 		cells.resize(gsize.x * gsize.y * gsize.z, GridCell());
 
-		#ifdef PFFG_DEBUG
-		ASSERT(gsize.x > 0);
-		ASSERT(gsize.y > 0);
-		ASSERT(gsize.z > 0);
-		#else
-		assert(gsize.x > 0);
-		assert(gsize.y > 0);
-		assert(gsize.z > 0);
-		#endif
+		PFFG_ASSERT(gsize.x > 0);
+		PFFG_ASSERT(gsize.y > 0);
+		PFFG_ASSERT(gsize.z > 0);
 
 		csize.x = (maxs.x - mins.x) / gsize.x;
 		csize.y = (maxs.y - mins.y) / gsize.y;
@@ -143,7 +131,7 @@ public:
 
 		const unsigned int idx1D = idx.z * (gsize.y * gsize.z) + idx.y * (gsize.y) + idx.x;
 		const MapListIt objCellsIt = objCells.find(idx1D);
-			ASSERT(objCellsIt == objCells.end());
+			PFFG_ASSERT(objCellsIt == objCells.end());
 
 		GridCell& cell = GetCell(idx);
 
@@ -181,7 +169,7 @@ public:
 
 		const unsigned int idx1D = idx.z * (gsize.y * gsize.z) + idx.y * (gsize.y) + idx.x;
 		const MapListIt objCellsIt = objCells.find(idx1D);
-			ASSERT(objCellsIt != objCells.end());
+			PFFG_ASSERT(objCellsIt != objCells.end());
 		const ListIt& objectIt = objCellsIt->second;
 
 		GridCell& cell = GetCell(idx);

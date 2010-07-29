@@ -1,19 +1,18 @@
 #include "./Debugger.hpp"
+
 #include "../Input/InputHandler.hpp"
 #include "../UI/Window.hpp"
 
-#include <cstdio>
-#include <cstdlib>
 #include <SDL.h>
 
 Debugger* Debugger::GetInstance() {
-	static Debugger* instance = NULL;
+	static Debugger* d = NULL;
 
-	if (instance == NULL) {
-		instance = new Debugger();
+	if (d == NULL) {
+		d = new Debugger();
 	}
 
-	return instance;
+	return d;
 }
 
 void Debugger::FreeInstance(Debugger* d) {
@@ -22,6 +21,7 @@ void Debugger::FreeInstance(Debugger* d) {
 
 
 
+#ifdef PFFG_DEBUG
 Debugger::Debugger(): mEnabled(false) {
 	mInputHandler = CInputHandler::GetInstance();
 	mInputHandler->AddReceiver(this);
@@ -125,3 +125,4 @@ void Debugger::DumpStack() {
 
 	#endif
 }
+#endif // PFFG_DEBUG

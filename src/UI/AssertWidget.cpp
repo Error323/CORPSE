@@ -38,7 +38,7 @@ void ui::AssertWidget::Update(const vec3i&, const vec3i& size) {
 			glTranslatef(-size.x*0.6f, size.y*0.8f, 0.0f);
 
 			int tabbedCount = 0;
-			const std::string& msg = Debugger::GetInstance()->GetMessage();
+			const std::string msg = std::string(Debugger::GetInstance()->GetMessage());
 
 			for (size_t j = 0; j < msg.size(); j++) {
 				if (msg[j] == '\n') {

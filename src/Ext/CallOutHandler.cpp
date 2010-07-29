@@ -14,11 +14,7 @@ CallOutHandler* CallOutHandler::GetInstance() {
 	static unsigned int depth = 0;
 
 	if (coh == NULL) {
-		#ifdef PFFG_DEBUG
-		ASSERT(depth == 0);
-		#else
-		assert(depth == 0);
-		#endif
+		PFFG_ASSERT(depth == 0);
 
 		depth += 1;
 		coh = new CallOutHandler();

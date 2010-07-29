@@ -5,9 +5,7 @@
 #include <GL/gl.h>
 #include "../Math/vec3fwd.hpp"
 #include "../Math/vec3.hpp"
-#ifdef PFFG_DEBUG
 #include "../System/Debugger.hpp"
-#endif
 
 #define VA_INIT_VERTICES 1000
 #define VA_INIT_STRIPS 100
@@ -97,12 +95,8 @@ protected:
 
 
 
-#ifdef DEBUG
-	#ifdef PFFG_DEBUG
-		#define ASSERT_SIZE(x) ASSERT(drawArraySize >= (drawArrayPos + x));
-	#else
-		#define ASSERT_SIZE(x) assert(drawArraySize >= (drawArrayPos + x));
-	#endif
+#ifdef VA_DEBUG
+	#define ASSERT_SIZE(x) PFFG_ASSERT(drawArraySize >= (drawArrayPos + x));
 #else
 	#define ASSERT_SIZE(x)
 #endif
@@ -329,11 +323,7 @@ unsigned int VertexArray::drawIndex() const {
 }
 
 void VertexArray::EndStripQ() {
-	#ifdef PFFG_DEBUG
-	ASSERT(stripArraySize >= stripArrayPos + 1);
-	#else
-	assert(stripArraySize >= stripArrayPos + 1);
-	#endif
+	PFFG_ASSERT(stripArraySize >= stripArrayPos + 1);
 
 	*stripArrayPos++ = ((char*) drawArrayPos - (char*) drawArray);
 }
