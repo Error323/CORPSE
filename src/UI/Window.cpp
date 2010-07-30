@@ -2,6 +2,7 @@
 #include <SDL/SDL_syswm.h>
 #include <GL/glxew.h>
 #include <GL/gl.h>
+#include <iostream>
 
 #include "./Window.hpp"
 #include "./UI.hpp"
@@ -51,6 +52,7 @@ ui::SDLWindow::SDLWindow() {
 
 	SDL_WM_SetIcon(SDL_LoadBMP(icon.c_str()), NULL);
 	SDL_WM_SetCaption(title.c_str(), NULL);
+	std::cout << title << std::endl;
 
 	SetWindowSize(vec3i(windowTable->GetFltVal("xsize", 800), windowTable->GetFltVal("ysize", 600), 0));
 	AddViewPort();

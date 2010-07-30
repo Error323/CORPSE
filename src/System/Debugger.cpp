@@ -4,6 +4,7 @@
 #include "../UI/Window.hpp"
 
 #include <SDL.h>
+#include <stdio.h>
 
 Debugger* Debugger::GetInstance() {
 	static Debugger* d = NULL;
@@ -31,7 +32,7 @@ Debugger::~Debugger() {
 	mInputHandler->DelReceiver(this);
 }
 
-void Debugger::Begin(const char* filename, int line) {
+bool Debugger::Begin(const char* filename, int line) {
 	snprintf(gDebugMessageKey, 1024, "%s:%d", filename, line);
 
 	mKey = std::string(gDebugMessageKey);
@@ -40,26 +41,23 @@ void Debugger::Begin(const char* filename, int line) {
 	if (i == mIgnoreForever.end())
 		mIgnoreForever[mKey] = false;
 
+	// If we are ignored don't start
 	if (mIgnoreForever[mKey])
-		return;
+		return false;
 
 	mEnabled = true;
 	mMessage.clear();
+
+	return true;
 }
 
 void Debugger::Print(const char* msg) {
-	if (mIgnoreForever[mKey])
-		return;
-
 	mMessage += std::string(msg);
 	fprintf(stderr, msg);
 }
 
 bool Debugger::End() {
 	bool breakPoint = false;
-
-	if (mIgnoreForever[mKey])
-		return breakPoint;
 
 	Print("\n\nPress LEFT for debugging, UP for ignore or DOWN for ignore forever");
 	/// FIXME
@@ -106,23 +104,13 @@ void Debugger::KeyReleased(int key) {
 	mKeyReleased = key;
 }
 
-void Debugger::DumpStack() {
-	#if (!defined(WIN32) && !defined(__powerpc64__))
-	void* addresses[16];
-
-	size_t size = backtrace(addresses, 16);
-	char** symbols = backtrace_symbols(addresses, size);
-
+void Debugger::DumpStack(char **symbols, int size) {
 	Debugger::GetInstance()->Print("\n");
 	if (symbols != NULL) {
 		for (size_t i = 0; i < size; i++) {
 			Debugger::GetInstance()->Print(symbols[i]);
 			Debugger::GetInstance()->Print("\n");
 		}
-
-		free(symbols);
 	}
-
-	#endif
 }
 #endif // PFFG_DEBUG

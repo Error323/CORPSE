@@ -24,29 +24,35 @@
 	#define BREAKPOINT asm("int $3")
 #endif
 
-#define START() Debugger::GetInstance()->Begin(__FILE__, __LINE__)
-#define STOP() if (Debugger::GetInstance()->End()) BREAKPOINT
-#define BACKTRACE() Debugger::GetInstance()->DumpStack()
+#define BEGIN() Debugger::GetInstance()->Begin(__FILE__, __LINE__)
+#define END() if (Debugger::GetInstance()->End()) BREAKPOINT
+
+#define BACKTRACE() \
+	do { \
+		void* addresses[16]; \
+		size_t size = backtrace(addresses, 16); \
+		char** symbols = backtrace_symbols(addresses, size); \
+		Debugger::GetInstance()->DumpStack(symbols, size); \
+		free(symbols); \
+	} while (0)
 
 #define PFFG_ASSERT(cond)                                                                                                                        \
 	do {                                                                                                                                         \
-		if (!(cond)) {                                                                                                                           \
-			START();                                                                                                                             \
-			FATAL("***ASSERTION FAILED***\n\n\tfile: %s\n\tline: %d\n\tfunc: %s\n\tcond: %s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
+		if ( !(cond) && BEGIN() ) {                                                                                                                           \
+			FATAL("***ASSERTION FAILED***\n\n\tfile\t%s\n\tline\t%d\n\tfunc\t%s\n\tcond\t%s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
 			BACKTRACE();                                                                                                                         \
-			STOP();                                                                                                                              \
+			END();                                                                                                                              \
 		}                                                                                                                                        \
 	} while (0)
 
 #define PFFG_ASSERT_MSG(cond, ...)                                                                                                                       \
 	do {                                                                                                                                                 \
-		if (!(cond)) {                                                                                                                                   \
-			START();                                                                                                                                     \
-			FATAL("***ASSERTION FAILED***\n\n\tfile: %s\n\tline: %d\n\tfunc: %s\n\tcond: %s\n\ttext: ", __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
+		if ( !(cond) && BEGIN() ) {                                                                                                                                   \
+			FATAL("***ASSERTION FAILED***\n\n\tfile\t%s\n\tline\t%d\n\tfunc\t%s\n\tcond\t%s\n\ttext\t", __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
 			FATAL(__VA_ARGS__);                                                                                                                          \
 			FATAL("\n");                                                                                                                                 \
 			BACKTRACE();                                                                                                                                 \
-			STOP();                                                                                                                                      \
+			END();                                                                                                                                      \
 		}                                                                                                                                                \
 	} while (0)
 
@@ -65,10 +71,10 @@ public:
 	Debugger();
 	~Debugger();
 
-	void Begin(const char*, int);
+	bool Begin(const char*, int);
 	bool End();
 	void Print(const char*);
-	void DumpStack();
+	void DumpStack(char**, int);
 
 	const char* GetMessage() const { return mMessage.c_str(); }
 	bool IsEnabled() const { return mEnabled; }

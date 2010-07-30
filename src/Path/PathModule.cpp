@@ -123,6 +123,7 @@ void PathModule::Update() {
 		coh->PopSimObjectWantedPhysicalStates(objID, 1, true);
 		coh->PushSimObjectWantedPhysicalState(objID, wps, true, true);
 	}
+	PFFG_ASSERT_MSG(false, "Trouble in paradise");
 }
 
 void PathModule::Kill() {

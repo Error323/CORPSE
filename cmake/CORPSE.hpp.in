@@ -1,3 +1,7 @@
-#define NAME       "CORPSE"
+#ifdef PFFG_DEBUG
+	#define NAME   "CORPSE (PFFG_DEBUG)"
+#else
+	#define NAME   "CORPSE"
+#endif
 #define VERSION    "@VERSION@"
 #define HUMAN_NAME NAME " v" VERSION " (" __DATE__ ")"
