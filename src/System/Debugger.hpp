@@ -26,40 +26,42 @@
 
 #define BEGIN() Debugger::GetInstance()->Begin(__FILE__, __LINE__)
 #define END() if (Debugger::GetInstance()->End()) BREAKPOINT
+#define FORMAT_STRING     "***ASSERTION FAILED***\n\n\tfile\t%s\n\tline\t%d\n\tfunc\t%s\n\tcond\t%s\n"
+#define FORMAT_STRING_MSG "***ASSERTION FAILED***\n\n\tfile\t%s\n\tline\t%d\n\tfunc\t%s\n\tcond\t%s\n\ttext\t"
 
-#define BACKTRACE() \
-	do { \
-		void* addresses[16]; \
-		size_t size = backtrace(addresses, 16); \
+#define BACKTRACE()                                          \
+	do {                                                     \
+		void* addresses[16];                                 \
+		size_t size = backtrace(addresses, 16);              \
 		char** symbols = backtrace_symbols(addresses, size); \
-		Debugger::GetInstance()->DumpStack(symbols, size); \
-		free(symbols); \
+		Debugger::GetInstance()->DumpStack(symbols, size);   \
+		free(symbols);                                       \
 	} while (0)
 
-#define PFFG_ASSERT(cond) \
-	do { \
-		if ( !(cond) && BEGIN() ) { \
-			FATAL("***ASSERTION FAILED***\n\n\tfile\t%s\n\tline\t%d\n\tfunc\t%s\n\tcond\t%s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
-			BACKTRACE(); \
-			END(); \
-		} \
+#define PFFG_ASSERT(cond)                                                         \
+	do {                                                                          \
+		if ( !(cond) && BEGIN() ) {                                               \
+			FATAL(FORMAT_STRING, __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
+			BACKTRACE();                                                          \
+			END();                                                                \
+		}                                                                         \
 	} while (0)
 
-#define PFFG_ASSERT_MSG(cond, ...) \
-	do { \
-		if ( !(cond) && BEGIN() ) { \
-			FATAL("***ASSERTION FAILED***\n\n\tfile\t%s\n\tline\t%d\n\tfunc\t%s\n\tcond\t%s\n\ttext\t", __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
-			FATAL(__VA_ARGS__); \
-			FATAL("\n"); \
-			BACKTRACE(); \
-			END(); \
-		} \
+#define PFFG_ASSERT_MSG(cond, ...)                                                    \
+	do {                                                                              \
+		if ( !(cond) && BEGIN() ) {                                                   \
+			FATAL(FORMAT_STRING_MSG, __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
+			FATAL(__VA_ARGS__);                                                       \
+			FATAL("\n");                                                              \
+			BACKTRACE();                                                              \
+			END();                                                                    \
+		}                                                                             \
 	} while (0)
 
-#define FATAL(...) \
-	do { \
-		char buffer[2048]; \
-		snprintf(buffer, 2048, __VA_ARGS__); \
+#define FATAL(...)                              \
+	do {                                        \
+		char buffer[2048];                      \
+		snprintf(buffer, 2048, __VA_ARGS__);    \
 		Debugger::GetInstance()->Print(buffer); \
 	} while (0)
 

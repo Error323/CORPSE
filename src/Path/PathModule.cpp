@@ -80,6 +80,7 @@ void PathModule::Init() {
 }
 
 void PathModule::Update() {
+	#ifdef PFFG_DEFAULT_PATHMODULE
 	// steer the sim-objects around the map based on user commands
 	for (std::map<unsigned int, const SimObjectDef*>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
 		const unsigned int objID = it->first;
@@ -123,6 +124,7 @@ void PathModule::Update() {
 		coh->PopSimObjectWantedPhysicalStates(objID, 1, true);
 		coh->PushSimObjectWantedPhysicalState(objID, wps, true, true);
 	}
+	#endif
 }
 
 void PathModule::Kill() {
