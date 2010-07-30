@@ -46,12 +46,15 @@ void PathModule::OnEvent(const IEvent* e) {
 
 				PFFG_ASSERT(coh->IsValidSimObjectID(objID));
 
+				#ifdef PFFG_DEFAULT_PATHMODULE
 				// note: direction is based on our current position
 				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID, true);
 					wps.wantedPos = goalPos;
 					wps.wantedDir = (goalPos - objPos).norm();
 					wps.wantedForwardSpeed = simObjectIDs[objID]->GetMaxForwardSpeed();
+
 				coh->PushSimObjectWantedPhysicalState(objID, wps, ee->GetQueued(), false);
+				#endif
 
 				DelObjectFromGroup(objID);
 				AddObjectToGroup(objID, groupID);
