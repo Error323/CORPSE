@@ -104,9 +104,10 @@ void Debugger::KeyReleased(int key) {
 	mKeyReleased = key;
 }
 
-void Debugger::DumpStack(char **symbols, size_t size) {
-	Print("\n");
+void Debugger::DumpStack(char** symbols, size_t size) {
 	if (symbols != NULL) {
+		Print("\n");
+
 		for (size_t i = 0; i < size; i++) {
 			Print(symbols[i]);
 			Print("\n");
