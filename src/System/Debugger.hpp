@@ -26,8 +26,8 @@
 
 #define BEGIN() Debugger::GetInstance()->Begin(__FILE__, __LINE__)
 #define END() if (Debugger::GetInstance()->End()) BREAKPOINT
-#define FORMAT_STRING     "***ASSERTION FAILED***\n\n\tfile\t%s\n\tline\t%d\n\tfunc\t%s\n\tcond\t%s\n"
-#define FORMAT_STRING_MSG "***ASSERTION FAILED***\n\n\tfile\t%s\n\tline\t%d\n\tfunc\t%s\n\tcond\t%s\n\ttext\t"
+#define FORMAT_STRING "***ASSERTION FAILED***\n\n\tfile\t%s\n\tline\t%d\n\tfunc\t%s\n\tcond\t%s\n"
+#define FORMAT_STRING_MSG FORMAT_STRING"\ttext\t"
 
 #define BACKTRACE()                                          \
 	do {                                                     \

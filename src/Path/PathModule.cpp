@@ -14,6 +14,7 @@ void PathModule::OnEvent(const IEvent* e) {
 
 			simObjectIDs[objectID] = coh->GetSimObjectDef(objectID);
 		} break;
+
 		case EVENT_SIMOBJECT_DESTROYED: {
 			const SimObjectDestroyedEvent* ee = dynamic_cast<const SimObjectDestroyedEvent*>(e);
 			const unsigned int objectID = ee->GetObjectID();
