@@ -28,12 +28,12 @@
 #define END() if (Debugger::GetInstance()->End()) BREAKPOINT
 
 #define BACKTRACE() \
-	do { \
-		void* addresses[16]; \
-		size_t size = backtrace(addresses, 16); \
+	do {                                                     \
+		void* addresses[16];                                 \
+		size_t size = backtrace(addresses, 16);              \
 		char** symbols = backtrace_symbols(addresses, size); \
-		Debugger::GetInstance()->DumpStack(symbols, size); \
-		free(symbols); \
+		Debugger::GetInstance()->DumpStack(symbols, size);   \
+		free(symbols);                                       \
 	} while (0)
 
 #define PFFG_ASSERT(cond)                                                                                                                        \
@@ -56,7 +56,7 @@
 		}                                                                                                                                                \
 	} while (0)
 
-#define FATAL(...) \
+#define FATAL(...)                              \
 	do {                                        \
 		char buffer[2048];                      \
 		snprintf(buffer, 2048, __VA_ARGS__);    \
