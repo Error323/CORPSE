@@ -36,30 +36,30 @@
 		free(symbols); \
 	} while (0)
 
-#define PFFG_ASSERT(cond)                                                                                                                        \
-	do {                                                                                                                                         \
-		if ( !(cond) && BEGIN() ) {                                                                                                                           \
+#define PFFG_ASSERT(cond) \
+	do { \
+		if ( !(cond) && BEGIN() ) { \
 			FATAL("***ASSERTION FAILED***\n\n\tfile\t%s\n\tline\t%d\n\tfunc\t%s\n\tcond\t%s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
-			BACKTRACE();                                                                                                                         \
-			END();                                                                                                                              \
-		}                                                                                                                                        \
+			BACKTRACE(); \
+			END(); \
+		} \
 	} while (0)
 
-#define PFFG_ASSERT_MSG(cond, ...)                                                                                                                       \
-	do {                                                                                                                                                 \
-		if ( !(cond) && BEGIN() ) {                                                                                                                                   \
+#define PFFG_ASSERT_MSG(cond, ...) \
+	do { \
+		if ( !(cond) && BEGIN() ) { \
 			FATAL("***ASSERTION FAILED***\n\n\tfile\t%s\n\tline\t%d\n\tfunc\t%s\n\tcond\t%s\n\ttext\t", __FILE__, __LINE__, __PRETTY_FUNCTION__, #cond); \
-			FATAL(__VA_ARGS__);                                                                                                                          \
-			FATAL("\n");                                                                                                                                 \
-			BACKTRACE();                                                                                                                                 \
-			END();                                                                                                                                      \
-		}                                                                                                                                                \
+			FATAL(__VA_ARGS__); \
+			FATAL("\n"); \
+			BACKTRACE(); \
+			END(); \
+		} \
 	} while (0)
 
 #define FATAL(...) \
-	do {                                        \
-		char buffer[2048];                      \
-		snprintf(buffer, 2048, __VA_ARGS__);    \
+	do { \
+		char buffer[2048]; \
+		snprintf(buffer, 2048, __VA_ARGS__); \
 		Debugger::GetInstance()->Print(buffer); \
 	} while (0)
 
@@ -74,7 +74,7 @@ public:
 	bool Begin(const char*, int);
 	bool End();
 	void Print(const char*);
-	void DumpStack(char**, int);
+	void DumpStack(char**, size_t);
 
 	const char* GetMessage() const { return mMessage.c_str(); }
 	bool IsEnabled() const { return mEnabled; }

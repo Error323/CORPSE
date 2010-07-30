@@ -104,12 +104,12 @@ void Debugger::KeyReleased(int key) {
 	mKeyReleased = key;
 }
 
-void Debugger::DumpStack(char **symbols, int size) {
-	Debugger::GetInstance()->Print("\n");
+void Debugger::DumpStack(char **symbols, size_t size) {
+	Print("\n");
 	if (symbols != NULL) {
 		for (size_t i = 0; i < size; i++) {
-			Debugger::GetInstance()->Print(symbols[i]);
-			Debugger::GetInstance()->Print("\n");
+			Print(symbols[i]);
+			Print("\n");
 		}
 	}
 }
