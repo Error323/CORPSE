@@ -1,10 +1,10 @@
 #include <iostream>
 
-#include "./PathModule.hpp"
-#include "../Math/vec3.hpp"
-#include "../Ext/ICallOutHandler.hpp"
-#include "../Sim/SimObjectDef.hpp"
-#include "../Sim/SimObjectState.hpp"
+#include "../PathModule.hpp"
+#include "../../Math/vec3.hpp"
+#include "../../Ext/ICallOutHandler.hpp"
+#include "../../Sim/SimObjectDef.hpp"
+#include "../../Sim/SimObjectState.hpp"
 
 void PathModule::OnEvent(const IEvent* e) {
 	switch (e->GetType()) {
@@ -46,7 +46,6 @@ void PathModule::OnEvent(const IEvent* e) {
 
 				PFFG_ASSERT(coh->IsValidSimObjectID(objID));
 
-				#ifdef PFFG_DEFAULT_PATHMODULE
 				// note: direction is based on our current position
 				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID, true);
 					wps.wantedPos = goalPos;
@@ -54,7 +53,6 @@ void PathModule::OnEvent(const IEvent* e) {
 					wps.wantedForwardSpeed = simObjectIDs[objID]->GetMaxForwardSpeed();
 
 				coh->PushSimObjectWantedPhysicalState(objID, wps, ee->GetQueued(), false);
-				#endif
 
 				DelObjectFromGroup(objID);
 				AddObjectToGroup(objID, groupID);
@@ -84,7 +82,6 @@ void PathModule::Init() {
 }
 
 void PathModule::Update() {
-	#ifdef PFFG_DEFAULT_PATHMODULE
 	// steer the sim-objects around the map based on user commands
 	for (std::map<unsigned int, const SimObjectDef*>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
 		const unsigned int objID = it->first;
@@ -128,7 +125,6 @@ void PathModule::Update() {
 		coh->PopSimObjectWantedPhysicalStates(objID, 1, true);
 		coh->PushSimObjectWantedPhysicalState(objID, wps, true, true);
 	}
-	#endif
 }
 
 void PathModule::Kill() {

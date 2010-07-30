@@ -140,8 +140,14 @@ SET(CORPSE_SOURCE
 	src/UI/SimObjectSpawnerWidget.hpp
 )
 
-SET(PATHMODULE_SOURCE
+SET(PATHMODULE_DUMMY_SOURCE
 	src/Path/IPathModule.hpp
-	src/Path/PathModule.cpp
 	src/Path/PathModule.hpp
+	src/Path/Dummy/Dummy.cpp
+)
+
+SET(PATHMODULE_CC_SOURCE
+	src/Path/IPathModule.hpp
+	src/Path/PathModule.hpp
+	src/Path/CC/CC.cpp
 )

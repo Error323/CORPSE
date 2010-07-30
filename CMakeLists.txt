@@ -51,7 +51,8 @@ INCLUDE_DIRECTORIES(${CORPSE_BINARY_DIR})
 #-------------------------------------------------------------------------------
 # Add our own libraries
 #-------------------------------------------------------------------------------
-ADD_LIBRARY(PathModule SHARED ${PATHMODULE_SOURCE})
+ADD_LIBRARY(DummyPathModule SHARED ${PATHMODULE_DUMMY_SOURCE})
+ADD_LIBRARY(CCPathModule SHARED ${PATHMODULE_CC_SOURCE})
 
 
 #-------------------------------------------------------------------------------
@@ -97,5 +98,5 @@ TARGET_LINK_LIBRARIES(CORPSE
 	${ILU_LIBRARIES}           ## cmake 2.8
 	${LUA_LIBRARIES}
 	${FTGL_LIBRARIES}
-	PathModule
+	CCPathModule
 	)
