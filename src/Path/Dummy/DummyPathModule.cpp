@@ -78,7 +78,7 @@ void PathModule::OnEvent(const IEvent* e) {
 }
 
 void PathModule::Init() {
-	std::cout << "[PathModule::Init][Dummy]" << std::endl;
+	std::cout << "[DummyPathModule::Init]" << std::endl;
 }
 
 void PathModule::Update() {
@@ -128,7 +128,7 @@ void PathModule::Update() {
 }
 
 void PathModule::Kill() {
-	std::cout << "[PathModule::Kill][Dummy]" << std::endl;
+	std::cout << "[DummyPathModule::Kill]" << std::endl;
 }
 
 
