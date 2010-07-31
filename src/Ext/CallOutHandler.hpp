@@ -44,6 +44,9 @@ public:
 	void PushSimObjectWantedPhysicalState(unsigned int, const WantedPhysicalState&, bool, bool) const;
 	bool PopSimObjectWantedPhysicalStates(unsigned int, unsigned int, bool) const;
 	const WantedPhysicalState& GetSimObjectWantedPhysicalState(unsigned int, bool) const;
+
+	void SetSimObjectRawPosition(unsigned int objID, const vec3f& pos) const;
+	void SetSimObjectRawDirection(unsigned int objID, const vec3f& dir) const;
 };
 
 #endif

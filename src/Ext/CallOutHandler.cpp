@@ -1,4 +1,5 @@
 #include "./CallOutHandler.hpp"
+#include "../Map/Ground.hpp"
 #include "../Map/ReadMap.hpp"
 #include "../Math/mat44.hpp"
 #include "../Math/vec3.hpp"
@@ -202,4 +203,45 @@ const WantedPhysicalState& CallOutHandler::GetSimObjectWantedPhysicalState(unsig
 	}
 
 	return swps;
+}
+
+
+
+void CallOutHandler::SetSimObjectRawPosition(unsigned int objID, const vec3f& pos) const {
+	if (IsValidSimObjectID(objID)) {
+		SimObject* so = simObjectHandler->GetSimObject(objID);
+
+		// get the old state
+		const PhysicalState& ops = so->GetPhysicalState();
+		      PhysicalState  nps = ops;
+
+		// update position and adjust to the local terrain-slope
+		vec3f gpos = pos;
+			gpos.y = ground->GetHeight(pos.x, pos.z);
+		mat44f mat = ops.mat;
+			mat.SetYDirXZ(ground->GetSmoothNormal(gpos.x, gpos.z));
+
+		// copy the new matrix
+		nps.mat = mat;
+
+		so->SetPhysicalState(nps);
+	}
+}
+
+void CallOutHandler::SetSimObjectRawDirection(unsigned int objID, const vec3f& dir) const {
+	if (IsValidSimObjectID(objID)) {
+		SimObject* so = simObjectHandler->GetSimObject(objID);
+
+		const PhysicalState& ops = so->GetPhysicalState();
+		      PhysicalState  nps = ops;
+
+		mat44f mat = ops.mat;
+			mat.SetZDir(dir);
+			mat.SetYDirXZ(ground->GetSmoothNormal(mat.GetPos().x, mat.GetPos().z));
+
+		// copy the new matrix
+		nps.mat = mat;
+
+		so->SetPhysicalState(nps);
+	}
 }

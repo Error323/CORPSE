@@ -61,14 +61,14 @@ void PathModule::OnEvent(const IEvent* e) {
 }
 
 void PathModule::Init() {
-	std::cout << "[PathModule::Init]" << std::endl;
+	std::cout << "[PathModule::Init][CC]" << std::endl;
 }
 
 void PathModule::Update() {
 }
 
 void PathModule::Kill() {
-	std::cout << "[PathModule::Kill]" << std::endl;
+	std::cout << "[PathModule::Kill][CC]" << std::endl;
 }
 
 

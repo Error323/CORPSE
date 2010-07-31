@@ -43,6 +43,9 @@ public:
 	virtual void PushSimObjectWantedPhysicalState(unsigned int objID, const WantedPhysicalState& state, bool queued, bool front) const = 0;
 	virtual bool PopSimObjectWantedPhysicalStates(unsigned int objID, unsigned int numStates, bool front) const = 0;
 	virtual const WantedPhysicalState& GetSimObjectWantedPhysicalState(unsigned int objID, bool front) const = 0;
+
+	virtual void SetSimObjectRawPosition(unsigned int objID, const vec3f& pos) const = 0;
+	virtual void SetSimObjectRawDirection(unsigned int objID, const vec3f& dir) const = 0;
 };
 
 #endif
