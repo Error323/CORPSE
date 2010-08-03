@@ -22,7 +22,7 @@ void Debugger::FreeInstance(Debugger* d) {
 
 
 
-#ifdef PFFG_DEBUG
+#ifdef DEBUG
 Debugger::Debugger(): mEnabled(false) {
 	mInputHandler = CInputHandler::GetInstance();
 	mInputHandler->AddReceiver(this);
@@ -114,4 +114,4 @@ void Debugger::DumpStack(char** symbols, size_t size) {
 		}
 	}
 }
-#endif // PFFG_DEBUG
+#endif // DEBUG

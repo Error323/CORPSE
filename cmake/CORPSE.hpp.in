@@ -1,5 +1,5 @@
-#ifdef PFFG_DEBUG
-	#define NAME   "CORPSE (PFFG_DEBUG)"
+#ifdef DEBUG
+	#define NAME   "CORPSE (DEBUG)"
 #else
 	#define NAME   "CORPSE"
 #endif

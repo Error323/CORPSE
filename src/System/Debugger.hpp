@@ -1,7 +1,7 @@
 #ifndef PFFG_DEBUGGER_HDR
 #define PFFG_DEBUGGER_HDR
 
-#ifdef PFFG_DEBUG
+#ifdef DEBUG
 #include <cstdio>
 #include <cstdlib>
 
@@ -100,10 +100,9 @@ private:
 	CInputHandler* mInputHandler;
 };
 
-#else // PFFG_DEBUG
-#include <cassert>
-#define PFFG_ASSERT(c) assert(c)
-#define PFFG_ASSERT_MSG
+#else // DEBUG
+#define PFFG_ASSERT(c)
+#define PFFG_ASSERT_MSG(c, ...)
 
 // dummy
 class Debugger {
@@ -114,7 +113,7 @@ public:
 	const char* GetMessage() const { return ""; }
 	bool IsEnabled() const { return false; }
 };
-#endif // PFFG_DEBUG
+#endif // DEBUG
 
 
 

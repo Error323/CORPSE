@@ -17,7 +17,7 @@ params = {
 
 	["ui"] = {
 		fontName        = "Vera.ttf",
-		fontSize        = 72,
+		fontSize        = 60,
 	},
 
 	["server"] = {

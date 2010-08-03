@@ -7,16 +7,9 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 #-------------------------------------------------------------------------------
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_MODULE_PATH "${CORPSE_SOURCE_DIR}/cmake/packages")
-SET(CMAKE_CXX_FLAGS "-O2 -fno-strict-aliasing -g -Wall -Wextra -rdynamic")
-
-#-------------------------------------------------------------------------------
-# Add custom compiler definitions
-#-------------------------------------------------------------------------------
-OPTION(PFFG_DEBUG "Enable pffg asserts" ON)
-
-IF(PFFG_DEBUG)
-	ADD_DEFINITIONS(-DPFFG_DEBUG)
-ENDIF(PFFG_DEBUG)
+SET(CMAKE_CXX_FLAGS "-Wall -Wextra")
+SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -rdynamic -DDEBUG")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -fno-strict-aliasing")
 
 #-------------------------------------------------------------------------------
 # Extract and set the version
@@ -31,8 +24,7 @@ EXECUTE_PROCESS(
 IF(GIT_VERSION)
 	SET(VERSION ${GIT_VERSION})
 ELSE(NOT GIT_VERSION)
-	MESSAGE(WARNING "No git tag found, adding VERSION as option")
-	SET(VERSION "1.0.0" CACHE STRING "Define the build version.")
+	SET(VERSION "0.0.0" CACHE STRING "Define the build version.")
 ENDIF(GIT_VERSION)
 
 CONFIGURE_FILE(

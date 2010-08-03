@@ -120,7 +120,7 @@ PieceS3O* CModelReaderS3O::LoadPiece(ModelBase* model, PieceS3O* parent, unsigne
 		piece->name = (char*) &buf[rawPiece->nameOffset];
 		piece->parent = parent;
 
-	#ifdef PFFG_DEBUG
+	#ifdef DEBUG
 	std::string tabs = "";
 	for (unsigned int k = 0; k < depth; k++) {
 		tabs += "\t";

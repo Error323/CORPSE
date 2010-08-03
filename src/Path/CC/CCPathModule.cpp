@@ -56,6 +56,7 @@ void PathModule::OnEvent(const IEvent* e) {
 		} break;
 
 		default: {
+			PFFG_ASSERT_MSG(false, "PathModule::OnEvent switch case (%d)", e->GetType());
 		} break;
 	}
 }

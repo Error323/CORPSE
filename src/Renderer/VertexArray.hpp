@@ -95,7 +95,7 @@ protected:
 
 
 
-#ifdef PFFG_DEBUG
+#ifdef DEBUG
 	#define ASSERT_SIZE(x) PFFG_ASSERT(drawArraySize >= (drawArrayPos + x));
 #else
 	#define ASSERT_SIZE(x)
