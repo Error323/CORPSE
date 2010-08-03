@@ -142,12 +142,12 @@ SET(CORPSE_SOURCE
 
 SET(PATHMODULE_DUMMY_SOURCE
 	src/Path/IPathModule.hpp
-	src/Path/PathModule.hpp
+	src/Path/Dummy/DummyPathModule.hpp
 	src/Path/Dummy/DummyPathModule.cpp
 )
 
 SET(PATHMODULE_CC_SOURCE
 	src/Path/IPathModule.hpp
-	src/Path/PathModule.hpp
+	src/Path/CC/CCPathModule.hpp
 	src/Path/CC/CCPathModule.cpp
 )

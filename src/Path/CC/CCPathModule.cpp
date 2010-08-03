@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../PathModule.hpp"
+#include "./CCPathModule.hpp"
 #include "../../Math/vec3.hpp"
 #include "../../Ext/ICallOutHandler.hpp"
 #include "../../Sim/SimObjectDef.hpp"
@@ -56,7 +56,7 @@ void PathModule::OnEvent(const IEvent* e) {
 		} break;
 
 		default: {
-			PFFG_ASSERT_MSG(false, "PathModule::OnEvent switch case (%d)", e->GetType());
+			PFFG_ASSERT_MSG(false, "PathModule::OnEvent switch case (%d) doesn't exist", e->GetType());
 		} break;
 	}
 }
@@ -66,6 +66,21 @@ void PathModule::Init() {
 }
 
 void PathModule::Update() {
+	// Convert the crowd into a density field
+	std::map<unsigned int, const SimObjectDef*>::iterator i;
+	for (i = simObjectIDs.begin(); i != simObjectIDs.end(); i++) {
+		
+	}
+
+	// Foreach group
+	std::map<unsigned int, std::set<unsigned int> >::iterator j;
+	for (j = objectGroups.begin(); j != objectGroups.end(); j++) {
+		// Construct the unit cost field
+		// Construct the potential and the gradient
+		// Update the object locations
+	}
+
+	// Enforce minimum distance between objects
 }
 
 void PathModule::Kill() {

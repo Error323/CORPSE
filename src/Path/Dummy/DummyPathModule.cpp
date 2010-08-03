@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../PathModule.hpp"
+#include "./DummyPathModule.hpp"
 #include "../../Math/vec3.hpp"
 #include "../../Ext/ICallOutHandler.hpp"
 #include "../../Sim/SimObjectDef.hpp"

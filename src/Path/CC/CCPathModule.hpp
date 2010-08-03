@@ -4,8 +4,8 @@
 #include <map>
 #include <set>
 
-#include "./IPathModule.hpp"
-#include "../System/IEvent.hpp"
+#include "../IPathModule.hpp"
+#include "../../System/IEvent.hpp"
 
 class IEvent;
 class SimObjectDef;
