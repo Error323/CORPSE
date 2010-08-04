@@ -63,15 +63,20 @@ void PathModule::OnEvent(const IEvent* e) {
 
 void PathModule::Init() {
 	std::cout << "[CCPathModule::Init]" << std::endl;
-	//mGrid.Init(coh->GetHeightMapSizeX(), coh->GetHeightMapSizeZ(), coh->GetSquareSize());
-	mGrid.Init(4, 4, 1);
+	mGrid.Init(2, coh);
 }
 
 void PathModule::Update() {
+	// Reset the touched cells in the grid
+	mGrid.Reset();
+
 	// Convert the crowd into a density field
 	std::map<unsigned int, const SimObjectDef*>::iterator i;
 	for (i = simObjectIDs.begin(); i != simObjectIDs.end(); i++) {
-		
+		const vec3f& objPos = coh->GetSimObjectPosition(i->first);
+		vec3f objVel = coh->GetSimObjectDirection(i->first);
+		objVel *= coh->GetSimObjectCurrentForwardSpeed(i->first);
+		mGrid.AddDensityAndSpeed(objPos, objVel);
 	}
 
 	// Foreach group
