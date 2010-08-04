@@ -63,6 +63,8 @@ void PathModule::OnEvent(const IEvent* e) {
 
 void PathModule::Init() {
 	std::cout << "[CCPathModule::Init]" << std::endl;
+	//mGrid.Init(coh->GetHeightMapSizeX(), coh->GetHeightMapSizeZ(), coh->GetSquareSize());
+	mGrid.Init(4, 4, 1);
 }
 
 void PathModule::Update() {

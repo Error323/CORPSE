@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 
+#include "./Grid.hpp"
 #include "../IPathModule.hpp"
 #include "../../System/IEvent.hpp"
 
@@ -37,6 +38,7 @@ private:
 	bool DelObjectFromGroup(unsigned int);
 
 	unsigned int numGroupIDs;
+	Grid mGrid;
 
 	std::map<unsigned int, const SimObjectDef*> simObjectIDs;     // object ID ==> object def
 	std::map<unsigned int, unsigned int> objectGroupIDs;          // object ID ==> group ID
