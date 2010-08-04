@@ -9,13 +9,19 @@
 #include "../../Math/vec3.hpp"
 #include "../../Ext/ICallOutHandler.hpp"
 
-enum { NORTH=0, EAST=1, SOUTH=2, WEST=3, DIRECTIONS=4 };
+enum {
+	NORTH      = 0,
+	EAST       = 1,
+	SOUTH      = 2,
+	WEST       = 3,
+	DIRECTIONS = 4
+};
 
 class Face;
 class Cell;
 class Grid {
 public:
-	Grid(){}
+	Grid() {}
 	~Grid();
 
 	vec3f Grid2Real(Cell*);

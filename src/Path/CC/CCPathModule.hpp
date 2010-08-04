@@ -33,11 +33,36 @@ public:
 	void Update();
 	void Kill();
 
+	enum {
+		// scalar fields
+		DATATYPE_DENSITY         = 0, // rho (global)
+		DATATYPE_DISCOMFORT      = 1, // g (per-group?, stored at cell-centers)
+		DATATYPE_POTENTIAL       = 2, // phi (per-group, stored at cell-centers)
+		DATATYPE_POTENTIAL_DELTA = 3, // delta-phi (per-group, stored at cell-edges)
+		DATATYPE_HEIGHT          = 4, // h (global, stored at cell-centers)
+		DATATYPE_HEIGHT_DELTA    = 5, // delta-h (global, stored at cell-edges)
+
+		// vector fields
+		DATATYPE_COST            = 6, // C (per-group, stored at cell-edges)
+		DATATYPE_SPEED           = 7, // f (per-group, stored at cell-edges)
+		DATATYPE_VELOCITY        = 8, // v (per-group, stored at cell-edges)
+		DATATYPE_VELOCITY_AVG    = 9, // v-bar (global, stored at cell-centers)
+	};
+
+	unsigned int GetScalarDataArraySizeX(unsigned int) const;
+	unsigned int GetScalarDataArraySizeZ(unsigned int) const;
+	const float* GetScalarDataArray(unsigned int, unsigned int) const;
+	unsigned int GetVectorDataArraySizeX(unsigned int) const;
+	unsigned int GetVectorDataArraySizeZ(unsigned int) const;
+	const vec3f* GetVectorDataArray(unsigned int, unsigned int) const;
+
 private:
 	void AddObjectToGroup(unsigned int, unsigned int);
 	bool DelObjectFromGroup(unsigned int);
 
 	unsigned int numGroupIDs;
+
+	//! FIXME: we need a grid per group?
 	Grid mGrid;
 
 	std::map<unsigned int, const SimObjectDef*> simObjectIDs;     // object ID ==> object def

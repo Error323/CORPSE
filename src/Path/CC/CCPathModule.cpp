@@ -35,14 +35,14 @@ void PathModule::OnEvent(const IEvent* e) {
 			const SimObjectMoveOrderEvent* ee = dynamic_cast<const SimObjectMoveOrderEvent*>(e);
 
 			const std::list<unsigned int>& objectIDs = ee->GetObjectIDs();
-			const vec3f& goalPos = ee->GetGoalPos();
+			// const vec3f& goalPos = ee->GetGoalPos();
 
 			// create a new group
 			const unsigned int groupID = numGroupIDs++;
 
 			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
 				const unsigned int objID = *it;
-				const vec3f& objPos = coh->GetSimObjectPosition(objID);
+				// const vec3f& objPos = coh->GetSimObjectPosition(objID);
 
 				PFFG_ASSERT(coh->IsValidSimObjectID(objID));
 
@@ -73,13 +73,15 @@ void PathModule::Update() {
 	// Convert the crowd into a density field
 	std::map<unsigned int, const SimObjectDef*>::iterator i;
 	for (i = simObjectIDs.begin(); i != simObjectIDs.end(); i++) {
-		const vec3f& objPos = coh->GetSimObjectPosition(i->first);
-		vec3f objVel = coh->GetSimObjectDirection(i->first);
-		objVel *= coh->GetSimObjectCurrentForwardSpeed(i->first);
+		const unsigned int objID = i->first;
+		const vec3f& objPos = coh->GetSimObjectPosition(objID);
+		const vec3f objVel =
+			coh->GetSimObjectDirection(objID) *
+			coh->GetSimObjectCurrentForwardSpeed(objID);
 		mGrid.AddDensityAndSpeed(objPos, objVel);
 	}
 
-	// Foreach group
+	// for each group
 	std::map<unsigned int, std::set<unsigned int> >::iterator j;
 	for (j = objectGroups.begin(); j != objectGroups.end(); j++) {
 		// Construct the unit cost field
@@ -122,4 +124,129 @@ bool PathModule::DelObjectFromGroup(unsigned int objID) {
 
 	// object was not in a group
 	return false;
+}
+
+
+
+
+
+
+unsigned int PathModule::GetScalarDataArraySizeX(unsigned int dataType) const {
+	switch (dataType) {
+		//! NOTE: these are not all the same size (eg. h vs. delta-h)!
+		//! case DATATYPE_DENSITY: { return mGrid.GetSizeX(); } break;
+		//! case DATATYPE_DISCOMFORT: { return mGrid.GetSizeX(); } break;
+		//! case DATATYPE_POTENTIAL: { return mGrid.GetSizeX(); } break;
+		//! case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetSizeX(); } break;
+		//! case DATATYPE_HEIGHT: { return mGrid.GetSizeX(); } break;
+		//! case DATATYPE_HEIGHT_DELTA: { return mGrid.GetSizeX(); } break;
+		default: {
+		} break;
+	}
+
+	return 0;
+}
+
+unsigned int PathModule::GetScalarDataArraySizeZ(unsigned int dataType) const {
+	switch (dataType) {
+		//! NOTE: these are not all the same size (eg. h vs. delta-h)!
+		//! case DATATYPE_DENSITY: { return mGrid.GetSizeZ(); } break;
+		//! case DATATYPE_DISCOMFORT: { return mGrid.GetSizeZ(); } break;
+		//! case DATATYPE_POTENTIAL: { return mGrid.GetSizeZ(); } break;
+		//! case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetSizeZ(); } break;
+		//! case DATATYPE_HEIGHT: { return mGrid.GetSizeZ(); } break;
+		//! case DATATYPE_HEIGHT_DELTA: { return mGrid.GetSizeZ(); } break;
+		default: {
+		} break;
+	}
+
+	return 0;
+}
+
+const float* PathModule::GetScalarDataArray(unsigned int dataType, unsigned int groupID) const {
+	switch (dataType) {
+		case DATATYPE_DENSITY: {
+			//! TODO
+			//! return mGrid.GetDensityDataArray();
+		} break;
+		case DATATYPE_DISCOMFORT: {
+			//! TODO, FIXME: per-group
+			//! return mGrid.GetDiscomfortDataArray();
+		} break;
+		case DATATYPE_POTENTIAL: {
+			//! TODO, FIXME: per-group
+			//! return mGrid.GetPotentialDataArray();
+		} break;
+		case DATATYPE_POTENTIAL_DELTA: {
+			//! TODO, FIXME: per-group
+			//! return mGrid.GetPotentialDeltaDataArray();
+		} break;
+		case DATATYPE_HEIGHT: {
+			//! TODO
+			//! return mGrid.GetHeightDataArray();
+		} break;
+		case DATATYPE_HEIGHT_DELTA: {
+			//! TODO, NOTE: slopes are stored per-edge, four values per cell
+			//! return mGrid.GetHeightDeltaDataArray();
+		} break;
+		default: {
+		} break;
+	}
+
+	return NULL;
+}
+
+
+
+unsigned int PathModule::GetVectorDataArraySizeX(unsigned int dataType) const {
+	switch (dataType) {
+		//! NOTE: these are not all the same size (eg. v vs. v-bar)!
+		//! case DATATYPE_COST: { return mGrid.GetSizeX(); } break;
+		//! case DATATYPE_SPEED: { return mGrid.GetSizeX(); } break;
+		//! case DATATYPE_VELOCITY: { return mGrid.GetSizeX(); } break;
+		//! case DATATYPE_VELOCITY_AVG: { return mGrid.GetSizeX(); } break;
+		default: {
+		} break;
+	}
+
+	return 0;
+}
+
+unsigned int PathModule::GetVectorDataArraySizeZ(unsigned int dataType) const {
+	switch (dataType) {
+		//! NOTE: these are not all the same size (eg. v vs. v-bar)!
+		//! case DATATYPE_COST: { return mGrid.GetSizeZ(); } break;
+		//! case DATATYPE_SPEED: { return mGrid.GetSizeZ(); } break;
+		//! case DATATYPE_VELOCITY: { return mGrid.GetSizeZ(); } break;
+		//! case DATATYPE_VELOCITY_AVG: { return mGrid.GetSizeZ(); } break;
+		default: {
+		} break;
+	}
+
+	return 0;
+}
+
+const vec3f* PathModule::GetVectorDataArray(unsigned int dataType, unsigned int groupID) const {
+	switch (dataType) {
+		case DATATYPE_COST: {
+			//! TODO, FIXME: per-group
+			//! return mGrid.GetCostDataArray();
+		} break;
+		case DATATYPE_SPEED: {
+			//! TODO, FIXME: per-group
+			//! return mGrid.GetSpeedDataArray();
+		} break;
+		case DATATYPE_VELOCITY: {
+			//! TODO, FIXME: per-group
+			//! return mGrid.GetVelocityDataArray();
+		} break;
+		case DATATYPE_VELOCITY_AVG: {
+			//! TODO
+			//! return mGrid.GetVelocityAvgDataArray();
+		} break;
+		default: {
+		} break;
+	}
+
+	return NULL;
 }
