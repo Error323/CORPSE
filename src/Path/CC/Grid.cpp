@@ -95,10 +95,10 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 
 	PFFG_ASSERT(i > 0 && j > 0);
 
-	Cell *A = mCells[GRID_ID(i-1, j-1)];
-	Cell *B = mCells[GRID_ID(i  , j-1)];
-	Cell *C = mCells[GRID_ID(i  , j  )];
-	Cell *D = mCells[GRID_ID(i-1, j  )];
+	Cell *A = mCells[GRID_ID(i-1, j-1)]; mTouchedCells[GRID_ID(i-1, j-1)] = A; 
+	Cell *B = mCells[GRID_ID(i  , j-1)]; mTouchedCells[GRID_ID(i  , j-1)] = B;
+	Cell *C = mCells[GRID_ID(i  , j  )]; mTouchedCells[GRID_ID(i  , j  )] = C;
+	Cell *D = mCells[GRID_ID(i-1, j  )]; mTouchedCells[GRID_ID(i-1, j  )] = D;
 
 	// Add velocity
 	C->avgVelocity += inVel;
