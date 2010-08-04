@@ -24,7 +24,7 @@ public:
 	Grid() {}
 	~Grid();
 
-	vec3f Grid2Real(Cell*);
+	vec3f Grid2Real(const Cell*);
 
 	void Init(const int, ICallOutHandler*);
 	void AddDensityAndSpeed(const vec3f&, const vec3f&);

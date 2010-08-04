@@ -5,14 +5,14 @@
 #define GRID_ID(x,y) (((y)*(mWidth))+(x))
 #define ELEVATION(x,y) (mCoh->GetCenterHeightMap()[(mDownScale*(y))*(mDownScale*mWidth)+(mDownScale*(x))])
 
-void Grid::Init(const int downscale, ICallOutHandler* coh) {
+void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	PFFG_ASSERT(downscale >= 1);
 
-	mDownScale  = downscale;
-	mCoh        = coh;
-	mWidth      = mCoh->GetHeightMapSizeX() / res;
-	mHeight     = mCoh->GetHeightMapSizeZ() / res;
-	mSquareSize = mCoh->GetSquareSize()     * res;
+	mDownScale  = inDownScale;
+	mCoh        = inCoh;
+	mWidth      = mCoh->GetHeightMapSizeX() / mDownScale;
+	mHeight     = mCoh->GetHeightMapSizeZ() / mDownScale;
+	mSquareSize = mCoh->GetSquareSize()     * mDownScale;
 
 	//! NOTE: if mDownScale != 1, the engine's height-map must be downsampled
 	printf("[Grid::Init] GridRes: %dx%d %d\n", mWidth, mHeight, mSquareSize);
@@ -99,11 +99,11 @@ Face* Grid::CreateFace() {
 	return f;
 }
 
-vec3f Grid::Real2Grid(const vec3f& v) {
-	return vec3f(v.x/mSquareSize, 0.0f, v.z/mSquareSize);
+vec3f Grid::Real2Grid(const vec3f& inVec) {
+	return vec3f(inVec.x/mSquareSize, 0.0f, inVec.z/mSquareSize);
 }
 
-vec3f Grid::Grid2Real(Cell* cell) {
+vec3f Grid::Grid2Real(const Cell* inCell) {
 	return vec3f(cell->x*mSquareSize, ELEVATION(cell->x, cell->y), cell->y*mSquareSize);
 }
 
