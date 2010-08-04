@@ -21,6 +21,13 @@ public:
 
 	virtual ICallOutHandler* GetCallOutHandler() const { return coh; }
 
+	virtual unsigned int GetScalarDataArraySizeX(int dataType) const = 0;
+	virtual unsigned int GetScalarDataArraySizeZ(int dataType) const = 0;
+	virtual const float* GetScalarDataArray(int dataType) const = 0;
+	virtual unsigned int GetVectorDataArraySizeX(int dataType) const = 0;
+	virtual unsigned int GetVectorDataArraySizeZ(int dataType) const = 0;
+	virtual const vec3f* GetVectorDataArray(int dataType) const = 0;
+
 protected:
 	ICallOutHandler* coh;
 };

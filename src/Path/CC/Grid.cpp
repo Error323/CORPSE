@@ -11,6 +11,8 @@ void Grid::Init(const int res, ICallOutHandler* coh) {
 	mWidth      = mCoh->GetHeightMapSizeX() / res;
 	mHeight     = mCoh->GetHeightMapSizeZ() / res;
 	mSquareSize = mCoh->GetSquareSize()     * res;
+
+	//! NOTE: if res != 1, the engine's height-map must be downsampled
 	printf("[Grid::Init] GridRes: %dx%d %d\n", mWidth, mHeight, mSquareSize);
 
 	unsigned int cells = mWidth*mHeight;
@@ -21,23 +23,23 @@ void Grid::Init(const int res, ICallOutHandler* coh) {
 
 	for (int y = 0; y < mHeight; y++) {
 		for (int x = 0; x < mWidth; x++) {
-			Cell *curCell = new Cell(x,y);
+			Cell* curCell = new Cell(x,y);
 			mCells.push_back(curCell);
 
-			Face *horizontal      = CreateFace();
-			Face *vertical        = CreateFace();
+			Face* horizontal      = CreateFace();
+			Face* vertical        = CreateFace();
 			curCell->faces[WEST]  = horizontal;
 			curCell->faces[NORTH] = vertical;
 
 			// Bind the east face of the cell west of the current cell
 			if (x > 0) {
-				Cell *westCell         = mCells[GRID_ID(x-1,y)];
+				Cell* westCell         = mCells[GRID_ID(x-1,y)];
 				westCell->faces[EAST]  = horizontal;
 			}
 
 			// Bind the south face of the cell north of the current cell
 			if (y > 0) {
-				Cell *northCell         = mCells[GRID_ID(x,y-1)];
+				Cell* northCell         = mCells[GRID_ID(x,y-1)];
 				northCell->faces[SOUTH] = vertical;
 			}
 
@@ -52,7 +54,7 @@ void Grid::Init(const int res, ICallOutHandler* coh) {
 			}
 
 			// Set the height, assuming the world is static wrt height
-			curCell->height = mCoh->GetCenterHeightMap()[(res*y)*(res*mWidth)+(res*x)];
+			curCell->height = mCoh->GetCenterHeightMap()[(res*y) * (res*mWidth) + (res*x)];
 		}
 	}
 
