@@ -80,6 +80,7 @@ void PathModule::Update() {
 			coh->GetSimObjectCurrentForwardSpeed(objID);
 		mGrid.AddDensityAndVelocity(objPos, objVel);
 	}
+	mGrid.ComputeAvgVelocity();
 
 	// for each group
 	std::map<unsigned int, std::set<unsigned int> >::iterator j;

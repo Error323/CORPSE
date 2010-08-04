@@ -28,6 +28,7 @@ public:
 
 	void Init(const int, ICallOutHandler*);
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
+	void ComputeAvgVelocity();
 	void Reset();
 
 	int GetGridWidth() const { return mWidth; }
@@ -42,6 +43,7 @@ private:
 	int mDownScale;
 
 	float* mHeightData;
+	float* mDensityData;
 
 	ICallOutHandler *mCoh;
 

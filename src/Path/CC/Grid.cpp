@@ -19,7 +19,8 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	//! NOTE: if mDownScale != 1, the engine's height-map must be downsampled
 	printf("[Grid::Init] GridRes: %dx%d %d\n", mWidth, mHeight, mSquareSize);
 
-	mHeightData = new float[mWidth*mHeight];
+	mHeightData  = new float[mWidth*mHeight];
+	mDensityData = new float[mWidth*mHeight];
 
 	unsigned int cells = mWidth*mHeight;
 	unsigned int faces = (mWidth+1)*mHeight + (mHeight+1)*mWidth;
@@ -94,6 +95,7 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 	int j = (posf.z > posi.z+0.5f) ? posi.z+1 : posi.z;
 
 	PFFG_ASSERT(i > 0 && j > 0);
+	PFFG_ASSERT(i < mWidth && j < mHeight);
 
 	Cell *A = mCells[GRID_ID(i-1, j-1)]; mTouchedCells[GRID_ID(i-1, j-1)] = A; 
 	Cell *B = mCells[GRID_ID(i  , j-1)]; mTouchedCells[GRID_ID(i  , j-1)] = B;
@@ -109,10 +111,18 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 
 	// Splat density
 	static const float lambda = 2.0f;
-	A->potential += pow(std::min<float>(1.0f - dX, 1.0f - dY), lambda);
-	B->potential += pow(std::min<float>(       dX, 1.0f - dY), lambda);
-	C->potential += pow(std::min<float>(       dX,        dY), lambda);
-	D->potential += pow(std::min<float>(1.0f - dX,        dY), lambda);
+	A->density += pow(std::min<float>(1.0f - dX, 1.0f - dY), lambda);
+	B->density += pow(std::min<float>(       dX, 1.0f - dY), lambda);
+	C->density += pow(std::min<float>(       dX,        dY), lambda);
+	D->density += pow(std::min<float>(1.0f - dX,        dY), lambda);
+}
+
+void Grid::ComputeAvgVelocity() {
+	std::map<unsigned int, Cell*>::iterator i;
+	for (i = mTouchedCells.begin(); i != mTouchedCells.end(); i++) {
+		i->second->avgVelocity /= i->second->density;
+		mDensityData[i->first] = i->second->density;
+	}
 }
 
 void Grid::Reset() {
@@ -145,4 +155,5 @@ Grid::~Grid() {
 		delete mFaces[i];
 
 	delete[] mHeightData;
+	delete[] mDensityData;
 }
