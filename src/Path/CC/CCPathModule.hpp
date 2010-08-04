@@ -49,12 +49,12 @@ public:
 		DATATYPE_VELOCITY_AVG    = 9, // v-bar (global, stored at cell-centers)
 	};
 
-	unsigned int GetScalarDataArraySizeX(int) const;
-	unsigned int GetScalarDataArraySizeZ(int) const;
-	const float* GetScalarDataArray(int) const;
-	unsigned int GetVectorDataArraySizeX(int) const;
-	unsigned int GetVectorDataArraySizeZ(int) const;
-	const vec3f* GetVectorDataArray(int) const;
+	unsigned int GetScalarDataArraySizeX(unsigned int) const;
+	unsigned int GetScalarDataArraySizeZ(unsigned int) const;
+	const float* GetScalarDataArray(unsigned int, unsigned int) const;
+	unsigned int GetVectorDataArraySizeX(unsigned int) const;
+	unsigned int GetVectorDataArraySizeZ(unsigned int) const;
+	const vec3f* GetVectorDataArray(unsigned int, unsigned int) const;
 
 private:
 	void AddObjectToGroup(unsigned int, unsigned int);

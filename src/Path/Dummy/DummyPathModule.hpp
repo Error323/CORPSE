@@ -32,12 +32,12 @@ public:
 	void Update();
 	void Kill();
 
-	unsigned int GetScalarDataArraySizeX(int) const { return 0; }
-	unsigned int GetScalarDataArraySizeZ(int) const { return 0; }
-	const float* GetScalarDataArray(int) const { return NULL; }
-	unsigned int GetVectorDataArraySizeX(int) const { return 0; }
-	unsigned int GetVectorDataArraySizeZ(int) const { return 0; }
-	const vec3f* GetVectorDataArray(int) const { return NULL; }
+	unsigned int GetScalarDataArraySizeX(unsigned int) const { return 0; }
+	unsigned int GetScalarDataArraySizeZ(unsigned int) const { return 0; }
+	const float* GetScalarDataArray(unsigned int, unsigned int) const { return NULL; }
+	unsigned int GetVectorDataArraySizeX(unsigned int) const { return 0; }
+	unsigned int GetVectorDataArraySizeZ(unsigned int) const { return 0; }
+	const vec3f* GetVectorDataArray(unsigned int, unsigned int) const { return NULL; }
 
 private:
 	void AddObjectToGroup(unsigned int, unsigned int);

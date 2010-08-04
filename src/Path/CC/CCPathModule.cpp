@@ -131,7 +131,7 @@ bool PathModule::DelObjectFromGroup(unsigned int objID) {
 
 
 
-unsigned int PathModule::GetScalarDataArraySizeX(int dataType) const {
+unsigned int PathModule::GetScalarDataArraySizeX(unsigned int dataType) const {
 	switch (dataType) {
 		//! NOTE: these are not all the same size (eg. h vs. delta-h)!
 		//! case DATATYPE_DENSITY: { return mGrid.GetSizeX(); } break;
@@ -147,7 +147,7 @@ unsigned int PathModule::GetScalarDataArraySizeX(int dataType) const {
 	return 0;
 }
 
-unsigned int PathModule::GetScalarDataArraySizeZ(int dataType) const {
+unsigned int PathModule::GetScalarDataArraySizeZ(unsigned int dataType) const {
 	switch (dataType) {
 		//! NOTE: these are not all the same size (eg. h vs. delta-h)!
 		//! case DATATYPE_DENSITY: { return mGrid.GetSizeZ(); } break;
@@ -163,7 +163,7 @@ unsigned int PathModule::GetScalarDataArraySizeZ(int dataType) const {
 	return 0;
 }
 
-const float* PathModule::GetScalarDataArray(int dataType) const {
+const float* PathModule::GetScalarDataArray(unsigned int dataType, unsigned int groupID) const {
 	switch (dataType) {
 		case DATATYPE_DENSITY: {
 			//! TODO
@@ -198,7 +198,7 @@ const float* PathModule::GetScalarDataArray(int dataType) const {
 
 
 
-unsigned int PathModule::GetVectorDataArraySizeX(int dataType) const {
+unsigned int PathModule::GetVectorDataArraySizeX(unsigned int dataType) const {
 	switch (dataType) {
 		//! NOTE: these are not all the same size (eg. v vs. v-bar)!
 		//! case DATATYPE_COST: { return mGrid.GetSizeX(); } break;
@@ -212,7 +212,7 @@ unsigned int PathModule::GetVectorDataArraySizeX(int dataType) const {
 	return 0;
 }
 
-unsigned int PathModule::GetVectorDataArraySizeZ(int dataType) const {
+unsigned int PathModule::GetVectorDataArraySizeZ(unsigned int dataType) const {
 	switch (dataType) {
 		//! NOTE: these are not all the same size (eg. v vs. v-bar)!
 		//! case DATATYPE_COST: { return mGrid.GetSizeZ(); } break;
@@ -226,7 +226,7 @@ unsigned int PathModule::GetVectorDataArraySizeZ(int dataType) const {
 	return 0;
 }
 
-const vec3f* PathModule::GetVectorDataArray(int dataType) const {
+const vec3f* PathModule::GetVectorDataArray(unsigned int dataType, unsigned int groupID) const {
 	switch (dataType) {
 		case DATATYPE_COST: {
 			//! TODO, FIXME: per-group
