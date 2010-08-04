@@ -2,7 +2,7 @@
 
 #include "../../System/Debugger.hpp"
 
-#define GRID_ID(x,y) ((y)*mWidth+(x))
+#define GRID_ID(x,y) (((y)*(mWidth))+(x))
 
 void Grid::Init(const int res, ICallOutHandler* coh) {
 	PFFG_ASSERT(res >= 1);
@@ -52,7 +52,7 @@ void Grid::Init(const int res, ICallOutHandler* coh) {
 			}
 
 			// Set the height, assuming the world is static wrt height
-			curCell->height = mCoh->GetCenterHeightMap()[res*GRID_ID(x,y)];
+			curCell->height = mCoh->GetCenterHeightMap()[(res*y)*(res*mWidth)+(res*x)];
 		}
 	}
 
@@ -61,7 +61,7 @@ void Grid::Init(const int res, ICallOutHandler* coh) {
 			Cell *cell = mCells[GRID_ID(x,y)];
 			cell->ResetDynamicVars();
 
-			// compute delta-heights
+			// Compute delta-heights
 			if (y > 0)
 				cell->dHeight[NORTH] = cell->height - mCells[GRID_ID(x, y-1)]->height;
 
