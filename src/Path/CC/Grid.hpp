@@ -27,7 +27,7 @@ public:
 	vec3f Grid2Real(const Cell*);
 
 	void Init(const int, ICallOutHandler*);
-	void AddDensityAndSpeed(const vec3f&, const vec3f&);
+	void AddDensityAndVelocity(const vec3f&, const vec3f&);
 	void Reset();
 
 	int GetGridWidth() const { return mWidth; }
@@ -50,7 +50,7 @@ private:
 	std::vector<Face*> mFaces;
 
 	Face* CreateFace();
-	vec3f Real2Grid(const vec3f&);
+	vec3i Real2Grid(const vec3f&);
 };
 
 struct Face {

@@ -78,7 +78,7 @@ void PathModule::Update() {
 		const vec3f objVel =
 			coh->GetSimObjectDirection(objID) *
 			coh->GetSimObjectCurrentForwardSpeed(objID);
-		mGrid.AddDensityAndSpeed(objPos, objVel);
+		mGrid.AddDensityAndVelocity(objPos, objVel);
 	}
 
 	// for each group

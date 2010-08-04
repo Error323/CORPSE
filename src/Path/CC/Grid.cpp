@@ -1,5 +1,7 @@
 #include "./Grid.hpp"
 
+#include <math.h>
+
 #include "../../System/Debugger.hpp"
 
 #define GRID_ID(x,y) (((y)*(mWidth))+(x))
@@ -84,8 +86,33 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	}
 }
 
-void Grid::AddDensityAndSpeed(const vec3f& inPos, const vec3f& inVel) {
-	vec3f pos = Real2Grid(inPos);
+void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
+	vec3f posf = vec3f(inPos.x/mSquareSize, 0.0f, inPos.z/mSquareSize);
+	vec3i posi = Real2Grid(inPos);
+
+	int i = (posf.x > posi.x+0.5f) ? posi.x+1 : posi.x;
+	int j = (posf.z > posi.z+0.5f) ? posi.z+1 : posi.z;
+
+	PFFG_ASSERT(i > 0 && j > 0);
+
+	Cell *A = mCells[GRID_ID(i-1, j-1)];
+	Cell *B = mCells[GRID_ID(i  , j-1)];
+	Cell *C = mCells[GRID_ID(i  , j  )];
+	Cell *D = mCells[GRID_ID(i-1, j  )];
+
+	// Add velocity
+	C->avgVelocity += inVel;
+
+	// Compute delta-X and delta-Y
+	float dX = posf.x - A->x + 0.5f;
+	float dY = posf.z - A->y + 0.5f;
+
+	// Splat density
+	static const float lambda = 2.0f;
+	A->potential += pow(std::min<float>(1.0f - dX, 1.0f - dY), lambda);
+	B->potential += pow(std::min<float>(       dX, 1.0f - dY), lambda);
+	C->potential += pow(std::min<float>(       dX,        dY), lambda);
+	D->potential += pow(std::min<float>(1.0f - dX,        dY), lambda);
 }
 
 void Grid::Reset() {
@@ -102,8 +129,8 @@ Face* Grid::CreateFace() {
 	return f;
 }
 
-vec3f Grid::Real2Grid(const vec3f& inVec) {
-	return vec3f(inVec.x/mSquareSize, 0.0f, inVec.z/mSquareSize);
+vec3i Grid::Real2Grid(const vec3f& inVec) {
+	return vec3i(int(inVec.x/mSquareSize), 0, int(inVec.z/mSquareSize));
 }
 
 vec3f Grid::Grid2Real(const Cell* inCell) {
