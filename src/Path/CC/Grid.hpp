@@ -18,16 +18,22 @@ public:
 	Grid(){}
 	~Grid();
 
+	vec3f Grid2Real(Cell*);
+
 	void Init(const int, ICallOutHandler*);
 	void AddDensityAndSpeed(const vec3f&, const vec3f&);
 	void Reset();
-	static vec3f Grid2Real(Cell*);
+
+	int GetGridWidth() { return mWidth; }
+	int GetGridHeight() { return mHeight; }
+
 	Cell* operator[] (size_t i) { return mCells[i]; }
 
 private:
 	int mWidth;
 	int mHeight;
 	int mSquareSize;
+	int mDownScale;
 
 	ICallOutHandler *mCoh;
 

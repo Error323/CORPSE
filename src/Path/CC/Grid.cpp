@@ -3,14 +3,16 @@
 #include "../../System/Debugger.hpp"
 
 #define GRID_ID(x,y) (((y)*(mWidth))+(x))
+#define ELEVATION(x,y) (mCoh->GetCenterHeightMap()[(mDownScale*(y))*(mDownScale*mWidth)+(mDownScale*(x))])
 
-void Grid::Init(const int res, ICallOutHandler* coh) {
-	PFFG_ASSERT(res >= 1);
+void Grid::Init(const int downscale, ICallOutHandler* coh) {
+	PFFG_ASSERT(downscale >= 1);
 
+	mDownScale  = downscale;
 	mCoh        = coh;
-	mWidth      = mCoh->GetHeightMapSizeX() / res;
-	mHeight     = mCoh->GetHeightMapSizeZ() / res;
-	mSquareSize = mCoh->GetSquareSize()     * res;
+	mWidth      = mCoh->GetHeightMapSizeX() / mDownScale;
+	mHeight     = mCoh->GetHeightMapSizeZ() / mDownScale;
+	mSquareSize = mCoh->GetSquareSize()     * mDownScale;
 	printf("[Grid::Init] GridRes: %dx%d %d\n", mWidth, mHeight, mSquareSize);
 
 	unsigned int cells = mWidth*mHeight;
@@ -52,7 +54,7 @@ void Grid::Init(const int res, ICallOutHandler* coh) {
 			}
 
 			// Set the height, assuming the world is static wrt height
-			curCell->height = mCoh->GetCenterHeightMap()[(res*y)*(res*mWidth)+(res*x)];
+			curCell->height = ELEVATION(x,y);
 		}
 	}
 
@@ -97,6 +99,10 @@ Face* Grid::CreateFace() {
 
 vec3f Grid::Real2Grid(const vec3f& v) {
 	return vec3f(v.x/mSquareSize, 0.0f, v.z/mSquareSize);
+}
+
+vec3f Grid::Grid2Real(Cell* cell) {
+	return vec3f(cell->x*mSquareSize, ELEVATION(cell->x, cell->y), cell->y*mSquareSize);
 }
 
 Grid::~Grid() {
