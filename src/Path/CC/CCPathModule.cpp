@@ -35,14 +35,14 @@ void PathModule::OnEvent(const IEvent* e) {
 			const SimObjectMoveOrderEvent* ee = dynamic_cast<const SimObjectMoveOrderEvent*>(e);
 
 			const std::list<unsigned int>& objectIDs = ee->GetObjectIDs();
-			const vec3f& goalPos = ee->GetGoalPos();
+			// const vec3f& goalPos = ee->GetGoalPos();
 
 			// create a new group
 			const unsigned int groupID = numGroupIDs++;
 
 			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
 				const unsigned int objID = *it;
-				const vec3f& objPos = coh->GetSimObjectPosition(objID);
+				// const vec3f& objPos = coh->GetSimObjectPosition(objID);
 
 				PFFG_ASSERT(coh->IsValidSimObjectID(objID));
 
@@ -226,7 +226,7 @@ unsigned int PathModule::GetVectorDataArraySizeZ(int dataType) const {
 	return 0;
 }
 
-const vec3f* PathModule::GetVectorDataArray(int) const {
+const vec3f* PathModule::GetVectorDataArray(int dataType) const {
 	switch (dataType) {
 		case DATATYPE_COST: {
 			//! TODO, FIXME: per-group
