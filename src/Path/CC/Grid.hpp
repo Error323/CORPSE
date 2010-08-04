@@ -30,16 +30,18 @@ public:
 	void AddDensityAndSpeed(const vec3f&, const vec3f&);
 	void Reset();
 
-	int GetGridWidth() { return mWidth; }
-	int GetGridHeight() { return mHeight; }
+	int GetGridWidth() const { return mWidth; }
+	int GetGridHeight() const { return mHeight; }
 
-	Cell* operator[] (size_t i) { return mCells[i]; }
+	const float* GetHeightDataArray() const { return mHeightData; }
 
 private:
 	int mWidth;
 	int mHeight;
 	int mSquareSize;
 	int mDownScale;
+
+	float* mHeightData;
 
 	ICallOutHandler *mCoh;
 

@@ -138,7 +138,7 @@ unsigned int PathModule::GetScalarDataArraySizeX(unsigned int dataType) const {
 		//! case DATATYPE_DISCOMFORT: { return mGrid.GetSizeX(); } break;
 		//! case DATATYPE_POTENTIAL: { return mGrid.GetSizeX(); } break;
 		//! case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetSizeX(); } break;
-		//! case DATATYPE_HEIGHT: { return mGrid.GetSizeX(); } break;
+		case DATATYPE_HEIGHT: { return mGrid.GetGridWidth(); } break;
 		//! case DATATYPE_HEIGHT_DELTA: { return mGrid.GetSizeX(); } break;
 		default: {
 		} break;
@@ -154,7 +154,7 @@ unsigned int PathModule::GetScalarDataArraySizeZ(unsigned int dataType) const {
 		//! case DATATYPE_DISCOMFORT: { return mGrid.GetSizeZ(); } break;
 		//! case DATATYPE_POTENTIAL: { return mGrid.GetSizeZ(); } break;
 		//! case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetSizeZ(); } break;
-		//! case DATATYPE_HEIGHT: { return mGrid.GetSizeZ(); } break;
+		case DATATYPE_HEIGHT: { return mGrid.GetGridHeight(); } break;
 		//! case DATATYPE_HEIGHT_DELTA: { return mGrid.GetSizeZ(); } break;
 		default: {
 		} break;
@@ -182,8 +182,7 @@ const float* PathModule::GetScalarDataArray(unsigned int dataType, unsigned int 
 			//! return mGrid.GetPotentialDeltaDataArray();
 		} break;
 		case DATATYPE_HEIGHT: {
-			//! TODO
-			//! return mGrid.GetHeightDataArray();
+			return mGrid.GetHeightDataArray();
 		} break;
 		case DATATYPE_HEIGHT_DELTA: {
 			//! TODO, NOTE: slopes are stored per-edge, four values per cell
