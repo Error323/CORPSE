@@ -1,7 +1,6 @@
+#include <cmath>
+
 #include "./Grid.hpp"
-
-#include <math.h>
-
 #include "../../System/Debugger.hpp"
 
 #define GRID_ID(x,y) (((y)*(mWidth))+(x))

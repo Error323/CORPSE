@@ -132,12 +132,14 @@ SET(CORPSE_SOURCE
 	src/UI/HUDWidget.hpp
 	src/UI/AssertWidget.cpp
 	src/UI/AssertWidget.hpp
-	src/UI/FontManager.cpp
-	src/UI/FontManager.hpp
+	src/UI/CCVisualizerWidget.cpp
+	src/UI/CCVisualizerWidget.hpp
 	src/UI/SimObjectSelectorWidget.cpp
 	src/UI/SimObjectSelectorWidget.hpp
 	src/UI/SimObjectSpawnerWidget.cpp
 	src/UI/SimObjectSpawnerWidget.hpp
+	src/UI/FontManager.cpp
+	src/UI/FontManager.hpp
 )
 
 SET(PATHMODULE_DUMMY_SOURCE
