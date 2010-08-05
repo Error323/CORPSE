@@ -65,6 +65,7 @@ private:
 	//! FIXME: we need a grid per group?
 	Grid mGrid;
 
+	std::map<unsigned int, std::vector<Cell*> > mGoals;
 	std::map<unsigned int, const SimObjectDef*> simObjectIDs;     // object ID ==> object def
 	std::map<unsigned int, unsigned int> objectGroupIDs;          // object ID ==> group ID
 	std::map<unsigned int, std::set<unsigned int> > objectGroups; // group ID ==> object IDs

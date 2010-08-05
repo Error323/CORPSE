@@ -19,11 +19,13 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	//! NOTE: if mDownScale != 1, the engine's height-map must be downsampled
 	printf("[Grid::Init] GridRes: %dx%d %d\n", mWidth, mHeight, mSquareSize);
 
-	mHeightData  = new float[mWidth*mHeight];
-	mDensityData = new float[mWidth*mHeight];
 
 	unsigned int cells = mWidth*mHeight;
 	unsigned int faces = (mWidth+1)*mHeight + (mHeight+1)*mWidth;
+
+	mHeightData.reserve(cells);
+	mDensityData.reserve(cells);
+	mVelocityData.reserve(cells);
 
 	mFaces.reserve(faces);
 	mCells.reserve(cells);
@@ -94,8 +96,7 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 	int i = (posf.x > posi.x+0.5f) ? posi.x+1 : posi.x;
 	int j = (posf.z > posi.z+0.5f) ? posi.z+1 : posi.z;
 
-	PFFG_ASSERT(i > 0 && j > 0);
-	PFFG_ASSERT(i < mWidth && j < mHeight);
+	PFFG_ASSERT(i > 0 && j > 0 && i < mWidth && j < mHeight);
 
 	Cell *A = mCells[GRID_ID(i-1, j-1)]; mTouchedCells[GRID_ID(i-1, j-1)] = A; 
 	Cell *B = mCells[GRID_ID(i  , j-1)]; mTouchedCells[GRID_ID(i  , j-1)] = B;
@@ -121,8 +122,18 @@ void Grid::ComputeAvgVelocity() {
 	std::map<unsigned int, Cell*>::iterator i;
 	for (i = mTouchedCells.begin(); i != mTouchedCells.end(); i++) {
 		i->second->avgVelocity /= i->second->density;
-		mDensityData[i->first] = i->second->density;
+		mDensityData[i->first]  = i->second->density;
+		mVelocityData[i->first] = i->second->avgVelocity;
 	}
+}
+
+void Grid::ComputeSpeedFieldAndUnitCost(const std::set<unsigned int>& inSimObjectIds) {
+}
+
+void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells) {
+}
+
+void Grid::UpdateSimObjectLocation(const int inSimObjectId) {
 }
 
 void Grid::Reset() {
@@ -153,7 +164,31 @@ Grid::~Grid() {
 
 	for (size_t i = 0; i < mFaces.size(); i++)
 		delete mFaces[i];
+}
 
-	delete[] mHeightData;
-	delete[] mDensityData;
+
+
+
+void Cell::ResetFull() {
+	ResetDynamicVars();
+	height = 0.0f;
+	for (int dir = 0; dir < DIRECTIONS; dir++)
+		dHeight[dir] = 0.0f;
+}
+
+void Cell::ResetDynamicVars() {
+	ResetGroupVars();
+	avgVelocity = NVECf;
+	density     = 0.0f;
+	discomfort = 0.0f;
+}
+
+void Cell::ResetGroupVars() {
+	potential  = std::numeric_limits<float>::max();
+	for (int dir = 0; dir < DIRECTIONS; dir++) {
+		speed[dir] = 0.0f;
+		cost[dir]  = 0.0f;
+		faces[dir]->dPotential = 0.0f;
+		faces[dir]->velocity = NVECf;
+	}
 }

@@ -67,11 +67,14 @@ void PathModule::Init() {
 }
 
 void PathModule::Update() {
+	std::map<unsigned int, const SimObjectDef*>::iterator i;
+	std::map<unsigned int, std::set<unsigned int> >::iterator j;
+	std::set<unsigned int>::iterator k;
+
 	// Reset the touched cells in the grid
 	mGrid.Reset();
 
 	// Convert the crowd into a density field
-	std::map<unsigned int, const SimObjectDef*>::iterator i;
 	for (i = simObjectIDs.begin(); i != simObjectIDs.end(); i++) {
 		const unsigned int objID = i->first;
 		const vec3f& objPos = coh->GetSimObjectPosition(objID);
@@ -80,17 +83,29 @@ void PathModule::Update() {
 			coh->GetSimObjectCurrentForwardSpeed(objID);
 		mGrid.AddDensityAndVelocity(objPos, objVel);
 	}
+	// Now that we know the cumulative density per cell, we can compute 
+	// the average velocity
 	mGrid.ComputeAvgVelocity();
 
-	// for each group
-	std::map<unsigned int, std::set<unsigned int> >::iterator j;
+	// For each group
 	for (j = objectGroups.begin(); j != objectGroups.end(); j++) {
-		// Construct the unit cost field
+		// Construct the speed field and the unit cost field
+		// Note: This first resets all the group-related variables
+		// Also: Discomfort regarding this group can be computed here
+		mGrid.ComputeSpeedFieldAndUnitCost(j->second);
+
 		// Construct the potential and the gradient
+		// Note: This should get the goal cells from a specific group,
+		//       how will we select them?
+		mGrid.UpdateGroupPotentialField(mGoals[j->first]);
+
 		// Update the object locations
+		for (k = j->second.begin(); k != j->second.end(); k++)
+			mGrid.UpdateSimObjectLocation(*k);
 	}
 
 	// Enforce minimum distance between objects
+	// Should this be handled in the EVENT_SIMOBJECT_COLLISION ?
 }
 
 void PathModule::Kill() {

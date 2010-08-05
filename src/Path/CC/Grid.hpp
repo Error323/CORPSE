@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <limits>
 
 #include "../../Math/vec3fwd.hpp"
@@ -29,12 +30,17 @@ public:
 	void Init(const int, ICallOutHandler*);
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
 	void ComputeAvgVelocity();
+	void ComputeSpeedFieldAndUnitCost(const std::set<unsigned int>&);
+	void UpdateGroupPotentialField(const std::vector<Cell*>&);
+	void UpdateSimObjectLocation(const int);
 	void Reset();
 
-	int GetGridWidth() const { return mWidth; }
-	int GetGridHeight() const { return mHeight; }
+	int GetGridWidth()                  const { return mWidth; }
+	int GetGridHeight()                 const { return mHeight; }
 
-	const float* GetHeightDataArray() const { return mHeightData; }
+	const float* GetHeightDataArray()   const { return &mHeightData[0]; }
+	const float* GetDensityDataArray()  const { return &mDensityData[0]; }
+	const vec3f* GetVelocityDataArray() const { return &mVelocityData[0]; }
 
 private:
 	int mWidth;
@@ -42,8 +48,10 @@ private:
 	int mSquareSize;
 	int mDownScale;
 
-	float* mHeightData;
-	float* mDensityData;
+	// Visualization data
+	std::vector<float> mHeightData;
+	std::vector<float> mDensityData;
+	std::vector<vec3f> mVelocityData;
 
 	ICallOutHandler *mCoh;
 
@@ -66,30 +74,9 @@ struct Cell {
 		y(_y)
 	{}
 
-	void ResetFull() {
-		ResetDynamicVars();
-		height = 0.0f;
-		for (int dir = 0; dir < DIRECTIONS; dir++)
-			dHeight[dir] = 0.0f;
-	}
-
-	void ResetDynamicVars() {
-		ResetGroupVars();
-		avgVelocity = NVECf;
-		density     = 0.0f;
-		discomfort = 0.0f;
-	}
-
-	void ResetGroupVars() {
-		potential  = std::numeric_limits<float>::max();
-		for (int dir = 0; dir < DIRECTIONS; dir++) {
-			speed[dir] = 0.0f;
-			cost[dir]  = 0.0f;
-			faces[dir]->dPotential = 0.0f;
-			faces[dir]->velocity = NVECf;
-		}
-	}
-
+	void ResetFull();
+	void ResetDynamicVars();
+	void ResetGroupVars();
 
 	unsigned int x, y;
 	float discomfort;
