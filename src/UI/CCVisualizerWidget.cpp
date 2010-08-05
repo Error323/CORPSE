@@ -2,8 +2,7 @@
 #include <GL/gl.h>
 #include <FTGL/ftgl.h>
 
-#include "./UI.hpp"
-#include "./CCWidget.hpp"
+#include "./CCVisualizerWidget.hpp"
 #include "../Math/vec3.hpp"
 #include "../Renderer/RenderThread.hpp"
 #include "../Sim/SimThread.hpp"
