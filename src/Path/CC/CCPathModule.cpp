@@ -90,8 +90,11 @@ void PathModule::Update() {
 	// For each group
 	for (j = objectGroups.begin(); j != objectGroups.end(); j++) {
 		// Construct the speed field and the unit cost field
-		// Note: This first resets all the group-related variables
-		// Also: Discomfort regarding this group can be computed here
+		// Note1: This first resets all the group-related variables
+		// Note2: Discomfort regarding this group can be computed here
+		// Note3: It might be possible to compute the speedfield and unit-
+		//        costfield in the UpdateGroupPotentialField as cells 
+		//        are picked from the UNKNOWN set, saving N iterations
 		mGrid.ComputeSpeedFieldAndUnitCost(j->second);
 
 		// Construct the potential and the gradient
