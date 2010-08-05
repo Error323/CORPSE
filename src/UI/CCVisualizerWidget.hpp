@@ -4,9 +4,6 @@
 #include "./UIWidget.hpp"
 #include "../Math/vec3fwd.hpp"
 
-#include <vector>
-#include <string>
-
 namespace ui {
 	struct CCWidget: public IUIWidget {
 	public:

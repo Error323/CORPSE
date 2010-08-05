@@ -7,12 +7,9 @@
 #include "../Math/vec3.hpp"
 #include "../Renderer/RenderThread.hpp"
 #include "../Sim/SimThread.hpp"
-#include "../Sim/SimObjectHandler.hpp"
 #include "../System/EngineAux.hpp"
 #include "../Path/IPathModule.hpp"
 
 void ui::CCWidget::Update(const vec3i&, const vec3i& size) {
-	if (!GetPathModuleInstance()->IsEnabled()) {
-		return;
-	}
+	const IPathModule* m = simThread->GetPathModule();
 }

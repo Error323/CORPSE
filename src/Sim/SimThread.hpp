@@ -18,6 +18,7 @@ public:
 	void SimCommand(NetMessage&);
 
 	unsigned int GetFrame() const { return frame; }
+	const IPathModule* GetPathModule() const { return mPathModule; }
 
 private:
 	CSimThread();
