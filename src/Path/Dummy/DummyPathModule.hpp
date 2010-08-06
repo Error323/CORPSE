@@ -55,6 +55,8 @@ private:
 	void AddObjectToGroup(unsigned int, unsigned int);
 	bool DelObjectFromGroup(unsigned int);
 
+	// running counter used to assign ID's to new groups
+	// (not the actual number of currently active groups)
 	unsigned int numGroupIDs;
 
 	std::map<unsigned int, const SimObjectDef*> simObjectIDs;     // object ID ==> object def
