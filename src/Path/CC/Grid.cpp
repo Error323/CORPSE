@@ -213,7 +213,7 @@ Face* Grid::CreateFace() {
 }
 
 vec3i Grid::Real2Grid(const vec3f& inVec) {
-	return vec3i(int(inVec.x/mSquareSize), 0, int(inVec.z/mSquareSize));
+	return vec3i(int(round(inVec.x/mSquareSize)), 0, int(round(inVec.z/mSquareSize)));
 }
 
 vec3f Grid::Grid2Real(const Cell* inCell) {
