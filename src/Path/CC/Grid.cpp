@@ -151,11 +151,12 @@ void Grid::ComputeSpeedFieldAndUnitCost(const std::set<unsigned int>& inSimObjec
 	             float maxRadius        = std::numeric_limits<float>::min();
 
 	for (std::set<unsigned int>::iterator i = inSimObjectIds.begin(); i != inSimObjectIds.end(); i++) {
-		const SimObjectDef *simObjectDef = mCoh->GetSimObjectDef(*i);
+		const SimObjectDef* simObjectDef = mCoh->GetSimObjectDef(*i);
+
 		minSlope  = std::min<float>(minSlope,  simObjectDef->GetMinSlopeAngleCosine());
 		maxSlope  = std::max<float>(maxSlope,  simObjectDef->GetMaxSlopeAngleCosine());
 		maxSpeed  = std::max<float>(maxSpeed,  simObjectDef->GetMaxForwardSpeed());
-		maxRadius = std::max<float>(maxRadius, simObjectDef->GetRadius());
+		maxRadius = std::max<float>(maxRadius, mCoh->GetSimObjectRadius(*i));
 	}
 
 	for (int i = 0, n = mWidth*mHeight; i < n; i++) {

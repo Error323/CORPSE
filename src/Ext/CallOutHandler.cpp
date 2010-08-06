@@ -100,15 +100,15 @@ unsigned int CallOutHandler::GetUsedSimObjectIDs(unsigned int* array, unsigned i
 	return n;
 }
 
-bool CallOutHandler::IsValidSimObjectID(unsigned int id) const {
-	return (simObjectHandler->IsValidSimObjectID(id));
+bool CallOutHandler::IsValidSimObjectID(unsigned int objID) const {
+	return (simObjectHandler->IsValidSimObjectID(objID));
 }
 
 
 
-const SimObjectDef* CallOutHandler::GetSimObjectDef(unsigned int id) const {
-	if (IsValidSimObjectID(id)) {
-		const SimObject* o = simObjectHandler->GetSimObject(id);
+const SimObjectDef* CallOutHandler::GetSimObjectDef(unsigned int objID) const {
+	if (IsValidSimObjectID(objID)) {
+		const SimObject* o = simObjectHandler->GetSimObject(objID);
 		const SimObjectDef* d = o->GetDef();
 
 		return d;
@@ -117,9 +117,9 @@ const SimObjectDef* CallOutHandler::GetSimObjectDef(unsigned int id) const {
 	return NULL;
 }
 
-const mat44f& CallOutHandler::GetSimObjectMatrix(unsigned int id) const {
-	if (IsValidSimObjectID(id)) {
-		const SimObject* o = simObjectHandler->GetSimObject(id);
+const mat44f& CallOutHandler::GetSimObjectMatrix(unsigned int objID) const {
+	if (IsValidSimObjectID(objID)) {
+		const SimObject* o = simObjectHandler->GetSimObject(objID);
 		const mat44f& m = o->GetMat();
 
 		return m;
@@ -129,9 +129,9 @@ const mat44f& CallOutHandler::GetSimObjectMatrix(unsigned int id) const {
 	return m;
 }
 
-const vec3f& CallOutHandler::GetSimObjectPosition(unsigned int id) const {
-	if (IsValidSimObjectID(id)) {
-		const SimObject* o = simObjectHandler->GetSimObject(id);
+const vec3f& CallOutHandler::GetSimObjectPosition(unsigned int objID) const {
+	if (IsValidSimObjectID(objID)) {
+		const SimObject* o = simObjectHandler->GetSimObject(objID);
 		const mat44f& m = o->GetMat();
 
 		return (m.GetPos());
@@ -140,9 +140,9 @@ const vec3f& CallOutHandler::GetSimObjectPosition(unsigned int id) const {
 	return NVECf;
 }
 
-const vec3f& CallOutHandler::GetSimObjectDirection(unsigned int id) const {
-	if (IsValidSimObjectID(id)) {
-		const SimObject* o = simObjectHandler->GetSimObject(id);
+const vec3f& CallOutHandler::GetSimObjectDirection(unsigned int objID) const {
+	if (IsValidSimObjectID(objID)) {
+		const SimObject* o = simObjectHandler->GetSimObject(objID);
 		const mat44f& m = o->GetMat();
 
 		return (m.GetZDir());
@@ -151,9 +151,9 @@ const vec3f& CallOutHandler::GetSimObjectDirection(unsigned int id) const {
 	return NVECf;
 }
 
-float CallOutHandler::GetSimObjectCurrentForwardSpeed(unsigned int id) const {
-	if (IsValidSimObjectID(id)) {
-		const SimObject* o = simObjectHandler->GetSimObject(id);
+float CallOutHandler::GetSimObjectCurrentForwardSpeed(unsigned int objID) const {
+	if (IsValidSimObjectID(objID)) {
+		const SimObject* o = simObjectHandler->GetSimObject(objID);
 		const PhysicalState& ps = o->GetPhysicalState();
 
 		return ps.currentForwardSpeed;
@@ -162,11 +162,22 @@ float CallOutHandler::GetSimObjectCurrentForwardSpeed(unsigned int id) const {
 	return 0.0f;
 }
 
-
-
-unsigned int CallOutHandler::GetSimObjectNumWantedPhysicalStates(unsigned int id) const {
+float CallOutHandler::GetSimObjectRadius(unsigned int objID) const {
 	if (IsValidSimObjectID(id)) {
-		const SimObject* so = simObjectHandler->GetSimObject(id);
+		const SimObject* o = simObjectHandler->GetSimObject(objID);
+		const float r = o->GetRadius();
+
+		return r;
+	}
+
+	return 0.0f;
+}
+
+
+
+unsigned int CallOutHandler::GetSimObjectNumWantedPhysicalStates(unsigned int objID) const {
+	if (IsValidSimObjectID(objID)) {
+		const SimObject* so = simObjectHandler->GetSimObject(objID);
 		const std::list<WantedPhysicalState>& wpsl = so->GetWantedPhysicalStates();
 		return wpsl.size();
 	}
@@ -181,9 +192,9 @@ void CallOutHandler::PushSimObjectWantedPhysicalState(unsigned int objID, const 
 	}
 }
 
-bool CallOutHandler::PopSimObjectWantedPhysicalStates(unsigned int id, unsigned int numStates, bool front) const {
-	if (IsValidSimObjectID(id)) {
-		SimObject* so = simObjectHandler->GetSimObject(id);
+bool CallOutHandler::PopSimObjectWantedPhysicalStates(unsigned int objID, unsigned int numStates, bool front) const {
+	if (IsValidSimObjectID(objID)) {
+		SimObject* so = simObjectHandler->GetSimObject(objID);
 		bool ret = so->PopWantedPhysicalStates(numStates, front);
 		return ret;
 	}
