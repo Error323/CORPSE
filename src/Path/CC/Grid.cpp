@@ -145,11 +145,10 @@ void Grid::ComputeSpeedFieldAndUnitCost(const std::set<unsigned int>& inSimObjec
 	const static float minDensity       = std::numeric_limits<float>::epsilon();
 	const static float minSpeed         = std::numeric_limits<float>::epsilon();
 
-		  static float minSlope         = std::numeric_limits<float>::max();
-	      static float maxSlope         = std::numeric_limits<float>::min();
-	      static float maxSpeed         = std::numeric_limits<float>::min();
-		  static float maxRadius        = std::numeric_limits<float>::min();
-		  
+	             float minSlope         = std::numeric_limits<float>::max();
+	             float maxSlope         = std::numeric_limits<float>::min();
+	             float maxSpeed         = std::numeric_limits<float>::min();
+	             float maxRadius        = std::numeric_limits<float>::min();
 
 	for (std::set<unsigned int>::iterator i = inSimObjectIds.begin(); i != inSimObjectIds.end(); i++) {
 		const SimObjectDef *simObjectDef = mCoh->GetSimObjectDef(*i);
