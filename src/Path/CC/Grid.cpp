@@ -102,25 +102,25 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 }
 
 void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
-	vec3f posf = vec3f(inPos.x/mSquareSize, 0.0f, inPos.z/mSquareSize);
-	vec3i posi = World2Grid(inPos);
+	const vec3f posf = vec3f(inPos.x / mSquareSize, 0.0f, inPos.z / mSquareSize);
+	const vec3i posi = World2Grid(inPos);
 
-	int i = (posf.x > posi.x+0.5f) ? posi.x+1 : posi.x;
-	int j = (posf.z > posi.z+0.5f) ? posi.z+1 : posi.z;
+	const int i = (posf.x > posi.x + 0.5f) ? posi.x + 1 : posi.x;
+	const int j = (posf.z > posi.z + 0.5f) ? posi.z + 1 : posi.z;
 
 	PFFG_ASSERT(i > 0 && j > 0 && i < mWidth && j < mHeight);
 
-	Cell *A = mCells[GRID_ID(i-1, j-1)]; mTouchedCells[GRID_ID(i-1, j-1)] = A; 
-	Cell *B = mCells[GRID_ID(i  , j-1)]; mTouchedCells[GRID_ID(i  , j-1)] = B;
-	Cell *C = mCells[GRID_ID(i  , j  )]; mTouchedCells[GRID_ID(i  , j  )] = C;
-	Cell *D = mCells[GRID_ID(i-1, j  )]; mTouchedCells[GRID_ID(i-1, j  )] = D;
+	Cell* A = mCells[GRID_ID(i - 1, j - 1)]; mTouchedCells[GRID_ID(i - 1, j - 1)] = A; 
+	Cell* B = mCells[GRID_ID(i    , j - 1)]; mTouchedCells[GRID_ID(i    , j - 1)] = B;
+	Cell* C = mCells[GRID_ID(i    , j    )]; mTouchedCells[GRID_ID(i    , j    )] = C;
+	Cell* D = mCells[GRID_ID(i - 1, j    )]; mTouchedCells[GRID_ID(i - 1, j    )] = D;
 
 	// Add velocity
 	C->avgVelocity += inVel;
 
 	// Compute delta-X and delta-Y
-	float dX = posf.x - A->x + 0.5f;
-	float dY = posf.z - A->y + 0.5f;
+	const float dX = posf.x - A->x + 0.5f;
+	const float dY = posf.z - A->y + 0.5f;
 
 	// Splat density
 	A->density += pow(std::min<float>(1.0f - dX, 1.0f - dY), sLambda);
