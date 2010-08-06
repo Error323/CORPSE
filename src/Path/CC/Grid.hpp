@@ -43,13 +43,13 @@ public:
 	const vec3f* GetVelocityDataArray() const { return &mVelocityData[0]; }
 
 private:
+	static const float sLambda;
+	static const float sMinDensity;
+
 	int mWidth;
 	int mHeight;
 	int mSquareSize;
 	int mDownScale;
-
-	float mLambda;
-	float mMinDensity;
 
 	// Visualization data
 	std::vector<float> mHeightData;
