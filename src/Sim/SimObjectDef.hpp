@@ -16,6 +16,7 @@ public:
 		maxSlopeAngleCosine  = 0.0f;
 		minTerrainHeight     = 0.0f;
 		maxTerrainHeight     = 0.0f;
+		radius               = 1.0f;
 	}
 
 	unsigned int GetID() const { return id; }
@@ -33,6 +34,7 @@ public:
 	void SetMaxSlopeAngleCosine(float f) { maxSlopeAngleCosine = f; }
 	void SetMinTerrainHeight(float f) { minTerrainHeight = f; }
 	void SetMaxTerrainHeight(float f) { maxTerrainHeight = f; }
+	void SetRadius(float f) { radius = f; }
 
 	float GetMaxForwardSpeed() const { return maxForwardSpeed; }
 	float GetMaxTurningRate() const { return maxTurningRate; }
@@ -42,6 +44,7 @@ public:
 	float GetMaxSlopeAngleCosine() const { return maxSlopeAngleCosine; } 
 	float GetMinTerrainHeight() const { return minTerrainHeight; }
 	float GetMaxTerrainHeight() const { return maxTerrainHeight; }
+	float GetRadius() const { return radius; }
 
 private:
 	unsigned int id;
@@ -57,6 +60,7 @@ private:
 	float maxSlopeAngleCosine;   // maximum slope (1.0 - terrain-normal y-component) this object can traverse
 	float minTerrainHeight;      // minimum terrain height this object can exist at
 	float maxTerrainHeight;      // maximum terrain height this object can exist at
+	float radius;                // In real world coords, should be a function of the unit's mass?
 };
 
 #endif

@@ -64,8 +64,9 @@ private:
 };
 
 struct Face {
-	float dPotential;
+	vec3f gradPotential;
 	vec3f velocity;
+	vec3f gradHeight;
 };
 
 struct Cell {
@@ -83,7 +84,6 @@ struct Cell {
 	float potential;
 	float density;
 	float height;
-	float dHeight[DIRECTIONS];
 	float speed[DIRECTIONS];
 	float cost[DIRECTIONS];
 	Face* faces[DIRECTIONS];

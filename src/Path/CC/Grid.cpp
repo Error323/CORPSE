@@ -2,6 +2,7 @@
 
 #include "./Grid.hpp"
 #include "../../System/Debugger.hpp"
+#include "../../Sim/SimObjectDef.hpp"
 
 #define GRID_ID(x,y) (((y)*(mWidth))+(x))
 #define ELEVATION(x,y) (mCoh->GetCenterHeightMap()[(mDownScale*(y))*(mDownScale*mWidth)+(mDownScale*(x))])
@@ -74,16 +75,20 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 
 			// Compute delta-heights
 			if (y > 0)
-				cell->dHeight[NORTH] = cell->height - mCells[GRID_ID(x, y-1)]->height;
+				cell->faces[NORTH]->gradHeight = 
+					vec3f(-mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y-1)]->height);
 
 			if (y < mHeight-1)
-				cell->dHeight[SOUTH] = cell->height - mCells[GRID_ID(x, y+1)]->height;
+				cell->faces[SOUTH]->gradHeight = 
+					vec3f( mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y+1)]->height);
 
 			if (x > 0)
-				cell->dHeight[WEST]  = cell->height - mCells[GRID_ID(x-1, y)]->height;
+				cell->faces[WEST]->gradHeight = 
+					vec3f(cell->height - mCells[GRID_ID(x-1, y)]->height, 0.0f, -mSquareSize);
 
 			if (x < mWidth-1)
-				cell->dHeight[EAST]  = cell->height - mCells[GRID_ID(x+1, y)]->height;
+				cell->faces[EAST]->gradHeight = 
+					vec3f(cell->height - mCells[GRID_ID(x+1, y)]->height, 0.0f, mSquareSize);
 		}
 	}
 }
@@ -127,6 +132,63 @@ void Grid::ComputeAvgVelocity() {
 }
 
 void Grid::ComputeSpeedFieldAndUnitCost(const std::set<unsigned int>& inSimObjectIds) {
+	const static vec3f dirVectors[] = {
+		vec3f(  0.0f, 0.0f,  1.0f), // NORTH
+		vec3f(  1.0f, 0.0f,  0.0f), // EAST
+		vec3f(  0.0f, 0.0f, -1.0f), // SOUTH
+		vec3f( -1.0f, 0.0f,  0.0f)  // WEST
+	};
+
+	const static float speedWeight      = 1.0f;   // No extra weight
+	const static float discomfortWeight = 100.0f; // Discomfort means YOU SHALL NOT PASS
+	const static float maxDensity       = 10.0f;  // According to the Stetson-Harrison method
+	const static float minDensity       = std::numeric_limits<float>::epsilon();
+	const static float minSpeed         = std::numeric_limits<float>::epsilon();
+
+		  static float minSlope         = std::numeric_limits<float>::max();
+	      static float maxSlope         = std::numeric_limits<float>::min();
+	      static float maxSpeed         = std::numeric_limits<float>::min();
+		  static float maxRadius        = std::numeric_limits<float>::min();
+		  
+
+	for (std::set<unsigned int>::iterator i = inSimObjectIds.begin(); i != inSimObjectIds.end(); i++) {
+		const SimObjectDef *simObjectDef = mCoh->GetSimObjectDef(*i);
+		minSlope  = std::min<float>(minSlope,  simObjectDef->GetMinSlopeAngleCosine());
+		maxSlope  = std::max<float>(maxSlope,  simObjectDef->GetMaxSlopeAngleCosine());
+		maxSpeed  = std::max<float>(maxSpeed,  simObjectDef->GetMaxForwardSpeed());
+		maxRadius = std::max<float>(maxRadius, simObjectDef->GetRadius());
+	}
+
+	for (int i = 0, n = mWidth*mHeight; i < n; i++) {
+		Cell* cell = mCells[i];
+		cell->ResetGroupVars();
+		
+		const vec3f realPos = Grid2Real(cell);
+		for (int dir = 0; dir < DIRECTIONS; dir++) {
+			// Compute the speed field
+			vec3i dGridPos = Real2Grid(realPos + dirVectors[dir]*maxRadius);
+			Cell* dCell = mCells[GRID_ID(dGridPos.x, dGridPos.z)];
+
+			// FIXME: Engine slope should be in the same format as CC slope
+			float topologicalSpeed = 
+				maxSpeed + ((cell->faces[dir]->gradHeight.dot2D(dirVectors[dir]) - minSlope) / 
+				(maxSlope - minSlope)) * 
+				(maxSpeed - minSpeed);
+
+			float flowSpeed = 
+				dCell->avgVelocity.dot2D(dirVectors[dir]);
+			
+			float speed = 
+				((dCell->density - minDensity) / (maxDensity - minDensity)) * 
+				(topologicalSpeed - flowSpeed) + 
+				topologicalSpeed;
+
+			cell->speed[dir] = speed;
+
+			// Compute the unit cost
+			cell->cost[dir] = (speedWeight*speed + discomfortWeight*cell->discomfort) / speed;
+		}
+	}
 }
 
 void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells) {
@@ -172,7 +234,7 @@ void Cell::ResetFull() {
 	ResetDynamicVars();
 	height = 0.0f;
 	for (int dir = 0; dir < DIRECTIONS; dir++)
-		dHeight[dir] = 0.0f;
+		faces[dir]->gradHeight = NVECf;
 }
 
 void Cell::ResetDynamicVars() {
@@ -187,7 +249,7 @@ void Cell::ResetGroupVars() {
 	for (int dir = 0; dir < DIRECTIONS; dir++) {
 		speed[dir] = 0.0f;
 		cost[dir]  = 0.0f;
-		faces[dir]->dPotential = 0.0f;
+		faces[dir]->gradPotential = NVECf;
 		faces[dir]->velocity = NVECf;
 	}
 }
