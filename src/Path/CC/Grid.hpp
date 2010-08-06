@@ -4,51 +4,68 @@
 #include <vector>
 #include <map>
 #include <set>
-#include <limits>
+#include <queue>
+#include <list>
 
 #include "../../Math/vec3fwd.hpp"
 #include "../../Math/vec3.hpp"
 #include "../../Ext/ICallOutHandler.hpp"
+
+// NOTE: This order should not be changed!
+enum {
+	DIRECTION_NORTH = 0,
+	DIRECTION_EAST  = 1,
+	DIRECTION_SOUTH = 2,
+	DIRECTION_WEST  = 3,
+	NUM_DIRECTIONS  = 4
+};
+
+struct Cell {
+	Cell() {}
+
+	Cell(unsigned int _x, unsigned int _y):
+		x(_x),
+		y(_y)
+	{}
+
+	struct Edge {
+		vec3f gradPotential;
+		vec3f velocity;
+		vec3f gradHeight;
+	};
+
+	bool operator== (const Cell* c) const {
+		return (x == c->x && y == c->y);
+	}
+
+	bool operator() (const Cell* a, const Cell* b) const {
+		return (a->potential < b->potential);
+	}
+
+	void ResetFull();
+	void ResetDynamicVars();
+	void ResetGroupVars();
+
+	unsigned int x, y;
+	bool  known;
+	float discomfort;
+	float potential;
+	float density;
+	float height;
+	float speed[NUM_DIRECTIONS];
+	float cost[NUM_DIRECTIONS];
+	Edge* edges[NUM_DIRECTIONS];
+	vec3f avgVelocity;
+	Cell* neighbours[NUM_DIRECTIONS];
+	int   numNeighbours;
+};
+
 
 class Grid {
 public:
 	Grid() {}
 	~Grid();
 
-	enum {
-		DIRECTION_NORTH = 0,
-		DIRECTION_EAST  = 1,
-		DIRECTION_SOUTH = 2,
-		DIRECTION_WEST  = 3,
-		NUM_DIRECTIONS  = 4
-	};
-
-	struct Cell {
-		Cell(unsigned int _x, unsigned int _y):
-			x(_x),
-			y(_y)
-		{}
-
-		struct Edge {
-			vec3f gradPotential;
-			vec3f velocity;
-			vec3f gradHeight;
-		};
-
-		void ResetFull();
-		void ResetDynamicVars();
-		void ResetGroupVars();
-
-		unsigned int x, y;
-		float discomfort;
-		float potential;
-		float density;
-		float height;
-		float speed[NUM_DIRECTIONS];
-		float cost[NUM_DIRECTIONS];
-		Edge* edges[NUM_DIRECTIONS];
-		vec3f avgVelocity;
-	};
 
 	void Init(const int, ICallOutHandler*);
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
@@ -73,6 +90,9 @@ private:
 	int mHeight;
 	int mSquareSize;
 	int mDownScale;
+	
+	// FMM vars
+	std::priority_queue<Cell*, std::vector<Cell*, std::allocator<Cell*> >, Cell> mCandidates;
 
 	// Visualization data
 	std::vector<float> mHeightData;
@@ -89,6 +109,10 @@ private:
 
 	vec3i World2Grid(const vec3f&);
 	vec3f Grid2World(const Cell*);
+	void UpdateCandidates(const Cell*);
+
+	float Potential2D(const float, const float, const float, const float);
+	float Potential1D(const float, const float);
 };
 
 #endif
