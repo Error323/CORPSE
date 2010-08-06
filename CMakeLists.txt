@@ -4,6 +4,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 #-------------------------------------------------------------------------------
 # General Settings
 # NOTE: -O2 breaks rendering without -fno-strict-aliasing
+# NOTE: we need -rdynamic for backtrace() to work properly
 #-------------------------------------------------------------------------------
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_MODULE_PATH "${CORPSE_SOURCE_DIR}/cmake/packages")
