@@ -95,12 +95,12 @@ void PathModule::Update() {
 		// Note3: It might be possible to compute the speedfield and unit-
 		//        costfield in the UpdateGroupPotentialField as cells 
 		//        are picked from the UNKNOWN set, saving N iterations
-		mGrid.ComputeSpeedFieldAndUnitCost(j->second);
+		// mGrid.ComputeSpeedFieldAndUnitCost(j->second);
 
 		// Construct the potential and the gradient
 		// Note: This should get the goal cells from a specific group,
 		//       how will we select them?
-		mGrid.UpdateGroupPotentialField(mGoals[j->first]);
+		mGrid.UpdateGroupPotentialField(mGoals[j->first], j->second);
 
 		// Update the object locations
 		for (k = j->second.begin(); k != j->second.end(); k++)

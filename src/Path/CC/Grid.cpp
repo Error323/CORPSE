@@ -157,7 +157,10 @@ void Grid::ComputeAvgVelocity() {
 	}
 }
 
-void Grid::ComputeSpeedFieldAndUnitCost(const std::set<unsigned int>& inSimObjectIds) {
+void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
+	PFFG_ASSERT(!inGoalCells.empty());
+	PFFG_ASSERT(mCandidates.empty());
+
 	const static vec3f dirVectors[] = {
 		vec3f(  0.0f, 0.0f,  1.0f), // NORTH
 		vec3f(  1.0f, 0.0f,  0.0f), // EAST
@@ -184,7 +187,10 @@ void Grid::ComputeSpeedFieldAndUnitCost(const std::set<unsigned int>& inSimObjec
 		maxRadius = std::max<float>(maxRadius, mCoh->GetSimObjectRadius(*i));
 	}
 
-	for (int i = 0, n = mWidth*mHeight; i < n; i++) {
+	// This loop computes the speedfield, unitcost and initializes the known
+	// and unknown set
+	for (size_t i = 0; i < mCells.size(); i++) {
+		// Compute the speedfield and unit cost
 		Cell* cell = mCells[i];
 		cell->ResetGroupVars();
 		
@@ -213,25 +219,20 @@ void Grid::ComputeSpeedFieldAndUnitCost(const std::set<unsigned int>& inSimObjec
 			// Compute the unit cost
 			cell->cost[dir] = (speedWeight*speed + discomfortWeight*cell->discomfort) / speed;
 		}
-	}
-}
-
-void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells) {
-	PFFG_ASSERT(!inGoalCells.empty());
-	PFFG_ASSERT(mCandidates.empty());
-
-	// Initialize the known and unknown set
-	for (size_t i = 0; i < mCells.size(); i++) {
-		if (std::find(inGoalCells.begin(), inGoalCells.end(), mCells[i]) == inGoalCells.end()) {
-			mCells[i]->potential = std::numeric_limits<float>::max();
-			mCells[i]->known = false;
+		
+		// Initialize the known and unknown set
+		if (std::find(inGoalCells.begin(), inGoalCells.end(), cell) == inGoalCells.end()) {
+			cell->potential = std::numeric_limits<float>::max();
+			cell->known = false;
 		}
 		else {
-			mCells[i]->potential = 0.0f;
-			mCells[i]->known = true;
-			UpdateCandidates(mCells[i]);
+			cell->potential = 0.0f;
+			cell->known = true;
+			UpdateCandidates(cell);
 		}
 	}
+
+	PFFG_ASSERT(!mCandidates.empty());
 
 	while (!mCandidates.empty()) {
 		Cell* cell = mCandidates.top(); mCandidates.pop();

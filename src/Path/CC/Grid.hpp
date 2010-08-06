@@ -70,8 +70,7 @@ public:
 	void Init(const int, ICallOutHandler*);
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
 	void ComputeAvgVelocity();
-	void ComputeSpeedFieldAndUnitCost(const std::set<unsigned int>&);
-	void UpdateGroupPotentialField(const std::vector<Cell*>&);
+	void UpdateGroupPotentialField(const std::vector<Cell*>&, const std::set<unsigned int>&);
 	void UpdateSimObjectLocation(const int);
 	void Reset();
 
