@@ -10,22 +10,45 @@
 #include "../../Math/vec3.hpp"
 #include "../../Ext/ICallOutHandler.hpp"
 
-enum {
-	NORTH      = 0,
-	EAST       = 1,
-	SOUTH      = 2,
-	WEST       = 3,
-	DIRECTIONS = 4
-};
-
-class Face;
-class Cell;
 class Grid {
 public:
 	Grid() {}
 	~Grid();
 
-	vec3f Grid2Real(const Cell*);
+	enum {
+		DIRECTION_NORTH = 0,
+		DIRECTION_EAST  = 1,
+		DIRECTION_SOUTH = 2,
+		DIRECTION_WEST  = 3,
+		NUM_DIRECTIONS  = 4
+	};
+
+	struct Cell {
+		Cell(unsigned int _x, unsigned int _y):
+			x(_x),
+			y(_y)
+		{}
+
+		struct Edge {
+			vec3f gradPotential;
+			vec3f velocity;
+			vec3f gradHeight;
+		};
+
+		void ResetFull();
+		void ResetDynamicVars();
+		void ResetGroupVars();
+
+		unsigned int x, y;
+		float discomfort;
+		float potential;
+		float density;
+		float height;
+		float speed[NUM_DIRECTIONS];
+		float cost[NUM_DIRECTIONS];
+		Edge* edges[NUM_DIRECTIONS];
+		vec3f avgVelocity;
+	};
 
 	void Init(const int, ICallOutHandler*);
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
@@ -56,41 +79,16 @@ private:
 	std::vector<float> mDensityData;
 	std::vector<vec3f> mVelocityData;
 
-	ICallOutHandler *mCoh;
+	ICallOutHandler* mCoh;
 
 	std::map<unsigned int, Cell*> mTouchedCells;
 	std::vector<Cell*> mCells;
-	std::vector<Face*> mFaces;
+	std::vector<Cell::Edge*> mEdges;
 
-	Face* CreateFace();
-	vec3i Real2Grid(const vec3f&);
-};
+	Cell::Edge* CreateEdge();
 
-struct Face {
-	vec3f gradPotential;
-	vec3f velocity;
-	vec3f gradHeight;
-};
-
-struct Cell {
-	Cell(unsigned int _x, unsigned int _y):
-		x(_x),
-		y(_y)
-	{}
-
-	void ResetFull();
-	void ResetDynamicVars();
-	void ResetGroupVars();
-
-	unsigned int x, y;
-	float discomfort;
-	float potential;
-	float density;
-	float height;
-	float speed[DIRECTIONS];
-	float cost[DIRECTIONS];
-	Face* faces[DIRECTIONS];
-	vec3f avgVelocity;
+	vec3i World2Grid(const vec3f&);
+	vec3f Grid2World(const Cell*);
 };
 
 #endif

@@ -23,82 +23,87 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	printf("[Grid::Init] GridRes: %dx%d %d\n", mWidth, mHeight, mSquareSize);
 
 
-	unsigned int cells = mWidth*mHeight;
-	unsigned int faces = (mWidth+1)*mHeight + (mHeight+1)*mWidth;
+	const unsigned int numCells = mWidth * mHeight;
+	const unsigned int numEdges = (mWidth + 1) * mHeight + (mHeight + 1) * mWidth;
 
-	mHeightData.reserve(cells);
-	mDensityData.reserve(cells);
-	mVelocityData.reserve(cells);
+	mHeightData.reserve(numCells);
+	mDensityData.reserve(numCells);
+	mVelocityData.reserve(numCells);
 
-	mFaces.reserve(faces);
-	mCells.reserve(cells);
+	mEdges.reserve(numEdges);
+	mCells.reserve(numCells);
 
 	for (int y = 0; y < mHeight; y++) {
 		for (int x = 0; x < mWidth; x++) {
-			Cell* curCell = new Cell(x,y);
+			Cell* curCell = new Cell(x, y);
 			mCells.push_back(curCell);
 
-			Face* horizontal      = CreateFace();
-			Face* vertical        = CreateFace();
-			curCell->faces[WEST]  = horizontal;
-			curCell->faces[NORTH] = vertical;
+			Cell::Edge* horizontal = CreateEdge();
+			Cell::Edge* vertical   = CreateEdge();
+
+			curCell->edges[DIRECTION_WEST]  = horizontal;
+			curCell->edges[DIRECTION_NORTH] = vertical;
 
 			// Bind the east face of the cell west of the current cell
 			if (x > 0) {
-				Cell* westCell         = mCells[GRID_ID(x-1,y)];
-				westCell->faces[EAST]  = horizontal;
+				Cell* westCell = mCells[GRID_ID(x - 1, y)];
+				westCell->edges[DIRECTION_EAST] = horizontal;
 			}
 
 			// Bind the south face of the cell north of the current cell
 			if (y > 0) {
-				Cell* northCell         = mCells[GRID_ID(x,y-1)];
-				northCell->faces[SOUTH] = vertical;
+				Cell* northCell = mCells[GRID_ID(x, y - 1)];
+				northCell->edges[DIRECTION_SOUTH] = vertical;
 			}
 
 			// Bind a new face to the southern face of the border cell
-			if (y == mHeight-1) {
-				curCell->faces[SOUTH] = CreateFace();
+			if (y == mHeight - 1) {
+				curCell->edges[DIRECTION_SOUTH] = CreateEdge();
 			}
 
 			// Bind a new face to the eastern face of the border cell
-			if (x == mWidth-1) {
-				curCell->faces[EAST]  = CreateFace();
+			if (x == mWidth - 1) {
+				curCell->edges[DIRECTION_EAST] = CreateEdge();
 			}
 
 			// Set the height, assuming the world is static wrt height
-			curCell->height = ELEVATION(x,y);
-			mHeightData[GRID_ID(x,y)] = curCell->height;
+			curCell->height = ELEVATION(x, y);
+			mHeightData[GRID_ID(x, y)] = curCell->height;
 		}
 	}
 
 	for (int y = 0; y < mHeight; y++) {
 		for (int x = 0; x < mWidth; x++) {
-			Cell *cell = mCells[GRID_ID(x,y)];
+			Cell* cell = mCells[GRID_ID(x, y)];
 			cell->ResetDynamicVars();
 
 			// Compute delta-heights
-			if (y > 0)
-				cell->faces[NORTH]->gradHeight = 
+			if (y > 0) {
+				cell->edges[DIRECTION_NORTH]->gradHeight = 
 					vec3f(-mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y-1)]->height);
+			}
 
-			if (y < mHeight-1)
-				cell->faces[SOUTH]->gradHeight = 
+			if (y < mHeight - 1) {
+				cell->edges[DIRECTION_SOUTH]->gradHeight = 
 					vec3f( mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y+1)]->height);
+			}
 
-			if (x > 0)
-				cell->faces[WEST]->gradHeight = 
+			if (x > 0) {
+				cell->edges[DIRECTION_WEST]->gradHeight = 
 					vec3f(cell->height - mCells[GRID_ID(x-1, y)]->height, 0.0f, -mSquareSize);
+			}
 
-			if (x < mWidth-1)
-				cell->faces[EAST]->gradHeight = 
+			if (x < mWidth - 1) {
+				cell->edges[DIRECTION_EAST]->gradHeight = 
 					vec3f(cell->height - mCells[GRID_ID(x+1, y)]->height, 0.0f, mSquareSize);
+			}
 		}
 	}
 }
 
 void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 	vec3f posf = vec3f(inPos.x/mSquareSize, 0.0f, inPos.z/mSquareSize);
-	vec3i posi = Real2Grid(inPos);
+	vec3i posi = World2Grid(inPos);
 
 	int i = (posf.x > posi.x+0.5f) ? posi.x+1 : posi.x;
 	int j = (posf.z > posi.z+0.5f) ? posi.z+1 : posi.z;
@@ -164,15 +169,15 @@ void Grid::ComputeSpeedFieldAndUnitCost(const std::set<unsigned int>& inSimObjec
 		Cell* cell = mCells[i];
 		cell->ResetGroupVars();
 		
-		const vec3f realPos = Grid2Real(cell);
-		for (int dir = 0; dir < DIRECTIONS; dir++) {
+		const vec3f worldPos = Grid2World(cell);
+		for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 			// Compute the speed field
-			vec3i dGridPos = Real2Grid(realPos + dirVectors[dir]*maxRadius);
+			vec3i dGridPos = World2Grid(worldPos + dirVectors[dir]*maxRadius);
 			Cell* dCell = mCells[GRID_ID(dGridPos.x, dGridPos.z)];
 
 			// FIXME: Engine slope should be in the same format as CC slope
 			float topologicalSpeed = 
-				maxSpeed + ((cell->faces[dir]->gradHeight.dot2D(dirVectors[dir]) - minSlope) / 
+				maxSpeed + ((cell->edges[dir]->gradHeight.dot2D(dirVectors[dir]) - minSlope) / 
 				(maxSlope - minSlope)) * 
 				(maxSpeed - minSpeed);
 
@@ -206,51 +211,54 @@ void Grid::Reset() {
 	mTouchedCells.clear();
 }
 
-Face* Grid::CreateFace() {
-	Face* f = new Face();
-	mFaces.push_back(f);
+Grid::Cell::Edge* Grid::CreateEdge() {
+	Cell::Edge* f = new Cell::Edge();
+	mEdges.push_back(f);
 	return f;
 }
 
-vec3i Grid::Real2Grid(const vec3f& inVec) {
-	return vec3i(int(round(inVec.x/mSquareSize)), 0, int(round(inVec.z/mSquareSize)));
+vec3i Grid::World2Grid(const vec3f& inVec) {
+	const int x = std::max(0, std::min( mWidth - 1, int(round(inVec.x / mSquareSize)) ));
+	const int z = std::max(0, std::min( mHeight - 1, int(round(inVec.z / mSquareSize)) ));
+	return vec3i(x, 0, z);
 }
 
-vec3f Grid::Grid2Real(const Cell* inCell) {
-	return vec3f(inCell->x*mSquareSize, ELEVATION(inCell->x, inCell->y), inCell->y*mSquareSize);
+vec3f Grid::Grid2World(const Cell* inCell) {
+	return vec3f(inCell->x * mSquareSize, ELEVATION(inCell->x, inCell->y), inCell->y * mSquareSize);
 }
 
 Grid::~Grid() {
 	for (size_t i = 0; i < mCells.size(); i++)
 		delete mCells[i];
 
-	for (size_t i = 0; i < mFaces.size(); i++)
-		delete mFaces[i];
+	for (size_t i = 0; i < mEdges.size(); i++)
+		delete mEdges[i];
 }
 
 
 
 
-void Cell::ResetFull() {
+void Grid::Cell::ResetFull() {
 	ResetDynamicVars();
 	height = 0.0f;
-	for (int dir = 0; dir < DIRECTIONS; dir++)
-		faces[dir]->gradHeight = NVECf;
+
+	for (int dir = 0; dir < NUM_DIRECTIONS; dir++)
+		edges[dir]->gradHeight = NVECf;
 }
 
-void Cell::ResetDynamicVars() {
+void Grid::Cell::ResetDynamicVars() {
 	ResetGroupVars();
 	avgVelocity = NVECf;
 	density     = 0.0f;
 	discomfort = 0.0f;
 }
 
-void Cell::ResetGroupVars() {
+void Grid::Cell::ResetGroupVars() {
 	potential  = std::numeric_limits<float>::max();
-	for (int dir = 0; dir < DIRECTIONS; dir++) {
+	for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		speed[dir] = 0.0f;
 		cost[dir]  = 0.0f;
-		faces[dir]->gradPotential = NVECf;
-		faces[dir]->velocity = NVECf;
+		edges[dir]->gradPotential = NVECf;
+		edges[dir]->velocity = NVECf;
 	}
 }
