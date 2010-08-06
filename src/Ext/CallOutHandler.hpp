@@ -39,6 +39,7 @@ public:
 	const vec3f& GetSimObjectPosition(unsigned int) const;
 	const vec3f& GetSimObjectDirection(unsigned int) const;
 	float GetSimObjectCurrentForwardSpeed(unsigned int) const;
+	float GetSimObjectRadius(unsigned int) const;
 
 	unsigned int GetSimObjectNumWantedPhysicalStates(unsigned int) const;
 	void PushSimObjectWantedPhysicalState(unsigned int, const WantedPhysicalState&, bool, bool) const;
