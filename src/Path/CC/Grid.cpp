@@ -19,6 +19,8 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	//! NOTE: if mDownScale != 1, the engine's height-map must be downsampled
 	printf("[Grid::Init] GridRes: %dx%d %d\n", mWidth, mHeight, mSquareSize);
 
+	mLambda = 2.0f;
+	mMinDensity = 1.0f / pow(2.0f, mLambda);
 
 	unsigned int cells = mWidth*mHeight;
 	unsigned int faces = (mWidth+1)*mHeight + (mHeight+1)*mWidth;
@@ -115,11 +117,10 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 	float dY = posf.z - A->y + 0.5f;
 
 	// Splat density
-	static const float lambda = 2.0f;
-	A->density += pow(std::min<float>(1.0f - dX, 1.0f - dY), lambda);
-	B->density += pow(std::min<float>(       dX, 1.0f - dY), lambda);
-	C->density += pow(std::min<float>(       dX,        dY), lambda);
-	D->density += pow(std::min<float>(1.0f - dX,        dY), lambda);
+	A->density += pow(std::min<float>(1.0f - dX, 1.0f - dY), mLambda);
+	B->density += pow(std::min<float>(       dX, 1.0f - dY), mLambda);
+	C->density += pow(std::min<float>(       dX,        dY), mLambda);
+	D->density += pow(std::min<float>(1.0f - dX,        dY), mLambda);
 }
 
 void Grid::ComputeAvgVelocity() {
@@ -142,8 +143,7 @@ void Grid::ComputeSpeedFieldAndUnitCost(const std::set<unsigned int>& inSimObjec
 	const static float speedWeight      = 1.0f;   // No extra weight
 	const static float discomfortWeight = 100.0f; // Discomfort means YOU SHALL NOT PASS
 	const static float maxDensity       = 10.0f;  // According to the Stetson-Harrison method
-	const static float minDensity       = std::numeric_limits<float>::epsilon();
-	const static float minSpeed         = std::numeric_limits<float>::epsilon();
+	const static float minSpeed         = 0.0f;
 
 	             float minSlope         = std::numeric_limits<float>::max();
 	             float maxSlope         = std::numeric_limits<float>::min();
@@ -178,7 +178,7 @@ void Grid::ComputeSpeedFieldAndUnitCost(const std::set<unsigned int>& inSimObjec
 				dCell->avgVelocity.dot2D(dirVectors[dir]);
 			
 			float speed = 
-				((dCell->density - minDensity) / (maxDensity - minDensity)) * 
+				((dCell->density - mMinDensity) / (maxDensity - mMinDensity)) * 
 				(topologicalSpeed - flowSpeed) + 
 				topologicalSpeed;
 
