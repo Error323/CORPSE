@@ -365,8 +365,8 @@ void Grid::Reset() {
 	mTouchedCells.clear();
 }
 
-Cell::Edge* Grid::CreateEdge() {
-	Cell::Edge* f = new Cell::Edge();
+Grid::Cell::Edge* Grid::CreateEdge() {
+	Grid::Cell::Edge* f = new Grid::Cell::Edge();
 	mEdges.push_back(f);
 	return f;
 }
@@ -392,7 +392,7 @@ Grid::~Grid() {
 
 
 
-void Cell::ResetFull() {
+void Grid::Cell::ResetFull() {
 	ResetDynamicVars();
 	height = 0.0f;
 	numNeighbours = 0;
@@ -403,14 +403,14 @@ void Cell::ResetFull() {
 	}
 }
 
-void Cell::ResetDynamicVars() {
+void Grid::Cell::ResetDynamicVars() {
 	ResetGroupVars();
 	avgVelocity = NVECf;
 	density     = 0.0f;
 	discomfort = 0.0f;
 }
 
-void Cell::ResetGroupVars() {
+void Grid::Cell::ResetGroupVars() {
 	potential  = std::numeric_limits<float>::max();
 	for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		speed[dir] = 0.0f;

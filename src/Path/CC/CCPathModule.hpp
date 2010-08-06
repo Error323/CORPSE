@@ -49,6 +49,18 @@ public:
 		DATATYPE_VELOCITY_AVG    = 9, // v-bar (global, stored at cell-centers)
 	};
 
+	unsigned int GetNumGroupIDs() const { return objectGroups.size(); }
+	unsigned int GetGroupIDs(unsigned int* array, unsigned int size) const {
+		unsigned int n = 0;
+
+		std::map<unsigned int, std::set<unsigned int> >::const_iterator it;
+		for (it = objectGroups.begin(); it != objectGroups.end() && n < size; ++it) {
+			array[n++] = it->first;
+		}
+
+		return n;
+	}
+
 	unsigned int GetScalarDataArraySizeX(unsigned int) const;
 	unsigned int GetScalarDataArraySizeZ(unsigned int) const;
 	const float* GetScalarDataArray(unsigned int, unsigned int) const;
@@ -62,10 +74,12 @@ private:
 
 	unsigned int numGroupIDs;
 
-	//! FIXME: we need a grid per group?
+	//! each group is updated sequentially, so we only
+	//! require one grid in which the per-group fields
+	//! are recycled
 	Grid mGrid;
 
-	std::map<unsigned int, std::vector<Cell*> > mGoals;
+	std::map<unsigned int, std::vector<Grid::Cell*> > mGoals;
 	std::map<unsigned int, const SimObjectDef*> simObjectIDs;     // object ID ==> object def
 	std::map<unsigned int, unsigned int> objectGroupIDs;          // object ID ==> group ID
 	std::map<unsigned int, std::set<unsigned int> > objectGroups; // group ID ==> object IDs
