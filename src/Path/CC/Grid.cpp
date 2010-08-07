@@ -168,8 +168,8 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		vec3f( -1.0f, 0.0f,  0.0f)  // WEST
 	};
 
-	const static float speedWeight      = 1.0f;   // No extra weight
-	const static float discomfortWeight = 100.0f; // Discomfort means YOU SHALL NOT PASS
+	const static float speedWeight      = mWidth+mHeight;
+	const static float discomfortWeight = 100.0f;
 	const static float maxDensity       = 10.0f;  // According to the Stetson-Harrison method
 	const static float minSpeed         = 0.0f;
 
@@ -228,7 +228,6 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		else {
 			cell->potential = 0.0f;
 			cell->known = true;
-			printf("\n\nGOAL = <%d, %d>\n\n\n", cell->x, cell->y);
 		}
 	}
 
@@ -246,6 +245,14 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 }
 
 void Grid::UpdateCandidates(const Cell* inParent) {
+/*
+	printf("Cell(%d, %d) Pot(%2.1f), V-bar(%2.1f, %2.1f)\n", 
+		inParent->x, inParent->y, inParent->potential, inParent->avgVelocity.x, inParent->avgVelocity.z);
+	for (int dir = 0; dir < NUM_DIRECTIONS; dir++)
+		printf("\tf_[dir] = %+2.1f, C_[dir] = %+2.1f\n", inParent->speed[dir], inParent->cost[dir]);
+	printf("\n");
+*/
+
 	for (int i = 0; i < inParent->numNeighbours; i++) {
 		Cell* neighbour = inParent->neighbours[i];
 		if (neighbour->known)
@@ -257,18 +264,19 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 		float dirCosts[NUM_DIRECTIONS];
 		Cell* dirCells[NUM_DIRECTIONS];
 		bool  dirValid[NUM_DIRECTIONS];
-		dirCells[DIRECTION_NORTH] = y > 0         ? mCells[GRID_ID(x    , y - 1)] : NULL;
-		dirCells[DIRECTION_SOUTH] = y < mHeight-1 ? mCells[GRID_ID(x    , y + 1)] : NULL;
-		dirCells[DIRECTION_EAST]  = x > 0         ? mCells[GRID_ID(x + 1, y    )] : NULL;
-		dirCells[DIRECTION_WEST]  = x < mWidth-1  ? mCells[GRID_ID(x - 1, y    )] : NULL;
+		dirCells[DIRECTION_NORTH] = (y > 0        ) ? mCells[GRID_ID(x    , y - 1)] : NULL;
+		dirCells[DIRECTION_SOUTH] = (y < mHeight-1) ? mCells[GRID_ID(x    , y + 1)] : NULL;
+		dirCells[DIRECTION_WEST]  = (x > 0        ) ? mCells[GRID_ID(x - 1, y    )] : NULL;
+		dirCells[DIRECTION_EAST]  = (x < mWidth-1 ) ? mCells[GRID_ID(x + 1, y    )] : NULL;
 
 		for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 			if (dirCells[dir] == NULL) {
 				dirValid[dir] = false;
+				dirCosts[dir] = std::numeric_limits<float>::infinity();
 			}
 			else {
 				dirCosts[dir] = dirCells[dir]->potential + dirCells[dir]->cost[dir];
-				dirValid[dir] = dirCosts[dir] < std::numeric_limits<float>::infinity();
+				dirValid[dir] = dirCosts[dir] != std::numeric_limits<float>::infinity();
 			}
 		}
 
@@ -286,7 +294,6 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				bestDirY = DIRECTION_SOUTH;
 				bestY = dirCells[DIRECTION_SOUTH];
 			}
-			PFFG_ASSERT(bestY != NULL);
 
 			neighbour->potential = Potential1D(bestY->potential, neighbour->cost[bestDirY]);
 			neighbour->edges[bestDirY]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestY->potential);
@@ -308,7 +315,6 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				bestDirX = DIRECTION_WEST;
 				bestX = dirCells[DIRECTION_WEST];
 			}
-			PFFG_ASSERT(bestX != NULL);
 
 			neighbour->potential = Potential1D(bestX->potential, neighbour->cost[bestDirX]);
 			neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
@@ -332,7 +338,6 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				bestDirX = DIRECTION_WEST;
 				bestX = dirCells[DIRECTION_WEST];
 			}
-			PFFG_ASSERT(bestX != NULL);
 
 			if (dirCosts[DIRECTION_NORTH] < dirCosts[DIRECTION_SOUTH]) {
 				bestDirY = DIRECTION_NORTH;
@@ -342,7 +347,6 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				bestDirY = DIRECTION_SOUTH;
 				bestY = dirCells[DIRECTION_SOUTH];
 			}
-			PFFG_ASSERT(bestY != NULL);
 
 			neighbour->potential = Potential2D(bestX->potential, neighbour->cost[bestDirX], bestY->potential, neighbour->cost[bestDirY]);
 			neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
@@ -363,9 +367,9 @@ float Grid::Potential2D(const float inPotX, const float inCostX, const float inP
 	static const float a = 2.0f;
 	       const float b = 2.0f*inPotX + 2.0f*inPotY;
 	       const float c = (inPotX*inPotX + inPotY*inPotY) - (inCostX*inCostX * inCostY*inCostY);
-	       const float d = b*b - 4*a*c;
+	       const float d = b*b - 4.0f*a*c;
 
-	PFFG_ASSERT_MSG(d >= 0.0f, "sqrt(%f) will fail!", d);
+	PFFG_ASSERT_MSG(d >= 0.0f, "sqrt(%f) will fail! a(%f) b(%f) c(%f)", d, a, b, c);
 
 	       const float e = sqrtf(d);
 
