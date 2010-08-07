@@ -205,8 +205,6 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		maxRadius = std::max<float>(maxRadius, mCoh->GetSimObjectRadius(*i));
 	}
 
-	// printf("%s[2]\n");
-
 	// This loop computes the speedfield, unitcost and initializes the known
 	// and unknown set
 	for (size_t i = 0; i < mCells.size(); i++) {
@@ -254,28 +252,29 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		}
 	}
 
-	// printf("%s[3]\n");
-
 	// Retrieve candidates from goal cells
 	for (size_t i = 0; i < inGoalCells.size(); i++)
 		UpdateCandidates(inGoalCells[i]);
 
 	PFFG_ASSERT(!mCandidates.empty());
 
-	// printf("%s[4]\n");
 
 	unsigned int numIterations = 0;
-	static const unsigned int maxIterations = 4;
+	static const unsigned int maxIterations = 1000;
 
 	while (!mCandidates.empty() && (numIterations++ < maxIterations)) {
 		Cell* cell = mCandidates.top(); mCandidates.pop();
 		cell->known = true;
 
-		// printf("%s[5] iteration: %d\n", numIterations - 1);
 		UpdateCandidates(cell);
 	}
 
-	// FIXME-DEBUG: clear the queue for the next update
+	printf("%s[2] iterations: %d\n", s.c_str(), numIterations);
+
+	// FIXME:
+	//    due to the numIterations < maxIterations test, the
+	//    queue might still contain candidates that need to
+	//    be cleared before the next update
 	while (!mCandidates.empty()) {
 		mCandidates.pop();
 	}

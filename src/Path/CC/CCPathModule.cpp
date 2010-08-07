@@ -84,8 +84,6 @@ void PathModule::Update() {
 		// Reset the touched cells in the grid
 		mGrid.Reset();
 
-		// printf("%s[2]\n", s.c_str());
-
 		// Convert the crowd into a density field
 		for (i = simObjectIDs.begin(); i != simObjectIDs.end(); i++) {
 			const unsigned int objID = i->first;
@@ -97,13 +95,9 @@ void PathModule::Update() {
 			mGrid.AddDensityAndVelocity(objPos, objVel);
 		}
 
-		// printf("%s[3]\n", s.c_str());
-
 		// Now that we know the cumulative density per cell, we can compute 
 		// the average velocity
 		mGrid.ComputeAvgVelocity();
-
-		// printf("%s[4]\n", s.c_str());
 
 		// For each group
 		for (j = objectGroups.begin(); j != objectGroups.end(); j++) {
@@ -119,27 +113,19 @@ void PathModule::Update() {
 			// Note: This should get the goal cells from a specific group,
 			//       how will we select them?
 
-			// printf("%s[5A]\n", s.c_str());
-
 			mGrid.UpdateGroupPotentialField(mGoals[j->first], j->second);
-
-			// printf("%s[5B]\n", s.c_str());
 
 			// Update the object locations
 			for (k = j->second.begin(); k != j->second.end(); k++) {
 				mGrid.UpdateSimObjectLocation(*k);
 			}
-
-			// printf("%s[5C]\n", s.c_str());
 		}
-
-		// printf("%s[6]\n", s.c_str());
 
 		// Enforce minimum distance between objects
 		// Should this be handled in the EVENT_SIMOBJECT_COLLISION ?
 	}
 
-	printf("%s[7] time: %ums\n", s.c_str(), (ScopedTimer::GetTaskTime(s) - t));;
+	printf("%s[2] time: %ums\n", s.c_str(), (ScopedTimer::GetTaskTime(s) - t));;
 	printf("\n");
 }
 
