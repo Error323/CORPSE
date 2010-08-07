@@ -35,10 +35,11 @@ void PathModule::OnEvent(const IEvent* e) {
 			const SimObjectMoveOrderEvent* ee = dynamic_cast<const SimObjectMoveOrderEvent*>(e);
 
 			const std::list<unsigned int>& objectIDs = ee->GetObjectIDs();
-			// const vec3f& goalPos = ee->GetGoalPos();
+			const vec3f& goalPos = ee->GetGoalPos();
 
 			// create a new group
 			const unsigned int groupID = numGroupIDs++;
+			mGoals[groupID].push_back(mGrid.World2Cell(goalPos));
 
 			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
 				const unsigned int objID = *it;
@@ -100,7 +101,7 @@ void PathModule::Update() {
 		// Construct the potential and the gradient
 		// Note: This should get the goal cells from a specific group,
 		//       how will we select them?
-		mGrid.UpdateGroupPotentialField(mGoals[j->first], j->second);
+		// mGrid.UpdateGroupPotentialField(mGoals[j->first], j->second);
 
 		// Update the object locations
 		for (k = j->second.begin(); k != j->second.end(); k++)
@@ -136,6 +137,7 @@ bool PathModule::DelObjectFromGroup(unsigned int objID) {
 		if (objectGroups[groupID].empty()) {
 			// old group is now empty, delete it
 			objectGroups.erase(groupID);
+			mGoals.erase(groupID);
 		}
 
 		return true;

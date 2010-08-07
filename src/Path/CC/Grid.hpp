@@ -81,6 +81,8 @@ public:
 	const float* GetDensityDataArray()  const { return &mDensityData[0]; }
 	const vec3f* GetVelocityDataArray() const { return &mVelocityData[0]; }
 
+	Cell* World2Cell(const vec3f&);
+
 private:
 	static const float sLambda;
 	static const float sMinDensity;

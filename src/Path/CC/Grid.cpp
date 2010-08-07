@@ -345,11 +345,15 @@ float Grid::Potential1D(const float inPot, const float inCost) {
 
 float Grid::Potential2D(const float inPotX, const float inCostX, const float inPotY, const float inCostY) {
 	const float b = 2.0f*inPotX + 2.0f*inPotY;
-	const float d = sqrt(-4.0f * inPotX*inPotX  +  4.0f * inPotY*inPotY  +
-		8.0f * inCostX*inCostX * inCostY*inCostY);
+	const float d = -4.0f * inPotX*inPotX  +  4.0f * inPotY*inPotY  +
+		8.0f * inCostX*inCostX * inCostY*inCostY;
 
-	const float solution1 = (-b + d) / 4.0f;
-	const float solution2 = (-b - d) / 4.0f;
+	PFFG_ASSERT(d >= 0.0f);
+
+	const float e = sqrt(d);
+
+	const float solution1 = (-b + e) / 4.0f;
+	const float solution2 = (-b - e) / 4.0f;
 
 	return std::max<float>(solution1, solution2);
 }
@@ -375,6 +379,11 @@ vec3i Grid::World2Grid(const vec3f& inVec) {
 	const int x = std::max(0, std::min( mWidth - 1, int(round(inVec.x / mSquareSize)) ));
 	const int z = std::max(0, std::min( mHeight - 1, int(round(inVec.z / mSquareSize)) ));
 	return vec3i(x, 0, z);
+}
+
+Cell* Grid::World2Cell(const vec3f& inPos) {
+	const vec3i cellCoords = World2Grid(inPos);
+	return mCells[GRID_ID(cellCoords.x, cellCoords.z)];
 }
 
 vec3f Grid::Grid2World(const Cell* inCell) {
