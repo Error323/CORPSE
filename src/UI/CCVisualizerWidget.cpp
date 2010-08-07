@@ -198,12 +198,3 @@ void ui::CCVisualizerWidget::Texture::Update(const float* ndata) {
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }
-
-
-
-
-
-
-	// TODO: when calling SetRawSimObjectPosition, do we also need to update a unit's currentSpeed?
-	// TODO: pathModule receives ObjectCreatedEvent before renderer, but the latter calls object->SetRadius()
-	// TODO: MSc AI project: GPU crowd simulator under Belleman?
