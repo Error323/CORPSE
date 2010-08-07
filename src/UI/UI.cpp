@@ -2,10 +2,11 @@
 
 #include "./UI.hpp"
 #include "./FontManager.hpp"
+#include "./AssertWidget.hpp"
+#include "./CCVisualizerWidget.hpp"
+#include "./HUDWidget.hpp"
 #include "./SimObjectSelectorWidget.hpp"
 #include "./SimObjectSpawnerWidget.hpp"
-#include "./HUDWidget.hpp"
-#include "./AssertWidget.hpp"
 #include "../Input/InputHandler.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/LuaParser.hpp"
@@ -35,10 +36,11 @@ void ui::UI::FreeInstance(UI* ui) {
 ui::UI::UI() {
 	mFontManager = IFontManager::GetInstance();
 
+	widgets.push_back(new AssertWidget());
+	widgets.push_back(new CCVisualizerWidget());
+	widgets.push_back(new HUDWidget());
 	widgets.push_back(new SimObjectSelectorWidget());
 	widgets.push_back(new SimObjectSpawnerWidget());
-	widgets.push_back(new HUDWidget());
-	widgets.push_back(new AssertWidget());
 
 	inputHandler->AddReceiver(this);
 

@@ -2,6 +2,7 @@
 
 
 uniform sampler2D diffuseMap;
+uniform sampler2D overlayMap;
 
 #ifdef SHADOWS_BASIC
 uniform sampler2D shadowMap;
@@ -87,4 +88,5 @@ void main() {
 		gl_LightSource[0].ambient +
 		gl_LightSource[0].diffuse * texture2D(diffuseMap, vertexDiffuseTexCoors) * cosAngleDiffuse * colorScalar +
 		gl_LightSource[0].specular * pow(cosAngleSpecular, specExp) * specMult * 0.1;
+	gl_FragColor += texture2D(overlayMap, gl_TexCoord[1].st);
 }

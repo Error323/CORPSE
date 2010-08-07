@@ -23,20 +23,22 @@
 
 static const float guViewRange = 16384.0f;
 
-CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm):
+CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* smfReadMap):
 	bigSquareSize(128),
-	numBigTexX(rm->mapx / bigSquareSize),
-	numBigTexY(rm->mapy / bigSquareSize),
-	maxIdx(((rm->mapx + 1) * (rm->mapy + 1)) - 1),
-	heightDataX(rm->mapx + 1) {
+	numBigTexX(smfReadMap->mapx / bigSquareSize),
+	numBigTexY(smfReadMap->mapy / bigSquareSize),
+	maxIdx(((smfReadMap->mapx + 1) * (smfReadMap->mapy + 1)) - 1),
+	heightDataX(smfReadMap->mapx + 1) {
 
-	mapWidth = (rm->mapx << 3);
-	bigTexH = (rm->mapy << 3) / numBigTexY;
+	mapWidth = (smfReadMap->mapx * smfReadMap->SQUARE_SIZE);
+	mapHeight = (smfReadMap->mapy * smfReadMap->SQUARE_SIZE);
+	bigTexH = (smfReadMap->mapy * smfReadMap->SQUARE_SIZE) / numBigTexY;
 
-	heightData = rm->heightmap;
-	map = rm;
+	heightData = smfReadMap->heightmap;
+	smfMap = smfReadMap;
+
 	va = new VertexArray();
-	textures = new CSMFGroundTextures(map);
+	textures = new CSMFGroundTextures(smfMap);
 
 	// we need a multiple of 2
 	viewRadius = LUA->GetRoot()->GetTblVal("map")->GetFltVal("viewRadius", 1024.0f);
@@ -67,14 +69,20 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm):
 
 		if (pObj->IsValid()) {
 			pObj->SetUniformLocation("diffuseMap"); // idx 0
-			pObj->SetUniformLocation("shadowMap");  // idx 1
-			pObj->SetUniformLocation("shadowMat");  // idx 2
-			pObj->SetUniformLocation("texSquareX"); // idx 3
-			pObj->SetUniformLocation("texSquareZ"); // idx 4
+			pObj->SetUniformLocation("overlayMap"); // idx 1
+			pObj->SetUniformLocation("shadowMap");  // idx 2
+			pObj->SetUniformLocation("shadowMat");  // idx 3
+			pObj->SetUniformLocation("texSquareX"); // idx 4
+			pObj->SetUniformLocation("texSquareZ"); // idx 5
+			pObj->SetUniformLocation("mapSizeX");   // idx 6
+			pObj->SetUniformLocation("mapSizeZ");   // idx 7
 
 			pObj->Enable();
-			pObj->SetUniform1i(0, 0);               // (idx 0, texunit 0)
-			pObj->SetUniform1i(1, 7);               // (idx 1, texunit 7)
+			pObj->SetUniform1i(0, 0);          // (idx 0, texunit 0)
+			pObj->SetUniform1i(1, 1);          // (idx 1, texunit 1)
+			pObj->SetUniform1i(2, 7);          // (idx 2, texunit 7)
+			pObj->SetUniform1i(6, mapWidth);
+			pObj->SetUniform1i(7, mapHeight);
 			pObj->Disable();
 		} else {
 			PFFG_ASSERT(false);
@@ -127,8 +135,8 @@ inline static void DrawNormal(const vec3f& p0, const vec3f& p1, const Shader::IP
 inline void CSMFGroundDrawer::AddVertex(int x, int y, bool inShadowPass) {
 	const float h = heightData[y * heightDataX + x];
 
-	const vec3f p = vec3f(x * map->SQUARE_SIZE, h, y * map->SQUARE_SIZE);
-	const vec3f& n = map->vertexNormals[y * heightDataX + x];
+	const vec3f p = vec3f(x * smfMap->SQUARE_SIZE, h, y * smfMap->SQUARE_SIZE);
+	const vec3f& n = smfMap->vertexNormals[y * heightDataX + x];
 
 	// pass at least a semi-acceptable normal for this vertex
 	// rather than just its position (since we just have the
@@ -141,8 +149,8 @@ inline void CSMFGroundDrawer::AddVertex(int x, int y, bool inShadowPass) {
 }
 
 inline void CSMFGroundDrawer::AddVertex(int x, int y, float height, bool inShadowPass) {
-	const vec3f p = vec3f(x * map->SQUARE_SIZE, height, y * map->SQUARE_SIZE);
-	const vec3f& n = map->vertexNormals[y * heightDataX + x];
+	const vec3f p = vec3f(x * smfMap->SQUARE_SIZE, height, y * smfMap->SQUARE_SIZE);
+	const vec3f& n = smfMap->vertexNormals[y * heightDataX + x];
 
 	// FIXME: this is broken now
 	// DrawNormal(p, n, shaderProObj);
@@ -177,7 +185,7 @@ inline void CSMFGroundDrawer::FindRange(int& xs, int& xe, std::vector<fline>& le
 	std::vector<fline>::iterator fli;
 
 	for (fli = left.begin(); fli != left.end(); fli++) {
-		xtf = fli->base / map->SQUARE_SIZE + fli->dir * y;
+		xtf = fli->base / smfMap->SQUARE_SIZE + fli->dir * y;
 		xt0 = (int(xtf)) / lod * lod - lod;
 		xt1 = ((int) (xtf + fli->dir * lod)) / lod * lod - lod;
 
@@ -185,7 +193,7 @@ inline void CSMFGroundDrawer::FindRange(int& xs, int& xe, std::vector<fline>& le
 		if (xt0 > xs) xs = xt0;
 	}
 	for (fli = right.begin(); fli != right.end(); fli++) {
-		xtf = fli->base / map->SQUARE_SIZE + fli->dir * y;
+		xtf = fli->base / smfMap->SQUARE_SIZE + fli->dir * y;
 		xt0 = (int(xtf)) / lod * lod + lod;
 		xt1 = ((int) (xtf + fli->dir * lod)) / lod * lod + lod;
 
@@ -195,7 +203,7 @@ inline void CSMFGroundDrawer::FindRange(int& xs, int& xe, std::vector<fline>& le
 }
 
 
-#define CLAMP(i) std::max(0, std::min((i), maxIdx))
+#define CLAMP(i) std::max(0, std::min(int(i), maxIdx))
 
 inline void CSMFGroundDrawer::DoDrawGroundRow(const Camera* cam, int bty, bool inShadowPass) {
 	if (!BigTexSquareRowVisible(cam, bty)) {
@@ -214,7 +222,7 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(const Camera* cam, int bty, bool i
 	int bigSquareSizeY = bty * bigSquareSize;
 
 	for (fli = left.begin(); fli != left.end(); fli++) {
-		x0 = fli->base / map->SQUARE_SIZE + fli->dir * bigSquareSizeY;
+		x0 = fli->base / smfMap->SQUARE_SIZE + fli->dir * bigSquareSizeY;
 		x1 = x0 + fli->dir * bigSquareSize;
 
 		if (x0 > x1)
@@ -226,7 +234,7 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(const Camera* cam, int bty, bool i
 			sx = (int) x0;
 	}
 	for (fli = right.begin(); fli != right.end(); fli++) {
-		x0 = fli->base / map->SQUARE_SIZE + fli->dir * bigSquareSizeY + bigSquareSize;
+		x0 = fli->base / smfMap->SQUARE_SIZE + fli->dir * bigSquareSizeY + bigSquareSize;
 		x1 = x0 + fli->dir * bigSquareSize;
 
 		if (x0 < x1)
@@ -238,21 +246,21 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(const Camera* cam, int bty, bool i
 			ex = (int) x0;
 	}
 
-	float cx2 = cam->pos.x / map->SQUARE_SIZE;
-	float cy2 = cam->pos.z / map->SQUARE_SIZE;
+	float cx2 = cam->pos.x / smfMap->SQUARE_SIZE;
+	float cy2 = cam->pos.z / smfMap->SQUARE_SIZE;
 
 	for (int btx = sx; btx < ex; ++btx) {
 		if (!inShadowPass) {
 			// don't do texturing in the shadow pass
 			textures->SetTexture(btx, bty);
 
-			shaderProObj->SetUniform1i(3, btx);
-			shaderProObj->SetUniform1i(4, bty);
+			shaderProObj->SetUniform1i(4, btx);
+			shaderProObj->SetUniform1i(5, bty);
 		}
 
 		va->Initialize();
 
-		for (int lod = 1; lod < neededLod; lod <<= 1) {
+		for (unsigned int lod = 1; lod < neededLod; lod <<= 1) {
 			float oldcamxpart = 0.0f;
 			float oldcamypart = 0.0f;
 
@@ -315,21 +323,23 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(const Camera* cam, int bty, bool i
 			for (y = ystart; y < yend; y += lod) {
 				int xs = xstart;
 				int xe = xend;
+
 				FindRange(xs, xe, left, right, y, lod);
 
-				int ylod = y + lod;
-				int yhlod = y + hlod;
+				const int ylod = y + lod;
+				const int yhlod = y + hlod;
+				const int nloop = (xe - xs) / lod + 1;
 
-				int nloop = (xe - xs) / lod + 1;
 				va->EnlargeArrays(52 * nloop, 14 * nloop + 1); //! includes one extra for final endstrip
 
-				int yhdx = y * heightDataX;
-				int ylhdx = yhdx + lod * heightDataX;
-				int yhhdx = yhdx + hlod * heightDataX;
+				const int yhdx = y * heightDataX;
+				const int ylhdx = yhdx + lod * heightDataX;
+				const int yhhdx = yhdx + hlod * heightDataX;
 
 				for (x = xs; x < xe; x += lod) {
-					int xlod = x + lod;
-					int xhlod = x + hlod;
+					const int xlod = x + lod;
+					const int xhlod = x + hlod;
+
 					//! info: all triangle quads start in the top left corner
 					if ((lod == 1) ||
 						(x > cx + vrhlod) || (x < cx - vrhlod) ||
@@ -478,9 +488,10 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(const Camera* cam, int bty, bool i
 				}
 			}
 
-			int yst = std::max(ystart - lod, minty);
-			int yed = std::min(yend + lod, maxty);
-			int nloop = (yed - yst) / lod + 1;
+			const int yst = std::max(ystart - int(lod), minty);
+			const int yed = std::min(yend + int(lod), maxty);
+			const int nloop = (yed - yst) / lod + 1;
+
 			va->EnlargeArrays(8 * nloop, 2 * nloop);
 
 			if (maxlx < maxtx && maxlx >= mintx) {
@@ -540,16 +551,18 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(const Camera* cam, int bty, bool i
 
 			if (maxly < maxty && maxly > minty) {
 				y = maxly;
-				int xs = std::max(xstart - lod, mintx);
-				int xe = std::min(xend + lod,   maxtx);
+				int xs = std::max(xstart - int(lod), mintx);
+				int xe = std::min(xend + int(lod),   maxtx);
+
 				FindRange(xs, xe, left, right, y, lod);
 
 				if (xs < xe) {
 					x = xs;
-					int ylod = y + lod;
-					int nloop = (xe - xs) / lod + 2; //! one extra for if statment
+					const int ylod = y + lod;
+					const int nloop = (xe - xs) / lod + 2; //! one extra for if statment
+					const int ylhdx = (y + lod) * heightDataX;
+
 					va->EnlargeArrays(2 * nloop, 1);
-					int ylhdx = (y + lod) * heightDataX;
 
 					if (x % dlod) {
 						int idx2 = CLAMP(ylhdx + x), idx2PLOD = CLAMP(idx2 + lod), idx2MLOD = CLAMP(idx2 - lod);
@@ -580,16 +593,18 @@ inline void CSMFGroundDrawer::DoDrawGroundRow(const Camera* cam, int bty, bool i
 
 			if (minly > minty && minly < maxty) {
 				y = minly - lod;
-				int xs = std::max(xstart - lod, mintx);
-				int xe = std::min(xend + lod,   maxtx);
+				int xs = std::max(xstart - int(lod), mintx);
+				int xe = std::min(xend + int(lod),   maxtx);
+
 				FindRange(xs, xe, left, right, y, lod);
 
 				if (xs < xe) {
 					x = xs;
-					int ylod = y + lod;
-					int nloop = (xe - xs) / lod + 2; //! one extra for if statment
+					const int ylod = y + lod;
+					const int nloop = (xe - xs) / lod + 2; //! one extra for if statment
+					const int yhdx = y * heightDataX;
+
 					va->EnlargeArrays(2 * nloop, 1);
-					int yhdx = y * heightDataX;
 
 					if (x % dlod) {
 						int idx1 = CLAMP(yhdx + x), idx1PLOD = CLAMP(idx1 + lod), idx1MLOD = CLAMP(idx1 - lod);
@@ -654,12 +669,14 @@ void CSMFGroundDrawer::Draw(const Camera* cam, bool inShadowPass) {
 
 	if (!inShadowPass) {
 		shaderProObj->Enable();
-		shaderProObj->SetUniformMatrix4fv(2, false, const_cast<float*>(shadowHandler->GetShadowProjectionMatrix()));
+		shaderProObj->SetUniformMatrix4fv(3, false, const_cast<float*>(shadowHandler->GetShadowProjectionMatrix()));
 
 		glEnable(GL_TEXTURE_2D);
 
 		glActiveTexture(GL_TEXTURE7);
 		glBindTexture(GL_TEXTURE_2D, shadowHandler->GetDepthTextureID());
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, overlayTexID);
 		glActiveTexture(GL_TEXTURE0);
 		textures->DrawUpdate(cam);
 	}
@@ -670,6 +687,7 @@ void CSMFGroundDrawer::Draw(const Camera* cam, bool inShadowPass) {
 
 	if (!inShadowPass) {
 		glActiveTexture(GL_TEXTURE7); glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
 
 		glDisable(GL_TEXTURE_GEN_S);

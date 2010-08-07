@@ -21,23 +21,23 @@
 using std::string;
 using std::max;
 
-CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm):
+CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* smfReadMap):
 	bigSquareSize(128),
-	numBigTexX(rm->mapx / bigSquareSize),
-	numBigTexY(rm->mapy / bigSquareSize) {
+	numBigTexX(smfReadMap->mapx / bigSquareSize),
+	numBigTexY(smfReadMap->mapy / bigSquareSize) {
 
 	usePBO = false;
-	map = rm;
+	smfMap = smfReadMap;
 
-	if (GLEW_EXT_pixel_buffer_object && rm->usePBO) {
+	if (GLEW_EXT_pixel_buffer_object && smfMap->usePBO) {
 		glGenBuffers(10, pboIDs);
 		currentPBO = 0;
 		usePBO = true;
 	}
 
 	// TODO: refactor and put reading code in CSMFFile
-	CFileHandler& ifs = (rm->GetFile()).ifs;
-	const SMFHeader* header = &rm->GetFile().GetHeader();
+	CFileHandler& ifs = (smfMap->GetFile()).ifs;
+	const SMFHeader* header = &smfMap->GetFile().GetHeader();
 
 	ifs.Seek(header->tilesPtr);
 	tileSize = header->tilesize;
@@ -157,10 +157,10 @@ void CSMFGroundTextures::SetTexture(int x, int y) {
 }
 
 inline bool CSMFGroundTextures::TexSquareInView(const Camera* cam, int btx, int bty) {
-	const float* heightData = map->GetHeightmap();
-	static const int heightDataX = map->mapx + 1;
-	static const int bigTexW = (map->mapx << 3) / numBigTexX;
-	static const int bigTexH = (map->mapy << 3) / numBigTexY;
+	const float* heightData = smfMap->GetHeightmap();
+	static const int heightDataX = smfMap->mapx + 1;
+	static const int bigTexW = (smfMap->mapx << 3) / numBigTexX;
+	static const int bigTexH = (smfMap->mapy << 3) / numBigTexY;
 	static const float bigTexSquareRadius = fastmath::sqrt1(float(bigTexW * bigTexW + bigTexH * bigTexH));
 
 	const int x = btx * bigTexW + (bigTexW >> 1);
@@ -174,8 +174,8 @@ inline bool CSMFGroundTextures::TexSquareInView(const Camera* cam, int btx, int 
 void CSMFGroundTextures::DrawUpdate(const Camera* cam) {
 	for (int y = 0; y < numBigTexY; ++y) {
 		float dy = 0.0f;
-			dy = cam->pos.z - y * bigSquareSize * map->SQUARE_SIZE - (map->SQUARE_SIZE << 6);
-			dy = max(0.0f, float(fabs(dy) - (map->SQUARE_SIZE << 6)));
+			dy = cam->pos.z - y * bigSquareSize * smfMap->SQUARE_SIZE - (smfMap->SQUARE_SIZE << 6);
+			dy = max(0.0f, float(fabs(dy) - (smfMap->SQUARE_SIZE << 6)));
 
 		for (int x = 0; x < numBigTexX; ++x) {
 			if (!TexSquareInView(cam, x, y)) {
@@ -187,8 +187,8 @@ void CSMFGroundTextures::DrawUpdate(const Camera* cam) {
 			GroundSquare* square = &squares[y * numBigTexX + x];
 
 			float dx = 0.0f;
-				dx = cam->pos.x - x * bigSquareSize * map->SQUARE_SIZE - (map->SQUARE_SIZE << 6);
-				dx = max(0.0f, float(fabs(dx) - (map->SQUARE_SIZE << 6)));
+				dx = cam->pos.x - x * bigSquareSize * smfMap->SQUARE_SIZE - (smfMap->SQUARE_SIZE << 6);
+				dx = max(0.0f, float(fabs(dx) - (smfMap->SQUARE_SIZE << 6)));
 			float dist = fastmath::sqrt1(dx * dx + dy * dy);
 
 			if (square->lastUsed < (SDL_GetTicks() - 60 * 1000)) {
@@ -275,8 +275,8 @@ void CSMFGroundTextures::LoadSquare(int x, int y, int level) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 
-	if (map->anisotropy != 0.0f) {
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, map->anisotropy);
+	if (smfMap->anisotropy != 0.0f) {
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, smfMap->anisotropy);
 	}
 
 	if (usedPBO) {

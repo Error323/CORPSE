@@ -20,7 +20,7 @@ class CSMFGroundDrawer: public CBaseGroundDrawer {
 	protected:
 		int viewRadius;
 
-		CSMFReadMap* map;
+		CSMFReadMap* smfMap;
 		CSMFGroundTextures* textures;
 		VertexArray* va;
 
@@ -29,9 +29,10 @@ class CSMFGroundDrawer: public CBaseGroundDrawer {
 		const int numBigTexY;
 		const int maxIdx;
 
-		int mapWidth;
-		int bigTexH;
-		int neededLod;
+		unsigned int mapWidth;
+		unsigned int mapHeight;
+		unsigned int bigTexH;
+		unsigned int neededLod;
 
 		float* heightData;
 		const int heightDataX;

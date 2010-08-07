@@ -1,4 +1,6 @@
 uniform mat4 shadowMat;
+uniform int mapSizeX;
+uniform int mapSizeZ;
 uniform int texSquareX;
 uniform int texSquareZ;
 varying vec4 vertexDepthTexCoors;
@@ -22,4 +24,6 @@ void main() {
 
 	gl_TexCoord[0].s = float(int(gl_Vertex.x) - (texSquareX * 1024)) / 1024.0;
 	gl_TexCoord[0].t = float(int(gl_Vertex.z) - (texSquareZ * 1024)) / 1024.0;
+	gl_TexCoord[1].s = gl_Vertex.x / float(mapSizeX);
+	gl_TexCoord[1].t = gl_Vertex.z / float(mapSizeZ);
 }

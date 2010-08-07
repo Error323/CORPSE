@@ -7,14 +7,14 @@ struct Camera;
 
 class CSMFGroundTextures {
 	public:
-		CSMFGroundTextures(CSMFReadMap* srm);
+		CSMFGroundTextures(CSMFReadMap*);
 		~CSMFGroundTextures(void);
 		void SetTexture(int x, int y);
 		void DrawUpdate(const Camera*);
 		void LoadSquare(int x, int y, int level);
 
 	protected:
-		CSMFReadMap* map;
+		CSMFReadMap* smfMap;
 
 		const int bigSquareSize;
 		const int numBigTexX;
