@@ -21,6 +21,9 @@ public:
 
 	virtual ICallOutHandler* GetCallOutHandler() const { return coh; }
 
+	virtual unsigned int GetNumGroupIDs() const = 0;
+	virtual unsigned int GetGroupIDs(unsigned int* array, unsigned int size) const = 0;
+
 	virtual unsigned int GetScalarDataArraySizeX(unsigned int dataType) const = 0;
 	virtual unsigned int GetScalarDataArraySizeZ(unsigned int dataType) const = 0;
 	virtual const float* GetScalarDataArray(unsigned int dataType, unsigned int groupID) const = 0;

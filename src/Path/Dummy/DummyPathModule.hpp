@@ -32,6 +32,18 @@ public:
 	void Update();
 	void Kill();
 
+	unsigned int GetNumGroupIDs() const { return objectGroups.size(); }
+	unsigned int GetGroupIDs(unsigned int* array, unsigned int size) const {
+		unsigned int n = 0;
+
+		std::map<unsigned int, std::set<unsigned int> >::const_iterator it;
+		for (it = objectGroups.begin(); it != objectGroups.end() && n < size; ++it) {
+			array[n++] = it->first;
+		}
+
+		return n;
+	}
+
 	unsigned int GetScalarDataArraySizeX(unsigned int) const { return 0; }
 	unsigned int GetScalarDataArraySizeZ(unsigned int) const { return 0; }
 	const float* GetScalarDataArray(unsigned int, unsigned int) const { return NULL; }
@@ -43,6 +55,8 @@ private:
 	void AddObjectToGroup(unsigned int, unsigned int);
 	bool DelObjectFromGroup(unsigned int);
 
+	// running counter used to assign ID's to new groups
+	// (not the actual number of currently active groups)
 	unsigned int numGroupIDs;
 
 	std::map<unsigned int, const SimObjectDef*> simObjectIDs;     // object ID ==> object def

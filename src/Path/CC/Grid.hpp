@@ -20,52 +20,52 @@ enum {
 	NUM_DIRECTIONS  = 4
 };
 
-struct Cell {
-	Cell() {}
-
-	Cell(unsigned int _x, unsigned int _y):
-		x(_x),
-		y(_y)
-	{}
-
-	struct Edge {
-		vec3f gradPotential;
-		vec3f velocity;
-		vec3f gradHeight;
-	};
-
-	bool operator== (const Cell* c) const {
-		return (x == c->x && y == c->y);
-	}
-
-	bool operator() (const Cell* a, const Cell* b) const {
-		return (a->potential < b->potential);
-	}
-
-	void ResetFull();
-	void ResetDynamicVars();
-	void ResetGroupVars();
-
-	unsigned int x, y;
-	bool  known;
-	float discomfort;
-	float potential;
-	float density;
-	float height;
-	float speed[NUM_DIRECTIONS];
-	float cost[NUM_DIRECTIONS];
-	Edge* edges[NUM_DIRECTIONS];
-	vec3f avgVelocity;
-	Cell* neighbours[NUM_DIRECTIONS];
-	int   numNeighbours;
-};
 
 
 class Grid {
 public:
+	struct Cell {
+		Cell() {}
+
+		Cell(unsigned int _x, unsigned int _y):
+			x(_x),
+			y(_y)
+		{}
+
+		struct Edge {
+			vec3f gradPotential;
+			vec3f velocity;
+			vec3f gradHeight;
+		};
+
+		bool operator== (const Cell* c) const {
+			return (x == c->x && y == c->y);
+		}
+
+		bool operator() (const Cell* a, const Cell* b) const {
+			return (a->potential < b->potential);
+		}
+
+		void ResetFull();
+		void ResetDynamicVars();
+		void ResetGroupVars();
+
+		unsigned int x, y;
+		bool  known;
+		float discomfort;
+		float potential;
+		float density;
+		float height;
+		float speed[NUM_DIRECTIONS];
+		float cost[NUM_DIRECTIONS];
+		Edge* edges[NUM_DIRECTIONS];
+		vec3f avgVelocity;
+		Cell* neighbours[NUM_DIRECTIONS];
+		int   numNeighbours;
+	};
+
 	Grid() {}
 	~Grid();
-
 
 	void Init(const int, ICallOutHandler*);
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
@@ -93,7 +93,7 @@ private:
 	int mDownScale;
 	
 	// FMM vars
-	std::priority_queue<Cell*, std::vector<Cell*, std::allocator<Cell*> >, Cell> mCandidates;
+	std::priority_queue<Cell*, std::vector<Cell*> > mCandidates;
 
 	// Visualization data
 	std::vector<float> mHeightData;
