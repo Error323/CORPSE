@@ -101,9 +101,14 @@ void CClient::Update() {
 void CClient::ReadNetMessages() {
 	NetMessage m;
 
-	// FIXME:
+	const unsigned int tick = SDL_GetTicks();
+
+	// NOTE:
 	//   if we are under heavy simulation load, the message
 	//   queue will grow faster than we can eat through it
+	//
+	//   we can deal with this here by limiting consumption
+	//   or in the server by examining a client's frame-lag
 	while (mNetBuf->PopServerToClientMessage(&m))  {
 		switch (m.GetMessageID()) {
 			case SERVER_MSG_SIMFRAME: {
@@ -111,6 +116,10 @@ void CClient::ReadNetMessages() {
 
 				NetMessage r(CLIENT_MSG_SIMFRAME, clientID, sizeof(unsigned int));
 				SendNetMessage(r);
+
+				if ((SDL_GetTicks() - tick) > 100) {
+					return;
+				}
 			} break;
 
 			case CLIENT_MSG_SIMCOMMAND: {
