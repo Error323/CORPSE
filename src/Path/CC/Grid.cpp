@@ -269,7 +269,7 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		UpdateCandidates(cell);
 	}
 
-	printf("%s[2] iterations: %d\n", s.c_str(), numIterations);
+	printf("%s[2] iterations: %d\n", s.c_str(), numIterations - 1);
 
 	// FIXME:
 	//    due to the numIterations < maxIterations test, the

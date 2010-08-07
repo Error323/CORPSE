@@ -99,9 +99,8 @@ void PathModule::Update() {
 		// the average velocity
 		mGrid.ComputeAvgVelocity();
 
-		// For each group
 		for (j = objectGroups.begin(); j != objectGroups.end(); j++) {
-			// Construct the speed field and the unit cost field
+			// For each group, construct the speed field and the unit cost field
 			// Note1: This first resets all the group-related variables
 			// Note2: Discomfort regarding this group can be computed here
 			// Note3: It might be possible to compute the speedfield and unit-
