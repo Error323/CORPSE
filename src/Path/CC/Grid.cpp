@@ -222,7 +222,7 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		
 		// Initialize the known and unknown set
 		if (std::find(inGoalCells.begin(), inGoalCells.end(), cell) == inGoalCells.end()) {
-			cell->potential = std::numeric_limits<float>::max();
+			cell->potential = std::numeric_limits<float>::infinity();
 			cell->known = false;
 		}
 		else {
@@ -246,7 +246,6 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 }
 
 void Grid::UpdateCandidates(const Cell* inParent) {
-	static const float maxf = std::numeric_limits<float>::max();
 	for (int i = 0; i < inParent->numNeighbours; i++) {
 		Cell* neighbour = inParent->neighbours[i];
 		if (neighbour->known)
@@ -269,7 +268,7 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 			}
 			else {
 				dirCosts[dir] = dirCells[dir]->potential + dirCells[dir]->cost[dir];
-				dirValid[dir] = dirCosts[dir] < maxf;
+				dirValid[dir] = dirCosts[dir] < std::numeric_limits<float>::infinity();
 			}
 		}
 
@@ -361,16 +360,17 @@ float Grid::Potential1D(const float inPot, const float inCost) {
 }
 
 float Grid::Potential2D(const float inPotX, const float inCostX, const float inPotY, const float inCostY) {
-	const float b = 2.0f*inPotX + 2.0f*inPotY;
-	const float d = 4.0f * inPotX*inPotX  +  4.0f * inPotY*inPotY  +
-		8.0f * inCostX*inCostX * inCostY*inCostY;
+	static const float a = 2.0f;
+	       const float b = 2.0f*inPotX + 2.0f*inPotY;
+	       const float c = (inPotX*inPotX + inPotY*inPotY) - (inCostX*inCostX * inCostY*inCostY);
+	       const float d = b*b - 4*a*c;
 
 	PFFG_ASSERT_MSG(d >= 0.0f, "sqrt(%f) will fail!", d);
 
-	const float e = sqrtf(d);
+	       const float e = sqrtf(d);
 
-	const float solution1 = (-b + e) / 4.0f;
-	const float solution2 = (-b - e) / 4.0f;
+	       const float solution1 = (-b + e) / 2.0f*a;
+	       const float solution2 = (-b - e) / 2.0f*a;
 
 	return std::max<float>(solution1, solution2);
 }
@@ -437,7 +437,7 @@ void Grid::Cell::ResetDynamicVars() {
 }
 
 void Grid::Cell::ResetGroupVars() {
-	potential  = std::numeric_limits<float>::max();
+	potential  = std::numeric_limits<float>::infinity();
 	for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		speed[dir] = 0.0f;
 		cost[dir]  = 0.0f;
