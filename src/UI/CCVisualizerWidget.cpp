@@ -55,7 +55,7 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 				// create the potential-texture
 				const unsigned int xsize = m->GetScalarDataArraySizeX(PathModule::DATATYPE_POTENTIAL);
 				const unsigned int zsize = m->GetScalarDataArraySizeZ(PathModule::DATATYPE_POTENTIAL);
-				const float* data = m->GetScalarDataArray(PathModule::DATATYPE_POTENTIAL, texGroupIdx);
+				const float* data = m->GetScalarDataArray(PathModule::DATATYPE_POTENTIAL, texGroupID);
 
 				potentialTex = new Texture(xsize, zsize, data);
 				textures[PathModule::DATATYPE_POTENTIAL] = potentialTex;
