@@ -25,12 +25,11 @@ enum {
 class Grid {
 public:
 	struct Cell {
-		Cell() {}
+		Cell(): x(0), y(0), known(false), numNeighbours(0) {
+		}
 
-		Cell(unsigned int _x, unsigned int _y):
-			x(_x),
-			y(_y)
-		{}
+		Cell(unsigned int _x, unsigned int _y): x(_x), y(_y), known(false), numNeighbours(0) {
+		}
 
 		struct Edge {
 			vec3f gradPotential;
@@ -64,7 +63,7 @@ public:
 		int   numNeighbours;
 	};
 
-	Grid() {}
+	Grid(): mWidth(0), mHeight(0), mSquareSize(0), mDownScale(0), numResets(0) {}
 	~Grid();
 
 	void Init(const int, ICallOutHandler*);
@@ -92,7 +91,8 @@ private:
 	int mHeight;
 	int mSquareSize;
 	int mDownScale;
-	
+	int numResets;
+
 	// FMM vars
 	std::priority_queue<Cell*> mCandidates;
 

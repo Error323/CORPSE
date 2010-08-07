@@ -5,6 +5,7 @@
 #include "../../Ext/ICallOutHandler.hpp"
 #include "../../Sim/SimObjectDef.hpp"
 #include "../../Sim/SimObjectState.hpp"
+#include "../../System/ScopedTimer.hpp"
 
 void PathModule::OnEvent(const IEvent* e) {
 	switch (e->GetType()) {
@@ -68,48 +69,75 @@ void PathModule::Init() {
 }
 
 void PathModule::Update() {
-	std::map<unsigned int, const SimObjectDef*>::iterator i;
-	std::map<unsigned int, std::set<unsigned int> >::iterator j;
-	std::set<unsigned int>::iterator k;
+	std::string s = "[CCPathModule::Update]";
+	std::cout << s << "[1]" << std::endl;
 
-	// Reset the touched cells in the grid
-	mGrid.Reset();
+	{
+		ScopedTimer t(s);
 
-	// Convert the crowd into a density field
-	for (i = simObjectIDs.begin(); i != simObjectIDs.end(); i++) {
-		const unsigned int objID = i->first;
-		const vec3f& objPos = coh->GetSimObjectPosition(objID);
-		const vec3f objVel =
-			coh->GetSimObjectDirection(objID) *
-			coh->GetSimObjectCurrentForwardSpeed(objID);
-		mGrid.AddDensityAndVelocity(objPos, objVel);
+		std::map<unsigned int, const SimObjectDef*>::iterator i;
+		std::map<unsigned int, std::set<unsigned int> >::iterator j;
+		std::set<unsigned int>::iterator k;
+
+		// Reset the touched cells in the grid
+		mGrid.Reset();
+
+		std::cout << s << "[2]" << std::endl;
+
+		// Convert the crowd into a density field
+		for (i = simObjectIDs.begin(); i != simObjectIDs.end(); i++) {
+			const unsigned int objID = i->first;
+			const vec3f& objPos = coh->GetSimObjectPosition(objID);
+			const vec3f objVel =
+				coh->GetSimObjectDirection(objID) *
+				coh->GetSimObjectCurrentForwardSpeed(objID);
+
+			mGrid.AddDensityAndVelocity(objPos, objVel);
+		}
+
+		std::cout << s << "[3]" << std::endl;
+
+		// Now that we know the cumulative density per cell, we can compute 
+		// the average velocity
+		mGrid.ComputeAvgVelocity();
+
+		std::cout << s << "[4]" << std::endl;
+
+		// For each group
+		for (j = objectGroups.begin(); j != objectGroups.end(); j++) {
+			// Construct the speed field and the unit cost field
+			// Note1: This first resets all the group-related variables
+			// Note2: Discomfort regarding this group can be computed here
+			// Note3: It might be possible to compute the speedfield and unit-
+			//        costfield in the UpdateGroupPotentialField as cells 
+			//        are picked from the UNKNOWN set, saving N iterations
+			// mGrid.ComputeSpeedFieldAndUnitCost(j->second);
+
+			// Construct the potential and the gradient
+			// Note: This should get the goal cells from a specific group,
+			//       how will we select them?
+			std::cout << s << "[5A]" << std::endl;
+
+			mGrid.UpdateGroupPotentialField(mGoals[j->first], j->second);
+
+			std::cout << s << "[5B]" << std::endl;
+
+			// Update the object locations
+			for (k = j->second.begin(); k != j->second.end(); k++) {
+				mGrid.UpdateSimObjectLocation(*k);
+			}
+
+			std::cout << s << "[5C]" << std::endl;
+		}
+
+		std::cout << s << "[6]" << std::endl;
+
+		// Enforce minimum distance between objects
+		// Should this be handled in the EVENT_SIMOBJECT_COLLISION ?
 	}
-	// Now that we know the cumulative density per cell, we can compute 
-	// the average velocity
-	mGrid.ComputeAvgVelocity();
 
-	// For each group
-	for (j = objectGroups.begin(); j != objectGroups.end(); j++) {
-		// Construct the speed field and the unit cost field
-		// Note1: This first resets all the group-related variables
-		// Note2: Discomfort regarding this group can be computed here
-		// Note3: It might be possible to compute the speedfield and unit-
-		//        costfield in the UpdateGroupPotentialField as cells 
-		//        are picked from the UNKNOWN set, saving N iterations
-		// mGrid.ComputeSpeedFieldAndUnitCost(j->second);
-
-		// Construct the potential and the gradient
-		// Note: This should get the goal cells from a specific group,
-		//       how will we select them?
-		mGrid.UpdateGroupPotentialField(mGoals[j->first], j->second);
-
-		// Update the object locations
-		for (k = j->second.begin(); k != j->second.end(); k++)
-			mGrid.UpdateSimObjectLocation(*k);
-	}
-
-	// Enforce minimum distance between objects
-	// Should this be handled in the EVENT_SIMOBJECT_COLLISION ?
+	std::cout << s << "[7] time: " << ScopedTimer::GetTaskTime(s) << "ms" << std::endl;
+	std::cout << std::endl;
 }
 
 void PathModule::Kill() {
