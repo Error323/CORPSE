@@ -72,8 +72,10 @@ void PathModule::Update() {
 	std::string s = "[CCPathModule::Update]";
 	std::cout << s << "[1]" << std::endl;
 
+	const unsigned int t = ScopedTimer::GetTaskTime(s);
+
 	{
-		ScopedTimer t(s);
+		ScopedTimer timer(s);
 
 		std::map<unsigned int, const SimObjectDef*>::iterator i;
 		std::map<unsigned int, std::set<unsigned int> >::iterator j;
@@ -136,7 +138,7 @@ void PathModule::Update() {
 		// Should this be handled in the EVENT_SIMOBJECT_COLLISION ?
 	}
 
-	std::cout << s << "[7] time: " << ScopedTimer::GetTaskTime(s) << "ms" << std::endl;
+	std::cout << s << "[7] time: " << (ScopedTimer::GetTaskTime(s) - t) << "ms" << std::endl;
 	std::cout << std::endl;
 }
 
