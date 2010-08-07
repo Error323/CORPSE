@@ -477,6 +477,7 @@ Grid::~Grid() {
 
 void Grid::Cell::ResetFull() {
 	ResetDynamicVars();
+
 	height = 0.0f;
 	numNeighbours = 0;
 
@@ -488,13 +489,15 @@ void Grid::Cell::ResetFull() {
 
 void Grid::Cell::ResetDynamicVars() {
 	ResetGroupVars();
+
 	avgVelocity = NVECf;
 	density     = 0.0f;
 	discomfort = 0.0f;
 }
 
 void Grid::Cell::ResetGroupVars() {
-	potential  = std::numeric_limits<float>::infinity();
+	potential = std::numeric_limits<float>::infinity();
+
 	for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		speed[dir] = 0.0f;
 		cost[dir]  = 0.0f;
