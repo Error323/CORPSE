@@ -6,8 +6,8 @@
 #include "../../System/Debugger.hpp"
 #include "../../Sim/SimObjectDef.hpp"
 
-#define GRID_ID(x,y) (((y)*(mWidth))+(x))
-#define ELEVATION(x,y) (mCoh->GetCenterHeightMap()[(mDownScale*(y))*(mDownScale*mWidth)+(mDownScale*(x))])
+#define GRID_ID(x,y) (((y) * (mWidth)) + (x))
+#define ELEVATION(x,y) (mCoh->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * mWidth) + (mDownScale * (x))])
 
 const float Grid::sLambda     = 2.0f;
 const float Grid::sMinDensity = 1.0f / pow(2.0f, sLambda);
@@ -28,9 +28,10 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	const unsigned int numCells = mWidth * mHeight;
 	const unsigned int numEdges = (mWidth + 1) * mHeight + (mHeight + 1) * mWidth;
 
-	mHeightData.reserve(numCells);
-	mDensityData.reserve(numCells);
-	mVelocityData.reserve(numCells);
+	mHeightData.resize(numCells);
+	mPotentialData.resize(numCells);
+	mDensityData.resize(numCells);
+	mVelocityData.resize(numCells);
 
 	mEdges.reserve(numEdges);
 	mCells.reserve(numCells);
@@ -80,7 +81,9 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 
 			// Set the height, assuming the world is static wrt height
 			curCell->height = ELEVATION(x, y);
+
 			mHeightData[GRID_ID(x, y)] = curCell->height;
+			mPotentialData[GRID_ID(x, y)] = 0.0f;
 		}
 	}
 
@@ -193,7 +196,7 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		// Compute the speedfield and unit cost
 		Cell* cell = mCells[i];
 		cell->ResetGroupVars();
-		
+
 		const vec3f worldPos = Grid2World(cell);
 		for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 			// Compute the speed field
@@ -208,7 +211,7 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 
 			float flowSpeed = 
 				dCell->avgVelocity.dot2D(dirVectors[dir]);
-			
+
 			float speed = 
 				((dCell->density - sMinDensity) / (maxDensity - sMinDensity)) * 
 				(topologicalSpeed - flowSpeed) + 
@@ -219,13 +222,12 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 			// Compute the unit cost
 			cell->cost[dir] = (speedWeight*speed + discomfortWeight*cell->discomfort) / speed;
 		}
-		
+
 		// Initialize the known and unknown set
 		if (std::find(inGoalCells.begin(), inGoalCells.end(), cell) == inGoalCells.end()) {
 			cell->potential = std::numeric_limits<float>::infinity();
 			cell->known = false;
-		}
-		else {
+		} else {
 			cell->potential = 0.0f;
 			cell->known = true;
 		}
@@ -237,9 +239,14 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 
 	PFFG_ASSERT(!mCandidates.empty());
 
-	while (!mCandidates.empty()) {
+
+	unsigned int numIterations = 0;
+	static const unsigned int maxIterations = 1000;
+
+	while (!mCandidates.empty() && numIterations++ < maxIterations) {
 		Cell* cell = mCandidates.top(); mCandidates.pop();
 		cell->known = true;
+
 		UpdateCandidates(cell);
 	}
 }
@@ -255,15 +262,17 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 
 	for (int i = 0; i < inParent->numNeighbours; i++) {
 		Cell* neighbour = inParent->neighbours[i];
+
 		if (neighbour->known)
 			continue;
 
-		int x = neighbour->x;
-		int y = neighbour->y;
+		const int x = neighbour->x;
+		const int y = neighbour->y;
 
 		float dirCosts[NUM_DIRECTIONS];
 		Cell* dirCells[NUM_DIRECTIONS];
 		bool  dirValid[NUM_DIRECTIONS];
+
 		dirCells[DIRECTION_NORTH] = (y > 0        ) ? mCells[GRID_ID(x    , y - 1)] : NULL;
 		dirCells[DIRECTION_SOUTH] = (y < mHeight-1) ? mCells[GRID_ID(x    , y + 1)] : NULL;
 		dirCells[DIRECTION_WEST]  = (x > 0        ) ? mCells[GRID_ID(x - 1, y    )] : NULL;
@@ -273,58 +282,56 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 			if (dirCells[dir] == NULL) {
 				dirValid[dir] = false;
 				dirCosts[dir] = std::numeric_limits<float>::infinity();
-			}
-			else {
+			} else {
 				dirCosts[dir] = dirCells[dir]->potential + dirCells[dir]->cost[dir];
 				dirValid[dir] = dirCosts[dir] != std::numeric_limits<float>::infinity();
 			}
 		}
 
-		// Potential undefined on the x-axis
-		if (!dirValid[DIRECTION_WEST] && !dirValid[DIRECTION_EAST]) {
-			PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
-			Cell* bestY;
-			int   bestDirY;
+		if ((!dirValid[DIRECTION_WEST] && !dirValid[DIRECTION_EAST])  ||  (!dirValid[DIRECTION_NORTH] && !dirValid[DIRECTION_SOUTH])) {
+			// Potential undefined on the x-axis
+			if (!dirValid[DIRECTION_WEST] && !dirValid[DIRECTION_EAST]) {
+				PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
 
-			if (dirCosts[DIRECTION_NORTH] < dirCosts[DIRECTION_SOUTH]) {
-				bestDirY = DIRECTION_NORTH;
-				bestY = dirCells[DIRECTION_NORTH];
-			}
-			else {
-				bestDirY = DIRECTION_SOUTH;
-				bestY = dirCells[DIRECTION_SOUTH];
-			}
+				Cell* bestY;
+				int   bestDirY;
 
-			neighbour->potential = Potential1D(bestY->potential, neighbour->cost[bestDirY]);
-			neighbour->edges[bestDirY]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestY->potential);
-			neighbour->edges[bestDirY]->gradPotential.y *= (bestDirY == DIRECTION_NORTH)  ? -1.0f : 1.0f;
-		}
+				if (dirCosts[DIRECTION_NORTH] < dirCosts[DIRECTION_SOUTH]) {
+					bestDirY = DIRECTION_NORTH;
+					bestY = dirCells[DIRECTION_NORTH];
+				} else {
+					bestDirY = DIRECTION_SOUTH;
+					bestY = dirCells[DIRECTION_SOUTH];
+				}
 
-		// Potential undefined on the y-axis
-		else
-		if (!dirValid[DIRECTION_NORTH] && !dirValid[DIRECTION_SOUTH]) {
-			PFFG_ASSERT(dirValid[DIRECTION_EAST ] || dirValid[DIRECTION_WEST ]);
-			Cell* bestX;
-			int   bestDirX;
-
-			if (dirCosts[DIRECTION_EAST] < dirCosts[DIRECTION_WEST]) {
-				bestDirX = DIRECTION_EAST;
-				bestX = dirCells[DIRECTION_EAST];
-			}
-			else {
-				bestDirX = DIRECTION_WEST;
-				bestX = dirCells[DIRECTION_WEST];
+				neighbour->potential = Potential1D(bestY->potential, neighbour->cost[bestDirY]);
+				neighbour->edges[bestDirY]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestY->potential);
+				neighbour->edges[bestDirY]->gradPotential.y *= (bestDirY == DIRECTION_NORTH)  ? -1.0f : 1.0f;
 			}
 
-			neighbour->potential = Potential1D(bestX->potential, neighbour->cost[bestDirX]);
-			neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
-			neighbour->edges[bestDirX]->gradPotential.x *= (bestDirX == DIRECTION_EAST)  ? -1.0f : 1.0f;
-		}
+			// Potential undefined on the y-axis
+			if (!dirValid[DIRECTION_NORTH] && !dirValid[DIRECTION_SOUTH]) {
+				PFFG_ASSERT(dirValid[DIRECTION_EAST] || dirValid[DIRECTION_WEST]);
+				Cell* bestX;
+				int   bestDirX;
 
-		// Potential defined on both axis
-		else {
+				if (dirCosts[DIRECTION_EAST] < dirCosts[DIRECTION_WEST]) {
+					bestDirX = DIRECTION_EAST;
+					bestX = dirCells[DIRECTION_EAST];
+				} else {
+					bestDirX = DIRECTION_WEST;
+					bestX = dirCells[DIRECTION_WEST];
+				}
+
+				neighbour->potential = Potential1D(bestX->potential, neighbour->cost[bestDirX]);
+				neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
+				neighbour->edges[bestDirX]->gradPotential.x *= (bestDirX == DIRECTION_EAST)  ? -1.0f : 1.0f;
+			}
+		} else {
+			// Potential defined on both axis
 			PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
 			PFFG_ASSERT(dirValid[DIRECTION_EAST ] || dirValid[DIRECTION_WEST ]);
+
 			Cell* bestX;
 			Cell* bestY;
 			int   bestDirX;
@@ -355,6 +362,7 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 			neighbour->edges[bestDirY]->gradPotential.y *= (bestDirY == DIRECTION_NORTH) ? -1.0f : 1.0f;
 		}
 
+		mPotentialData[GRID_ID(x, y)] = neighbour->potential;
 		mCandidates.push(neighbour);
 	}
 }
@@ -365,16 +373,16 @@ float Grid::Potential1D(const float inPot, const float inCost) {
 
 float Grid::Potential2D(const float inPotX, const float inCostX, const float inPotY, const float inCostY) {
 	static const float a = 2.0f;
-	       const float b = 2.0f*inPotX + 2.0f*inPotY;
-	       const float c = (inPotX*inPotX + inPotY*inPotY) - (inCostX*inCostX * inCostY*inCostY);
-	       const float d = b*b - 4.0f*a*c;
+	       const float b = 2.0f * inPotX + 2.0f * inPotY;
+	       const float c = (inPotX * inPotX + inPotY * inPotY) - (inCostX * inCostX * inCostY * inCostY);
+	       const float d = (b * b) - (4.0f * a * c);
 
 	PFFG_ASSERT_MSG(d >= 0.0f, "sqrt(%f) will fail! a(%f) b(%f) c(%f)", d, a, b, c);
 
 	       const float e = sqrtf(d);
 
-	       const float solution1 = (-b + e) / (2.0f*a);
-	       const float solution2 = (-b - e) / (2.0f*a);
+	       const float solution1 = (-b + e) / (2.0f * a);
+	       const float solution2 = (-b - e) / (2.0f * a);
 
 	return std::max<float>(solution1, solution2);
 }
@@ -417,6 +425,15 @@ Grid::~Grid() {
 
 	for (size_t i = 0; i < mEdges.size(); i++)
 		delete mEdges[i];
+
+	mHeightData.clear();
+	mPotentialData.clear();
+	mDensityData.clear();
+	mVelocityData.clear();
+
+	mTouchedCells.clear();
+	mCells.clear();
+	mEdges.clear();
 }
 
 

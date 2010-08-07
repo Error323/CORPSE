@@ -74,12 +74,13 @@ public:
 	void UpdateSimObjectLocation(const int);
 	void Reset();
 
-	int GetGridWidth()                  const { return mWidth; }
-	int GetGridHeight()                 const { return mHeight; }
+	int GetGridWidth() const { return mWidth; }
+	int GetGridHeight() const { return mHeight; }
 
-	const float* GetHeightDataArray()   const { return &mHeightData[0]; }
-	const float* GetDensityDataArray()  const { return &mDensityData[0]; }
-	const vec3f* GetVelocityDataArray() const { return &mVelocityData[0]; }
+	const float* GetHeightDataArray()    const { return (mHeightData.empty())? NULL: &mHeightData[0]; }
+	const float* GetPotentialDataArray() const { return (mPotentialData.empty())? NULL: &mPotentialData[0]; }
+	const float* GetDensityDataArray()   const { return (mDensityData.empty())? NULL: &mDensityData[0]; }
+	const vec3f* GetVelocityDataArray()  const { return (mVelocityData.empty())? NULL: &mVelocityData[0]; }
 
 	Cell* World2Cell(const vec3f&);
 
@@ -97,6 +98,7 @@ private:
 
 	// Visualization data
 	std::vector<float> mHeightData;
+	std::vector<float> mPotentialData;
 	std::vector<float> mDensityData;
 	std::vector<vec3f> mVelocityData;
 

@@ -158,9 +158,7 @@ unsigned int PathModule::GetScalarDataArraySizeX(unsigned int dataType) const {
 		//! case DATATYPE_DENSITY: { return mGrid.GetSizeX(); } break;
 		//! case DATATYPE_DISCOMFORT: { return mGrid.GetSizeX(); } break;
 		//! case DATATYPE_POTENTIAL: { return mGrid.GetSizeX(); } break;
-		//! case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetSizeX(); } break;
 		case DATATYPE_HEIGHT: { return mGrid.GetGridWidth(); } break;
-		//! case DATATYPE_HEIGHT_DELTA: { return mGrid.GetSizeX(); } break;
 		default: {
 		} break;
 	}
@@ -174,9 +172,7 @@ unsigned int PathModule::GetScalarDataArraySizeZ(unsigned int dataType) const {
 		//! case DATATYPE_DENSITY: { return mGrid.GetSizeZ(); } break;
 		//! case DATATYPE_DISCOMFORT: { return mGrid.GetSizeZ(); } break;
 		//! case DATATYPE_POTENTIAL: { return mGrid.GetSizeZ(); } break;
-		//! case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetSizeZ(); } break;
 		case DATATYPE_HEIGHT: { return mGrid.GetGridHeight(); } break;
-		//! case DATATYPE_HEIGHT_DELTA: { return mGrid.GetSizeZ(); } break;
 		default: {
 		} break;
 	}
@@ -187,27 +183,18 @@ unsigned int PathModule::GetScalarDataArraySizeZ(unsigned int dataType) const {
 const float* PathModule::GetScalarDataArray(unsigned int dataType, unsigned int groupID) const {
 	switch (dataType) {
 		case DATATYPE_DENSITY: {
-			//! TODO
-			//! return mGrid.GetDensityDataArray();
+			return mGrid.GetDensityDataArray();
 		} break;
 		case DATATYPE_DISCOMFORT: {
 			//! TODO, FIXME: per-group
 			//! return mGrid.GetDiscomfortDataArray();
 		} break;
 		case DATATYPE_POTENTIAL: {
-			//! TODO, FIXME: per-group
-			//! return mGrid.GetPotentialDataArray();
-		} break;
-		case DATATYPE_POTENTIAL_DELTA: {
-			//! TODO, FIXME: per-group
-			//! return mGrid.GetPotentialDeltaDataArray();
+			//! FIXME: per-group
+			return mGrid.GetPotentialDataArray();
 		} break;
 		case DATATYPE_HEIGHT: {
 			return mGrid.GetHeightDataArray();
-		} break;
-		case DATATYPE_HEIGHT_DELTA: {
-			//! TODO, NOTE: slopes are stored per-edge, four values per cell
-			//! return mGrid.GetHeightDeltaDataArray();
 		} break;
 		default: {
 		} break;
@@ -223,6 +210,8 @@ unsigned int PathModule::GetVectorDataArraySizeX(unsigned int dataType) const {
 		//! NOTE: these are not all the same size (eg. v vs. v-bar)!
 		//! case DATATYPE_COST: { return mGrid.GetSizeX(); } break;
 		//! case DATATYPE_SPEED: { return mGrid.GetSizeX(); } break;
+		//! case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetSizeX(); } break;
+		//! case DATATYPE_HEIGHT_DELTA: { return mGrid.GetSizeX(); } break;
 		//! case DATATYPE_VELOCITY: { return mGrid.GetSizeX(); } break;
 		//! case DATATYPE_VELOCITY_AVG: { return mGrid.GetSizeX(); } break;
 		default: {
@@ -237,6 +226,8 @@ unsigned int PathModule::GetVectorDataArraySizeZ(unsigned int dataType) const {
 		//! NOTE: these are not all the same size (eg. v vs. v-bar)!
 		//! case DATATYPE_COST: { return mGrid.GetSizeZ(); } break;
 		//! case DATATYPE_SPEED: { return mGrid.GetSizeZ(); } break;
+		//! case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetSizeZ(); } break;
+		//! case DATATYPE_HEIGHT_DELTA: { return mGrid.GetSizeZ(); } break;
 		//! case DATATYPE_VELOCITY: { return mGrid.GetSizeZ(); } break;
 		//! case DATATYPE_VELOCITY_AVG: { return mGrid.GetSizeZ(); } break;
 		default: {
@@ -256,6 +247,16 @@ const vec3f* PathModule::GetVectorDataArray(unsigned int dataType, unsigned int 
 			//! TODO, FIXME: per-group
 			//! return mGrid.GetSpeedDataArray();
 		} break;
+
+		case DATATYPE_POTENTIAL_DELTA: {
+			//! TODO, FIXME: per-group
+			//! return mGrid.GetPotentialDeltaDataArray();
+		} break;
+		case DATATYPE_HEIGHT_DELTA: {
+			//! TODO, NOTE: slopes are stored per-edge, four values per cell
+			//! return mGrid.GetHeightDeltaDataArray();
+		} break;
+
 		case DATATYPE_VELOCITY: {
 			//! TODO, FIXME: per-group
 			//! return mGrid.GetVelocityDataArray();
