@@ -173,7 +173,7 @@ unsigned int PathModule::GetScalarDataArraySizeX(unsigned int dataType) const {
 		//! NOTE: these are not all the same size (eg. h vs. delta-h)!
 		//! case DATATYPE_DENSITY: { return mGrid.GetSizeX(); } break;
 		//! case DATATYPE_DISCOMFORT: { return mGrid.GetSizeX(); } break;
-		//! case DATATYPE_POTENTIAL: { return mGrid.GetSizeX(); } break;
+		case DATATYPE_POTENTIAL: { return mGrid.GetGridWidth(); } break;
 		case DATATYPE_HEIGHT: { return mGrid.GetGridWidth(); } break;
 		default: {
 		} break;
@@ -187,7 +187,7 @@ unsigned int PathModule::GetScalarDataArraySizeZ(unsigned int dataType) const {
 		//! NOTE: these are not all the same size (eg. h vs. delta-h)!
 		//! case DATATYPE_DENSITY: { return mGrid.GetSizeZ(); } break;
 		//! case DATATYPE_DISCOMFORT: { return mGrid.GetSizeZ(); } break;
-		//! case DATATYPE_POTENTIAL: { return mGrid.GetSizeZ(); } break;
+		case DATATYPE_POTENTIAL: { return mGrid.GetGridHeight(); } break;
 		case DATATYPE_HEIGHT: { return mGrid.GetGridHeight(); } break;
 		default: {
 		} break;

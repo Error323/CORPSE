@@ -77,8 +77,8 @@ void CServer::ChangeSpeed(uint mult) {
 		std::cout << std::endl;
 
 		/*
-		// clients cannot fall behind the server yet
-		// (since they are part of the same process)
+		// clients cannot fall behind the server
+		// unless PFFG_SERVER_NOTHREAD is false
 		for (unsigned int i = 0; i < GetNumClients(); i++) {
 			std::cout << "\tclient " << i << " is at sim-frame " << clientFrames[i];
 			std::cout << " (lag: " << (frame - clientFrames[i]) << " frames)" << std::endl;
