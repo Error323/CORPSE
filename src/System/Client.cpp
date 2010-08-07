@@ -101,6 +101,9 @@ void CClient::Update() {
 void CClient::ReadNetMessages() {
 	NetMessage m;
 
+	// FIXME:
+	//   if we are under heavy simulation load, the message
+	//   queue will grow faster than we can eat through it
 	while (mNetBuf->PopServerToClientMessage(&m))  {
 		switch (m.GetMessageID()) {
 			case SERVER_MSG_SIMFRAME: {

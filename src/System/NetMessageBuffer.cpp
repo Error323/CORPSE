@@ -3,7 +3,6 @@
 #endif
 
 #include "./NetMessageBuffer.hpp"
-#include "./Debugger.hpp"
 
 CNetMessageBuffer::CNetMessageBuffer() {
 	#ifndef PFFG_SERVER_NOTHREAD
@@ -87,4 +86,38 @@ void CNetMessageBuffer::AddServerToClientMessage(const NetMessage& m) {
 	boost::mutex::scoped_lock lock(*msgMutex);
 	#endif
 	serverClientMsgs.push_back(m);
+}
+
+
+
+unsigned int CNetMessageBuffer::GetServerToClientMessageCount(unsigned int msgID) {
+	#ifndef PFFG_SERVER_NOTHREAD
+	boost::mutex::scoped_lock lock(*msgMutex);
+	#endif
+
+	unsigned int n = 0;
+
+	for (MsgQueue::iterator it = serverClientMsgs.begin(); it != serverClientMsgs.end(); ++it) {
+		if ((*it).GetMessageID() == msgID) {
+			n += 1;
+		}
+	}
+
+	return n;
+}
+
+unsigned int CNetMessageBuffer::GetClientToServerMessageCount(unsigned int msgID) {
+	#ifndef PFFG_SERVER_NOTHREAD
+	boost::mutex::scoped_lock lock(*msgMutex);
+	#endif
+
+	unsigned int n = 0;
+
+	for (MsgQueue::iterator it = clientServerMsgs.begin(); it != clientServerMsgs.end(); ++it) {
+		if ((*it).GetMessageID() == msgID) {
+			n += 1;
+		}
+	}
+
+	return n;
 }

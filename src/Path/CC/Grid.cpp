@@ -21,7 +21,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	mHeight     = mCoh->GetHeightMapSizeZ() / mDownScale;
 	mSquareSize = mCoh->GetSquareSize()     * mDownScale;
 
-	//! NOTE: if mDownScale != 1, the engine's height-map must be downsampled
+	// NOTE: if mDownScale != 1, the engine's height-map must be downsampled
 	printf("[Grid::Init] GridRes: %dx%d %d\n", mWidth, mHeight, mSquareSize);
 
 
@@ -172,7 +172,9 @@ void Grid::ComputeAvgVelocity() {
 }
 
 void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
-	printf("[UpdateGroupPotentialField][1][frame=%d]\n", numResets);
+	static const std::string s = "[Grid::UpdateGroupPotentialField]";
+
+	printf("%s[1][frame=%d]\n", s.c_str(), numResets);
 
 	PFFG_ASSERT(!inGoalCells.empty());
 	PFFG_ASSERT(mCandidates.empty());
@@ -203,7 +205,7 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		maxRadius = std::max<float>(maxRadius, mCoh->GetSimObjectRadius(*i));
 	}
 
-	printf("[UpdateGroupPotentialField][2]\n");
+	// printf("%s[2]\n");
 
 	// This loop computes the speedfield, unitcost and initializes the known
 	// and unknown set
@@ -252,7 +254,7 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		}
 	}
 
-	printf("[UpdateGroupPotentialField][3]\n");
+	// printf("%s[3]\n");
 
 	// Retrieve candidates from goal cells
 	for (size_t i = 0; i < inGoalCells.size(); i++)
@@ -260,7 +262,7 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 
 	PFFG_ASSERT(!mCandidates.empty());
 
-	printf("[UpdateGroupPotentialField][4]\n");
+	// printf("%s[4]\n");
 
 	unsigned int numIterations = 0;
 	static const unsigned int maxIterations = 4;
@@ -269,24 +271,24 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		Cell* cell = mCandidates.top(); mCandidates.pop();
 		cell->known = true;
 
-		printf("[UpdateGroupPotentialField] iteration: %d\n", numIterations - 1);
+		// printf("%s[5] iteration: %d\n", numIterations - 1);
 		UpdateCandidates(cell);
 	}
 
-	//! R-DEBUG: clear the queue for the next update
+	// FIXME-DEBUG: clear the queue for the next update
 	while (!mCandidates.empty()) {
 		mCandidates.pop();
 	}
 }
 
 void Grid::UpdateCandidates(const Cell* inParent) {
-/*
+	/*
 	printf("Cell(%d, %d) Pot(%2.1f), V-bar(%2.1f, %2.1f)\n", 
 		inParent->x, inParent->y, inParent->potential, inParent->avgVelocity.x, inParent->avgVelocity.z);
 	for (int dir = 0; dir < NUM_DIRECTIONS; dir++)
 		printf("\tf_[dir] = %+2.1f, C_[dir] = %+2.1f\n", inParent->speed[dir], inParent->cost[dir]);
 	printf("\n");
-*/
+	*/
 
 	for (int i = 0; i < inParent->numNeighbours; i++) {
 		Cell* neighbour = inParent->neighbours[i];

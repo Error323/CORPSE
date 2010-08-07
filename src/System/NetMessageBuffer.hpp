@@ -27,6 +27,9 @@ public:
 	void AddClientToServerMessage(const NetMessage&);
 	void AddServerToClientMessage(const NetMessage&);
 
+	unsigned int GetServerToClientMessageCount(unsigned int);
+	unsigned int GetClientToServerMessageCount(unsigned int);
+
 private:
 	MsgQueue clientServerMsgs;   // client-to-server
 	MsgQueue serverClientMsgs;   // server-to-client(s)

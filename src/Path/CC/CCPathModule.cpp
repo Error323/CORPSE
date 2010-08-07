@@ -69,10 +69,10 @@ void PathModule::Init() {
 }
 
 void PathModule::Update() {
-	std::string s = "[CCPathModule::Update]";
-	std::cout << s << "[1]" << std::endl;
-
+	static const std::string s = "[CCPathModule::Update]";
 	const unsigned int t = ScopedTimer::GetTaskTime(s);
+
+	printf("%s[1]\n", s.c_str());
 
 	{
 		ScopedTimer timer(s);
@@ -84,7 +84,7 @@ void PathModule::Update() {
 		// Reset the touched cells in the grid
 		mGrid.Reset();
 
-		std::cout << s << "[2]" << std::endl;
+		// printf("%s[2]\n", s.c_str());
 
 		// Convert the crowd into a density field
 		for (i = simObjectIDs.begin(); i != simObjectIDs.end(); i++) {
@@ -97,13 +97,13 @@ void PathModule::Update() {
 			mGrid.AddDensityAndVelocity(objPos, objVel);
 		}
 
-		std::cout << s << "[3]" << std::endl;
+		// printf("%s[3]\n", s.c_str());
 
 		// Now that we know the cumulative density per cell, we can compute 
 		// the average velocity
 		mGrid.ComputeAvgVelocity();
 
-		std::cout << s << "[4]" << std::endl;
+		// printf("%s[4]\n", s.c_str());
 
 		// For each group
 		for (j = objectGroups.begin(); j != objectGroups.end(); j++) {
@@ -118,28 +118,29 @@ void PathModule::Update() {
 			// Construct the potential and the gradient
 			// Note: This should get the goal cells from a specific group,
 			//       how will we select them?
-			std::cout << s << "[5A]" << std::endl;
+
+			// printf("%s[5A]\n", s.c_str());
 
 			mGrid.UpdateGroupPotentialField(mGoals[j->first], j->second);
 
-			std::cout << s << "[5B]" << std::endl;
+			// printf("%s[5B]\n", s.c_str());
 
 			// Update the object locations
 			for (k = j->second.begin(); k != j->second.end(); k++) {
 				mGrid.UpdateSimObjectLocation(*k);
 			}
 
-			std::cout << s << "[5C]" << std::endl;
+			// printf("%s[5C]\n", s.c_str());
 		}
 
-		std::cout << s << "[6]" << std::endl;
+		// printf("%s[6]\n", s.c_str());
 
 		// Enforce minimum distance between objects
 		// Should this be handled in the EVENT_SIMOBJECT_COLLISION ?
 	}
 
-	std::cout << s << "[7] time: " << (ScopedTimer::GetTaskTime(s) - t) << "ms" << std::endl;
-	std::cout << std::endl;
+	printf("%s[7] time: %ums\n", s.c_str(), (ScopedTimer::GetTaskTime(s) - t));;
+	printf("\n");
 }
 
 void PathModule::Kill() {
