@@ -369,8 +369,8 @@ float Grid::Potential2D(const float inPotX, const float inCostX, const float inP
 
 	       const float e = sqrtf(d);
 
-	       const float solution1 = (-b + e) / 2.0f*a;
-	       const float solution2 = (-b - e) / 2.0f*a;
+	       const float solution1 = (-b + e) / (2.0f*a);
+	       const float solution2 = (-b - e) / (2.0f*a);
 
 	return std::max<float>(solution1, solution2);
 }
