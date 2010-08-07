@@ -93,7 +93,7 @@ private:
 	int mDownScale;
 	
 	// FMM vars
-	std::priority_queue<Cell*, std::vector<Cell*> > mCandidates;
+	std::priority_queue<Cell*> mCandidates;
 
 	// Visualization data
 	std::vector<float> mHeightData;

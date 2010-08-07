@@ -101,7 +101,7 @@ void PathModule::Update() {
 		// Construct the potential and the gradient
 		// Note: This should get the goal cells from a specific group,
 		//       how will we select them?
-		// mGrid.UpdateGroupPotentialField(mGoals[j->first], j->second);
+		mGrid.UpdateGroupPotentialField(mGoals[j->first], j->second);
 
 		// Update the object locations
 		for (k = j->second.begin(); k != j->second.end(); k++)
