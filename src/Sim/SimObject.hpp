@@ -10,6 +10,12 @@ class SimObjectDef;
 class SimObject {
 public:
 	SimObject(SimObjectDef* d, unsigned int _id): def(d), id(_id) {
+		// NOTE:
+		//    this is set by rendering code when it receives the
+		//    SimObjectCreatedEvent, so simulation logic will not
+		//    see the proper value via GetRadius() until the next
+		//    sim-frame
+		mdlRadius = 0.0f;
 	}
 
 	virtual ~SimObject() {
