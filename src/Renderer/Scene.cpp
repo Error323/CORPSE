@@ -225,7 +225,14 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 			const ModelBase* mb = lm->GetModelBase();
 
 			// interpolate the draw-position between sim-frames
-			const vec3f rPos = mat.GetPos() + (mat.GetZDir() * obj->GetPhysicalState().currentForwardSpeed * server->GetLastTickDeltaRatio());
+			// NOTE:
+			//  we add a vertical offset so we can inspect
+			//  the CC density-texture (large models block
+			//  all texels)
+			const vec3f rPos =
+				mat.GetPos() +
+				(mat.GetZDir() * obj->GetPhysicalState().currentForwardSpeed * server->GetLastTickDeltaRatio()) +
+				vec3f(0.0f, obj->GetRadius(), 0.0f);
 			const mat44f rMat(rPos, mat.GetXDir(), mat.GetYDir(), mat.GetZDir());
 
 			Shader::IProgramObject* shObj = const_cast<Shader::IProgramObject*>(mb->GetShaderProgramObj());

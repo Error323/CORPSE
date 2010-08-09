@@ -298,9 +298,9 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 		const int x = neighbour->x;
 		const int y = neighbour->y;
 
-		float dirCosts[NUM_DIRECTIONS];
-		Cell* dirCells[NUM_DIRECTIONS];
-		bool  dirValid[NUM_DIRECTIONS];
+		float dirCosts[NUM_DIRECTIONS] = {0.0f};
+		Cell* dirCells[NUM_DIRECTIONS] = {NULL};
+		bool  dirValid[NUM_DIRECTIONS] = {false};
 
 		dirCells[DIRECTION_NORTH] = (y > 0        ) ? mCells[GRID_ID(x    , y - 1)] : NULL;
 		dirCells[DIRECTION_SOUTH] = (y < mHeight-1) ? mCells[GRID_ID(x    , y + 1)] : NULL;
@@ -322,8 +322,8 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 			if (!dirValid[DIRECTION_WEST] && !dirValid[DIRECTION_EAST]) {
 				PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
 
-				Cell* bestY;
-				int   bestDirY;
+				Cell* bestY = NULL;
+				int   bestDirY = 0;
 
 				if (dirCosts[DIRECTION_NORTH] < dirCosts[DIRECTION_SOUTH]) {
 					bestDirY = DIRECTION_NORTH;
@@ -339,10 +339,10 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 			}
 
 			// Potential undefined on the y-axis
-			if (!dirValid[DIRECTION_NORTH] && !dirValid[DIRECTION_SOUTH]) {
+			else if (!dirValid[DIRECTION_NORTH] && !dirValid[DIRECTION_SOUTH]) {
 				PFFG_ASSERT(dirValid[DIRECTION_EAST] || dirValid[DIRECTION_WEST]);
-				Cell* bestX;
-				int   bestDirX;
+				Cell* bestX = NULL;
+				int   bestDirX = 0;
 
 				if (dirCosts[DIRECTION_EAST] < dirCosts[DIRECTION_WEST]) {
 					bestDirX = DIRECTION_EAST;

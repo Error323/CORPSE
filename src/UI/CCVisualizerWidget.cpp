@@ -25,8 +25,9 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 	if (enabled) {
 		const IPathModule* m = simThread->GetPathModule();
 
-		Texture* heightTex = textures[PathModule::DATATYPE_HEIGHT];
+		Texture* heightTex    = textures[PathModule::DATATYPE_HEIGHT];
 		Texture* potentialTex = textures[PathModule::DATATYPE_POTENTIAL];
+		Texture* densityTex   = textures[PathModule::DATATYPE_DENSITY];
 
 		if (key == SDLK_h) {
 			if (heightTex == NULL) {
@@ -83,6 +84,28 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 				}
 			}
 		}
+
+		if (key == SDLK_d) {
+			if (densityTex == NULL) {
+				// create the density-texture
+				const unsigned int xsize = m->GetScalarDataArraySizeX(PathModule::DATATYPE_DENSITY);
+				const unsigned int zsize = m->GetScalarDataArraySizeZ(PathModule::DATATYPE_DENSITY);
+				const float* data = m->GetScalarDataArray(PathModule::DATATYPE_DENSITY, texGroupID);
+
+				densityTex = new Texture(xsize, zsize, data);
+				textures[PathModule::DATATYPE_DENSITY] = densityTex;
+
+				readMap->GetGroundDrawer()->SetOverlayTexture(densityTex->GetID());
+			} else {
+				densityTex->ToggleEnabled();
+
+				if (!densityTex->IsEnabled()) {
+					readMap->GetGroundDrawer()->SetOverlayTexture(0);
+				} else {
+					readMap->GetGroundDrawer()->SetOverlayTexture(densityTex->GetID());
+				}
+			}
+		}
 	}
 }
 
@@ -91,6 +114,7 @@ void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 
 	if (enabled) {
 		Texture* potentialTex = textures[PathModule::DATATYPE_POTENTIAL];
+		Texture* densityTex   = textures[PathModule::DATATYPE_DENSITY];
 
 		if (potentialTex != NULL && potentialTex->IsEnabled()) {
 			if (simThread->GetFrame() != simFrame) {
@@ -103,6 +127,17 @@ void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 				const float* d = m->GetScalarDataArray(PathModule::DATATYPE_POTENTIAL, texGroupID);
 
 				potentialTex->Update(d);
+			}
+		}
+
+		if (densityTex != NULL && densityTex->IsEnabled()) {
+			if (simThread->GetFrame() != simFrame) {
+				simFrame = simThread->GetFrame();
+
+				const IPathModule* m = simThread->GetPathModule();
+				const float* d = m->GetScalarDataArray(PathModule::DATATYPE_DENSITY, texGroupID);
+
+				densityTex->Update(d);
 			}
 		}
 	}
