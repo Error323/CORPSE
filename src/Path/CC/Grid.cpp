@@ -87,7 +87,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 		for (int x = 0; x < mWidth; x++) {
 			Cell* curCell = mCells[GRID_ID(x, y)];
 
-			// Full reset
+			// Full reset (sets potential to +inf, etc.)
 			curCell->ResetFull();
 
 			// Set the height, assuming the world is static wrt height
@@ -97,7 +97,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 			//    initializing the potentials to +inf makes
 			//    the field invisible (due to normalization)
 			mHeightData[GRID_ID(x, y)] = curCell->height;
-			mPotentialData[GRID_ID(x, y)] = std::numeric_limits<float>::infinity();
+			mPotentialData[GRID_ID(x, y)] = curCell->potential;
 		}
 	}
 
