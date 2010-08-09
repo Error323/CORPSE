@@ -258,25 +258,11 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 
 	PFFG_ASSERT(!mCandidates.empty());
 
-
-	unsigned int numIterations = 0;
-	static const unsigned int maxIterations = 1000;
-
-	while (!mCandidates.empty() && (numIterations++ < maxIterations)) {
+	while (!mCandidates.empty()) {
 		Cell* cell = mCandidates.top(); mCandidates.pop();
 		cell->known = true;
 
 		UpdateCandidates(cell);
-	}
-
-	printf("%s[2] iterations: %d\n", s.c_str(), numIterations - 1);
-
-	// FIXME:
-	//    due to the numIterations < maxIterations test, the
-	//    queue might still contain candidates that need to
-	//    be cleared before the next update
-	while (!mCandidates.empty()) {
-		mCandidates.pop();
 	}
 }
 

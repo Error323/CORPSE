@@ -42,9 +42,9 @@ public:
 			return (x == c->x && y == c->y);
 		}
 
-		// for less()
+		// for less() (NOTE: candidates are sorted in increasing order)
 		bool operator() (const Cell* a, const Cell* b) const {
-			return (a->potential < b->potential);
+			return (a->potential > b->potential);
 		}
 
 		void ResetFull();
