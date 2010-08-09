@@ -37,10 +37,12 @@ public:
 			vec3f gradHeight;
 		};
 
+		// for find()
 		bool operator== (const Cell* c) const {
 			return (x == c->x && y == c->y);
 		}
 
+		// for less()
 		bool operator() (const Cell* a, const Cell* b) const {
 			return (a->potential < b->potential);
 		}
@@ -94,7 +96,7 @@ private:
 	int numResets;
 
 	// FMM vars
-	std::priority_queue<Cell*> mCandidates;
+	std::priority_queue<Cell*, std::vector<Cell*, std::allocator<Cell*> >, Cell> mCandidates;
 
 	// Visualization data
 	std::vector<float> mHeightData;
