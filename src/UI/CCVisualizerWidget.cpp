@@ -1,3 +1,5 @@
+#include <limits>
+
 #include <SDL/SDL.h>
 #include <GL/gl.h>
 
@@ -176,8 +178,8 @@ void ui::CCVisualizerWidget::Texture::Update(const float* ndata) {
 	static const int dataType  = GL_UNSIGNED_BYTE;
 	#endif
 
-	float ndataMin =  1e9f;
-	float ndataMax = -1e9f;
+	float ndataMin =  std::numeric_limits<float>::max();
+	float ndataMax = -std::numeric_limits<float>::max();
 
 	if (ndata != NULL) {
 		// find the extrema

@@ -194,10 +194,10 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 	const static float maxDensity       = 10.0f;  // According to the Stetson-Harrison method
 	const static float minSpeed         = 0.0f;
 
-	             float minSlope         = std::numeric_limits<float>::max();
-	             float maxSlope         = std::numeric_limits<float>::min();
-	             float maxSpeed         = std::numeric_limits<float>::min();
-	             float maxRadius        = std::numeric_limits<float>::min();
+	             float minSlope         =  std::numeric_limits<float>::max();
+	             float maxSlope         = -std::numeric_limits<float>::max();
+	             float maxSpeed         = -std::numeric_limits<float>::max();
+	             float maxRadius        = -std::numeric_limits<float>::max();
 
 	for (std::set<unsigned int>::iterator i = inSimObjectIds.begin(); i != inSimObjectIds.end(); i++) {
 		const SimObjectDef* simObjectDef = mCoh->GetSimObjectDef(*i);
