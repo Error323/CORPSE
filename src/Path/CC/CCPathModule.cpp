@@ -65,7 +65,7 @@ void PathModule::OnEvent(const IEvent* e) {
 
 void PathModule::Init() {
 	std::cout << "[CCPathModule::Init]" << std::endl;
-	mGrid.Init(2, coh);
+	mGrid.Init(4, coh);
 }
 
 void PathModule::Update() {
