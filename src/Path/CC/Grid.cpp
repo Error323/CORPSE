@@ -93,8 +93,11 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 			// Set the height, assuming the world is static wrt height
 			curCell->height = ELEVATION(x, y);
 
+			// NOTE:
+			//    initializing the potentials to +inf makes
+			//    the field invisible (due to normalization)
 			mHeightData[GRID_ID(x, y)] = curCell->height;
-			mPotentialData[GRID_ID(x, y)] = 0.0f;
+			mPotentialData[GRID_ID(x, y)] = curCell->potential; // +inf
 		}
 	}
 
@@ -186,7 +189,7 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		vec3f( -1.0f, 0.0f,  0.0f)  // WEST
 	};
 
-	const static float speedWeight      = mWidth+mHeight;
+	const static float speedWeight      = (mWidth + mHeight) * 1.0f;
 	const static float discomfortWeight = 100.0f;
 	const static float maxDensity       = 10.0f;  // According to the Stetson-Harrison method
 	const static float minSpeed         = 0.0f;
@@ -478,7 +481,7 @@ void Grid::Cell::ResetDynamicVars() {
 
 	avgVelocity = NVECf;
 	density     = 0.0f;
-	discomfort = 0.0f;
+	discomfort  = 0.0f;
 }
 
 void Grid::Cell::ResetGroupVars() {
