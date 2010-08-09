@@ -97,7 +97,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 			//    initializing the potentials to +inf makes
 			//    the field invisible (due to normalization)
 			mHeightData[GRID_ID(x, y)] = curCell->height;
-			mPotentialData[GRID_ID(x, y)] = curCell->potential; // +inf
+			mPotentialData[GRID_ID(x, y)] = std::numeric_limits<float>::infinity();
 		}
 	}
 
@@ -252,19 +252,14 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		} else {
 			cell->potential = 0.0f;
 			cell->known = true;
+			mCandidates.push(cell);
 		}
+		mPotentialData[i] = cell->potential;
 	}
-
-	// Retrieve candidates from goal cells
-	for (size_t i = 0; i < inGoalCells.size(); i++)
-		UpdateCandidates(inGoalCells[i]);
-
-	PFFG_ASSERT(!mCandidates.empty());
 
 	while (!mCandidates.empty()) {
 		Cell* cell = mCandidates.top(); mCandidates.pop();
 		cell->known = true;
-
 		UpdateCandidates(cell);
 	}
 }
@@ -306,45 +301,48 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 			}
 		}
 
-		if ((!dirValid[DIRECTION_WEST] && !dirValid[DIRECTION_EAST])  ||  (!dirValid[DIRECTION_NORTH] && !dirValid[DIRECTION_SOUTH])) {
-			// Potential undefined on the x-axis
-			if (!dirValid[DIRECTION_WEST] && !dirValid[DIRECTION_EAST]) {
-				PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
+		const bool undefinedX = (!dirValid[DIRECTION_WEST] && !dirValid[DIRECTION_EAST]);
+		const bool undefinedY = (!dirValid[DIRECTION_NORTH] && !dirValid[DIRECTION_SOUTH]);
+		if (undefinedX) {
+			PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
 
-				Cell* bestY = NULL;
-				int   bestDirY = 0;
+			Cell* bestY = NULL;
+			int   bestDirY = -1;
 
-				if (dirCosts[DIRECTION_NORTH] < dirCosts[DIRECTION_SOUTH]) {
-					bestDirY = DIRECTION_NORTH;
-					bestY = dirCells[DIRECTION_NORTH];
-				} else {
-					bestDirY = DIRECTION_SOUTH;
-					bestY = dirCells[DIRECTION_SOUTH];
-				}
-
-				neighbour->potential = Potential1D(bestY->potential, neighbour->cost[bestDirY]);
-				neighbour->edges[bestDirY]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestY->potential);
-				neighbour->edges[bestDirY]->gradPotential.y *= (bestDirY == DIRECTION_NORTH)  ? -1.0f : 1.0f;
+			if (dirCosts[DIRECTION_NORTH] < dirCosts[DIRECTION_SOUTH]) {
+				bestDirY = DIRECTION_NORTH;
+				bestY = dirCells[DIRECTION_NORTH];
+			} else {
+				bestDirY = DIRECTION_SOUTH;
+				bestY = dirCells[DIRECTION_SOUTH];
 			}
 
-			// Potential undefined on the y-axis
-			else if (!dirValid[DIRECTION_NORTH] && !dirValid[DIRECTION_SOUTH]) {
-				PFFG_ASSERT(dirValid[DIRECTION_EAST] || dirValid[DIRECTION_WEST]);
-				Cell* bestX = NULL;
-				int   bestDirX = 0;
+			neighbour->potential = Potential1D(bestY->potential, neighbour->cost[bestDirY]);
+			neighbour->edges[bestDirY]->gradPotential = 
+				vec3f(mSquareSize, 0.0f, neighbour->potential - bestY->potential);
+			neighbour->edges[bestDirY]->gradPotential.y *= 
+				(bestDirY == DIRECTION_NORTH)  ? -1.0f : 1.0f;
+		}
 
-				if (dirCosts[DIRECTION_EAST] < dirCosts[DIRECTION_WEST]) {
-					bestDirX = DIRECTION_EAST;
-					bestX = dirCells[DIRECTION_EAST];
-				} else {
-					bestDirX = DIRECTION_WEST;
-					bestX = dirCells[DIRECTION_WEST];
-				}
+		// Potential undefined on the y-axis
+		else if (undefinedY) {
+			PFFG_ASSERT(dirValid[DIRECTION_EAST] || dirValid[DIRECTION_WEST]);
+			Cell* bestX = NULL;
+			int   bestDirX = -1;
 
-				neighbour->potential = Potential1D(bestX->potential, neighbour->cost[bestDirX]);
-				neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
-				neighbour->edges[bestDirX]->gradPotential.x *= (bestDirX == DIRECTION_EAST)  ? -1.0f : 1.0f;
+			if (dirCosts[DIRECTION_EAST] < dirCosts[DIRECTION_WEST]) {
+				bestDirX = DIRECTION_EAST;
+				bestX = dirCells[DIRECTION_EAST];
+			} else {
+				bestDirX = DIRECTION_WEST;
+				bestX = dirCells[DIRECTION_WEST];
 			}
+
+			neighbour->potential = Potential1D(bestX->potential, neighbour->cost[bestDirX]);
+			neighbour->edges[bestDirX]->gradPotential = 
+				vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
+			neighbour->edges[bestDirX]->gradPotential.x *= 
+				(bestDirX == DIRECTION_WEST)  ? -1.0f : 1.0f;
 		} else {
 			// Potential defined on both axis
 			PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
@@ -378,6 +376,7 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 			neighbour->edges[bestDirY]->gradPotential.y *= (bestDirY == DIRECTION_NORTH) ? -1.0f : 1.0f;
 		}
 
+		PFFG_ASSERT(neighbour->potential != std::numeric_limits<float>::infinity());
 		mPotentialData[GRID_ID(x, y)] = neighbour->potential;
 		mCandidates.push(neighbour);
 	}
