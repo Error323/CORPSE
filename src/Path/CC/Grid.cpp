@@ -95,9 +95,6 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 			// Set the height, assuming the world is static wrt height
 			curCell->height = ELEVATION(x, y);
 
-			// NOTE:
-			//    initializing the potentials to +inf makes
-			//    the field invisible (due to normalization)
 			mHeightData[GRID_ID(x, y)] = curCell->height;
 			mPotentialData[GRID_ID(x, y)] = curCell->potential;
 		}
@@ -230,7 +227,6 @@ void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
 	PFFG_ASSERT(!inGoalCells.empty());
 	PFFG_ASSERT(mCandidates.empty());
-
 
 	mMinSlope  =  std::numeric_limits<float>::max();
 	mMaxSlope  = -std::numeric_limits<float>::max();

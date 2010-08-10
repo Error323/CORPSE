@@ -13,19 +13,19 @@ void PathModule::OnEvent(const IEvent* e) {
 			const SimObjectCreatedEvent* ee = dynamic_cast<const SimObjectCreatedEvent*>(e);
 			const unsigned int objectID = ee->GetObjectID();
 
-			simObjectIDs[objectID] = coh->GetSimObjectDef(objectID);
+			mSimObjectIDs[objectID] = coh->GetSimObjectDef(objectID);
 		} break;
 
 		case EVENT_SIMOBJECT_DESTROYED: {
 			const SimObjectDestroyedEvent* ee = dynamic_cast<const SimObjectDestroyedEvent*>(e);
 			const unsigned int objectID = ee->GetObjectID();
 
-			simObjectIDs.erase(objectID);
+			mSimObjectIDs.erase(objectID);
 			DelObjectFromGroup(objectID);
 
-			if (simObjectIDs.empty()) {
-				PFFG_ASSERT(objectGroupIDs.empty());
-				PFFG_ASSERT(objectGroups.empty());
+			if (mSimObjectIDs.empty()) {
+				PFFG_ASSERT(mObjectGroupIDs.empty());
+				PFFG_ASSERT(mObjectGroups.empty());
 
 				// reset the group counter
 				numGroupIDs = 0;
@@ -51,6 +51,7 @@ void PathModule::OnEvent(const IEvent* e) {
 				AddObjectToGroup(objID, groupID);
 			}
 
+			// NOTE: how should these be cleaned up when the group arrives?
 			mGoals[groupID].push_back(mGrid.World2Cell(goalPos));
 		} break;
 
@@ -78,16 +79,16 @@ void PathModule::Update() {
 		ScopedTimer timer(s);
 		#endif
 
-		std::map<unsigned int, const SimObjectDef*>::iterator i;
-		std::map<unsigned int, std::set<unsigned int> >::iterator j;
-		std::set<unsigned int>::iterator k;
+		std::map<unsigned int, const SimObjectDef*>::iterator simObjectIt;
+		std::map<unsigned int, std::set<unsigned int> >::iterator objectGroupIt;
+		std::set<unsigned int>::iterator goalCellIt;
 
 		// Reset all the cells in the grid
 		mGrid.Reset();
 
 		// Convert the crowd into a density field
-		for (i = simObjectIDs.begin(); i != simObjectIDs.end(); i++) {
-			const unsigned int objID = i->first;
+		for (simObjectIt = mSimObjectIDs.begin(); simObjectIt != mSimObjectIDs.end(); ++simObjectIt) {
+			const unsigned int objID = simObjectIt->first;
 			const vec3f& objPos = coh->GetSimObjectPosition(objID);
 			const vec3f objVel =
 				coh->GetSimObjectDirection(objID) *
@@ -96,27 +97,26 @@ void PathModule::Update() {
 			mGrid.AddDensityAndVelocity(objPos, objVel);
 		}
 
-		// Now that we know the cumulative density per cell, we can compute 
-		// the average velocity
+		// Now that we know the cumulative density per cell,
+		// we can compute the average velocity field
 		mGrid.ComputeAvgVelocity();
 
-		for (j = objectGroups.begin(); j != objectGroups.end(); j++) {
+		for (objectGroupIt = mObjectGroups.begin(); objectGroupIt != mObjectGroups.end(); ++objectGroupIt) {
 			// For each group, construct the speed field and the unit cost field
 			// Note1: This first resets all the group-related variables
 			// Note2: Discomfort regarding this group can be computed here
 			// Note3: It might be possible to compute the speedfield and unit-
 			//        costfield in the UpdateGroupPotentialField as cells 
 			//        are picked from the UNKNOWN set, saving N iterations
-			// mGrid.ComputeSpeedFieldAndUnitCost(j->second);
 
 			// Construct the potential and the gradient
 			// Note: This should get the goal cells from a specific group,
-			//       how will we select them?
-			mGrid.UpdateGroupPotentialField(mGoals[j->first], j->second);
+			//       but how will we select them?
+			mGrid.UpdateGroupPotentialField(mGoals[objectGroupIt->first], objectGroupIt->second);
 
 			// Update the object locations
-			for (k = j->second.begin(); k != j->second.end(); k++) {
-				mGrid.UpdateSimObjectLocation(*k);
+			for (goalCellIt = objectGroupIt->second.begin(); goalCellIt != objectGroupIt->second.end(); ++goalCellIt) {
+				mGrid.UpdateSimObjectLocation(*goalCellIt);
 			}
 		}
 
@@ -137,28 +137,29 @@ void PathModule::Kill() {
 
 
 void PathModule::AddObjectToGroup(unsigned int objID, unsigned int groupID) {
-	if (objectGroups.find(groupID) == objectGroups.end()) {
-		objectGroups[groupID] = std::set<unsigned int>();
+	if (mObjectGroups.find(groupID) == mObjectGroups.end()) {
+		mObjectGroups[groupID] = std::set<unsigned int>();
 	}
 
 	if (mGoals.find(groupID) == mGoals.end()) {
 		mGoals[groupID] = std::vector<Grid::Cell*>();
 	}
 
-	objectGroupIDs[objID] = groupID;
-	objectGroups[groupID].insert(objID);
+	mObjectGroupIDs[objID] = groupID;
+	mObjectGroups[groupID].insert(objID);
 }
 
 bool PathModule::DelObjectFromGroup(unsigned int objID) {
-	if (objectGroupIDs.find(objID) != objectGroupIDs.end()) {
-		const unsigned int groupID = objectGroupIDs[objID];
+	if (mObjectGroupIDs.find(objID) != mObjectGroupIDs.end()) {
+		const unsigned int groupID = mObjectGroupIDs[objID];
 
-		objectGroupIDs.erase(objID);
-		objectGroups[groupID].erase(objID);
+		mObjectGroupIDs.erase(objID);
+		mObjectGroups[groupID].erase(objID);
 
-		if (objectGroups[groupID].empty()) {
+		if (mObjectGroups[groupID].empty()) {
 			// old group is now empty, delete it
-			objectGroups.erase(groupID);
+			mObjectGroups.erase(groupID);
+			mGoals[groupID].clear();
 			mGoals.erase(groupID);
 		}
 
