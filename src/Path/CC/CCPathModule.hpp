@@ -49,12 +49,12 @@ public:
 		DATATYPE_HEIGHT_DELTA    = 9, // delta-h (global, stored at cell-edges)
 	};
 
-	unsigned int GetNumGroupIDs() const { return objectGroups.size(); }
+	unsigned int GetNumGroupIDs() const { return mObjectGroups.size(); }
 	unsigned int GetGroupIDs(unsigned int* array, unsigned int size) const {
 		unsigned int n = 0;
 
 		std::map<unsigned int, std::set<unsigned int> >::const_iterator it;
-		for (it = objectGroups.begin(); it != objectGroups.end() && n < size; ++it) {
+		for (it = mObjectGroups.begin(); it != mObjectGroups.end() && n < size; ++it) {
 			array[n++] = it->first;
 		}
 
