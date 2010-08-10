@@ -6,8 +6,8 @@
 #include "../../System/Debugger.hpp"
 #include "../../Sim/SimObjectDef.hpp"
 
-#define GRID_ID(x,y) (((y) * (mWidth)) + (x))
-#define ELEVATION(x,y) (mCOH->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * mWidth) + (mDownScale * (x))])
+#define GRID_ID(x, y) (((y) * (mWidth)) + (x))
+#define ELEVATION(x, y) (mCOH->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * mWidth) + (mDownScale * (x))])
 
 const float Grid::sLambda     = 2.0f;
 const float Grid::sMinDensity = 1.0f / pow(2.0f, sLambda);
@@ -218,7 +218,7 @@ void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 
 	cell->ResetGroupVars();
 
-	// const unsigned int cellGridIdx = GRID_ID(cell->x, cell->y);
+	const unsigned int cellGridIdx = GRID_ID(cell->x, cell->y);
 	const vec3f& cellWorldPos = Grid2World(cell);
 
 	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
@@ -251,14 +251,10 @@ void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 		cell->speed[dir] = speed;
 		cell->cost[dir] = cost;
 
-		// FIXME: need a better way to represent the anisotropy
 		// FIXME: do we even want to visualize these as textures?
-		// mSpeedVisData[cellGridIdx] += speed;
-		// mCostVisData[cellGridIdx] += cost;
+		mSpeedVisData[cellGridIdx * NUM_DIRECTIONS + dir] = speed;
+		mCostVisData[cellGridIdx * NUM_DIRECTIONS + dir] = cost;
 	}
-
-	// mSpeedVisData[cellGridIdx] /= NUM_DIRECTIONS;
-	// mCostVisData[cellGridIdx] /= NUM_DIRECTIONS;
 }
 
 void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<Cell*>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
@@ -279,7 +275,7 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<Cel
 		mMaxRadius = std::max<float>(mMaxRadius, mCOH->GetSimObjectRadius(*i));
 	}
 
-	// Add goal cells to the known set and add their neighbours to the
+	// Add goal-cells to the known set and add their neighbours to the
 	// candidate-set
 	for (size_t i = 0; i < inGoalCells.size(); i++) {
 		Cell* cell = inGoalCells[i];
@@ -287,15 +283,29 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<Cel
 		cell->known = true;
 		cell->candidate = true;
 		cell->potential = 0.0f;
-		mPotentialVisData[GRID_ID(cell->x, cell->y)] = cell->potential;
+
 		UpdateCandidates(cell);
+
+		mPotentialVisData[GRID_ID(cell->x, cell->y)] = cell->potential;
+		mVelocityVisData[GRID_ID(cell->x, cell->y) * NUM_DIRECTIONS + DIRECTION_NORTH] = NVECf;
+		mVelocityVisData[GRID_ID(cell->x, cell->y) * NUM_DIRECTIONS + DIRECTION_SOUTH] = NVECf;
+		mVelocityVisData[GRID_ID(cell->x, cell->y) * NUM_DIRECTIONS + DIRECTION_EAST ] = NVECf;
+		mVelocityVisData[GRID_ID(cell->x, cell->y) * NUM_DIRECTIONS + DIRECTION_WEST ] = NVECf;
 	}
 
 	while (!mCandidates.empty()) {
 		Cell* cell = mCandidates.top(); mCandidates.pop();
 		cell->known = true;
-		mPotentialVisData[GRID_ID(cell->x, cell->y)] = cell->potential;
+
 		UpdateCandidates(cell);
+
+		const unsigned int cellIdx = GRID_ID(cell->x, cell->y);
+
+		mPotentialVisData[cellIdx] = cell->potential;
+		mVelocityVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_NORTH] = (cell->GetNormalizedPotentialGradient(DIRECTION_NORTH) * -cell->speed[DIRECTION_NORTH]);
+		mVelocityVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_SOUTH] = (cell->GetNormalizedPotentialGradient(DIRECTION_SOUTH) * -cell->speed[DIRECTION_SOUTH]);
+		mVelocityVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_EAST ] = (cell->GetNormalizedPotentialGradient(DIRECTION_EAST ) * -cell->speed[DIRECTION_EAST ]);
+		mVelocityVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_WEST ] = (cell->GetNormalizedPotentialGradient(DIRECTION_WEST ) * -cell->speed[DIRECTION_WEST ]);
 	}
 }
 
@@ -316,10 +326,10 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 		Cell* dirCells[NUM_DIRECTIONS] = {NULL};
 		bool  dirValid[NUM_DIRECTIONS] = {false};
 
-		dirCells[DIRECTION_NORTH] = (y > 0        ) ? &mCells[GRID_ID(x    , y - 1)] : NULL;
-		dirCells[DIRECTION_SOUTH] = (y < mHeight-1) ? &mCells[GRID_ID(x    , y + 1)] : NULL;
-		dirCells[DIRECTION_WEST]  = (x > 0        ) ? &mCells[GRID_ID(x - 1, y    )] : NULL;
-		dirCells[DIRECTION_EAST]  = (x < mWidth-1 ) ? &mCells[GRID_ID(x + 1, y    )] : NULL;
+		dirCells[DIRECTION_NORTH] = (y >           0) ? &mCells[GRID_ID(x    , y - 1)] : NULL;
+		dirCells[DIRECTION_SOUTH] = (y < mHeight - 1) ? &mCells[GRID_ID(x    , y + 1)] : NULL;
+		dirCells[DIRECTION_WEST]  = (x >           0) ? &mCells[GRID_ID(x - 1, y    )] : NULL;
+		dirCells[DIRECTION_EAST]  = (x < mWidth -  1) ? &mCells[GRID_ID(x + 1, y    )] : NULL;
 
 		for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 			if (dirCells[dir] == NULL) {
@@ -493,6 +503,9 @@ vec3f Grid::Cell::GetInterpolatedVelocity(const vec3f& dir) const {
 		b = -dir.z;
 	}
 
+	// NOTE: these have already been calculated to fill mVelocityVisData
+	// vel += mVelocityVisData[GRID_ID(x, y) * NUM_DIRECTIONS + i] * a;
+	// vel += mVelocityVisData[GRID_ID(x, y) * NUM_DIRECTIONS + j] * b;
 	vel += (GetNormalizedPotentialGradient(i) * -speed[i]) * a;
 	vel += (GetNormalizedPotentialGradient(j) * -speed[j]) * b;
 

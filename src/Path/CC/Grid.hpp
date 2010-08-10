@@ -111,14 +111,14 @@ private:
 
 	// visualization data for scalar fields
 	std::vector<float> mDensityVisData;
-	std::vector<float> mDiscomfortVisData;
+	std::vector<float> mDiscomfortVisData;     // TODO: fill me
 	std::vector<float> mSpeedVisData;          // TODO: fill me
 	std::vector<float> mCostVisData;           // TODO: fill me
 	std::vector<float> mPotentialVisData;
 	std::vector<float> mHeightVisData;
 
 	// visualization data for vector fields
-	std::vector<vec3f> mVelocityVisData;       // TODO: fill me
+	std::vector<vec3f> mVelocityVisData;       // TODO: fill me (GetNormalizedPotentialGradient(i) * -speed[i] for all i)
 	std::vector<vec3f> mAvgVelocityVisData;
 	std::vector<vec3f> mPotentialDeltaVisData; // TODO: fill me
 	std::vector<vec3f> mHeightDeltaVisData;    // TODO: fill me
