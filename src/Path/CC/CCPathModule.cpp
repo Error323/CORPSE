@@ -40,7 +40,6 @@ void PathModule::OnEvent(const IEvent* e) {
 
 			// create a new group
 			const unsigned int groupID = numGroupIDs++;
-			mGoals[groupID].push_back(mGrid.World2Cell(goalPos));
 
 			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
 				const unsigned int objID = *it;
@@ -51,6 +50,7 @@ void PathModule::OnEvent(const IEvent* e) {
 				DelObjectFromGroup(objID);
 				AddObjectToGroup(objID, groupID);
 			}
+			mGoals[groupID].push_back(mGrid.World2Cell(goalPos));
 		} break;
 
 		case EVENT_SIMOBJECT_COLLISION: {
@@ -137,6 +137,10 @@ void PathModule::Kill() {
 void PathModule::AddObjectToGroup(unsigned int objID, unsigned int groupID) {
 	if (objectGroups.find(groupID) == objectGroups.end()) {
 		objectGroups[groupID] = std::set<unsigned int>();
+	}
+
+	if (mGoals.find(groupID) == mGoals.end()) {
+		mGoals[groupID] = std::vector<Grid::Cell*>();
 	}
 
 	objectGroupIDs[objID] = groupID;

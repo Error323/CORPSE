@@ -204,8 +204,7 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		maxRadius = std::max<float>(maxRadius, mCoh->GetSimObjectRadius(*i));
 	}
 
-	// This loop computes the speedfield, unitcost and initializes the known
-	// and unknown set
+	// This loop computes the speedfield, unitcost and initializes the unknown
 	for (size_t i = 0; i < mCells.size(); i++) {
 		// Compute the speedfield and unit cost
 		Cell* cell = mCells[i];
@@ -240,22 +239,24 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 			// Compute the unit cost
 			cell->cost[dir] = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
 		}
+	}
 
-		// Initialize the known and unknown set
-		if (std::find(inGoalCells.begin(), inGoalCells.end(), cell) == inGoalCells.end()) {
-			cell->potential = std::numeric_limits<float>::infinity();
-			cell->known = false;
-		} else {
-			cell->potential = 0.0f;
-			cell->known = true;
-			mCandidates.push(cell);
-		}
-		mPotentialData[i] = cell->potential;
+	// Add goal cells to the known set and add their neighbours to the
+	// candidate-set
+	for (size_t i = 0; i < inGoalCells.size(); i++) {
+		Cell* cell = inGoalCells[i];
+		cell->known = true;
+		cell->potential = 0.0f;
+		mPotentialData[GRID_ID(cell->x, cell->y)] = cell->potential;
+		UpdateCandidates(cell);
 	}
 
 	while (!mCandidates.empty()) {
-		Cell* cell = mCandidates.top(); mCandidates.pop();
+		Cell* cell = mCandidates.top(); 
+		PFFG_ASSERT(cell->known == false);
+		mCandidates.pop();
 		cell->known = true;
+		mPotentialData[GRID_ID(cell->x, cell->y)] = cell->potential;
 		UpdateCandidates(cell);
 	}
 }
@@ -264,8 +265,9 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 	for (int i = 0; i < inParent->numNeighbours; i++) {
 		Cell* neighbour = inParent->neighbours[i];
 
-		if (neighbour->known)
+		if (neighbour->known || neighbour->candidate) {
 			continue;
+		}
 
 		const int x = neighbour->x;
 		const int y = neighbour->y;
@@ -291,6 +293,7 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 
 		const bool undefinedX = (!dirValid[DIRECTION_WEST] && !dirValid[DIRECTION_EAST]);
 		const bool undefinedY = (!dirValid[DIRECTION_NORTH] && !dirValid[DIRECTION_SOUTH]);
+
 		if (undefinedX) {
 			PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
 
@@ -311,9 +314,8 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 			neighbour->edges[bestDirY]->gradPotential.y *= 
 				(bestDirY == DIRECTION_NORTH)  ? -1.0f : 1.0f;
 		}
-
-		// Potential undefined on the y-axis
-		else if (undefinedY) {
+		else
+		if (undefinedY) {
 			PFFG_ASSERT(dirValid[DIRECTION_EAST] || dirValid[DIRECTION_WEST]);
 			Cell* bestX = NULL;
 			int   bestDirX = -1;
@@ -331,8 +333,8 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
 			neighbour->edges[bestDirX]->gradPotential.x *= 
 				(bestDirX == DIRECTION_WEST)  ? -1.0f : 1.0f;
-		} else {
-			// Potential defined on both axis
+		}
+		else {
 			PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
 			PFFG_ASSERT(dirValid[DIRECTION_EAST ] || dirValid[DIRECTION_WEST ]);
 
@@ -357,13 +359,9 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				bestY = dirCells[DIRECTION_SOUTH];
 			}
 
-			const float abcform = Potential2DAbcform(bestX->potential, neighbour->cost[bestDirX], 
+			const float wyke = Potential2DWyke(bestX->potential, neighbour->cost[bestDirX], 
 				bestY->potential, neighbour->cost[bestDirY]);
-			const float wolfram = Potential2DWolfram(bestX->potential, neighbour->cost[bestDirX], 
-				bestY->potential, neighbour->cost[bestDirY]);
-
-			PFFG_ASSERT_MSG(fabs(abcform - wolfram) < 0.0001f, "wolfram(%f) != abcform(%f)", wolfram, abcform);
-			neighbour->potential = abcform;
+			neighbour->potential = wyke;
 			neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
 			neighbour->edges[bestDirY]->gradPotential = vec3f(neighbour->potential - bestY->potential, 0.0f, mSquareSize);
 			neighbour->edges[bestDirX]->gradPotential.x *= (bestDirX == DIRECTION_EAST)  ? -1.0f : 1.0f;
@@ -372,14 +370,26 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 
 		PFFG_ASSERT(neighbour->potential != std::numeric_limits<float>::infinity());
 		//printf("C_nb(%d,%d) = %+2.2f\n", neighbour->x, neighbour->y, neighbour->potential);
-		mPotentialData[GRID_ID(x, y)] = neighbour->potential;
+		neighbour->candidate = true;
 		mCandidates.push(neighbour);
 	}
 }
 
-inline
-float Grid::Potential1D(const float inPot, const float inCost) {
-	return std::max<float>(inPot + inCost, inPot - inCost);
+float Grid::Potential1D(const float p, const float c) {
+	return std::max<float>(p+c, p-c);
+}
+
+float Grid::Potential2DWyke(const float p1, const float c1, const float p2, const float c2) {
+	// (c1^2*p2 + c2^2*p1) / (c1^2+c2^2) +/- c1*c2 / sqrt(c1^2 + c2^2)
+	const float c1s = c1*c1;
+	const float c2s = c2*c2;
+	const float c1s_plus_c2s = c1s + c2s;
+	PFFG_ASSERT(c1s_plus_c2s > 0.0f);
+	const float a = (c1s*p2 + c2s*p1) / (c1s_plus_c2s);
+	const float b = sqrtf(c1s_plus_c2s);
+	const float c = c1*c2 / b;
+
+	return std::max<float>(a+c, a-c);
 }
 
 inline
@@ -444,8 +454,8 @@ Grid::Cell::Edge* Grid::CreateEdge() {
 
 
 vec3i Grid::World2Grid(const vec3f& inVec) {
-	const int x = std::max(0, std::min( mWidth - 1, int(round(inVec.x / mSquareSize)) ));
-	const int z = std::max(0, std::min( mHeight - 1, int(round(inVec.z / mSquareSize)) ));
+	const int x = std::max(0, std::min( mWidth - 1, int(inVec.x / mSquareSize) ));
+	const int z = std::max(0, std::min( mHeight - 1, int(inVec.z / mSquareSize) ));
 	return vec3i(x, 0, z);
 }
 
@@ -453,8 +463,9 @@ Grid::Cell* Grid::World2Cell(const vec3f& inPos) {
 	const vec3i& cellCoords = World2Grid(inPos);
 	const unsigned int idx = GRID_ID(cellCoords.x, cellCoords.z);
 
-	PFFG_ASSERT(idx < mCells.size());
-	return mCells[idx];
+	Cell* cell = mCells[idx];
+	PFFG_ASSERT_MSG(cell != NULL, "world(%2.2f, %2.2f) grid(%d, %d)", inPos.x, inPos.z, cellCoords.x, cellCoords.z);
+	return cell;
 }
 
 vec3f Grid::Grid2World(const Cell* inCell) {
@@ -505,6 +516,8 @@ void Grid::Cell::ResetDynamicVars() {
 
 void Grid::Cell::ResetGroupVars() {
 	potential = std::numeric_limits<float>::infinity();
+	known = false;
+	candidate = false;
 
 	for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		speed[dir] = 0.0f;

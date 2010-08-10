@@ -25,10 +25,10 @@ enum {
 class Grid {
 public:
 	struct Cell {
-		Cell(): x(0), y(0), known(false), numNeighbours(0) {
+		Cell(): x(0), y(0), known(false), candidate(false), numNeighbours(0) {
 		}
 
-		Cell(unsigned int _x, unsigned int _y): x(_x), y(_y), known(false), numNeighbours(0) {
+		Cell(unsigned int _x, unsigned int _y): x(_x), y(_y), known(false), candidate(false), numNeighbours(0) {
 		}
 
 		struct Edge {
@@ -36,11 +36,6 @@ public:
 			vec3f velocity;
 			vec3f gradHeight;
 		};
-
-		// for find()
-		bool operator== (const Cell* c) const {
-			return (x == c->x && y == c->y);
-		}
 
 		// for less() (NOTE: candidates are sorted in increasing order)
 		bool operator() (const Cell* a, const Cell* b) const {
@@ -53,6 +48,7 @@ public:
 
 		unsigned int x, y;
 		bool  known;
+		bool  candidate;
 		float discomfort;
 		float potential;
 		float density;
@@ -118,6 +114,7 @@ private:
 
 	float Potential2DWolfram(const float, const float, const float, const float);
 	float Potential2DAbcform(const float, const float, const float, const float);
+	float Potential2DWyke(const float, const float, const float, const float);
 	float Potential1D(const float, const float);
 };
 
