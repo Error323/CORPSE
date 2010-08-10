@@ -91,15 +91,14 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 
 void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 	static unsigned int simFrame = simThread->GetFrame();
+	static const unsigned int dataTypes[4] = {
+		PathModule::DATATYPE_POTENTIAL,
+		PathModule::DATATYPE_DENSITY,
+		PathModule::DATATYPE_SPEED,
+		PathModule::DATATYPE_COST,
+	};
 
 	if (enabled) {
-		static const unsigned int dataTypes[4] = {
-			PathModule::DATATYPE_POTENTIAL,
-			PathModule::DATATYPE_DENSITY,
-			PathModule::DATATYPE_SPEED,
-			PathModule::DATATYPE_COST,
-		};
-
 		for (unsigned int i = 0; i < 4; i++) {
 			Texture* tex = textures[ dataTypes[i] ];
 

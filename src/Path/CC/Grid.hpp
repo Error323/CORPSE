@@ -40,7 +40,7 @@ public:
 		void ResetDynamicVars();
 		void ResetGroupVars();
 
-		vec3f GetNormalizedPotentialGradient(unsigned int dir) const { return (edges[dir]->gradPotential / edges[dir]->gradPotential.len3D()); }
+		vec3f GetNormalizedPotentialGradient(unsigned int dir) const { return (edges[dir]->gradPotential / edges[dir]->gradPotential.len2D()); }
 		vec3f GetInterpolatedVelocity(const vec3f&) const;
 
 		struct Edge {
