@@ -175,10 +175,6 @@ void Grid::ComputeAvgVelocity() {
 }
 
 void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
-	static const std::string s = "[Grid::UpdateGroupPotentialField]";
-
-	printf("%s[1][frame=%d]\n", s.c_str(), numResets);
-
 	PFFG_ASSERT(!inGoalCells.empty());
 	PFFG_ASSERT(mCandidates.empty());
 
@@ -189,7 +185,7 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		vec3f( -1.0f, 0.0f,  0.0f)  // WEST
 	};
 
-	const static float speedWeight      = (mWidth + mHeight) * 1.0f;
+	const static float speedWeight      = 1.0f;
 	const static float discomfortWeight = 100.0f;
 	const static float maxDensity       = 10.0f;  // According to the Stetson-Harrison method
 	const static float minSpeed         = 0.0f;
@@ -361,9 +357,12 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				bestY = dirCells[DIRECTION_SOUTH];
 			}
 
-			const float abcform = Potential2DAbcform(bestX->potential, neighbour->cost[bestDirX], bestY->potential, neighbour->cost[bestDirY]);
-			//const float wolfram = Potential2DWolfram(bestX->potential, neighbour->cost[bestDirX], bestY->potential, neighbour->cost[bestDirY]);
-			//PFFG_ASSERT_MSG(abcform == wolfram, "\nwolfram\t%+2.2f\n\t != \nabcform\t%+2.2f", wolfram,abcform);
+			const float abcform = Potential2DAbcform(bestX->potential, neighbour->cost[bestDirX], 
+				bestY->potential, neighbour->cost[bestDirY]);
+			const float wolfram = Potential2DWolfram(bestX->potential, neighbour->cost[bestDirX], 
+				bestY->potential, neighbour->cost[bestDirY]);
+
+			PFFG_ASSERT_MSG(fabs(abcform - wolfram) < 0.0001f, "wolfram(%f) != abcform(%f)", wolfram, abcform);
 			neighbour->potential = abcform;
 			neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
 			neighbour->edges[bestDirY]->gradPotential = vec3f(neighbour->potential - bestY->potential, 0.0f, mSquareSize);
@@ -372,6 +371,7 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 		}
 
 		PFFG_ASSERT(neighbour->potential != std::numeric_limits<float>::infinity());
+		//printf("C_nb(%d,%d) = %+2.2f\n", neighbour->x, neighbour->y, neighbour->potential);
 		mPotentialData[GRID_ID(x, y)] = neighbour->potential;
 		mCandidates.push(neighbour);
 	}
