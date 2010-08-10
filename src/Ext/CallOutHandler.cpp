@@ -230,6 +230,7 @@ void CallOutHandler::SetSimObjectRawPosition(unsigned int objID, const vec3f& po
 		vec3f gpos = pos;
 			gpos.y = ground->GetHeight(pos.x, pos.z);
 		mat44f mat = ops.mat;
+			mat.SetPos(pos);
 			mat.SetYDirXZ(ground->GetSmoothNormal(gpos.x, gpos.z));
 
 		// copy the new matrix

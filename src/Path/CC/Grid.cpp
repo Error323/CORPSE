@@ -7,19 +7,19 @@
 #include "../../Sim/SimObjectDef.hpp"
 
 #define GRID_ID(x,y) (((y) * (mWidth)) + (x))
-#define ELEVATION(x,y) (mCoh->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * mWidth) + (mDownScale * (x))])
+#define ELEVATION(x,y) (mCOH->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * mWidth) + (mDownScale * (x))])
 
 const float Grid::sLambda     = 2.0f;
 const float Grid::sMinDensity = 1.0f / pow(2.0f, sLambda);
 
-void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
+void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 	PFFG_ASSERT(inDownScale >= 1);
 
 	mDownScale  = inDownScale;
-	mCoh        = inCoh;
-	mWidth      = mCoh->GetHeightMapSizeX() / mDownScale;
-	mHeight     = mCoh->GetHeightMapSizeZ() / mDownScale;
-	mSquareSize = mCoh->GetSquareSize()     * mDownScale;
+	mCOH        = inCOH;
+	mWidth      = mCOH->GetHeightMapSizeX() / mDownScale;
+	mHeight     = mCOH->GetHeightMapSizeZ() / mDownScale;
+	mSquareSize = mCOH->GetSquareSize()     * mDownScale;
 
 	// NOTE: if mDownScale != 1, the engine's height-map must be downsampled
 	printf("[Grid::Init] GridRes: %dx%d %d\n", mWidth, mHeight, mSquareSize);
@@ -220,6 +220,9 @@ void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 		cell->speed[dir] = speed;
 
 		// Compute the unit cost
+		// TODO:
+		//    evaluate speed and discomfort at cell into which
+		//   an agent would move if it chose direction <dir>
 		cell->cost[dir] = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
 	}
 }
@@ -234,12 +237,12 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 	mMaxRadius = -std::numeric_limits<float>::max();
 
 	for (std::set<unsigned int>::iterator i = inSimObjectIds.begin(); i != inSimObjectIds.end(); i++) {
-		const SimObjectDef* simObjectDef = mCoh->GetSimObjectDef(*i);
+		const SimObjectDef* simObjectDef = mCOH->GetSimObjectDef(*i);
 
 		mMinSlope  = std::min<float>(mMinSlope,  simObjectDef->GetMinSlopeAngleCosine());
 		mMaxSlope  = std::max<float>(mMaxSlope,  simObjectDef->GetMaxSlopeAngleCosine());
 		mMaxSpeed  = std::max<float>(mMaxSpeed,  simObjectDef->GetMaxForwardSpeed());
-		mMaxRadius = std::max<float>(mMaxRadius, mCoh->GetSimObjectRadius(*i));
+		mMaxRadius = std::max<float>(mMaxRadius, mCOH->GetSimObjectRadius(*i));
 	}
 
 	// Add goal cells to the known set and add their neighbours to the
@@ -269,6 +272,7 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 		if (neighbour->known || neighbour->candidate) {
 			continue;
 		}
+
 		ComputeSpeedAndUnitCost(neighbour);
 
 		const int x = neighbour->x;
@@ -296,47 +300,11 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 		const bool undefinedX = (!dirValid[DIRECTION_WEST] && !dirValid[DIRECTION_EAST]);
 		const bool undefinedY = (!dirValid[DIRECTION_NORTH] && !dirValid[DIRECTION_SOUTH]);
 
-		if (undefinedX) {
-			PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
+		// at least one dimension must ALWAYS be defined
+		PFFG_ASSERT((int(undefinedX) + int(undefinedY)) < 2);
 
-			Cell* bestY = NULL;
-			int   bestDirY = -1;
-
-			if (dirCosts[DIRECTION_NORTH] < dirCosts[DIRECTION_SOUTH]) {
-				bestDirY = DIRECTION_NORTH;
-				bestY = dirCells[DIRECTION_NORTH];
-			} else {
-				bestDirY = DIRECTION_SOUTH;
-				bestY = dirCells[DIRECTION_SOUTH];
-			}
-
-			neighbour->potential = Potential1D(bestY->potential, neighbour->cost[bestDirY]);
-			neighbour->edges[bestDirY]->gradPotential = 
-				vec3f(mSquareSize, 0.0f, neighbour->potential - bestY->potential);
-			neighbour->edges[bestDirY]->gradPotential.y *= 
-				(bestDirY == DIRECTION_NORTH)  ? -1.0f : 1.0f;
-		}
-		else
-		if (undefinedY) {
-			PFFG_ASSERT(dirValid[DIRECTION_EAST] || dirValid[DIRECTION_WEST]);
-			Cell* bestX = NULL;
-			int   bestDirX = -1;
-
-			if (dirCosts[DIRECTION_EAST] < dirCosts[DIRECTION_WEST]) {
-				bestDirX = DIRECTION_EAST;
-				bestX = dirCells[DIRECTION_EAST];
-			} else {
-				bestDirX = DIRECTION_WEST;
-				bestX = dirCells[DIRECTION_WEST];
-			}
-
-			neighbour->potential = Potential1D(bestX->potential, neighbour->cost[bestDirX]);
-			neighbour->edges[bestDirX]->gradPotential = 
-				vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
-			neighbour->edges[bestDirX]->gradPotential.x *= 
-				(bestDirX == DIRECTION_WEST)  ? -1.0f : 1.0f;
-		}
-		else {
+		if (!undefinedX && !undefinedY) {
+			// both dimensions are defined
 			PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
 			PFFG_ASSERT(dirValid[DIRECTION_EAST ] || dirValid[DIRECTION_WEST ]);
 
@@ -361,15 +329,56 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				bestY = dirCells[DIRECTION_SOUTH];
 			}
 
-			neighbour->potential = Potential2D(bestX->potential, neighbour->cost[bestDirX], 
-				bestY->potential, neighbour->cost[bestDirY]);
-			neighbour->edges[bestDirX]->gradPotential = 
-				vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
-			neighbour->edges[bestDirY]->gradPotential = 
-				vec3f(neighbour->potential - bestY->potential, 0.0f, mSquareSize);
-			neighbour->edges[bestDirX]->gradPotential.x *= (bestDirX == DIRECTION_EAST)  ? -1.0f : 1.0f;
-			neighbour->edges[bestDirY]->gradPotential.y *= (bestDirY == DIRECTION_NORTH) ? -1.0f : 1.0f;
+			neighbour->potential = Potential2D(
+				bestX->potential, neighbour->cost[bestDirX], 
+				bestY->potential, neighbour->cost[bestDirY]
+			);
+			neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
+			neighbour->edges[bestDirY]->gradPotential = vec3f(neighbour->potential - bestY->potential, 0.0f, mSquareSize);
+			neighbour->edges[bestDirX]->gradPotential.x *= (bestDirX == DIRECTION_EAST) ? -1.0f : 1.0f;
+			neighbour->edges[bestDirY]->gradPotential.y *= (bestDirY == DIRECTION_NORTH)? -1.0f : 1.0f;
+		} else {
+			if (undefinedX) {
+				PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
+				PFFG_ASSERT(!undefinedY);
+
+				Cell* bestY = NULL;
+				int   bestDirY = -1;
+
+				if (dirCosts[DIRECTION_NORTH] < dirCosts[DIRECTION_SOUTH]) {
+					bestDirY = DIRECTION_NORTH;
+					bestY = dirCells[DIRECTION_NORTH];
+				} else {
+					bestDirY = DIRECTION_SOUTH;
+					bestY = dirCells[DIRECTION_SOUTH];
+				}
+
+				neighbour->potential = Potential1D(bestY->potential, neighbour->cost[bestDirY]);
+				neighbour->edges[bestDirY]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestY->potential);
+				neighbour->edges[bestDirY]->gradPotential.y *= (bestDirY == DIRECTION_NORTH)? -1.0f : 1.0f;
+			}
+
+			if (undefinedY) {
+				PFFG_ASSERT(dirValid[DIRECTION_EAST] || dirValid[DIRECTION_WEST]);
+				PFFG_ASSERT(!undefinedX);
+
+				Cell* bestX = NULL;
+				int   bestDirX = -1;
+
+				if (dirCosts[DIRECTION_EAST] < dirCosts[DIRECTION_WEST]) {
+					bestDirX = DIRECTION_EAST;
+					bestX = dirCells[DIRECTION_EAST];
+				} else {
+					bestDirX = DIRECTION_WEST;
+					bestX = dirCells[DIRECTION_WEST];
+				}
+
+				neighbour->potential = Potential1D(bestX->potential, neighbour->cost[bestDirX]);
+				neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
+				neighbour->edges[bestDirX]->gradPotential.x *= (bestDirX == DIRECTION_WEST)? -1.0f : 1.0f;
+			}
 		}
+
 		neighbour->candidate = true;
 		mCandidates.push(neighbour);
 	}
@@ -382,7 +391,7 @@ float Grid::Potential1D(const float p, const float c) const {
 }
 
 float Grid::Potential2D(const float p1, const float c1, const float p2, const float c2) const {
-	// (c1^2*p2 + c2^2*p1) / (c1^2+c2^2) +/- c1*c2 / sqrt(c1^2 + c2^2)
+	// (c1^2*p2 + c2^2*p1) / (c1^2+c2^2) +/- (c1*c2 / sqrt(c1^2 + c2^2))
 	const float c1s = c1 * c1;
 	const float c2s = c2 * c2;
 	const float c1s_plus_c2s = c1s + c2s;
@@ -398,8 +407,14 @@ float Grid::Potential2D(const float p1, const float c1, const float p2, const fl
 
 
 
-void Grid::UpdateSimObjectLocation(const unsigned int inSimObjectId) const {
+void Grid::UpdateSimObjectLocation(const unsigned int inSimObjectID) const {
 	// TODO: interpolate the velocity-field
+	const vec3f& worldPos = mCOH->GetSimObjectPosition(inSimObjectID);
+	const vec3f& worldDir = mCOH->GetSimObjectDirection(inSimObjectID);
+	const vec3i& gridPos = World2Grid(worldPos);
+
+	mCOH->SetSimObjectRawPosition(inSimObjectID, worldPos);
+	mCOH->SetSimObjectRawDirection(inSimObjectID, worldDir);
 }
 
 void Grid::Reset() {
@@ -416,24 +431,30 @@ Grid::Cell::Edge* Grid::CreateEdge() {
 
 
 
-vec3i Grid::World2Grid(const vec3f& inVec) const {
-	const int x = std::max(0, std::min( mWidth - 1, int(inVec.x / mSquareSize) ));
-	const int z = std::max(0, std::min( mHeight - 1, int(inVec.z / mSquareSize) ));
-	return vec3i(x, 0, z);
+// convert a world-space position to <x, y> grid-indices
+vec3i Grid::World2Grid(const vec3f& inWorldPos) const {
+	const int gx = int(inWorldPos.x / mSquareSize);
+	const int gz = int(inWorldPos.z / mSquareSize);
+	const int cx = std::max(0, std::min(mWidth - 1, gx));
+	const int cz = std::max(0, std::min(mHeight - 1, gz));
+	return vec3i(cx, 0, cz);
 }
 
-Grid::Cell* Grid::World2Cell(const vec3f& inPos) {
-	const vec3i& cellCoords = World2Grid(inPos);
-	const unsigned int idx = GRID_ID(cellCoords.x, cellCoords.z);
+// get the grid-cell corresponding to a world-space position
+Grid::Cell* Grid::World2Cell(const vec3f& inWorldPos) {
+	const vec3i& gridPos = World2Grid(inWorldPos);
+	const unsigned int gridIdx = GRID_ID(gridPos.x, gridPos.z);
 
-	PFFG_ASSERT_MSG(idx < mCells.size(), "world(%2.2f, %2.2f) grid(%d, %d)", inPos.x, inPos.z, cellCoords.x, cellCoords.z);
+	PFFG_ASSERT_MSG(gridIdx < mCells.size(), "world(%2.2f, %2.2f) grid(%d, %d)", inWorldPos.x, inWorldPos.z, gridPos.x, gridPos.z);
 
-	Cell* cell = &mCells[idx];
-	return cell;
+	return &mCells[gridIdx];
 }
 
+// convert a cell's <x, y> grid-indices to world-space coordinates
 vec3f Grid::Grid2World(const Cell* inCell) const {
-	return vec3f(inCell->x * mSquareSize, ELEVATION(inCell->x, inCell->y), inCell->y * mSquareSize);
+	const float wx = inCell->x * mSquareSize;
+	const float wz = inCell->y * mSquareSize;
+	return vec3f(wx, ELEVATION(inCell->x, inCell->y), wz);
 }
 
 

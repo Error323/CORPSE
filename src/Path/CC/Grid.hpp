@@ -105,7 +105,7 @@ private:
 	std::vector<float> mDensityData;
 	std::vector<vec3f> mAvgVelocityData;
 
-	ICallOutHandler* mCoh;
+	ICallOutHandler* mCOH;
 
 	std::map<unsigned int, Cell*> mTouchedCells;
 	std::vector<Cell> mCells;
