@@ -7,6 +7,8 @@
 #include "./UIWidget.hpp"
 #include "../Math/vec3fwd.hpp"
 
+class VertexArray;
+
 namespace ui {
 	struct CCVisualizerWidget: public IUIWidget {
 	public:
@@ -22,7 +24,7 @@ namespace ui {
 	private:
 		struct Texture {
 		public:
-			Texture(unsigned int, unsigned int, const float*);
+			Texture(unsigned int, unsigned int, unsigned int, const float*);
 			~Texture();
 
 			void Update(const float*);
@@ -38,6 +40,7 @@ namespace ui {
 			unsigned int id;
 			unsigned int sizex;
 			unsigned int sizey;
+			unsigned int stride;
 
 			#ifdef TEXTURE_DATATYPE_FLOAT
 			float* data;
@@ -46,7 +49,8 @@ namespace ui {
 			#endif
 		};
 
-		std::map<unsigned int, Texture*> textures;
+		std::map<unsigned int, VertexArray*> vectorOverlays;
+		std::map<unsigned int, Texture*> textureOverlays;
 		std::vector<unsigned int> textureGroupIDs;
 
 		unsigned int texGroupIdx;

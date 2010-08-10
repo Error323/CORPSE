@@ -46,9 +46,11 @@ public:
 
 	unsigned int GetScalarDataArraySizeX(unsigned int) const { return 0; }
 	unsigned int GetScalarDataArraySizeZ(unsigned int) const { return 0; }
+	unsigned int GetScalarDataArrayStride(unsigned int) const { return 0; }
 	const float* GetScalarDataArray(unsigned int, unsigned int) const { return NULL; }
 	unsigned int GetVectorDataArraySizeX(unsigned int) const { return 0; }
 	unsigned int GetVectorDataArraySizeZ(unsigned int) const { return 0; }
+	unsigned int GetVectorDataArrayStride(unsigned int) const { return 0; }
 	const vec3f* GetVectorDataArray(unsigned int, unsigned int) const { return NULL; }
 
 private:

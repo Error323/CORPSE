@@ -12,11 +12,11 @@
 #include "../Path/CC/CCPathModule.hpp"
 
 ui::CCVisualizerWidget::~CCVisualizerWidget() {
-	for (std::map<unsigned int, Texture*>::iterator it = textures.begin(); it != textures.end(); ++it) {
+	for (std::map<unsigned int, Texture*>::iterator it = textureOverlays.begin(); it != textureOverlays.end(); ++it) {
 		delete it->second;
 	}
 
-	textures.clear();
+	textureOverlays.clear();
 }
 
 void ui::CCVisualizerWidget::KeyPressed(int key) {
@@ -30,21 +30,21 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 
 	Texture* texturePtrs[PathModule::NUM_DATATYPES] = {NULL};
 
-	texturePtrs[PathModule::DATATYPE_HEIGHT]    = textures[PathModule::DATATYPE_HEIGHT];
-	texturePtrs[PathModule::DATATYPE_POTENTIAL] = textures[PathModule::DATATYPE_POTENTIAL];
-	texturePtrs[PathModule::DATATYPE_DENSITY]   = textures[PathModule::DATATYPE_DENSITY];
-	texturePtrs[PathModule::DATATYPE_SPEED]     = textures[PathModule::DATATYPE_SPEED];
-	texturePtrs[PathModule::DATATYPE_COST]      = textures[PathModule::DATATYPE_COST];
+	texturePtrs[PathModule::DATATYPE_HEIGHT]    = textureOverlays[PathModule::DATATYPE_HEIGHT];
+	texturePtrs[PathModule::DATATYPE_POTENTIAL] = textureOverlays[PathModule::DATATYPE_POTENTIAL];
+	texturePtrs[PathModule::DATATYPE_DENSITY]   = textureOverlays[PathModule::DATATYPE_DENSITY];
+	texturePtrs[PathModule::DATATYPE_SPEED]     = textureOverlays[PathModule::DATATYPE_SPEED];
+	texturePtrs[PathModule::DATATYPE_COST]      = textureOverlays[PathModule::DATATYPE_COST];
 
 	const IPathModule* m = simThread->GetPathModule();
 	unsigned int dataType = PathModule::NUM_DATATYPES;
 
 	switch (key) {
-		case SDLK_h: { dataType = PathModule::DATATYPE_HEIGHT;    } break;
-		case SDLK_p: { dataType = PathModule::DATATYPE_POTENTIAL; } break;
-		case SDLK_d: { dataType = PathModule::DATATYPE_DENSITY;   } break;
-		case SDLK_f: { dataType = PathModule::DATATYPE_SPEED;     } break;
-		case SDLK_k: { dataType = PathModule::DATATYPE_COST;      } break;
+		case SDLK_h: { dataType = PathModule::DATATYPE_HEIGHT;    } break; // texture
+		case SDLK_p: { dataType = PathModule::DATATYPE_POTENTIAL; } break; // texture
+		case SDLK_d: { dataType = PathModule::DATATYPE_DENSITY;   } break; // texture
+		case SDLK_f: { dataType = PathModule::DATATYPE_SPEED;     } break; // four scalars per cell: texture or vector?
+		case SDLK_k: { dataType = PathModule::DATATYPE_COST;      } break; // four scalars per cell: texture or vector?
 		default: {} break;
 	}
 
@@ -57,10 +57,11 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 	if (dataTex == NULL) {
 		const unsigned int xsize = m->GetScalarDataArraySizeX(dataType);
 		const unsigned int zsize = m->GetScalarDataArraySizeZ(dataType);
+		const unsigned int stride = m->GetScalarDataArrayStride(dataType);
 		const float* data = m->GetScalarDataArray(dataType, texGroupID);
 
-		dataTex = new Texture(xsize, zsize, data);
-		textures[dataType] = dataTex;
+		dataTex = new Texture(xsize, zsize, stride, data);
+		textureOverlays[dataType] = dataTex;
 
 		readMap->GetGroundDrawer()->SetOverlayTexture(dataTex->GetID());
 	} else {
@@ -71,7 +72,7 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 		} else {
 			readMap->GetGroundDrawer()->SetOverlayTexture(dataTex->GetID());
 
-			if (dataType == PathModule::DATATYPE_POTENTIAL) {
+			if (dataType != PathModule::DATATYPE_HEIGHT && dataType != PathModule::DATATYPE_DENSITY) {
 				// cycle to the next group
 				const unsigned int numGroupIDs = m->GetNumGroupIDs();
 
@@ -100,7 +101,7 @@ void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 
 	if (enabled) {
 		for (unsigned int i = 0; i < 4; i++) {
-			Texture* tex = textures[ dataTypes[i] ];
+			Texture* tex = textureOverlays[ dataTypes[i] ];
 
 			if (tex != NULL && tex->IsEnabled()) {
 				if (simThread->GetFrame() != simFrame) {
@@ -121,15 +122,16 @@ void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 
 
 
-ui::CCVisualizerWidget::Texture::Texture(unsigned int x, unsigned int y, const float* ndata):
+ui::CCVisualizerWidget::Texture::Texture(unsigned int x, unsigned int y, unsigned int s, const float* ndata):
 	enabled(true),
 	id(0),
 	sizex(x),
 	sizey(y),
+	stride(s),
 	#ifdef TEXTURE_DATATYPE_FLOAT
-	data(new float[sizex * sizey])
+	data(new float[sizex * sizey * stride])
 	#else
-	data(new unsigned char[sizex * sizey * 4])
+	data(new unsigned char[sizex * sizey * stride * 4])
 	#endif
 {
 	Update(ndata);
@@ -147,9 +149,11 @@ void ui::CCVisualizerWidget::Texture::Update(const float* ndata) {
 	#ifdef TEXTURE_DATATYPE_FLOAT
 	static const int extFormat = GL_RED;
 	static const int dataType  = GL_FLOAT;
+	static const int bpp       = 1;
 	#else
 	static const int extFormat = GL_RGBA;
 	static const int dataType  = GL_UNSIGNED_BYTE;
+	static const int bpp       = 4;
 	#endif
 
 	float ndataMin =  std::numeric_limits<float>::max();
@@ -157,7 +161,7 @@ void ui::CCVisualizerWidget::Texture::Update(const float* ndata) {
 
 	if (ndata != NULL) {
 		// find the extrema
-		for (unsigned int i = 0; i < (sizex * sizey); i++) {
+		for (unsigned int i = 0; i < (sizex * sizey * stride); i += 1) {
 			ndataMin = std::min(ndataMin, ndata[i]);
 			ndataMax = std::max(ndataMax, ndata[i]);
 		}
@@ -166,11 +170,11 @@ void ui::CCVisualizerWidget::Texture::Update(const float* ndata) {
 	if (ndata != NULL) {
 		// normalize
 		#ifdef TEXTURE_DATATYPE_FLOAT
-		for (unsigned int i = 0; i < (sizex * sizey); i += 1) {
+		for (unsigned int i = 0; i < (sizex * sizey * stride); i += bpp) {
 			data[i] = (ndata[i] - ndataMin) / (ndataMax - ndataMin);
 		}
 		#else
-		for (unsigned int i = 0; i < (sizex * sizey * 4); i += 4) {
+		for (unsigned int i = 0; i < (sizex * sizey * stride * bpp); i += bpp) {
 			data[i + 0] = (ndata[i / 4] < 0.0f)? 0: ((ndata[i / 4] / ndataMax) * 255);
 			data[i + 1] =                                                          0;
 			data[i + 2] = (ndata[i / 4] > 0.0f)? 0: ((ndata[i / 4] / ndataMin) * 255);
@@ -179,11 +183,11 @@ void ui::CCVisualizerWidget::Texture::Update(const float* ndata) {
 		#endif
 	} else {
 		#ifdef TEXTURE_DATATYPE_FLOAT
-		for (unsigned int i = 0; i < (sizex * sizey); i += 1) {
+		for (unsigned int i = 0; i < (sizex * sizey * stride); i += bpp) {
 			data[i] = 0.0f;
 		}
 		#else
-		for (unsigned int i = 0; i < (sizex * sizey * 4); i += 4) {
+		for (unsigned int i = 0; i < (sizex * sizey * stride * 4); i += bpp) {
 			data[i + 0] =   0;
 			data[i + 1] =   0;
 			data[i + 2] =   0;

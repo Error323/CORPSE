@@ -11,19 +11,17 @@
 #include "../../Math/vec3.hpp"
 #include "../../Ext/ICallOutHandler.hpp"
 
-// NOTE: This order should not be changed!
-enum {
-	DIRECTION_NORTH = 0,
-	DIRECTION_EAST  = 1,
-	DIRECTION_SOUTH = 2,
-	DIRECTION_WEST  = 3,
-	NUM_DIRECTIONS  = 4
-};
-
-
-
 class Grid {
 public:
+	enum {
+		// NOTE: This order should not be changed!
+		DIRECTION_NORTH = 0,
+		DIRECTION_EAST  = 1,
+		DIRECTION_SOUTH = 2,
+		DIRECTION_WEST  = 3,
+		NUM_DIRECTIONS  = 4
+	};
+
 	struct Cell {
 		Cell(): x(0), y(0), known(false), candidate(false), numNeighbours(0) {
 		}
@@ -70,19 +68,26 @@ public:
 	void Init(const int, ICallOutHandler*);
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
 	void ComputeAvgVelocity();
-	void UpdateGroupPotentialField(const std::vector<Cell*>&, const std::set<unsigned int>&);
+	void UpdateGroupPotentialField(unsigned int, const std::vector<Cell*>&, const std::set<unsigned int>&);
 	void UpdateSimObjectLocation(const unsigned int);
 	void Reset();
 
 	int GetGridWidth() const { return mWidth; }
 	int GetGridHeight() const { return mHeight; }
 
-	const float* GetHeightVisDataArray() const { return (mHeightVisData.empty())? NULL: &mHeightVisData[0]; }
+	// visualisation data accessors for scalar fields
+	const float* GetDensityVisDataArray() const { return (mDensityVisData.empty())? NULL: &mDensityVisData[0]; }
+	const float* GetDiscomfortVisDataArray() const { return (mDiscomfortVisData.empty())? NULL: &mDiscomfortVisData[0]; }
 	const float* GetSpeedVisDataArray() const { return (mSpeedVisData.empty())? NULL: &mSpeedVisData[0]; }
 	const float* GetCostVisDataArray() const { return (mCostVisData.empty())? NULL: &mCostVisData[0]; }
+	const float* GetHeightVisDataArray() const { return (mHeightVisData.empty())? NULL: &mHeightVisData[0]; }
 	const float* GetPotentialVisDataArray() const { return (mPotentialVisData.empty())? NULL: &mPotentialVisData[0]; }
-	const float* GetDensityVisDataArray() const { return (mDensityVisData.empty())? NULL: &mDensityVisData[0]; }
+
+	// visualisation data accessors for vector fields
+	const vec3f* GetVelocityVisDataArray() const { return (mVelocityVisData.empty())? NULL: &mVelocityVisData[0]; }
 	const vec3f* GetVelocityAvgVisDataArray() const { return (mAvgVelocityVisData.empty())? NULL: &mAvgVelocityVisData[0]; }
+	const vec3f* GetPotentialDeltaVisDataArray() const { return (mPotentialDeltaVisData.empty())? NULL: &mPotentialDeltaVisData[0]; }
+	const vec3f* GetHeightDeltaVisDataArray() const { return (mHeightDeltaVisData.empty())? NULL: &mHeightDeltaVisData[0]; }
 
 	Cell* World2Cell(const vec3f&);
 
@@ -104,13 +109,19 @@ private:
 	// FMM vars
 	std::priority_queue<Cell*, std::vector<Cell*, std::allocator<Cell*> >, Cell> mCandidates;
 
-	// Visualization data
-	std::vector<float> mHeightVisData;
-	std::vector<float> mSpeedVisData;
-	std::vector<float> mCostVisData;
-	std::vector<float> mPotentialVisData;
+	// visualization data for scalar fields
 	std::vector<float> mDensityVisData;
+	std::vector<float> mDiscomfortVisData;
+	std::vector<float> mSpeedVisData;          // TODO: fill me
+	std::vector<float> mCostVisData;           // TODO: fill me
+	std::vector<float> mPotentialVisData;
+	std::vector<float> mHeightVisData;
+
+	// visualization data for vector fields
+	std::vector<vec3f> mVelocityVisData;       // TODO: fill me
 	std::vector<vec3f> mAvgVelocityVisData;
+	std::vector<vec3f> mPotentialDeltaVisData; // TODO: fill me
+	std::vector<vec3f> mHeightDeltaVisData;    // TODO: fill me
 
 	ICallOutHandler* mCOH;
 

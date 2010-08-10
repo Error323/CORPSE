@@ -35,18 +35,18 @@ public:
 
 	enum {
 		// scalar fields
-		DATATYPE_DENSITY         =  0, // rho (global)
-		DATATYPE_DISCOMFORT      =  1, // g (per-group?, stored at cell-centers)
-		DATATYPE_SPEED           =  2, // f (per-group, stored at cell-edges)
-		DATATYPE_COST            =  5, // C (per-group, stored at cell-edges)
-		DATATYPE_POTENTIAL       =  3, // phi (per-group, stored at cell-centers)
-		DATATYPE_HEIGHT          =  4, // h (global, stored at cell-centers)
+		DATATYPE_DENSITY         =  0, // rho (global,    stored at cell-centers (1 scalar  per cell))
+		DATATYPE_DISCOMFORT      =  1, // g   (per-group, stored at cell-centers (1 scalar  per cell))
+		DATATYPE_SPEED           =  2, // f   (per-group, stored at cell-edges   (4 scalars per cell))
+		DATATYPE_COST            =  5, // C   (per-group, stored at cell-edges   (4 scalars per cell))
+		DATATYPE_POTENTIAL       =  3, // phi (per-group, stored at cell-centers (1 scalar  per cell))
+		DATATYPE_HEIGHT          =  4, // h   (global,    stored at cell-centers (1 scalar  per cell))
 
 		// vector fields
-		DATATYPE_VELOCITY        =  6, // v (per-group, stored at cell-edges)
-		DATATYPE_VELOCITY_AVG    =  7, // v-bar (global, stored at cell-centers)
-		DATATYPE_POTENTIAL_DELTA =  8, // delta-phi (per-group, stored at cell-edges)
-		DATATYPE_HEIGHT_DELTA    =  9, // delta-h (global, stored at cell-edges)
+		DATATYPE_VELOCITY        =  6, // v         (per-group, stored at cell-edges   (4 vectors per cell))
+		DATATYPE_VELOCITY_AVG    =  7, // v-bar     (global,    stored at cell-centers (1 vector  per cell))
+		DATATYPE_POTENTIAL_DELTA =  8, // delta-phi (per-group, stored at cell-edges   (4 vectors per cell))
+		DATATYPE_HEIGHT_DELTA    =  9, // delta-h   (global,    stored at cell-edges   (4 vectors per cell))
 
 		NUM_DATATYPES            = 10,
 	};
@@ -65,9 +65,11 @@ public:
 
 	unsigned int GetScalarDataArraySizeX(unsigned int) const;
 	unsigned int GetScalarDataArraySizeZ(unsigned int) const;
+	unsigned int GetScalarDataArrayStride(unsigned int) const;
 	const float* GetScalarDataArray(unsigned int, unsigned int) const;
 	unsigned int GetVectorDataArraySizeX(unsigned int) const;
 	unsigned int GetVectorDataArraySizeZ(unsigned int) const;
+	unsigned int GetVectorDataArrayStride(unsigned int) const;
 	const vec3f* GetVectorDataArray(unsigned int, unsigned int) const;
 
 private:
@@ -76,9 +78,9 @@ private:
 
 	unsigned int numGroupIDs;
 
-	//! each group is updated sequentially, so we only
-	//! require one grid in which the per-group fields
-	//! are recycled
+	// each group is updated sequentially, so we only
+	// require one grid in which the per-group fields
+	// are recycled
 	Grid mGrid;
 
 	std::map<unsigned int, std::vector<Grid::Cell*> > mGoals;

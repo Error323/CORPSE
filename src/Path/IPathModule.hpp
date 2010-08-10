@@ -26,9 +26,11 @@ public:
 
 	virtual unsigned int GetScalarDataArraySizeX(unsigned int dataType) const = 0;
 	virtual unsigned int GetScalarDataArraySizeZ(unsigned int dataType) const = 0;
+	virtual unsigned int GetScalarDataArrayStride(unsigned int dataType) const = 0;
 	virtual const float* GetScalarDataArray(unsigned int dataType, unsigned int groupID) const = 0;
 	virtual unsigned int GetVectorDataArraySizeX(unsigned int dataType) const = 0;
 	virtual unsigned int GetVectorDataArraySizeZ(unsigned int dataType) const = 0;
+	virtual unsigned int GetVectorDataArrayStride(unsigned int dataType) const = 0;
 	virtual const vec3f* GetVectorDataArray(unsigned int dataType, unsigned int groupID) const = 0;
 
 protected:

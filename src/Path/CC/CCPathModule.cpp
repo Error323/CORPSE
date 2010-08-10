@@ -81,7 +81,7 @@ void PathModule::Update() {
 
 		std::map<unsigned int, const SimObjectDef*>::iterator simObjectIt;
 		std::map<unsigned int, std::set<unsigned int> >::iterator objectGroupIt;
-		std::set<unsigned int>::iterator goalCellIt;
+		std::set<unsigned int>::iterator objectIDsIt;
 
 		// Reset all the cells in the grid
 		mGrid.Reset();
@@ -102,21 +102,24 @@ void PathModule::Update() {
 		mGrid.ComputeAvgVelocity();
 
 		for (objectGroupIt = mObjectGroups.begin(); objectGroupIt != mObjectGroups.end(); ++objectGroupIt) {
-			// For each group, construct the speed field and the unit cost field
-			// Note1: This first resets all the group-related variables
-			// Note2: Discomfort regarding this group can be computed here
-			// Note3: It might be possible to compute the speedfield and unit-
+			const unsigned int groupID = objectGroupIt->first;
+			const std::set<unsigned int>& groupObjectIDs = objectGroupIt->second;
+
+			// for each active group <groupID>, first construct the speed- and the
+			// unit-cost field; then construct the potential- and gradient-fields
+			//
+			// NOTE: This first resets all the group-related variables
+			// NOTE: Discomfort regarding this group can be computed here
+			// NOTE: It might be possible to compute the speedfield and unit-
 			//        costfield in the UpdateGroupPotentialField as cells 
 			//        are picked from the UNKNOWN set, saving N iterations
-
-			// Construct the potential and the gradient
-			// Note: This should get the goal cells from a specific group,
+			// NOTE: This should get the goal cells from a specific group,
 			//       but how will we select them?
-			mGrid.UpdateGroupPotentialField(mGoals[objectGroupIt->first], objectGroupIt->second);
+			mGrid.UpdateGroupPotentialField(groupID, mGoals[groupID], groupObjectIDs);
 
-			// Update the object locations
-			for (goalCellIt = objectGroupIt->second.begin(); goalCellIt != objectGroupIt->second.end(); ++goalCellIt) {
-				mGrid.UpdateSimObjectLocation(*goalCellIt);
+			// finally, update the locations of objects in this group ("advection")
+			for (objectIDsIt = groupObjectIDs.begin(); objectIDsIt != groupObjectIDs.end(); ++objectIDsIt) {
+				mGrid.UpdateSimObjectLocation(*objectIDsIt);
 			}
 		}
 
@@ -177,15 +180,13 @@ bool PathModule::DelObjectFromGroup(unsigned int objID) {
 
 unsigned int PathModule::GetScalarDataArraySizeX(unsigned int dataType) const {
 	switch (dataType) {
-		//! NOTE: these are not all the same size (eg. density vs. speed)
-		case DATATYPE_DENSITY: { return mGrid.GetGridWidth(); } break;
-		case DATATYPE_DISCOMFORT: { return 0; } break;
-		case DATATYPE_POTENTIAL: { return mGrid.GetGridWidth(); } break;
-		case DATATYPE_SPEED: { return mGrid.GetGridWidth(); } break;
-		case DATATYPE_COST: { return mGrid.GetGridWidth(); } break;
-		case DATATYPE_HEIGHT: { return mGrid.GetGridWidth(); } break;
-		default: {
-		} break;
+		case DATATYPE_DENSITY:    { return mGrid.GetGridWidth(); } break;
+		case DATATYPE_DISCOMFORT: { return mGrid.GetGridWidth(); } break;
+		case DATATYPE_SPEED:      { return mGrid.GetGridWidth(); } break;
+		case DATATYPE_COST:       { return mGrid.GetGridWidth(); } break;
+		case DATATYPE_POTENTIAL:  { return mGrid.GetGridWidth(); } break;
+		case DATATYPE_HEIGHT:     { return mGrid.GetGridWidth(); } break;
+		default: {} break;
 	}
 
 	return 0;
@@ -193,43 +194,42 @@ unsigned int PathModule::GetScalarDataArraySizeX(unsigned int dataType) const {
 
 unsigned int PathModule::GetScalarDataArraySizeZ(unsigned int dataType) const {
 	switch (dataType) {
-		//! NOTE: these are not all the same size (eg. density vs. speed)
-		case DATATYPE_DENSITY: { return mGrid.GetGridHeight(); } break;
-		case DATATYPE_DISCOMFORT: { return 0; } break;
-		case DATATYPE_POTENTIAL: { return mGrid.GetGridHeight(); } break;
-		case DATATYPE_SPEED: { return mGrid.GetGridHeight(); } break;
-		case DATATYPE_COST: { return mGrid.GetGridHeight(); } break;
-		case DATATYPE_HEIGHT: { return mGrid.GetGridHeight(); } break;
-		default: {
-		} break;
+		case DATATYPE_DENSITY:    { return mGrid.GetGridHeight(); } break;
+		case DATATYPE_DISCOMFORT: { return mGrid.GetGridHeight(); } break;
+		case DATATYPE_SPEED:      { return mGrid.GetGridHeight(); } break;
+		case DATATYPE_COST:       { return mGrid.GetGridHeight(); } break;
+		case DATATYPE_POTENTIAL:  { return mGrid.GetGridHeight(); } break;
+		case DATATYPE_HEIGHT:     { return mGrid.GetGridHeight(); } break;
+		default: {} break;
 	}
 
 	return 0;
 }
 
+unsigned int PathModule::GetScalarDataArrayStride(unsigned int dataType) const {
+	switch (dataType) {
+		case DATATYPE_DENSITY:    { return                    1; } break;
+		case DATATYPE_DISCOMFORT: { return                    1; } break;
+		case DATATYPE_SPEED:      { return Grid::NUM_DIRECTIONS; } break;
+		case DATATYPE_COST:       { return Grid::NUM_DIRECTIONS; } break;
+		case DATATYPE_POTENTIAL:  { return                    1; } break;
+		case DATATYPE_HEIGHT:     { return                    1; } break;
+		default: {} break;
+	}
+
+	return 0;
+}
+
+// FIXME: use groupID for the per-group scalar fields
 const float* PathModule::GetScalarDataArray(unsigned int dataType, unsigned int groupID) const {
 	switch (dataType) {
-		case DATATYPE_DENSITY: {
-			return mGrid.GetDensityVisDataArray();
-		} break;
-		case DATATYPE_DISCOMFORT: {
-			//! TODO, FIXME: per-group
-			//! return mGrid.GetDiscomfortDataArray();
-		} break;
-		case DATATYPE_POTENTIAL: {
-			return mGrid.GetPotentialVisDataArray(); //! FIXME: per-group
-		} break;
-		case DATATYPE_SPEED: {
-			return mGrid.GetSpeedVisDataArray(); //! FIXME: per-group
-		} break;
-		case DATATYPE_COST: {
-			return mGrid.GetCostVisDataArray(); //! FIXME: per-group
-		} break;
-		case DATATYPE_HEIGHT: {
-			return mGrid.GetHeightVisDataArray();
-		} break;
-		default: {
-		} break;
+		case DATATYPE_DENSITY:    { return mGrid.GetDensityVisDataArray();    } break;
+		case DATATYPE_DISCOMFORT: { return mGrid.GetDiscomfortVisDataArray(); } break;
+		case DATATYPE_SPEED:      { return mGrid.GetSpeedVisDataArray();      } break;
+		case DATATYPE_COST:       { return mGrid.GetCostVisDataArray();       } break;
+		case DATATYPE_POTENTIAL:  { return mGrid.GetPotentialVisDataArray();  } break;
+		case DATATYPE_HEIGHT:     { return mGrid.GetHeightVisDataArray();     } break;
+		default: {} break;
 	}
 
 	return NULL;
@@ -239,53 +239,46 @@ const float* PathModule::GetScalarDataArray(unsigned int dataType, unsigned int 
 
 unsigned int PathModule::GetVectorDataArraySizeX(unsigned int dataType) const {
 	switch (dataType) {
-		//! NOTE: these are not all the same size (eg. v vs. v-bar)!
-		//! case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetSizeX(); } break;
-		//! case DATATYPE_HEIGHT_DELTA: { return mGrid.GetSizeX(); } break;
-		//! case DATATYPE_VELOCITY: { return mGrid.GetSizeX(); } break;
-		//! case DATATYPE_VELOCITY_AVG: { return mGrid.GetSizeX(); } break;
-		default: {
-		} break;
+		case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetGridWidth(); }
+		case DATATYPE_HEIGHT_DELTA:    { return mGrid.GetGridWidth(); }
+		case DATATYPE_VELOCITY:        { return mGrid.GetGridWidth(); }
+		case DATATYPE_VELOCITY_AVG:    { return mGrid.GetGridWidth(); }
+		default: {} break;
 	}
 
 	return 0;
 }
-
 unsigned int PathModule::GetVectorDataArraySizeZ(unsigned int dataType) const {
 	switch (dataType) {
-		//! NOTE: these are not all the same size (eg. v vs. v-bar)!
-		//! case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetSizeZ(); } break;
-		//! case DATATYPE_HEIGHT_DELTA: { return mGrid.GetSizeZ(); } break;
-		//! case DATATYPE_VELOCITY: { return mGrid.GetSizeZ(); } break;
-		//! case DATATYPE_VELOCITY_AVG: { return mGrid.GetSizeZ(); } break;
-		default: {
-		} break;
+		case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetGridHeight(); }
+		case DATATYPE_HEIGHT_DELTA:    { return mGrid.GetGridHeight(); }
+		case DATATYPE_VELOCITY:        { return mGrid.GetGridHeight(); }
+		case DATATYPE_VELOCITY_AVG:    { return mGrid.GetGridHeight(); }
+		default: {} break;
+	}
+
+	return 0;
+}
+unsigned int PathModule::GetVectorDataArrayStride(unsigned int dataType) const {
+	switch (dataType) {
+		case DATATYPE_POTENTIAL_DELTA: { return Grid::NUM_DIRECTIONS; }
+		case DATATYPE_HEIGHT_DELTA:    { return Grid::NUM_DIRECTIONS; }
+		case DATATYPE_VELOCITY:        { return Grid::NUM_DIRECTIONS; }
+		case DATATYPE_VELOCITY_AVG:    { return                    1; }
+		default: {} break;
 	}
 
 	return 0;
 }
 
+// FIXME: use groupID for the per-group vector fields
 const vec3f* PathModule::GetVectorDataArray(unsigned int dataType, unsigned int groupID) const {
 	switch (dataType) {
-		case DATATYPE_POTENTIAL_DELTA: {
-			//! TODO, FIXME: per-group
-			//! return mGrid.GetPotentialDeltaDataArray();
-		} break;
-		case DATATYPE_HEIGHT_DELTA: {
-			//! TODO, NOTE: slopes are stored per-edge, so four values per cell (same as speed and cost)
-			//! return mGrid.GetHeightDeltaDataArray();
-		} break;
-
-		case DATATYPE_VELOCITY: {
-			//! TODO, FIXME: per-group
-			//! return mGrid.GetVelocityDataArray();
-		} break;
-		case DATATYPE_VELOCITY_AVG: {
-			//! TODO
-			//! return mGrid.GetVelocityAvgDataArray();
-		} break;
-		default: {
-		} break;
+		case DATATYPE_VELOCITY:        { return mGrid.GetVelocityVisDataArray();       } break;
+		case DATATYPE_VELOCITY_AVG:    { return mGrid.GetVelocityAvgVisDataArray();    } break;
+		case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetPotentialDeltaVisDataArray(); } break;
+		case DATATYPE_HEIGHT_DELTA:    { return mGrid.GetHeightDeltaVisDataArray();    } break;
+		default: {} break;
 	}
 
 	return NULL;

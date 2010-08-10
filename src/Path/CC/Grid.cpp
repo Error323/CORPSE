@@ -12,6 +12,24 @@
 const float Grid::sLambda     = 2.0f;
 const float Grid::sMinDensity = 1.0f / pow(2.0f, sLambda);
 
+Grid::~Grid() {
+	mDensityVisData.clear();
+	mDiscomfortVisData.clear();
+	mSpeedVisData.clear();
+	mCostVisData.clear();
+	mHeightVisData.clear();
+	mPotentialVisData.clear();
+
+	mVelocityVisData.clear();
+	mAvgVelocityVisData.clear();
+	mPotentialDeltaVisData.clear();
+	mHeightDeltaVisData.clear();
+
+	mTouchedCells.clear();
+	mCells.clear();
+	mEdges.clear();
+}
+
 void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 	PFFG_ASSERT(inDownScale >= 1);
 
@@ -28,12 +46,17 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 	const unsigned int numCells = mWidth * mHeight;
 	const unsigned int numEdges = (mWidth + 1) * mHeight + (mHeight + 1) * mWidth;
 
-	mHeightVisData.resize(numCells);
-	mSpeedVisData.resize(numCells);
-	mCostVisData.resize(numCells);
-	mPotentialVisData.resize(numCells);
 	mDensityVisData.resize(numCells);
+	mDiscomfortVisData.resize(numCells);
+	mSpeedVisData.resize(numCells * NUM_DIRECTIONS);
+	mCostVisData.resize(numCells * NUM_DIRECTIONS);
+	mHeightVisData.resize(numCells);
+	mPotentialVisData.resize(numCells);
+
+	mVelocityVisData.resize(numCells * NUM_DIRECTIONS);
 	mAvgVelocityVisData.resize(numCells);
+	mPotentialDeltaVisData.resize(numCells * NUM_DIRECTIONS);
+	mHeightDeltaVisData.resize(numCells * NUM_DIRECTIONS);
 
 	mEdges.reserve(numEdges);
 	mEdgesBackup.reserve(numEdges);
@@ -195,7 +218,7 @@ void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 
 	cell->ResetGroupVars();
 
-	const unsigned int cellIdx = GRID_ID(cell->x, cell->y);
+	// const unsigned int cellGridIdx = GRID_ID(cell->x, cell->y);
 	const vec3f& cellWorldPos = Grid2World(cell);
 
 	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
@@ -203,7 +226,8 @@ void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 		const unsigned int ngbIdx = GRID_ID(ngbGridPos.x, ngbGridPos.z);
 
 		PFFG_ASSERT(ngbIdx < mCells.size());
-		Cell* ngbCell = &mCells[ngbIdx];
+
+		const Cell* ngbCell = &mCells[ngbIdx];
 
 		// Compute the speed- and unit-cost fields
 		// TODO:
@@ -228,15 +252,16 @@ void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 		cell->cost[dir] = cost;
 
 		// FIXME: need a better way to represent the anisotropy
-		mSpeedVisData[cellIdx] += speed;
-		mCostVisData[cellIdx] += cost;
+		// FIXME: do we even want to visualize these as textures?
+		// mSpeedVisData[cellGridIdx] += speed;
+		// mCostVisData[cellGridIdx] += cost;
 	}
 
-	mSpeedVisData[cellIdx] /= NUM_DIRECTIONS;
-	mCostVisData[cellIdx] /= NUM_DIRECTIONS;
+	// mSpeedVisData[cellGridIdx] /= NUM_DIRECTIONS;
+	// mCostVisData[cellGridIdx] /= NUM_DIRECTIONS;
 }
 
-void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
+void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<Cell*>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
 	PFFG_ASSERT(!inGoalCells.empty());
 	PFFG_ASSERT(mCandidates.empty());
 
@@ -503,19 +528,6 @@ vec3f Grid::Grid2World(const Cell* inCell) const {
 }
 
 
-
-Grid::~Grid() {
-	mHeightVisData.clear();
-	mSpeedVisData.clear();
-	mCostVisData.clear();
-	mPotentialVisData.clear();
-	mDensityVisData.clear();
-	mAvgVelocityVisData.clear();
-
-	mTouchedCells.clear();
-	mCells.clear();
-	mEdges.clear();
-}
 
 
 
