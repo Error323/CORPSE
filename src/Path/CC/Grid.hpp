@@ -110,7 +110,8 @@ private:
 	std::map<unsigned int, Cell*> mTouchedCells;
 	std::vector<Cell> mCells;
 	std::vector<Cell> mCellsBackup;
-	std::vector<Cell::Edge*> mEdges;
+	std::vector<Cell::Edge> mEdges;
+	std::vector<Cell::Edge> mEdgesBackup;
 
 	Cell::Edge* CreateEdge();
 
@@ -119,9 +120,7 @@ private:
 	void UpdateCandidates(const Cell*);
 
 	void ComputeSpeedAndUnitCost(Cell*);
-	float Potential2DWolfram(const float, const float, const float, const float);
-	float Potential2DAbcform(const float, const float, const float, const float);
-	float Potential2DWyke(const float, const float, const float, const float);
+	float Potential2D(const float, const float, const float, const float);
 	float Potential1D(const float, const float);
 };
 

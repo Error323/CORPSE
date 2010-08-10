@@ -34,6 +34,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	mVelocityData.resize(numCells);
 
 	mEdges.reserve(numEdges);
+	mEdgesBackup.reserve(numEdges);
 	mCells.reserve(numCells);
 	mCellsBackup.reserve(numCells);
 
@@ -139,6 +140,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	
 	// Make a backup
 	mCellsBackup.assign(mCells.begin(), mCells.end());
+	mEdgesBackup.assign(mEdges.begin(), mEdges.end());
 }
 
 void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
@@ -362,17 +364,15 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				bestY = dirCells[DIRECTION_SOUTH];
 			}
 
-			const float wyke = Potential2DWyke(bestX->potential, neighbour->cost[bestDirX], 
+			neighbour->potential = Potential2D(bestX->potential, neighbour->cost[bestDirX], 
 				bestY->potential, neighbour->cost[bestDirY]);
-			neighbour->potential = wyke;
-			neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
-			neighbour->edges[bestDirY]->gradPotential = vec3f(neighbour->potential - bestY->potential, 0.0f, mSquareSize);
+			neighbour->edges[bestDirX]->gradPotential = 
+				vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
+			neighbour->edges[bestDirY]->gradPotential = 
+				vec3f(neighbour->potential - bestY->potential, 0.0f, mSquareSize);
 			neighbour->edges[bestDirX]->gradPotential.x *= (bestDirX == DIRECTION_EAST)  ? -1.0f : 1.0f;
 			neighbour->edges[bestDirY]->gradPotential.y *= (bestDirY == DIRECTION_NORTH) ? -1.0f : 1.0f;
 		}
-
-		PFFG_ASSERT(neighbour->potential != std::numeric_limits<float>::infinity());
-		//printf("C_nb(%d,%d) = %+2.2f\n", neighbour->x, neighbour->y, neighbour->potential);
 		neighbour->candidate = true;
 		mCandidates.push(neighbour);
 	}
@@ -382,7 +382,7 @@ float Grid::Potential1D(const float p, const float c) {
 	return std::max<float>(p+c, p-c);
 }
 
-float Grid::Potential2DWyke(const float p1, const float c1, const float p2, const float c2) {
+float Grid::Potential2D(const float p1, const float c1, const float p2, const float c2) {
 	// (c1^2*p2 + c2^2*p1) / (c1^2+c2^2) +/- c1*c2 / sqrt(c1^2 + c2^2)
 	const float c1s = c1*c1;
 	const float c2s = c2*c2;
@@ -395,59 +395,19 @@ float Grid::Potential2DWyke(const float p1, const float c1, const float p2, cons
 	return std::max<float>(a+c, a-c);
 }
 
-inline
-float Grid::Potential2DAbcform(const float p1, const float c1, const float p2, const float c2) {
-	static const float a = 2.0f;
-	       const float b = -(2.0f*p1 + 2.0f*p2);
-	       const float c = (p1*p1 + p2*p2) - ((c1*c1) * (c2*c2));
-	       const float d = b*b - 4.0f*a*c;
-	PFFG_ASSERT(d > 0.0f);
-	       const float e = sqrtf(d);
-
-	       const float solution1 = (-b + e) / (2.0f*a);
-	       const float solution2 = (+b + e) / (2.0f*a);
-
-	return std::max<float>(solution1, solution2);
-}
-
-inline
-float Grid::Potential2DWolfram(const float p1, const float c1, const float p2, const float c2) {
-	// Wolfram solution to equation (11)
-	// solve ( (x-p1) / c1 )^2  +  ( (x-p2) / c2 )^2 = 1 for x
-
-	PFFG_ASSERT(c1 != 0.0f && c2 != 0.0f);
-
-	const float c1s = c1*c1;
-	const float c2s = c2*c2;
-	const float p1_min_p2 = (p1 - p2);
-	const float square = c1s*c2s * (c1s + c2s - p1_min_p2*p1_min_p2);
-
-	PFFG_ASSERT(square > 0.0f);
-
-	const float nom1 = sqrtf(square);
-	const float nom2 = c1s*p2 + c2s*p1;
-	const float denom = c1s + c2s;
-
-	const float solution1 = (-nom1 + nom2) / denom;
-	const float solution2 = ( nom1 + nom2) / denom;
-
-
-	return std::max<float>(solution1, solution2);
-}
-
 void Grid::UpdateSimObjectLocation(const int inSimObjectId) {
 }
 
 void Grid::Reset() {
 	numResets += 1;
 	mCells.assign(mCellsBackup.begin(), mCellsBackup.end());
+	mEdges.assign(mEdgesBackup.begin(), mEdgesBackup.end());
 	mTouchedCells.clear();
 }
 
 Grid::Cell::Edge* Grid::CreateEdge() {
-	Grid::Cell::Edge* f = new Grid::Cell::Edge();
-	mEdges.push_back(f);
-	return f;
+	mEdges.push_back(Grid::Cell::Edge());
+	return &mEdges.back();
 }
 
 
@@ -474,9 +434,6 @@ vec3f Grid::Grid2World(const Cell* inCell) {
 
 
 Grid::~Grid() {
-	for (size_t i = 0; i < mEdges.size(); i++)
-		delete mEdges[i];
-
 	mHeightData.clear();
 	mPotentialData.clear();
 	mDensityData.clear();
