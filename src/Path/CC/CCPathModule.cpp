@@ -55,11 +55,9 @@ void PathModule::OnEvent(const IEvent* e) {
 		} break;
 
 		case EVENT_SIMOBJECT_COLLISION: {
-
 		} break;
 
 		default: {
-			PFFG_ASSERT_MSG(false, "PathModule::OnEvent switch case (%d) doesn't exist", e->GetType());
 		} break;
 	}
 }
@@ -71,12 +69,14 @@ void PathModule::Init() {
 
 void PathModule::Update() {
 	static const std::string s = "[CCPathModule::Update]";
-	// const unsigned int t = ScopedTimer::GetTaskTime(s);
-
-	// printf("%s[1]\n", s.c_str());
+	#ifdef CCPATHMODULE_PROFILE
+	const unsigned int t = ScopedTimer::GetTaskTime(s);
+	#endif
 
 	{
+		#ifdef CCPATHMODULE_PROFILE
 		ScopedTimer timer(s);
+		#endif
 
 		std::map<unsigned int, const SimObjectDef*>::iterator i;
 		std::map<unsigned int, std::set<unsigned int> >::iterator j;
@@ -112,7 +112,6 @@ void PathModule::Update() {
 			// Construct the potential and the gradient
 			// Note: This should get the goal cells from a specific group,
 			//       how will we select them?
-
 			mGrid.UpdateGroupPotentialField(mGoals[j->first], j->second);
 
 			// Update the object locations
@@ -125,8 +124,10 @@ void PathModule::Update() {
 		// Should this be handled in the EVENT_SIMOBJECT_COLLISION ?
 	}
 
-	// printf("%s[2] time: %ums\n", s.c_str(), (ScopedTimer::GetTaskTime(s) - t));;
-	// printf("\n");
+	#ifdef CCPATHMODULE_PROFILE
+	printf("%s time: %ums\n", s.c_str(), (ScopedTimer::GetTaskTime(s) - t));;
+	printf("\n");
+	#endif
 }
 
 void PathModule::Kill() {

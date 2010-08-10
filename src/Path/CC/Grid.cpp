@@ -31,7 +31,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	mHeightData.resize(numCells);
 	mPotentialData.resize(numCells);
 	mDensityData.resize(numCells);
-	mVelocityData.resize(numCells);
+	mAvgVelocityData.resize(numCells);
 
 	mEdges.reserve(numEdges);
 	mEdgesBackup.reserve(numEdges);
@@ -173,10 +173,11 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 
 void Grid::ComputeAvgVelocity() {
 	std::map<unsigned int, Cell*>::iterator i;
+
 	for (i = mTouchedCells.begin(); i != mTouchedCells.end(); i++) {
-		i->second->avgVelocity /= i->second->density;
-		mDensityData[i->first]  = i->second->density;
-		mVelocityData[i->first] = i->second->avgVelocity;
+		i->second->avgVelocity     /= i->second->density;
+		mDensityData[i->first]      = i->second->density;
+		mAvgVelocityData[i->first]  = i->second->avgVelocity;
 	}
 }
 
@@ -401,7 +402,8 @@ float Grid::Potential2D(const float p1, const float c1, const float p2, const fl
 
 
 
-void Grid::UpdateSimObjectLocation(const int inSimObjectId) {
+void Grid::UpdateSimObjectLocation(const unsigned int inSimObjectId) const {
+	// TODO: interpolate the velocity-field
 }
 
 void Grid::Reset() {
@@ -444,7 +446,7 @@ Grid::~Grid() {
 	mHeightData.clear();
 	mPotentialData.clear();
 	mDensityData.clear();
-	mVelocityData.clear();
+	mAvgVelocityData.clear();
 
 	mTouchedCells.clear();
 	mCells.clear();

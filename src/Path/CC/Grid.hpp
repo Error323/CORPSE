@@ -68,7 +68,7 @@ public:
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
 	void ComputeAvgVelocity();
 	void UpdateGroupPotentialField(const std::vector<Cell*>&, const std::set<unsigned int>&);
-	void UpdateSimObjectLocation(const int);
+	void UpdateSimObjectLocation(const unsigned int) const;
 	void Reset();
 
 	int GetGridWidth() const { return mWidth; }
@@ -77,7 +77,7 @@ public:
 	const float* GetHeightDataArray()    const { return (mHeightData.empty())? NULL: &mHeightData[0]; }
 	const float* GetPotentialDataArray() const { return (mPotentialData.empty())? NULL: &mPotentialData[0]; }
 	const float* GetDensityDataArray()   const { return (mDensityData.empty())? NULL: &mDensityData[0]; }
-	const vec3f* GetVelocityDataArray()  const { return (mVelocityData.empty())? NULL: &mVelocityData[0]; }
+	const vec3f* GetVelocityAvgDataArray()  const { return (mAvgVelocityData.empty())? NULL: &mAvgVelocityData[0]; }
 
 	Cell* World2Cell(const vec3f&);
 
@@ -103,7 +103,7 @@ private:
 	std::vector<float> mHeightData;
 	std::vector<float> mPotentialData;
 	std::vector<float> mDensityData;
-	std::vector<vec3f> mVelocityData;
+	std::vector<vec3f> mAvgVelocityData;
 
 	ICallOutHandler* mCoh;
 
