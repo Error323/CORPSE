@@ -222,12 +222,12 @@ void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 	const vec3f& cellWorldPos = Grid2World(cell);
 
 	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
-		const vec3i ngbGridPos = World2Grid(cellWorldPos + dirVectors[dir] * mMaxRadius);
-		const unsigned int ngbIdx = GRID_ID(ngbGridPos.x, ngbGridPos.z);
+		const vec3i& ngbGridPos = World2Grid(cellWorldPos + dirVectors[dir] * mMaxRadius);
+		const unsigned int ngbGridIdx = GRID_ID(ngbGridPos.x, ngbGridPos.z);
 
-		PFFG_ASSERT(ngbIdx < mCells.size());
+		PFFG_ASSERT(ngbGridIdx < mCells.size());
 
-		const Cell* ngbCell = &mCells[ngbIdx];
+		const Cell* ngbCell = &mCells[ngbGridIdx];
 
 		// Compute the speed- and unit-cost fields
 		// TODO:
