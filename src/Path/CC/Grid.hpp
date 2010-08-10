@@ -77,10 +77,12 @@ public:
 	int GetGridWidth() const { return mWidth; }
 	int GetGridHeight() const { return mHeight; }
 
-	const float* GetHeightDataArray()    const { return (mHeightData.empty())? NULL: &mHeightData[0]; }
-	const float* GetPotentialDataArray() const { return (mPotentialData.empty())? NULL: &mPotentialData[0]; }
-	const float* GetDensityDataArray()   const { return (mDensityData.empty())? NULL: &mDensityData[0]; }
-	const vec3f* GetVelocityAvgDataArray()  const { return (mAvgVelocityData.empty())? NULL: &mAvgVelocityData[0]; }
+	const float* GetHeightVisDataArray() const { return (mHeightVisData.empty())? NULL: &mHeightVisData[0]; }
+	const float* GetSpeedVisDataArray() const { return (mSpeedVisData.empty())? NULL: &mSpeedVisData[0]; }
+	const float* GetCostVisDataArray() const { return (mCostVisData.empty())? NULL: &mCostVisData[0]; }
+	const float* GetPotentialVisDataArray() const { return (mPotentialVisData.empty())? NULL: &mPotentialVisData[0]; }
+	const float* GetDensityVisDataArray() const { return (mDensityVisData.empty())? NULL: &mDensityVisData[0]; }
+	const vec3f* GetVelocityAvgVisDataArray() const { return (mAvgVelocityVisData.empty())? NULL: &mAvgVelocityVisData[0]; }
 
 	Cell* World2Cell(const vec3f&);
 
@@ -103,10 +105,12 @@ private:
 	std::priority_queue<Cell*, std::vector<Cell*, std::allocator<Cell*> >, Cell> mCandidates;
 
 	// Visualization data
-	std::vector<float> mHeightData;
-	std::vector<float> mPotentialData;
-	std::vector<float> mDensityData;
-	std::vector<vec3f> mAvgVelocityData;
+	std::vector<float> mHeightVisData;
+	std::vector<float> mSpeedVisData;
+	std::vector<float> mCostVisData;
+	std::vector<float> mPotentialVisData;
+	std::vector<float> mDensityVisData;
+	std::vector<vec3f> mAvgVelocityVisData;
 
 	ICallOutHandler* mCOH;
 

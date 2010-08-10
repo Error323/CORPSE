@@ -24,87 +24,65 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 		enabled = !enabled;
 	}
 
-	if (enabled) {
-		const IPathModule* m = simThread->GetPathModule();
+	if (!enabled) {
+		return;
+	}
 
-		Texture* heightTex    = textures[PathModule::DATATYPE_HEIGHT];
-		Texture* potentialTex = textures[PathModule::DATATYPE_POTENTIAL];
-		Texture* densityTex   = textures[PathModule::DATATYPE_DENSITY];
+	Texture* texturePtrs[PathModule::NUM_DATATYPES] = {NULL};
 
-		if (key == SDLK_h) {
-			if (heightTex == NULL) {
-				// create the height-texture
-				const unsigned int xsize = m->GetScalarDataArraySizeX(PathModule::DATATYPE_HEIGHT);
-				const unsigned int zsize = m->GetScalarDataArraySizeZ(PathModule::DATATYPE_HEIGHT);
-				const float* data = m->GetScalarDataArray(PathModule::DATATYPE_HEIGHT, -1);
+	texturePtrs[PathModule::DATATYPE_HEIGHT]    = textures[PathModule::DATATYPE_HEIGHT];
+	texturePtrs[PathModule::DATATYPE_POTENTIAL] = textures[PathModule::DATATYPE_POTENTIAL];
+	texturePtrs[PathModule::DATATYPE_DENSITY]   = textures[PathModule::DATATYPE_DENSITY];
+	texturePtrs[PathModule::DATATYPE_SPEED]     = textures[PathModule::DATATYPE_SPEED];
+	texturePtrs[PathModule::DATATYPE_COST]      = textures[PathModule::DATATYPE_COST];
 
-				heightTex = new Texture(xsize, zsize, data);
-				textures[PathModule::DATATYPE_HEIGHT] = heightTex;
+	const IPathModule* m = simThread->GetPathModule();
+	unsigned int dataType = PathModule::NUM_DATATYPES;
 
-				readMap->GetGroundDrawer()->SetOverlayTexture(heightTex->GetID());
-			} else {
-				heightTex->ToggleEnabled();
+	switch (key) {
+		case SDLK_h: { dataType = PathModule::DATATYPE_HEIGHT;    } break;
+		case SDLK_p: { dataType = PathModule::DATATYPE_POTENTIAL; } break;
+		case SDLK_d: { dataType = PathModule::DATATYPE_DENSITY;   } break;
+		case SDLK_f: { dataType = PathModule::DATATYPE_SPEED;     } break;
+		case SDLK_k: { dataType = PathModule::DATATYPE_COST;      } break;
+		default: {} break;
+	}
 
-				if (!heightTex->IsEnabled()) {
-					readMap->GetGroundDrawer()->SetOverlayTexture(0);
-				} else {
-					readMap->GetGroundDrawer()->SetOverlayTexture(heightTex->GetID());
-				}
-			}
-		}
+	if (dataType >= PathModule::NUM_DATATYPES) {
+		return;
+	}
 
-		if (key == SDLK_p) {
-			if (potentialTex == NULL) {
-				// create the potential-texture
-				const unsigned int xsize = m->GetScalarDataArraySizeX(PathModule::DATATYPE_POTENTIAL);
-				const unsigned int zsize = m->GetScalarDataArraySizeZ(PathModule::DATATYPE_POTENTIAL);
-				const float* data = m->GetScalarDataArray(PathModule::DATATYPE_POTENTIAL, texGroupID);
+	Texture* dataTex = texturePtrs[dataType];
 
-				potentialTex = new Texture(xsize, zsize, data);
-				textures[PathModule::DATATYPE_POTENTIAL] = potentialTex;
+	if (dataTex == NULL) {
+		const unsigned int xsize = m->GetScalarDataArraySizeX(dataType);
+		const unsigned int zsize = m->GetScalarDataArraySizeZ(dataType);
+		const float* data = m->GetScalarDataArray(dataType, texGroupID);
 
-				readMap->GetGroundDrawer()->SetOverlayTexture(potentialTex->GetID());
-			} else {
-				potentialTex->ToggleEnabled();
+		dataTex = new Texture(xsize, zsize, data);
+		textures[dataType] = dataTex;
 
-				if (!potentialTex->IsEnabled()) {
-					readMap->GetGroundDrawer()->SetOverlayTexture(0);
-				} else {
-					// cycle to the next group
-					const unsigned int numGroupIDs = m->GetNumGroupIDs();
+		readMap->GetGroundDrawer()->SetOverlayTexture(dataTex->GetID());
+	} else {
+		dataTex->ToggleEnabled();
 
-					if (numGroupIDs > 0) {
-						textureGroupIDs.resize(numGroupIDs);
-						m->GetGroupIDs(&textureGroupIDs[0], numGroupIDs);
+		if (!dataTex->IsEnabled()) {
+			readMap->GetGroundDrawer()->SetOverlayTexture(0);
+		} else {
+			readMap->GetGroundDrawer()->SetOverlayTexture(dataTex->GetID());
 
-						texGroupIdx = (texGroupIdx + 1) % numGroupIDs;
-						texGroupID = textureGroupIDs[texGroupIdx];
+			if (dataType == PathModule::DATATYPE_POTENTIAL) {
+				// cycle to the next group
+				const unsigned int numGroupIDs = m->GetNumGroupIDs();
 
-						potentialTex->Update(m->GetScalarDataArray(PathModule::DATATYPE_POTENTIAL, texGroupID));
-						readMap->GetGroundDrawer()->SetOverlayTexture(potentialTex->GetID());
-					}
-				}
-			}
-		}
+				if (numGroupIDs > 0) {
+					textureGroupIDs.resize(numGroupIDs);
+					m->GetGroupIDs(&textureGroupIDs[0], numGroupIDs);
 
-		if (key == SDLK_d) {
-			if (densityTex == NULL) {
-				// create the density-texture
-				const unsigned int xsize = m->GetScalarDataArraySizeX(PathModule::DATATYPE_DENSITY);
-				const unsigned int zsize = m->GetScalarDataArraySizeZ(PathModule::DATATYPE_DENSITY);
-				const float* data = m->GetScalarDataArray(PathModule::DATATYPE_DENSITY, texGroupID);
+					texGroupIdx = (texGroupIdx + 1) % numGroupIDs;
+					texGroupID = textureGroupIDs[texGroupIdx];
 
-				densityTex = new Texture(xsize, zsize, data);
-				textures[PathModule::DATATYPE_DENSITY] = densityTex;
-
-				readMap->GetGroundDrawer()->SetOverlayTexture(densityTex->GetID());
-			} else {
-				densityTex->ToggleEnabled();
-
-				if (!densityTex->IsEnabled()) {
-					readMap->GetGroundDrawer()->SetOverlayTexture(0);
-				} else {
-					readMap->GetGroundDrawer()->SetOverlayTexture(densityTex->GetID());
+					dataTex->Update(m->GetScalarDataArray(dataType, texGroupID));
 				}
 			}
 		}
@@ -115,31 +93,28 @@ void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 	static unsigned int simFrame = simThread->GetFrame();
 
 	if (enabled) {
-		Texture* potentialTex = textures[PathModule::DATATYPE_POTENTIAL];
-		Texture* densityTex   = textures[PathModule::DATATYPE_DENSITY];
+		static const unsigned int dataTypes[4] = {
+			PathModule::DATATYPE_POTENTIAL,
+			PathModule::DATATYPE_DENSITY,
+			PathModule::DATATYPE_SPEED,
+			PathModule::DATATYPE_COST,
+		};
 
-		if (potentialTex != NULL && potentialTex->IsEnabled()) {
-			if (simThread->GetFrame() != simFrame) {
-				simFrame = simThread->GetFrame();
+		for (unsigned int i = 0; i < 4; i++) {
+			Texture* tex = textures[ dataTypes[i] ];
 
-				// update the texture data
-				// if the group corresponding to <texGroupID> no longer exists,
-				// this causes the texture to be filled with default values (0)
-				const IPathModule* m = simThread->GetPathModule();
-				const float* d = m->GetScalarDataArray(PathModule::DATATYPE_POTENTIAL, texGroupID);
+			if (tex != NULL && tex->IsEnabled()) {
+				if (simThread->GetFrame() != simFrame) {
+					simFrame = simThread->GetFrame();
 
-				potentialTex->Update(d);
-			}
-		}
+					// update the texture data
+					// if the group corresponding to <texGroupID> no longer exists,
+					// this causes the texture to be filled with default values (0)
+					const IPathModule* m = simThread->GetPathModule();
+					const float* d = m->GetScalarDataArray(dataTypes[i], texGroupID);
 
-		if (densityTex != NULL && densityTex->IsEnabled()) {
-			if (simThread->GetFrame() != simFrame) {
-				simFrame = simThread->GetFrame();
-
-				const IPathModule* m = simThread->GetPathModule();
-				const float* d = m->GetScalarDataArray(PathModule::DATATYPE_DENSITY, texGroupID);
-
-				densityTex->Update(d);
+					tex->Update(d);
+				}
 			}
 		}
 	}

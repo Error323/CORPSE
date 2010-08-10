@@ -28,10 +28,12 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 	const unsigned int numCells = mWidth * mHeight;
 	const unsigned int numEdges = (mWidth + 1) * mHeight + (mHeight + 1) * mWidth;
 
-	mHeightData.resize(numCells);
-	mPotentialData.resize(numCells);
-	mDensityData.resize(numCells);
-	mAvgVelocityData.resize(numCells);
+	mHeightVisData.resize(numCells);
+	mSpeedVisData.resize(numCells);
+	mCostVisData.resize(numCells);
+	mPotentialVisData.resize(numCells);
+	mDensityVisData.resize(numCells);
+	mAvgVelocityVisData.resize(numCells);
 
 	mEdges.reserve(numEdges);
 	mEdgesBackup.reserve(numEdges);
@@ -95,8 +97,8 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 			// Set the height, assuming the world is static wrt height
 			curCell->height = ELEVATION(x, y);
 
-			mHeightData[GRID_ID(x, y)] = curCell->height;
-			mPotentialData[GRID_ID(x, y)] = curCell->potential;
+			mHeightVisData[GRID_ID(x, y)] = curCell->height;
+			mPotentialVisData[GRID_ID(x, y)] = curCell->potential;
 		}
 	}
 
@@ -172,9 +174,9 @@ void Grid::ComputeAvgVelocity() {
 	std::map<unsigned int, Cell*>::iterator i;
 
 	for (i = mTouchedCells.begin(); i != mTouchedCells.end(); i++) {
-		i->second->avgVelocity     /= i->second->density;
-		mDensityData[i->first]      = i->second->density;
-		mAvgVelocityData[i->first]  = i->second->avgVelocity;
+		i->second->avgVelocity        /= i->second->density;
+		mDensityVisData[i->first]      = i->second->density;
+		mAvgVelocityVisData[i->first]  = i->second->avgVelocity;
 	}
 }
 
@@ -193,38 +195,45 @@ void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 
 	cell->ResetGroupVars();
 
-	const vec3f& worldPos = Grid2World(cell);
+	const unsigned int cellIdx = GRID_ID(cell->x, cell->y);
+	const vec3f& cellWorldPos = Grid2World(cell);
 
 	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
-		// Compute the speed field
-		const vec3i dGridPos = World2Grid(worldPos + dirVectors[dir] * mMaxRadius);
-		const unsigned int idx = GRID_ID(dGridPos.x, dGridPos.z);
+		const vec3i ngbGridPos = World2Grid(cellWorldPos + dirVectors[dir] * mMaxRadius);
+		const unsigned int ngbIdx = GRID_ID(ngbGridPos.x, ngbGridPos.z);
 
-		PFFG_ASSERT(idx < mCells.size());
-		Cell* dCell = &mCells[idx];
+		PFFG_ASSERT(ngbIdx < mCells.size());
+		Cell* ngbCell = &mCells[ngbIdx];
 
-		// FIXME: Engine slope should be in the same format as CC slope
-		const float topologicalSpeed = 
-			mMaxSpeed + ((cell->edges[dir]->gradHeight.dot2D(dirVectors[dir]) - mMinSlope) / 
-			(mMaxSlope - mMinSlope)) * 
-			(mMaxSpeed - minSpeed);
-
-		const float flowSpeed = 
-			dCell->avgVelocity.dot2D(dirVectors[dir]);
-
-		const float speed = 
-			((dCell->density - sMinDensity) / (maxDensity - sMinDensity)) * 
-			(topologicalSpeed - flowSpeed) + 
-			topologicalSpeed;
-
-		cell->speed[dir] = speed;
-
-		// Compute the unit cost
+		// Compute the speed- and unit-cost fields
 		// TODO:
 		//    evaluate speed and discomfort at cell into which
 		//   an agent would move if it chose direction <dir>
-		cell->cost[dir] = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
+		// FIXME: engine slopes should be in the same format as CC slopes
+		const float topologicalSpeed = 
+			mMaxSpeed +
+			((cell->edges[dir]->gradHeight.dot2D(dirVectors[dir]) - mMinSlope) /  (mMaxSlope - mMinSlope)) * 
+			(mMaxSpeed - minSpeed);
+
+		const float flowSpeed = 
+			ngbCell->avgVelocity.dot2D(dirVectors[dir]);
+
+		const float speed = 
+			((ngbCell->density - sMinDensity) / (maxDensity - sMinDensity)) * 
+			(topologicalSpeed - flowSpeed) + 
+			topologicalSpeed;
+		const float cost = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
+
+		cell->speed[dir] = speed;
+		cell->cost[dir] = cost;
+
+		// FIXME: need a better way to represent the anisotropy
+		mSpeedVisData[cellIdx] += speed;
+		mCostVisData[cellIdx] += cost;
 	}
+
+	mSpeedVisData[cellIdx] /= NUM_DIRECTIONS;
+	mCostVisData[cellIdx] /= NUM_DIRECTIONS;
 }
 
 void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
@@ -253,14 +262,14 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 		cell->known = true;
 		cell->candidate = true;
 		cell->potential = 0.0f;
-		mPotentialData[GRID_ID(cell->x, cell->y)] = cell->potential;
+		mPotentialVisData[GRID_ID(cell->x, cell->y)] = cell->potential;
 		UpdateCandidates(cell);
 	}
 
 	while (!mCandidates.empty()) {
 		Cell* cell = mCandidates.top(); mCandidates.pop();
 		cell->known = true;
-		mPotentialData[GRID_ID(cell->x, cell->y)] = cell->potential;
+		mPotentialVisData[GRID_ID(cell->x, cell->y)] = cell->potential;
 		UpdateCandidates(cell);
 	}
 }
@@ -496,10 +505,12 @@ vec3f Grid::Grid2World(const Cell* inCell) const {
 
 
 Grid::~Grid() {
-	mHeightData.clear();
-	mPotentialData.clear();
-	mDensityData.clear();
-	mAvgVelocityData.clear();
+	mHeightVisData.clear();
+	mSpeedVisData.clear();
+	mCostVisData.clear();
+	mPotentialVisData.clear();
+	mDensityVisData.clear();
+	mAvgVelocityVisData.clear();
 
 	mTouchedCells.clear();
 	mCells.clear();

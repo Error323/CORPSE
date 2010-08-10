@@ -35,18 +35,20 @@ public:
 
 	enum {
 		// scalar fields
-		DATATYPE_DENSITY         = 0, // rho (global)
-		DATATYPE_DISCOMFORT      = 1, // g (per-group?, stored at cell-centers)
-		DATATYPE_SPEED           = 2, // f (per-group, stored at cell-edges)
-		DATATYPE_POTENTIAL       = 3, // phi (per-group, stored at cell-centers)
-		DATATYPE_HEIGHT          = 4, // h (global, stored at cell-centers)
+		DATATYPE_DENSITY         =  0, // rho (global)
+		DATATYPE_DISCOMFORT      =  1, // g (per-group?, stored at cell-centers)
+		DATATYPE_SPEED           =  2, // f (per-group, stored at cell-edges)
+		DATATYPE_COST            =  5, // C (per-group, stored at cell-edges)
+		DATATYPE_POTENTIAL       =  3, // phi (per-group, stored at cell-centers)
+		DATATYPE_HEIGHT          =  4, // h (global, stored at cell-centers)
 
 		// vector fields
-		DATATYPE_COST            = 5, // C (per-group, stored at cell-edges)
-		DATATYPE_VELOCITY        = 6, // v (per-group, stored at cell-edges)
-		DATATYPE_VELOCITY_AVG    = 7, // v-bar (global, stored at cell-centers)
-		DATATYPE_POTENTIAL_DELTA = 8, // delta-phi (per-group, stored at cell-edges)
-		DATATYPE_HEIGHT_DELTA    = 9, // delta-h (global, stored at cell-edges)
+		DATATYPE_VELOCITY        =  6, // v (per-group, stored at cell-edges)
+		DATATYPE_VELOCITY_AVG    =  7, // v-bar (global, stored at cell-centers)
+		DATATYPE_POTENTIAL_DELTA =  8, // delta-phi (per-group, stored at cell-edges)
+		DATATYPE_HEIGHT_DELTA    =  9, // delta-h (global, stored at cell-edges)
+
+		NUM_DATATYPES            = 10,
 	};
 
 	unsigned int GetNumGroupIDs() const { return mObjectGroups.size(); }

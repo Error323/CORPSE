@@ -177,10 +177,12 @@ bool PathModule::DelObjectFromGroup(unsigned int objID) {
 
 unsigned int PathModule::GetScalarDataArraySizeX(unsigned int dataType) const {
 	switch (dataType) {
-		//! NOTE: these are not all the same size (eg. h vs. delta-h)!
+		//! NOTE: these are not all the same size (eg. density vs. speed)
 		case DATATYPE_DENSITY: { return mGrid.GetGridWidth(); } break;
-		//! case DATATYPE_DISCOMFORT: { return mGrid.GetSizeX(); } break;
+		case DATATYPE_DISCOMFORT: { return 0; } break;
 		case DATATYPE_POTENTIAL: { return mGrid.GetGridWidth(); } break;
+		case DATATYPE_SPEED: { return mGrid.GetGridWidth(); } break;
+		case DATATYPE_COST: { return mGrid.GetGridWidth(); } break;
 		case DATATYPE_HEIGHT: { return mGrid.GetGridWidth(); } break;
 		default: {
 		} break;
@@ -191,10 +193,12 @@ unsigned int PathModule::GetScalarDataArraySizeX(unsigned int dataType) const {
 
 unsigned int PathModule::GetScalarDataArraySizeZ(unsigned int dataType) const {
 	switch (dataType) {
-		//! NOTE: these are not all the same size (eg. h vs. delta-h)!
+		//! NOTE: these are not all the same size (eg. density vs. speed)
 		case DATATYPE_DENSITY: { return mGrid.GetGridHeight(); } break;
-		//! case DATATYPE_DISCOMFORT: { return mGrid.GetSizeZ(); } break;
+		case DATATYPE_DISCOMFORT: { return 0; } break;
 		case DATATYPE_POTENTIAL: { return mGrid.GetGridHeight(); } break;
+		case DATATYPE_SPEED: { return mGrid.GetGridHeight(); } break;
+		case DATATYPE_COST: { return mGrid.GetGridHeight(); } break;
 		case DATATYPE_HEIGHT: { return mGrid.GetGridHeight(); } break;
 		default: {
 		} break;
@@ -206,18 +210,23 @@ unsigned int PathModule::GetScalarDataArraySizeZ(unsigned int dataType) const {
 const float* PathModule::GetScalarDataArray(unsigned int dataType, unsigned int groupID) const {
 	switch (dataType) {
 		case DATATYPE_DENSITY: {
-			return mGrid.GetDensityDataArray();
+			return mGrid.GetDensityVisDataArray();
 		} break;
 		case DATATYPE_DISCOMFORT: {
 			//! TODO, FIXME: per-group
 			//! return mGrid.GetDiscomfortDataArray();
 		} break;
 		case DATATYPE_POTENTIAL: {
-			//! FIXME: per-group
-			return mGrid.GetPotentialDataArray();
+			return mGrid.GetPotentialVisDataArray(); //! FIXME: per-group
+		} break;
+		case DATATYPE_SPEED: {
+			return mGrid.GetSpeedVisDataArray(); //! FIXME: per-group
+		} break;
+		case DATATYPE_COST: {
+			return mGrid.GetCostVisDataArray(); //! FIXME: per-group
 		} break;
 		case DATATYPE_HEIGHT: {
-			return mGrid.GetHeightDataArray();
+			return mGrid.GetHeightVisDataArray();
 		} break;
 		default: {
 		} break;
@@ -231,8 +240,6 @@ const float* PathModule::GetScalarDataArray(unsigned int dataType, unsigned int 
 unsigned int PathModule::GetVectorDataArraySizeX(unsigned int dataType) const {
 	switch (dataType) {
 		//! NOTE: these are not all the same size (eg. v vs. v-bar)!
-		//! case DATATYPE_COST: { return mGrid.GetSizeX(); } break;
-		//! case DATATYPE_SPEED: { return mGrid.GetSizeX(); } break;
 		//! case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetSizeX(); } break;
 		//! case DATATYPE_HEIGHT_DELTA: { return mGrid.GetSizeX(); } break;
 		//! case DATATYPE_VELOCITY: { return mGrid.GetSizeX(); } break;
@@ -247,8 +254,6 @@ unsigned int PathModule::GetVectorDataArraySizeX(unsigned int dataType) const {
 unsigned int PathModule::GetVectorDataArraySizeZ(unsigned int dataType) const {
 	switch (dataType) {
 		//! NOTE: these are not all the same size (eg. v vs. v-bar)!
-		//! case DATATYPE_COST: { return mGrid.GetSizeZ(); } break;
-		//! case DATATYPE_SPEED: { return mGrid.GetSizeZ(); } break;
 		//! case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetSizeZ(); } break;
 		//! case DATATYPE_HEIGHT_DELTA: { return mGrid.GetSizeZ(); } break;
 		//! case DATATYPE_VELOCITY: { return mGrid.GetSizeZ(); } break;
@@ -262,21 +267,12 @@ unsigned int PathModule::GetVectorDataArraySizeZ(unsigned int dataType) const {
 
 const vec3f* PathModule::GetVectorDataArray(unsigned int dataType, unsigned int groupID) const {
 	switch (dataType) {
-		case DATATYPE_COST: {
-			//! TODO, FIXME: per-group
-			//! return mGrid.GetCostDataArray();
-		} break;
-		case DATATYPE_SPEED: {
-			//! TODO, FIXME: per-group
-			//! return mGrid.GetSpeedDataArray();
-		} break;
-
 		case DATATYPE_POTENTIAL_DELTA: {
 			//! TODO, FIXME: per-group
 			//! return mGrid.GetPotentialDeltaDataArray();
 		} break;
 		case DATATYPE_HEIGHT_DELTA: {
-			//! TODO, NOTE: slopes are stored per-edge, four values per cell
+			//! TODO, NOTE: slopes are stored per-edge, so four values per cell (same as speed and cost)
 			//! return mGrid.GetHeightDeltaDataArray();
 		} break;
 
