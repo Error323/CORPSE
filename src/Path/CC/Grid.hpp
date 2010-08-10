@@ -31,12 +31,6 @@ public:
 		Cell(unsigned int _x, unsigned int _y): x(_x), y(_y), known(false), candidate(false), numNeighbours(0) {
 		}
 
-		struct Edge {
-			vec3f gradPotential;
-			vec3f velocity;
-			vec3f gradHeight;
-		};
-
 		// for less() (NOTE: candidates are sorted in increasing order)
 		bool operator() (const Cell* a, const Cell* b) const {
 			return (a->potential > b->potential);
@@ -45,6 +39,16 @@ public:
 		void ResetFull();
 		void ResetDynamicVars();
 		void ResetGroupVars();
+
+		vec3f GetNormalizedPotentialGradient(unsigned int dir) const {
+			return (edges[dir]->gradPotential / edges[dir]->gradPotential.len3D());
+		}
+
+		struct Edge {
+			vec3f gradPotential;
+			vec3f velocity;
+			vec3f gradHeight;
+		};
 
 		unsigned int x, y;
 		bool  known;
@@ -68,7 +72,7 @@ public:
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
 	void ComputeAvgVelocity();
 	void UpdateGroupPotentialField(const std::vector<Cell*>&, const std::set<unsigned int>&);
-	void UpdateSimObjectLocation(const unsigned int) const;
+	void UpdateSimObjectLocation(const unsigned int);
 	void Reset();
 
 	int GetGridWidth() const { return mWidth; }

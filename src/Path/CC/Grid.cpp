@@ -195,7 +195,7 @@ void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 
 	const vec3f& worldPos = Grid2World(cell);
 
-	for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
+	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		// Compute the speed field
 		const vec3i dGridPos = World2Grid(worldPos + dirVectors[dir] * mMaxRadius);
 		const unsigned int idx = GRID_ID(dGridPos.x, dGridPos.z);
@@ -287,7 +287,7 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 		dirCells[DIRECTION_WEST]  = (x > 0        ) ? &mCells[GRID_ID(x - 1, y    )] : NULL;
 		dirCells[DIRECTION_EAST]  = (x < mWidth-1 ) ? &mCells[GRID_ID(x + 1, y    )] : NULL;
 
-		for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
+		for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 			if (dirCells[dir] == NULL) {
 				dirValid[dir] = false;
 				dirCosts[dir] = std::numeric_limits<float>::infinity();
@@ -407,13 +407,15 @@ float Grid::Potential2D(const float p1, const float c1, const float p2, const fl
 
 
 
-void Grid::UpdateSimObjectLocation(const unsigned int inSimObjectID) const {
+void Grid::UpdateSimObjectLocation(const unsigned int inSimObjectID) {
 	// TODO: interpolate the velocity-field
 	const vec3f& worldPos = mCOH->GetSimObjectPosition(inSimObjectID);
 	const vec3f& worldDir = mCOH->GetSimObjectDirection(inSimObjectID);
-	const vec3i& gridPos = World2Grid(worldPos);
 
-	mCOH->SetSimObjectRawPosition(inSimObjectID, worldPos);
+	const Cell* c = World2Cell(worldPos);
+	const vec3f worldVel; /// = -INTERPOLATE_SPEED_FIELD(c, worldDir) * c->GetNormalizedPotentialGradient(edgeDir);
+
+	mCOH->SetSimObjectRawPosition(inSimObjectID, worldPos + worldVel);
 	mCOH->SetSimObjectRawDirection(inSimObjectID, worldDir);
 }
 
@@ -479,7 +481,7 @@ void Grid::Cell::ResetFull() {
 	height = 0.0f;
 	numNeighbours = 0;
 
-	for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
+	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		edges[dir]->gradHeight = NVECf;
 		neighbours[dir] = NULL;
 	}
@@ -498,7 +500,7 @@ void Grid::Cell::ResetGroupVars() {
 	known = false;
 	candidate = false;
 
-	for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
+	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		speed[dir] = 0.0f;
 		cost[dir]  = 0.0f;
 		edges[dir]->gradPotential = NVECf;
