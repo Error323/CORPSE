@@ -115,13 +115,13 @@ private:
 
 	Cell::Edge* CreateEdge();
 
-	vec3i World2Grid(const vec3f&);
-	vec3f Grid2World(const Cell*);
+	vec3i World2Grid(const vec3f&) const;
+	vec3f Grid2World(const Cell*) const;
 	void UpdateCandidates(const Cell*);
 
 	void ComputeSpeedAndUnitCost(Cell*);
-	float Potential2D(const float, const float, const float, const float);
-	float Potential1D(const float, const float);
+	float Potential2D(const float, const float, const float, const float) const;
+	float Potential1D(const float, const float) const;
 };
 
 #endif

@@ -378,22 +378,28 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 	}
 }
 
-float Grid::Potential1D(const float p, const float c) {
-	return std::max<float>(p+c, p-c);
+
+
+float Grid::Potential1D(const float p, const float c) const {
+	return std::max<float>(p + c, p - c);
 }
 
-float Grid::Potential2D(const float p1, const float c1, const float p2, const float c2) {
+float Grid::Potential2D(const float p1, const float c1, const float p2, const float c2) const {
 	// (c1^2*p2 + c2^2*p1) / (c1^2+c2^2) +/- c1*c2 / sqrt(c1^2 + c2^2)
-	const float c1s = c1*c1;
-	const float c2s = c2*c2;
+	const float c1s = c1 * c1;
+	const float c2s = c2 * c2;
 	const float c1s_plus_c2s = c1s + c2s;
-	PFFG_ASSERT(c1s_plus_c2s > 0.0f);
-	const float a = (c1s*p2 + c2s*p1) / (c1s_plus_c2s);
-	const float b = sqrtf(c1s_plus_c2s);
-	const float c = c1*c2 / b;
 
-	return std::max<float>(a+c, a-c);
+	PFFG_ASSERT(c1s_plus_c2s > 0.0f);
+
+	const float a = (c1s * p2 + c2s * p1) / (c1s_plus_c2s);
+	const float b = sqrtf(c1s_plus_c2s);
+	const float c = c1 * c2 / b;
+
+	return std::max<float>(a + c, a - c);
 }
+
+
 
 void Grid::UpdateSimObjectLocation(const int inSimObjectId) {
 }
@@ -412,7 +418,7 @@ Grid::Cell::Edge* Grid::CreateEdge() {
 
 
 
-vec3i Grid::World2Grid(const vec3f& inVec) {
+vec3i Grid::World2Grid(const vec3f& inVec) const {
 	const int x = std::max(0, std::min( mWidth - 1, int(inVec.x / mSquareSize) ));
 	const int z = std::max(0, std::min( mHeight - 1, int(inVec.z / mSquareSize) ));
 	return vec3i(x, 0, z);
@@ -422,12 +428,13 @@ Grid::Cell* Grid::World2Cell(const vec3f& inPos) {
 	const vec3i& cellCoords = World2Grid(inPos);
 	const unsigned int idx = GRID_ID(cellCoords.x, cellCoords.z);
 
+	PFFG_ASSERT_MSG(idx < mCells.size(), "world(%2.2f, %2.2f) grid(%d, %d)", inPos.x, inPos.z, cellCoords.x, cellCoords.z);
+
 	Cell* cell = &mCells[idx];
-	PFFG_ASSERT_MSG(cell != NULL, "world(%2.2f, %2.2f) grid(%d, %d)", inPos.x, inPos.z, cellCoords.x, cellCoords.z);
 	return cell;
 }
 
-vec3f Grid::Grid2World(const Cell* inCell) {
+vec3f Grid::Grid2World(const Cell* inCell) const {
 	return vec3f(inCell->x * mSquareSize, ELEVATION(inCell->x, inCell->y), inCell->y * mSquareSize);
 }
 

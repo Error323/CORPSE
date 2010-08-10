@@ -50,6 +50,7 @@ void PathModule::OnEvent(const IEvent* e) {
 				DelObjectFromGroup(objID);
 				AddObjectToGroup(objID, groupID);
 			}
+
 			mGoals[groupID].push_back(mGrid.World2Cell(goalPos));
 		} break;
 
@@ -70,9 +71,9 @@ void PathModule::Init() {
 
 void PathModule::Update() {
 	static const std::string s = "[CCPathModule::Update]";
-	const unsigned int t = ScopedTimer::GetTaskTime(s);
+	// const unsigned int t = ScopedTimer::GetTaskTime(s);
 
-	//printf("%s[1]\n", s.c_str());
+	// printf("%s[1]\n", s.c_str());
 
 	{
 		ScopedTimer timer(s);
@@ -124,8 +125,8 @@ void PathModule::Update() {
 		// Should this be handled in the EVENT_SIMOBJECT_COLLISION ?
 	}
 
-	//printf("%s[2] time: %ums\n", s.c_str(), (ScopedTimer::GetTaskTime(s) - t));;
-	//printf("\n");
+	// printf("%s[2] time: %ums\n", s.c_str(), (ScopedTimer::GetTaskTime(s) - t));;
+	// printf("\n");
 }
 
 void PathModule::Kill() {
