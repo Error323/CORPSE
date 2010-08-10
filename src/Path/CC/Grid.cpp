@@ -35,11 +35,12 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 
 	mEdges.reserve(numEdges);
 	mCells.reserve(numCells);
+	mCellsBackup.reserve(numCells);
 
 	for (int y = 0; y < mHeight; y++) {
 		for (int x = 0; x < mWidth; x++) {
-			Cell* curCell = new Cell(x, y);
-			mCells.push_back(curCell);
+			mCells.push_back(Cell(x,y));
+			Cell* curCell = &mCells.back();
 
 			Cell::Edge* edgeW = CreateEdge();
 			Cell::Edge* edgeN = CreateEdge();
@@ -54,7 +55,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 				idx = GRID_ID(x - 1, y);
 				PFFG_ASSERT(idx < mCells.size());
 
-				Cell* westCell = mCells[idx];
+				Cell* westCell = &mCells[idx];
 				westCell->edges[DIRECTION_EAST] = edgeW;
 			}
 
@@ -63,7 +64,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 				idx = GRID_ID(x, y - 1);
 				PFFG_ASSERT(idx < mCells.size());
 
-				Cell* northCell = mCells[idx];
+				Cell* northCell = &mCells[idx];
 				northCell->edges[DIRECTION_SOUTH] = edgeN;
 			}
 
@@ -85,7 +86,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	// Perform a full reset on the cells and compute the height
 	for (int y = 0; y < mHeight; y++) {
 		for (int x = 0; x < mWidth; x++) {
-			Cell* curCell = mCells[GRID_ID(x, y)];
+			Cell* curCell = &mCells[GRID_ID(x, y)];
 
 			// Full reset (sets potential to +inf, etc.)
 			curCell->ResetFull();
@@ -104,37 +105,40 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCoh) {
 	// Compute gradient-heights and neighbours
 	for (int y = 0; y < mHeight; y++) {
 		for (int x = 0; x < mWidth; x++) {
-			Cell* cell = mCells[GRID_ID(x, y)];
+			Cell* cell = &mCells[GRID_ID(x, y)];
 
 			if (y > 0) {
 				cell->edges[DIRECTION_NORTH]->gradHeight = 
-					vec3f(-mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y - 1)]->height);
+					vec3f(-mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y - 1)].height);
 
-				cell->neighbours[cell->numNeighbours++] = mCells[GRID_ID(x, y - 1)];
+				cell->neighbours[cell->numNeighbours++] = &mCells[GRID_ID(x, y - 1)];
 			}
 
 			if (y < mHeight - 1) {
 				cell->edges[DIRECTION_SOUTH]->gradHeight = 
-					vec3f( mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y + 1)]->height);
+					vec3f( mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y + 1)].height);
 
-				cell->neighbours[cell->numNeighbours++] = mCells[GRID_ID(x, y + 1)];
+				cell->neighbours[cell->numNeighbours++] = &mCells[GRID_ID(x, y + 1)];
 			}
 
 			if (x > 0) {
 				cell->edges[DIRECTION_WEST]->gradHeight = 
-					vec3f(cell->height - mCells[GRID_ID(x-1, y)]->height, 0.0f, -mSquareSize);
+					vec3f(cell->height - mCells[GRID_ID(x-1, y)].height, 0.0f, -mSquareSize);
 
-				cell->neighbours[cell->numNeighbours++] = mCells[GRID_ID(x - 1, y)];
+				cell->neighbours[cell->numNeighbours++] = &mCells[GRID_ID(x - 1, y)];
 			}
 
 			if (x < mWidth - 1) {
 				cell->edges[DIRECTION_EAST]->gradHeight = 
-					vec3f(cell->height - mCells[GRID_ID(x+1, y)]->height, 0.0f, mSquareSize);
+					vec3f(cell->height - mCells[GRID_ID(x+1, y)].height, 0.0f, mSquareSize);
 
-				cell->neighbours[cell->numNeighbours++] = mCells[GRID_ID(x + 1, y)];
+				cell->neighbours[cell->numNeighbours++] = &mCells[GRID_ID(x + 1, y)];
 			}
 		}
 	}
+	
+	// Make a backup
+	mCellsBackup.assign(mCells.begin(), mCells.end());
 }
 
 void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
@@ -146,10 +150,10 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 
 	PFFG_ASSERT(i > 0 && j > 0 && i < mWidth && j < mHeight);
 
-	Cell* A = mCells[GRID_ID(i - 1, j - 1)]; mTouchedCells[GRID_ID(i - 1, j - 1)] = A; 
-	Cell* B = mCells[GRID_ID(i    , j - 1)]; mTouchedCells[GRID_ID(i    , j - 1)] = B;
-	Cell* C = mCells[GRID_ID(i    , j    )]; mTouchedCells[GRID_ID(i    , j    )] = C;
-	Cell* D = mCells[GRID_ID(i - 1, j    )]; mTouchedCells[GRID_ID(i - 1, j    )] = D;
+	Cell* A = &mCells[GRID_ID(i - 1, j - 1)]; mTouchedCells[GRID_ID(i - 1, j - 1)] = A; 
+	Cell* B = &mCells[GRID_ID(i    , j - 1)]; mTouchedCells[GRID_ID(i    , j - 1)] = B;
+	Cell* C = &mCells[GRID_ID(i    , j    )]; mTouchedCells[GRID_ID(i    , j    )] = C;
+	Cell* D = &mCells[GRID_ID(i - 1, j    )]; mTouchedCells[GRID_ID(i - 1, j    )] = D;
 
 	// Add velocity
 	C->avgVelocity += inVel;
@@ -174,10 +178,7 @@ void Grid::ComputeAvgVelocity() {
 	}
 }
 
-void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
-	PFFG_ASSERT(!inGoalCells.empty());
-	PFFG_ASSERT(mCandidates.empty());
-
+void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 	const static vec3f dirVectors[] = {
 		vec3f(  0.0f, 0.0f,  1.0f), // NORTH
 		vec3f(  1.0f, 0.0f,  0.0f), // EAST
@@ -190,71 +191,72 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 	const static float maxDensity       = 10.0f;  // According to the Stetson-Harrison method
 	const static float minSpeed         = 0.0f;
 
-	             float minSlope         =  std::numeric_limits<float>::max();
-	             float maxSlope         = -std::numeric_limits<float>::max();
-	             float maxSpeed         = -std::numeric_limits<float>::max();
-	             float maxRadius        = -std::numeric_limits<float>::max();
+	cell->ResetGroupVars();
+
+	const vec3f& worldPos = Grid2World(cell);
+
+	for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
+		// Compute the speed field
+		const vec3i dGridPos = World2Grid(worldPos + dirVectors[dir] * mMaxRadius);
+		const unsigned int idx = GRID_ID(dGridPos.x, dGridPos.z);
+
+		PFFG_ASSERT(idx < mCells.size());
+		Cell* dCell = &mCells[idx];
+
+		// FIXME: Engine slope should be in the same format as CC slope
+		const float topologicalSpeed = 
+			mMaxSpeed + ((cell->edges[dir]->gradHeight.dot2D(dirVectors[dir]) - mMinSlope) / 
+			(mMaxSlope - mMinSlope)) * 
+			(mMaxSpeed - minSpeed);
+
+		const float flowSpeed = 
+			dCell->avgVelocity.dot2D(dirVectors[dir]);
+
+		const float speed = 
+			((dCell->density - sMinDensity) / (maxDensity - sMinDensity)) * 
+			(topologicalSpeed - flowSpeed) + 
+			topologicalSpeed;
+
+		cell->speed[dir] = speed;
+
+		// Compute the unit cost
+		cell->cost[dir] = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
+	}
+}
+
+void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
+	PFFG_ASSERT(!inGoalCells.empty());
+	PFFG_ASSERT(mCandidates.empty());
+
+
+	mMinSlope  =  std::numeric_limits<float>::max();
+	mMaxSlope  = -std::numeric_limits<float>::max();
+	mMaxSpeed  = -std::numeric_limits<float>::max();
+	mMaxRadius = -std::numeric_limits<float>::max();
 
 	for (std::set<unsigned int>::iterator i = inSimObjectIds.begin(); i != inSimObjectIds.end(); i++) {
 		const SimObjectDef* simObjectDef = mCoh->GetSimObjectDef(*i);
 
-		minSlope  = std::min<float>(minSlope,  simObjectDef->GetMinSlopeAngleCosine());
-		maxSlope  = std::max<float>(maxSlope,  simObjectDef->GetMaxSlopeAngleCosine());
-		maxSpeed  = std::max<float>(maxSpeed,  simObjectDef->GetMaxForwardSpeed());
-		maxRadius = std::max<float>(maxRadius, mCoh->GetSimObjectRadius(*i));
-	}
-
-	// This loop computes the speedfield, unitcost and initializes the unknown
-	for (size_t i = 0; i < mCells.size(); i++) {
-		// Compute the speedfield and unit cost
-		Cell* cell = mCells[i];
-		cell->ResetGroupVars();
-
-		const vec3f& worldPos = Grid2World(cell);
-
-		for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
-			// Compute the speed field
-			const vec3i dGridPos = World2Grid(worldPos + dirVectors[dir] * maxRadius);
-			const unsigned int idx = GRID_ID(dGridPos.x, dGridPos.z);
-
-			PFFG_ASSERT(idx < mCells.size());
-			Cell* dCell = mCells[idx];
-
-			// FIXME: Engine slope should be in the same format as CC slope
-			const float topologicalSpeed = 
-				maxSpeed + ((cell->edges[dir]->gradHeight.dot2D(dirVectors[dir]) - minSlope) / 
-				(maxSlope - minSlope)) * 
-				(maxSpeed - minSpeed);
-
-			const float flowSpeed = 
-				dCell->avgVelocity.dot2D(dirVectors[dir]);
-
-			const float speed = 
-				((dCell->density - sMinDensity) / (maxDensity - sMinDensity)) * 
-				(topologicalSpeed - flowSpeed) + 
-				topologicalSpeed;
-
-			cell->speed[dir] = speed;
-
-			// Compute the unit cost
-			cell->cost[dir] = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
-		}
+		mMinSlope  = std::min<float>(mMinSlope,  simObjectDef->GetMinSlopeAngleCosine());
+		mMaxSlope  = std::max<float>(mMaxSlope,  simObjectDef->GetMaxSlopeAngleCosine());
+		mMaxSpeed  = std::max<float>(mMaxSpeed,  simObjectDef->GetMaxForwardSpeed());
+		mMaxRadius = std::max<float>(mMaxRadius, mCoh->GetSimObjectRadius(*i));
 	}
 
 	// Add goal cells to the known set and add their neighbours to the
 	// candidate-set
 	for (size_t i = 0; i < inGoalCells.size(); i++) {
 		Cell* cell = inGoalCells[i];
+		ComputeSpeedAndUnitCost(cell);
 		cell->known = true;
+		cell->candidate = true;
 		cell->potential = 0.0f;
 		mPotentialData[GRID_ID(cell->x, cell->y)] = cell->potential;
 		UpdateCandidates(cell);
 	}
 
 	while (!mCandidates.empty()) {
-		Cell* cell = mCandidates.top(); 
-		PFFG_ASSERT(cell->known == false);
-		mCandidates.pop();
+		Cell* cell = mCandidates.top(); mCandidates.pop();
 		cell->known = true;
 		mPotentialData[GRID_ID(cell->x, cell->y)] = cell->potential;
 		UpdateCandidates(cell);
@@ -268,6 +270,7 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 		if (neighbour->known || neighbour->candidate) {
 			continue;
 		}
+		ComputeSpeedAndUnitCost(neighbour);
 
 		const int x = neighbour->x;
 		const int y = neighbour->y;
@@ -276,10 +279,10 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 		Cell* dirCells[NUM_DIRECTIONS] = {NULL};
 		bool  dirValid[NUM_DIRECTIONS] = {false};
 
-		dirCells[DIRECTION_NORTH] = (y > 0        ) ? mCells[GRID_ID(x    , y - 1)] : NULL;
-		dirCells[DIRECTION_SOUTH] = (y < mHeight-1) ? mCells[GRID_ID(x    , y + 1)] : NULL;
-		dirCells[DIRECTION_WEST]  = (x > 0        ) ? mCells[GRID_ID(x - 1, y    )] : NULL;
-		dirCells[DIRECTION_EAST]  = (x < mWidth-1 ) ? mCells[GRID_ID(x + 1, y    )] : NULL;
+		dirCells[DIRECTION_NORTH] = (y > 0        ) ? &mCells[GRID_ID(x    , y - 1)] : NULL;
+		dirCells[DIRECTION_SOUTH] = (y < mHeight-1) ? &mCells[GRID_ID(x    , y + 1)] : NULL;
+		dirCells[DIRECTION_WEST]  = (x > 0        ) ? &mCells[GRID_ID(x - 1, y    )] : NULL;
+		dirCells[DIRECTION_EAST]  = (x < mWidth-1 ) ? &mCells[GRID_ID(x + 1, y    )] : NULL;
 
 		for (int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 			if (dirCells[dir] == NULL) {
@@ -437,11 +440,7 @@ void Grid::UpdateSimObjectLocation(const int inSimObjectId) {
 
 void Grid::Reset() {
 	numResets += 1;
-
-	std::map<unsigned int, Cell*>::iterator i;
-	for (i = mTouchedCells.begin(); i != mTouchedCells.end(); i++)
-		i->second->ResetDynamicVars();
-
+	mCells.assign(mCellsBackup.begin(), mCellsBackup.end());
 	mTouchedCells.clear();
 }
 
@@ -463,7 +462,7 @@ Grid::Cell* Grid::World2Cell(const vec3f& inPos) {
 	const vec3i& cellCoords = World2Grid(inPos);
 	const unsigned int idx = GRID_ID(cellCoords.x, cellCoords.z);
 
-	Cell* cell = mCells[idx];
+	Cell* cell = &mCells[idx];
 	PFFG_ASSERT_MSG(cell != NULL, "world(%2.2f, %2.2f) grid(%d, %d)", inPos.x, inPos.z, cellCoords.x, cellCoords.z);
 	return cell;
 }
@@ -475,9 +474,6 @@ vec3f Grid::Grid2World(const Cell* inCell) {
 
 
 Grid::~Grid() {
-	for (size_t i = 0; i < mCells.size(); i++)
-		delete mCells[i];
-
 	for (size_t i = 0; i < mEdges.size(); i++)
 		delete mEdges[i];
 

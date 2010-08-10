@@ -91,6 +91,11 @@ private:
 	int mDownScale;
 	int numResets;
 
+	float mMinSlope;
+	float mMaxSlope;
+	float mMaxSpeed;
+	float mMaxRadius;
+
 	// FMM vars
 	std::priority_queue<Cell*, std::vector<Cell*, std::allocator<Cell*> >, Cell> mCandidates;
 
@@ -103,7 +108,8 @@ private:
 	ICallOutHandler* mCoh;
 
 	std::map<unsigned int, Cell*> mTouchedCells;
-	std::vector<Cell*> mCells;
+	std::vector<Cell> mCells;
+	std::vector<Cell> mCellsBackup;
 	std::vector<Cell::Edge*> mEdges;
 
 	Cell::Edge* CreateEdge();
@@ -112,6 +118,7 @@ private:
 	vec3f Grid2World(const Cell*);
 	void UpdateCandidates(const Cell*);
 
+	void ComputeSpeedAndUnitCost(Cell*);
 	float Potential2DWolfram(const float, const float, const float, const float);
 	float Potential2DAbcform(const float, const float, const float, const float);
 	float Potential2DWyke(const float, const float, const float, const float);

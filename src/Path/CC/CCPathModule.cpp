@@ -81,7 +81,7 @@ void PathModule::Update() {
 		std::map<unsigned int, std::set<unsigned int> >::iterator j;
 		std::set<unsigned int>::iterator k;
 
-		// Reset the touched cells in the grid
+		// Reset all the cells in the grid
 		mGrid.Reset();
 
 		// Convert the crowd into a density field
