@@ -408,15 +408,14 @@ float Grid::Potential2D(const float p1, const float c1, const float p2, const fl
 
 
 void Grid::UpdateSimObjectLocation(const unsigned int inSimObjectID) {
-	// TODO: interpolate the velocity-field
 	const vec3f& worldPos = mCOH->GetSimObjectPosition(inSimObjectID);
 	const vec3f& worldDir = mCOH->GetSimObjectDirection(inSimObjectID);
 
-	const Cell* c = World2Cell(worldPos);
-	const vec3f worldVel; /// = -INTERPOLATE_SPEED_FIELD(c, worldDir) * c->GetNormalizedPotentialGradient(edgeDir);
+	const Cell* worldCell = World2Cell(worldPos);
+	const vec3f& worldVel = worldCell->GetInterpolatedVelocity(worldDir);
 
 	mCOH->SetSimObjectRawPosition(inSimObjectID, worldPos + worldVel);
-	mCOH->SetSimObjectRawDirection(inSimObjectID, worldDir);
+	mCOH->SetSimObjectRawDirection(inSimObjectID, worldVel.norm());
 }
 
 void Grid::Reset() {
@@ -429,6 +428,41 @@ void Grid::Reset() {
 Grid::Cell::Edge* Grid::CreateEdge() {
 	mEdges.push_back(Grid::Cell::Edge());
 	return &mEdges.back();
+}
+
+vec3f Grid::Cell::GetInterpolatedVelocity(const vec3f& dir) const {
+	// <dir> always falls into one of four quadrants
+	// therefore, we need to sample the speed-field
+	// and potential-gradient along two of the four
+	// cardinal (NSEW) directions and interpolate
+	vec3f vel;
+
+	float a = 0.0f;
+	float b = 0.0f;
+
+	unsigned int i = 0;
+	unsigned int j = 0;
+
+	if (dir.x >= 0.0f) {
+		i = DIRECTION_EAST;
+		a = dir.x;
+	} else {
+		i = DIRECTION_WEST;
+		a = -dir.x;
+	}
+
+	if (dir.z >= 0.0f) {
+		j = DIRECTION_NORTH;
+		b = dir.z;
+	} else {
+		j = DIRECTION_SOUTH;
+		b = -dir.z;
+	}
+
+	vel += (GetNormalizedPotentialGradient(i) * -speed[i]) * a;
+	vel += (GetNormalizedPotentialGradient(j) * -speed[j]) * b;
+
+	return vel;
 }
 
 
