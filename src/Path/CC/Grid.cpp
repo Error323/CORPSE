@@ -275,8 +275,7 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<Cel
 		mMaxRadius = std::max<float>(mMaxRadius, mCOH->GetSimObjectRadius(*i));
 	}
 
-	// Add goal-cells to the known set and add their neighbours to the
-	// candidate-set
+	// add goal-cells to the known set and add their neighbours to the candidate-set
 	for (size_t i = 0; i < inGoalCells.size(); i++) {
 		Cell* cell = inGoalCells[i];
 		ComputeSpeedAndUnitCost(cell);

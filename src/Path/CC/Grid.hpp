@@ -118,7 +118,7 @@ private:
 	std::vector<float> mHeightVisData;
 
 	// visualization data for vector fields
-	std::vector<vec3f> mVelocityVisData;       // TODO: fill me (GetNormalizedPotentialGradient(i) * -speed[i] for all i)
+	std::vector<vec3f> mVelocityVisData;
 	std::vector<vec3f> mAvgVelocityVisData;
 	std::vector<vec3f> mPotentialDeltaVisData; // TODO: fill me
 	std::vector<vec3f> mHeightDeltaVisData;    // TODO: fill me
