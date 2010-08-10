@@ -116,7 +116,8 @@ private:
 	vec3f Grid2World(const Cell*);
 	void UpdateCandidates(const Cell*);
 
-	float Potential2D(const float, const float, const float, const float);
+	float Potential2DWolfram(const float, const float, const float, const float);
+	float Potential2DAbcform(const float, const float, const float, const float);
 	float Potential1D(const float, const float);
 };
 

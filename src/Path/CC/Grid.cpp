@@ -265,14 +265,6 @@ void Grid::UpdateGroupPotentialField(const std::vector<Cell*>& inGoalCells, cons
 }
 
 void Grid::UpdateCandidates(const Cell* inParent) {
-	/*
-	printf("Cell(%d, %d) Pot(%2.1f), V-bar(%2.1f, %2.1f)\n", 
-		inParent->x, inParent->y, inParent->potential, inParent->avgVelocity.x, inParent->avgVelocity.z);
-	for (int dir = 0; dir < NUM_DIRECTIONS; dir++)
-		printf("\tf_[dir] = %+2.1f, C_[dir] = %+2.1f\n", inParent->speed[dir], inParent->cost[dir]);
-	printf("\n");
-	*/
-
 	for (int i = 0; i < inParent->numNeighbours; i++) {
 		Cell* neighbour = inParent->neighbours[i];
 
@@ -369,7 +361,10 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				bestY = dirCells[DIRECTION_SOUTH];
 			}
 
-			neighbour->potential = Potential2D(bestX->potential, neighbour->cost[bestDirX], bestY->potential, neighbour->cost[bestDirY]);
+			const float abcform = Potential2DAbcform(bestX->potential, neighbour->cost[bestDirX], bestY->potential, neighbour->cost[bestDirY]);
+			//const float wolfram = Potential2DWolfram(bestX->potential, neighbour->cost[bestDirX], bestY->potential, neighbour->cost[bestDirY]);
+			//PFFG_ASSERT_MSG(abcform == wolfram, "\nwolfram\t%+2.2f\n\t != \nabcform\t%+2.2f", wolfram,abcform);
+			neighbour->potential = abcform;
 			neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
 			neighbour->edges[bestDirY]->gradPotential = vec3f(neighbour->potential - bestY->potential, 0.0f, mSquareSize);
 			neighbour->edges[bestDirX]->gradPotential.x *= (bestDirX == DIRECTION_EAST)  ? -1.0f : 1.0f;
@@ -382,22 +377,47 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 	}
 }
 
+inline
 float Grid::Potential1D(const float inPot, const float inCost) {
 	return std::max<float>(inPot + inCost, inPot - inCost);
 }
 
-float Grid::Potential2D(const float inPotX, const float inCostX, const float inPotY, const float inCostY) {
+inline
+float Grid::Potential2DAbcform(const float p1, const float c1, const float p2, const float c2) {
 	static const float a = 2.0f;
-	       const float b = 2.0f * inPotX + 2.0f * inPotY;
-	       const float c = (inPotX * inPotX + inPotY * inPotY) - (inCostX * inCostX * inCostY * inCostY);
-	       const float d = (b * b) - (4.0f * a * c);
-
-	PFFG_ASSERT_MSG(d >= 0.0f, "sqrt(%f) will fail! a(%f) b(%f) c(%f)", d, a, b, c);
-
+	       const float b = -(2.0f*p1 + 2.0f*p2);
+	       const float c = (p1*p1 + p2*p2) - ((c1*c1) * (c2*c2));
+	       const float d = b*b - 4.0f*a*c;
+	PFFG_ASSERT(d > 0.0f);
 	       const float e = sqrtf(d);
 
-	       const float solution1 = (-b + e) / (2.0f * a);
-	       const float solution2 = (-b - e) / (2.0f * a);
+	       const float solution1 = (-b + e) / (2.0f*a);
+	       const float solution2 = (+b + e) / (2.0f*a);
+
+	return std::max<float>(solution1, solution2);
+}
+
+inline
+float Grid::Potential2DWolfram(const float p1, const float c1, const float p2, const float c2) {
+	// Wolfram solution to equation (11)
+	// solve ( (x-p1) / c1 )^2  +  ( (x-p2) / c2 )^2 = 1 for x
+
+	PFFG_ASSERT(c1 != 0.0f && c2 != 0.0f);
+
+	const float c1s = c1*c1;
+	const float c2s = c2*c2;
+	const float p1_min_p2 = (p1 - p2);
+	const float square = c1s*c2s * (c1s + c2s - p1_min_p2*p1_min_p2);
+
+	PFFG_ASSERT(square > 0.0f);
+
+	const float nom1 = sqrtf(square);
+	const float nom2 = c1s*p2 + c2s*p1;
+	const float denom = c1s + c2s;
+
+	const float solution1 = (-nom1 + nom2) / denom;
+	const float solution2 = ( nom1 + nom2) / denom;
+
 
 	return std::max<float>(solution1, solution2);
 }

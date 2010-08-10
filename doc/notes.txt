@@ -305,14 +305,9 @@ Continuum Crowds
 				// 2*M^2 - (2Px + 2Py)*M + (Px^2 + Py^2) - (Cx^2 * Cy^2) = 0
 				//
 				// a = 2
-				// b = (2Px + 2Py)
+				// b = -(2Px + 2Py)
 				// c = (Px^2 + Py^2) - (Cx^2 * Cy^2)
 				// D = b*b - 4*a*c
-				//
-				// D = (2Px + 2Py)^2            -  8 * ((Px^2 + Py^2) - (Cx^2 * Cy^2))
-				// D = (4Px^2 + 4PxPy + 4Py^2)  -  8 * ((Px^2 + Py^2) - (Cx^2 * Cy^2))
-				// D = (4Px^2 + 4PxPy + 4Py^2)  -  8Px^2 - 8Py^2 + 8 * (Cx^2 * Cy^2)
-				// D = -4Px^2 + 4PxPy - 4Py^2                    + 8 * (Cx^2 * Cy^2)
 				//
 				// M = (-b +/- sqrt(D)) / 2*a
 
