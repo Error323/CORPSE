@@ -187,7 +187,7 @@ void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 				glEnable(GL_DEPTH_TEST);
 				glLineWidth(2.0f);
 				camera->ApplyViewProjTransform();
-				currentVectorOverlay->GetData()->DrawArrayC(GL_LINES);
+				currentVectorOverlay->Draw();
 			glPopAttrib();
 			glMatrixMode(GL_PROJECTION); glPopMatrix();
 			glMatrixMode(GL_MODELVIEW); glPopMatrix();
@@ -313,6 +313,10 @@ ui::CCVisualizerWidget::VectorOverlay::VectorOverlay(
 
 ui::CCVisualizerWidget::VectorOverlay::~VectorOverlay() {
 	delete data;
+}
+
+void ui::CCVisualizerWidget::VectorOverlay::Draw() {
+	data->DrawArrayC(GL_LINES);
 }
 
 void ui::CCVisualizerWidget::VectorOverlay::Update(const vec3f* ndata) {

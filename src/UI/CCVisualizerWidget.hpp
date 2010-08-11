@@ -62,11 +62,6 @@ namespace ui {
 
 				void Update(const float*);
 				unsigned int GetID() const { return id; }
-				#ifdef TEXTURE_DATATYPE_FLOAT
-				float* GetData() { return data; }
-				#else
-				unsigned char* GetData() { return data; }
-				#endif
 			private:
 				unsigned int id;
 
@@ -83,7 +78,7 @@ namespace ui {
 				~VectorOverlay();
 
 				void Update(const vec3f*);
-				VertexArray* GetData() { return data; }
+				void Draw();
 			private:
 				VertexArray* data;
 		};
