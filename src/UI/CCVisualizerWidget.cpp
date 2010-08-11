@@ -51,12 +51,12 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 	};
 	#undef STRINGIFY
 
-	const CBaseGroundDrawer* g = readMap->GetGroundDrawer();
-	const IPathModule* m = simThread->GetPathModule();
+	CBaseGroundDrawer* g = readMap->GetGroundDrawer();
+	IPathModule* m = simThread->GetPathModule();
+
 	unsigned int dataType = PathModule::NUM_DATATYPES;
 
 	if (key >= SDLK_0 && key <= SDLK_9) {
-		// NOTE: assumes SDLK_0 is 48, SDLK_9 is 57
 		dataType = key - SDLK_0;
 	}
 
