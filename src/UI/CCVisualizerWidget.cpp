@@ -160,38 +160,40 @@ bool ui::CCVisualizerWidget::SetNextGroupID(const IPathModule* m, bool texture, 
 void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 	static unsigned int simFrame = simThread->GetFrame();
 
-	if (enabled) {
+	if (!enabled) {
+		return;
+	}
+
+	if (simThread->GetFrame() != simFrame) {
+		simFrame = simThread->GetFrame();
+
 		const IPathModule* module = simThread->GetPathModule();
 
-		if (simThread->GetFrame() != simFrame) {
-			simFrame = simThread->GetFrame();
-
-			if (currentTextureOverlay != NULL && currentTextureOverlay->IsEnabled()) {
-				// update the texture data
-				// if the group corresponding to <visGroupID> no longer exists,
-				// this causes the texture to be filled with default values (0)
-				currentTextureOverlay->Update(module->GetScalarDataArray(currentTextureOverlay->GetDataType(), visGroupID));
-			}
-
-			if (currentVectorOverlay != NULL) {
-				currentVectorOverlay->Update(module->GetVectorDataArray(currentVectorOverlay->GetDataType(), visGroupID));
-			}
+		if (currentTextureOverlay != NULL && currentTextureOverlay->IsEnabled()) {
+			// update the texture data
+			// if the group corresponding to <visGroupID> no longer exists,
+			// this causes the texture to be filled with default values (0)
+			currentTextureOverlay->Update(module->GetScalarDataArray(currentTextureOverlay->GetDataType(), visGroupID));
 		}
 
-		if (currentVectorOverlay != NULL && currentVectorOverlay->IsEnabled()) {
-			Camera* camera = renderThread->GetCamCon()->GetCurrCam();
-
-			glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
-			glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
-			glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT | GL_CURRENT_BIT);
-				glEnable(GL_DEPTH_TEST);
-				glLineWidth(2.0f);
-				camera->ApplyViewProjTransform();
-				currentVectorOverlay->Draw();
-			glPopAttrib();
-			glMatrixMode(GL_PROJECTION); glPopMatrix();
-			glMatrixMode(GL_MODELVIEW); glPopMatrix();
+		if (currentVectorOverlay != NULL) {
+			currentVectorOverlay->Update(module->GetVectorDataArray(currentVectorOverlay->GetDataType(), visGroupID));
 		}
+	}
+
+	if (currentVectorOverlay != NULL && currentVectorOverlay->IsEnabled()) {
+		Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+
+		glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
+		glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
+		glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT | GL_CURRENT_BIT);
+			glEnable(GL_DEPTH_TEST);
+			glLineWidth(2.0f);
+			camera->ApplyViewProjTransform();
+			currentVectorOverlay->Draw();
+		glPopAttrib();
+		glMatrixMode(GL_PROJECTION); glPopMatrix();
+		glMatrixMode(GL_MODELVIEW); glPopMatrix();
 	}
 }
 

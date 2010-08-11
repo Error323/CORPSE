@@ -36,8 +36,6 @@ namespace ui {
 
 				virtual ~Overlay() {}
 
-				virtual void Update(const float*) {}
-				virtual void Update(const vec3f*) {} 
 				virtual void SetEnabled(bool b) { enabled = b; }
 				virtual bool IsEnabled() const { return enabled; }
 				virtual unsigned int GetSizeX() const { return sizex; }
