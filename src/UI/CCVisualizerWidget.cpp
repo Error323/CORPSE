@@ -143,6 +143,7 @@ bool ui::CCVisualizerWidget::SetNextGroupID(const IPathModule* m, bool texture, 
 		return false;
 	}
 
+	// get the current group ID's
 	visGroupIDs.resize(numGroupIDs);
 	m->GetGroupIDs(&visGroupIDs[0], numGroupIDs);
 

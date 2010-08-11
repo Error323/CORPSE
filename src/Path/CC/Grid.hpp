@@ -9,8 +9,8 @@
 
 #include "../../Math/vec3fwd.hpp"
 #include "../../Math/vec3.hpp"
-#include "../../Ext/ICallOutHandler.hpp"
 
+class ICallOutHandler;
 class Grid {
 public:
 	enum {

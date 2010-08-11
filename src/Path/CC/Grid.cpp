@@ -3,8 +3,9 @@
 #include <limits>
 
 #include "./Grid.hpp"
-#include "../../System/Debugger.hpp"
+#include "../../Ext/ICallOutHandler.hpp"
 #include "../../Sim/SimObjectDef.hpp"
+#include "../../System/Debugger.hpp"
 
 #define GRID_ID(x, y) (((y) * (mWidth)) + (x))
 #define ELEVATION(x, y) (mCOH->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * mWidth) + (mDownScale * (x))])
