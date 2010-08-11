@@ -328,7 +328,7 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 
 	// TODO: properly set discomfort
 	cell->ResetGroupVars();
-	cell->discomfort = 0.0f * (cell->x * cell->x) + (cell->y * cell->y);
+	cell->discomfort = 0.0f * ((cell->x * cell->x) + (cell->y * cell->y));
 
 	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		const vec3i& ngbGridPos = World2Grid(cellWorldPos + dirVectors[dir] * mMaxRadius);
