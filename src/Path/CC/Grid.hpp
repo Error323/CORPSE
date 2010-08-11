@@ -90,17 +90,17 @@ public:
 
 	// visualisation data accessors for scalar fields
 	const float* GetDensityVisDataArray() const;
+	const float* GetHeightVisDataArray() const;
 	const float* GetDiscomfortVisDataArray(unsigned int) const;
 	const float* GetSpeedVisDataArray(unsigned int) const;
 	const float* GetCostVisDataArray(unsigned int) const;
-	const float* GetHeightVisDataArray() const;
 	const float* GetPotentialVisDataArray(unsigned int) const;
 
 	// visualisation data accessors for vector fields
-	const vec3f* GetVelocityVisDataArray(unsigned int) const;
-	const vec3f* GetVelocityAvgVisDataArray() const;
-	const vec3f* GetPotentialDeltaVisDataArray(unsigned int) const;
 	const vec3f* GetHeightDeltaVisDataArray() const;
+	const vec3f* GetVelocityAvgVisDataArray() const;
+	const vec3f* GetVelocityVisDataArray(unsigned int) const;
+	const vec3f* GetPotentialDeltaVisDataArray(unsigned int) const;
 
 	Cell* World2Cell(const vec3f&);
 
