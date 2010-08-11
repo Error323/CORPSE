@@ -24,9 +24,17 @@ public:
 
 	struct Cell {
 		Cell(): x(0), y(0), known(false), candidate(false), numNeighbours(0) {
+			edges[DIRECTION_NORTH] = NULL; neighbours[DIRECTION_NORTH] = NULL;
+			edges[DIRECTION_EAST ] = NULL; neighbours[DIRECTION_EAST ] = NULL;
+			edges[DIRECTION_SOUTH] = NULL; neighbours[DIRECTION_SOUTH] = NULL;
+			edges[DIRECTION_WEST ] = NULL; neighbours[DIRECTION_WEST ] = NULL;
 		}
 
 		Cell(unsigned int _x, unsigned int _y): x(_x), y(_y), known(false), candidate(false), numNeighbours(0) {
+			edges[DIRECTION_NORTH] = NULL; neighbours[DIRECTION_NORTH] = NULL;
+			edges[DIRECTION_EAST ] = NULL; neighbours[DIRECTION_EAST ] = NULL;
+			edges[DIRECTION_SOUTH] = NULL; neighbours[DIRECTION_SOUTH] = NULL;
+			edges[DIRECTION_WEST ] = NULL; neighbours[DIRECTION_WEST ] = NULL;
 		}
 
 		// for less() (NOTE: candidates are sorted in increasing order)
@@ -35,10 +43,11 @@ public:
 		}
 
 		void ResetFull();
-		void ResetDynamicVars();
+		void ResetGlobalStaticVars();
+		void ResetGlobalDynamicVars();
 		void ResetGroupVars();
 
-		vec3f GetNormalizedPotentialGradient(unsigned int dir) const { return (edges[dir]->gradPotential / edges[dir]->gradPotential.len2D()); }
+		vec3f GetNormalizedPotentialGradient(unsigned int) const;
 		vec3f GetInterpolatedVelocity(const vec3f&) const;
 
 		struct Edge {
@@ -63,9 +72,10 @@ public:
 	};
 
 	Grid(): mWidth(0), mHeight(0), mSquareSize(0), mDownScale(0), numResets(0) {}
-	~Grid();
+	~Grid() {}
 
 	void Init(const int, ICallOutHandler*);
+	void Kill(const std::map<unsigned int, std::set<unsigned int> >&);
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
 	void ComputeAvgVelocity();
 	void UpdateGroupPotentialField(unsigned int, const std::vector<Cell*>&, const std::set<unsigned int>&);
@@ -75,19 +85,22 @@ public:
 	int GetGridWidth() const { return mWidth; }
 	int GetGridHeight() const { return mHeight; }
 
+	void AddGroup(unsigned int);
+	void DelGroup(unsigned int);
+
 	// visualisation data accessors for scalar fields
-	const float* GetDensityVisDataArray() const { return (mDensityVisData.empty())? NULL: &mDensityVisData[0]; }
-	const float* GetDiscomfortVisDataArray() const { return (mDiscomfortVisData.empty())? NULL: &mDiscomfortVisData[0]; }
-	const float* GetSpeedVisDataArray() const { return (mSpeedVisData.empty())? NULL: &mSpeedVisData[0]; }
-	const float* GetCostVisDataArray() const { return (mCostVisData.empty())? NULL: &mCostVisData[0]; }
-	const float* GetHeightVisDataArray() const { return (mHeightVisData.empty())? NULL: &mHeightVisData[0]; }
-	const float* GetPotentialVisDataArray() const { return (mPotentialVisData.empty())? NULL: &mPotentialVisData[0]; }
+	const float* GetDensityVisDataArray() const;
+	const float* GetDiscomfortVisDataArray(unsigned int) const;
+	const float* GetSpeedVisDataArray(unsigned int) const;
+	const float* GetCostVisDataArray(unsigned int) const;
+	const float* GetHeightVisDataArray() const;
+	const float* GetPotentialVisDataArray(unsigned int) const;
 
 	// visualisation data accessors for vector fields
-	const vec3f* GetVelocityVisDataArray() const { return (mVelocityVisData.empty())? NULL: &mVelocityVisData[0]; }
-	const vec3f* GetVelocityAvgVisDataArray() const { return (mAvgVelocityVisData.empty())? NULL: &mAvgVelocityVisData[0]; }
-	const vec3f* GetPotentialDeltaVisDataArray() const { return (mPotentialDeltaVisData.empty())? NULL: &mPotentialDeltaVisData[0]; }
-	const vec3f* GetHeightDeltaVisDataArray() const { return (mHeightDeltaVisData.empty())? NULL: &mHeightDeltaVisData[0]; }
+	const vec3f* GetVelocityVisDataArray(unsigned int) const;
+	const vec3f* GetVelocityAvgVisDataArray() const;
+	const vec3f* GetPotentialDeltaVisDataArray(unsigned int) const;
+	const vec3f* GetHeightDeltaVisDataArray() const;
 
 	Cell* World2Cell(const vec3f&);
 
@@ -111,17 +124,17 @@ private:
 
 	// visualization data for scalar fields
 	std::vector<float> mDensityVisData;
-	std::vector<float> mDiscomfortVisData;     // TODO: fill me
-	std::vector<float> mSpeedVisData;          // TODO: fill me
-	std::vector<float> mCostVisData;           // TODO: fill me
-	std::vector<float> mPotentialVisData;
 	std::vector<float> mHeightVisData;
+	std::map<unsigned int, std::vector<float> > mDiscomfortVisData;
+	std::map<unsigned int, std::vector<float> > mSpeedVisData;
+	std::map<unsigned int, std::vector<float> > mCostVisData;
+	std::map<unsigned int, std::vector<float> > mPotentialVisData;
 
 	// visualization data for vector fields
-	std::vector<vec3f> mVelocityVisData;
+	std::vector<vec3f> mHeightDeltaVisData;
 	std::vector<vec3f> mAvgVelocityVisData;
-	std::vector<vec3f> mPotentialDeltaVisData; // TODO: fill me
-	std::vector<vec3f> mHeightDeltaVisData;    // TODO: fill me
+	std::map<unsigned int, std::vector<vec3f> > mVelocityVisData;
+	std::map<unsigned int, std::vector<vec3f> > mPotentialDeltaVisData;
 
 	ICallOutHandler* mCOH;
 
@@ -135,9 +148,9 @@ private:
 
 	vec3i World2Grid(const vec3f&) const;
 	vec3f Grid2World(const Cell*) const;
-	void UpdateCandidates(const Cell*);
+	void UpdateCandidates(unsigned int, const Cell*);
 
-	void ComputeSpeedAndUnitCost(Cell*);
+	void ComputeSpeedAndUnitCost(unsigned int, Cell*);
 	float Potential2D(const float, const float, const float, const float) const;
 	float Potential1D(const float, const float) const;
 };

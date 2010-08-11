@@ -10,20 +10,125 @@
 #define ELEVATION(x, y) (mCOH->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * mWidth) + (mDownScale * (x))])
 
 const float Grid::sLambda     = 2.0f;
-const float Grid::sMinDensity = 1.0f / pow(2.0f, sLambda);
+const float Grid::sMinDensity = 1.0f / powf(2.0f, sLambda);
 
-Grid::~Grid() {
+void Grid::AddGroup(unsigned int groupID) {
+	mDiscomfortVisData[groupID] = std::vector<float>();
+	mDiscomfortVisData[groupID].resize(mWidth * mHeight);
+	mSpeedVisData[groupID] = std::vector<float>();
+	mSpeedVisData[groupID].resize(mWidth * mHeight * NUM_DIRECTIONS);
+	mCostVisData[groupID] = std::vector<float>();
+	mCostVisData[groupID].resize(mWidth * mHeight * NUM_DIRECTIONS);
+
+	mPotentialVisData[groupID] = std::vector<float>();
+	mPotentialVisData[groupID].resize(mWidth * mHeight);
+
+	mVelocityVisData[groupID] = std::vector<vec3f>();
+	mVelocityVisData[groupID].resize(mWidth * mHeight * NUM_DIRECTIONS);
+
+	mPotentialDeltaVisData[groupID] = std::vector<vec3f>();
+	mPotentialDeltaVisData[groupID].resize(mWidth * mHeight * NUM_DIRECTIONS);
+}
+
+void Grid::DelGroup(unsigned int groupID) {
+	mDiscomfortVisData[groupID].clear(); mDiscomfortVisData.erase(groupID);
+	mSpeedVisData[groupID].clear(); mSpeedVisData.erase(groupID);
+	mCostVisData[groupID].clear(); mCostVisData.erase(groupID);
+	mPotentialVisData[groupID].clear(); mPotentialVisData.erase(groupID);
+
+	mVelocityVisData[groupID].clear(); mVelocityVisData.erase(groupID);
+	mPotentialDeltaVisData[groupID].clear(); mPotentialDeltaVisData.erase(groupID);
+}
+
+
+
+// visualisation data accessors for scalar fields
+const float* Grid::GetDensityVisDataArray() const {
+	return (mDensityVisData.empty())? NULL: &mDensityVisData[0];
+}
+
+const float* Grid::GetDiscomfortVisDataArray(unsigned int groupID) const {
+	std::map<unsigned int, std::vector<float> >::const_iterator it = mDiscomfortVisData.find(groupID);
+
+	if (it == mDiscomfortVisData.end()) { return NULL; }
+	if ((it->second).empty()) { return NULL; }
+
+	return &(it->second)[0];
+}
+
+const float* Grid::GetSpeedVisDataArray(unsigned int groupID) const {
+	std::map<unsigned int, std::vector<float> >::const_iterator it = mSpeedVisData.find(groupID);
+
+	if (it == mSpeedVisData.end()) { return NULL; }
+	if ((it->second).empty()) { return NULL; }
+
+	return &(it->second)[0];
+}
+
+const float* Grid::GetCostVisDataArray(unsigned int groupID) const {
+	std::map<unsigned int, std::vector<float> >::const_iterator it = mCostVisData.find(groupID);
+
+	if (it == mCostVisData.end()) { return NULL; }
+	if ((it->second).empty()) { return NULL; }
+
+	return &(it->second)[0];
+}
+
+const float* Grid::GetHeightVisDataArray() const {
+	return (mHeightVisData.empty())? NULL: &mHeightVisData[0];
+}
+
+const float* Grid::GetPotentialVisDataArray(unsigned int groupID) const {
+	std::map<unsigned int, std::vector<float> >::const_iterator it = mPotentialVisData.find(groupID);
+
+	if (it == mPotentialVisData.end()) { return NULL; }
+	if ((it->second).empty()) { return NULL; }
+
+	return &(it->second)[0];
+}
+
+// visualisation data accessors for vector fields
+const vec3f* Grid::GetVelocityVisDataArray(unsigned int groupID) const {
+	std::map<unsigned int, std::vector<vec3f> >::const_iterator it = mVelocityVisData.find(groupID);
+
+	if (it == mVelocityVisData.end()) { return NULL; }
+	if ((it->second).empty()) { return NULL; }
+
+	return &(it->second)[0];
+}
+
+const vec3f* Grid::GetVelocityAvgVisDataArray() const {
+	return (mAvgVelocityVisData.empty())? NULL: &mAvgVelocityVisData[0];
+}
+
+const vec3f* Grid::GetPotentialDeltaVisDataArray(unsigned int groupID) const {
+	std::map<unsigned int, std::vector<vec3f> >::const_iterator it = mPotentialDeltaVisData.find(groupID);
+
+	if (it == mPotentialDeltaVisData.end()) { return NULL; }
+	if ((it->second).empty()) { return NULL; }
+
+	return &(it->second)[0];
+}
+
+const vec3f* Grid::GetHeightDeltaVisDataArray() const {
+	return (mHeightDeltaVisData.empty())? NULL: &mHeightDeltaVisData[0];
+}
+
+
+
+void Grid::Kill(const std::map<unsigned int, std::set<unsigned int> >& groupIDs) {
+	// clear the global scalar field visualisation data
 	mDensityVisData.clear();
-	mDiscomfortVisData.clear();
-	mSpeedVisData.clear();
-	mCostVisData.clear();
 	mHeightVisData.clear();
-	mPotentialVisData.clear();
 
-	mVelocityVisData.clear();
+	// clear the global vector field visualisation data
 	mAvgVelocityVisData.clear();
-	mPotentialDeltaVisData.clear();
 	mHeightDeltaVisData.clear();
+
+	// clear the per-group visualisation data
+	for (std::map<unsigned int, std::set<unsigned int> >::const_iterator it = groupIDs.begin(); it != groupIDs.end(); ++it) {
+		DelGroup(it->first);
+	}
 
 	mTouchedCells.clear();
 	mCells.clear();
@@ -46,16 +151,12 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 	const unsigned int numCells = mWidth * mHeight;
 	const unsigned int numEdges = (mWidth + 1) * mHeight + (mHeight + 1) * mWidth;
 
+	// visualisation data for global scalar fields
 	mDensityVisData.resize(numCells);
-	mDiscomfortVisData.resize(numCells);
-	mSpeedVisData.resize(numCells * NUM_DIRECTIONS);
-	mCostVisData.resize(numCells * NUM_DIRECTIONS);
 	mHeightVisData.resize(numCells);
-	mPotentialVisData.resize(numCells);
 
-	mVelocityVisData.resize(numCells * NUM_DIRECTIONS);
+	// visualisation data for global vector fields
 	mAvgVelocityVisData.resize(numCells);
-	mPotentialDeltaVisData.resize(numCells * NUM_DIRECTIONS);
 	mHeightDeltaVisData.resize(numCells * NUM_DIRECTIONS);
 
 	mEdges.reserve(numEdges);
@@ -114,48 +215,54 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 		for (int x = 0; x < mWidth; x++) {
 			Cell* curCell = &mCells[GRID_ID(x, y)];
 
-			// Full reset (sets potential to +inf, etc.)
+			// set potential to +inf, etc.
 			curCell->ResetFull();
 
-			// Set the height, assuming the world is static wrt height
+			// set the height, assuming the heightmap is static
 			curCell->height = ELEVATION(x, y);
 
 			mHeightVisData[GRID_ID(x, y)] = curCell->height;
-			mPotentialVisData[GRID_ID(x, y)] = curCell->potential;
 		}
 	}
 
 	// Compute gradient-heights and neighbours
 	for (int y = 0; y < mHeight; y++) {
 		for (int x = 0; x < mWidth; x++) {
-			Cell* cell = &mCells[GRID_ID(x, y)];
+			unsigned int idx = GRID_ID(x, y);
+			unsigned int dir = 0;
+
+			Cell* cell = &mCells[idx];
 
 			if (y > 0) {
-				cell->edges[DIRECTION_NORTH]->gradHeight = 
-					vec3f(-mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y - 1)].height);
-
+				dir = DIRECTION_NORTH;
+				cell->edges[dir]->gradHeight = vec3f(-mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y - 1)].height);
 				cell->neighbours[cell->numNeighbours++] = &mCells[GRID_ID(x, y - 1)];
+
+				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = cell->edges[dir]->gradHeight;
 			}
 
 			if (y < mHeight - 1) {
-				cell->edges[DIRECTION_SOUTH]->gradHeight = 
-					vec3f( mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y + 1)].height);
-
+				dir = DIRECTION_SOUTH;
+				cell->edges[dir]->gradHeight = vec3f( mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y + 1)].height);
 				cell->neighbours[cell->numNeighbours++] = &mCells[GRID_ID(x, y + 1)];
+
+				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = cell->edges[dir]->gradHeight;
 			}
 
 			if (x > 0) {
-				cell->edges[DIRECTION_WEST]->gradHeight = 
-					vec3f(cell->height - mCells[GRID_ID(x-1, y)].height, 0.0f, -mSquareSize);
-
+				dir = DIRECTION_WEST;
+				cell->edges[dir]->gradHeight = vec3f(cell->height - mCells[GRID_ID(x-1, y)].height, 0.0f, -mSquareSize);
 				cell->neighbours[cell->numNeighbours++] = &mCells[GRID_ID(x - 1, y)];
+
+				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = cell->edges[dir]->gradHeight;
 			}
 
 			if (x < mWidth - 1) {
-				cell->edges[DIRECTION_EAST]->gradHeight = 
-					vec3f(cell->height - mCells[GRID_ID(x+1, y)].height, 0.0f, mSquareSize);
-
+				dir = DIRECTION_EAST;
+				cell->edges[dir]->gradHeight = vec3f(cell->height - mCells[GRID_ID(x+1, y)].height, 0.0f, mSquareSize);
 				cell->neighbours[cell->numNeighbours++] = &mCells[GRID_ID(x + 1, y)];
+
+				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = cell->edges[dir]->gradHeight;
 			}
 		}
 	}
@@ -203,7 +310,7 @@ void Grid::ComputeAvgVelocity() {
 	}
 }
 
-void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
+void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 	const static vec3f dirVectors[] = {
 		vec3f(  0.0f, 0.0f,  1.0f), // NORTH
 		vec3f(  1.0f, 0.0f,  0.0f), // EAST
@@ -216,10 +323,12 @@ void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 	const static float maxDensity       = 10.0f;  // According to the Stetson-Harrison method
 	const static float minSpeed         = 0.0f;
 
-	cell->ResetGroupVars();
-
 	const unsigned int cellGridIdx = GRID_ID(cell->x, cell->y);
 	const vec3f& cellWorldPos = Grid2World(cell);
+
+	// TODO: properly set discomfort
+	cell->ResetGroupVars();
+	cell->discomfort = 0.0f * (cell->x * cell->x) + (cell->y * cell->y);
 
 	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		const vec3i& ngbGridPos = World2Grid(cellWorldPos + dirVectors[dir] * mMaxRadius);
@@ -252,9 +361,11 @@ void Grid::ComputeSpeedAndUnitCost(Cell* cell) {
 		cell->cost[dir] = cost;
 
 		// FIXME: do we even want to visualize these as textures?
-		mSpeedVisData[cellGridIdx * NUM_DIRECTIONS + dir] = speed;
-		mCostVisData[cellGridIdx * NUM_DIRECTIONS + dir] = cost;
+		mSpeedVisData[groupID][cellGridIdx * NUM_DIRECTIONS + dir] = speed;
+		mCostVisData[groupID][cellGridIdx * NUM_DIRECTIONS + dir] = cost;
 	}
+
+	mDiscomfortVisData[groupID][cellGridIdx] = cell->discomfort;
 }
 
 void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<Cell*>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
@@ -275,40 +386,57 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<Cel
 		mMaxRadius = std::max<float>(mMaxRadius, mCOH->GetSimObjectRadius(*i));
 	}
 
-	// add goal-cells to the known set and add their neighbours to the candidate-set
+	std::vector<float>& potVisData      = mPotentialVisData[groupID];
+	std::vector<vec3f>& velVisData      = mVelocityVisData[groupID];
+	std::vector<vec3f>& potDeltaVisData = mPotentialDeltaVisData[groupID];
+
+	unsigned int cellIdx = 0;
+
+	// add goal-cells to the known set and their neighbours to the candidate-set
 	for (size_t i = 0; i < inGoalCells.size(); i++) {
 		Cell* cell = inGoalCells[i];
-		ComputeSpeedAndUnitCost(cell);
+
+		ComputeSpeedAndUnitCost(groupID, cell);
+
+		// must come after ComputeSpeedAndUnitCost (whichs calls ResetGroupVars)
 		cell->known = true;
 		cell->candidate = true;
 		cell->potential = 0.0f;
+		cellIdx = GRID_ID(cell->x, cell->y);
 
-		UpdateCandidates(cell);
+		UpdateCandidates(groupID, cell);
 
-		mPotentialVisData[GRID_ID(cell->x, cell->y)] = cell->potential;
-		mVelocityVisData[GRID_ID(cell->x, cell->y) * NUM_DIRECTIONS + DIRECTION_NORTH] = NVECf;
-		mVelocityVisData[GRID_ID(cell->x, cell->y) * NUM_DIRECTIONS + DIRECTION_SOUTH] = NVECf;
-		mVelocityVisData[GRID_ID(cell->x, cell->y) * NUM_DIRECTIONS + DIRECTION_EAST ] = NVECf;
-		mVelocityVisData[GRID_ID(cell->x, cell->y) * NUM_DIRECTIONS + DIRECTION_WEST ] = NVECf;
+		potVisData[cellIdx] = cell->potential;
+		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_NORTH] = NVECf;
+		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_SOUTH] = NVECf;
+		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_EAST ] = NVECf;
+		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_WEST ] = NVECf;
+		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_NORTH] = NVECf;
+		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_SOUTH] = NVECf;
+		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_EAST ] = NVECf;
+		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_WEST ] = NVECf;
 	}
 
 	while (!mCandidates.empty()) {
 		Cell* cell = mCandidates.top(); mCandidates.pop();
 		cell->known = true;
+		cellIdx = GRID_ID(cell->x, cell->y);
 
-		UpdateCandidates(cell);
+		UpdateCandidates(groupID, cell);
 
-		const unsigned int cellIdx = GRID_ID(cell->x, cell->y);
-
-		mPotentialVisData[cellIdx] = cell->potential;
-		mVelocityVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_NORTH] = (cell->GetNormalizedPotentialGradient(DIRECTION_NORTH) * -cell->speed[DIRECTION_NORTH]);
-		mVelocityVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_SOUTH] = (cell->GetNormalizedPotentialGradient(DIRECTION_SOUTH) * -cell->speed[DIRECTION_SOUTH]);
-		mVelocityVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_EAST ] = (cell->GetNormalizedPotentialGradient(DIRECTION_EAST ) * -cell->speed[DIRECTION_EAST ]);
-		mVelocityVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_WEST ] = (cell->GetNormalizedPotentialGradient(DIRECTION_WEST ) * -cell->speed[DIRECTION_WEST ]);
+		potVisData[cellIdx] = cell->potential;
+		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_NORTH] = (cell->GetNormalizedPotentialGradient(DIRECTION_NORTH) * -cell->speed[DIRECTION_NORTH]);
+		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_SOUTH] = (cell->GetNormalizedPotentialGradient(DIRECTION_SOUTH) * -cell->speed[DIRECTION_SOUTH]);
+		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_EAST ] = (cell->GetNormalizedPotentialGradient(DIRECTION_EAST ) * -cell->speed[DIRECTION_EAST ]);
+		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_WEST ] = (cell->GetNormalizedPotentialGradient(DIRECTION_WEST ) * -cell->speed[DIRECTION_WEST ]);
+		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_NORTH] = cell->edges[DIRECTION_NORTH]->gradPotential;
+		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_SOUTH] = cell->edges[DIRECTION_SOUTH]->gradPotential;
+		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_EAST ] = cell->edges[DIRECTION_EAST ]->gradPotential;
+		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_WEST ] = cell->edges[DIRECTION_WEST ]->gradPotential;
 	}
 }
 
-void Grid::UpdateCandidates(const Cell* inParent) {
+void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 	for (int i = 0; i < inParent->numNeighbours; i++) {
 		Cell* neighbour = inParent->neighbours[i];
 
@@ -316,7 +444,7 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 			continue;
 		}
 
-		ComputeSpeedAndUnitCost(neighbour);
+		ComputeSpeedAndUnitCost(groupID, neighbour);
 
 		const int x = neighbour->x;
 		const int y = neighbour->y;
@@ -376,10 +504,23 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				bestX->potential, neighbour->cost[bestDirX], 
 				bestY->potential, neighbour->cost[bestDirY]
 			);
-			neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
-			neighbour->edges[bestDirY]->gradPotential = vec3f(neighbour->potential - bestY->potential, 0.0f, mSquareSize);
-			neighbour->edges[bestDirX]->gradPotential.x *= (bestDirX == DIRECTION_EAST) ? -1.0f : 1.0f;
-			neighbour->edges[bestDirY]->gradPotential.y *= (bestDirY == DIRECTION_NORTH)? -1.0f : 1.0f;
+
+			neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, (neighbour->potential - bestX->potential));
+			neighbour->edges[bestDirY]->gradPotential = vec3f((neighbour->potential - bestY->potential), 0.0f, mSquareSize);
+			neighbour->edges[bestDirX]->gradPotential.x *= ((bestDirX == DIRECTION_EAST) ? -1.0f : 1.0f);
+			neighbour->edges[bestDirY]->gradPotential.z *= ((bestDirY == DIRECTION_NORTH)? -1.0f : 1.0f);
+
+			// NOTE:
+			//    gradHeight is stored as vec3f(squareSize, 0.0f, deltaHeight) for DIR_N and
+			//    DIR_S, and as vec3f(deltaHeight, 0.0f, squareSize) for DIR_E and DIR_W
+			//    this field is used to calculate the topological speed via dot2D operations
+			//    therefore gradPotential "should" be stored the same way, but this makes no
+			//    sense for rendering purposes (since all vectors end up in the xz-plane)
+			//
+			// neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, (neighbour->potential - bestX->potential),        0.0f);
+			// neighbour->edges[bestDirY]->gradPotential = vec3f(       0.0f, (neighbour->potential - bestY->potential), mSquareSize);
+			// neighbour->edges[bestDirX]->gradPotential.y *= ((bestDirX == DIRECTION_EAST) ? -1.0f : 1.0f);
+			// neighbour->edges[bestDirY]->gradPotential.y *= ((bestDirY == DIRECTION_NORTH)? -1.0f : 1.0f);
 		} else {
 			if (undefinedX) {
 				PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
@@ -397,8 +538,11 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				}
 
 				neighbour->potential = Potential1D(bestY->potential, neighbour->cost[bestDirY]);
-				neighbour->edges[bestDirY]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestY->potential);
-				neighbour->edges[bestDirY]->gradPotential.y *= (bestDirY == DIRECTION_NORTH)? -1.0f : 1.0f;
+				neighbour->edges[bestDirY]->gradPotential = vec3f((neighbour->potential - bestY->potential), 0.0f, mSquareSize);
+				neighbour->edges[bestDirY]->gradPotential.z *= ((bestDirY == DIRECTION_NORTH)? -1.0f : 1.0f);
+
+				// neighbour->edges[bestDirY]->gradPotential = vec3f(0.0f, (neighbour->potential - bestY->potential), mSquareSize);
+				// neighbour->edges[bestDirY]->gradPotential.y *= ((bestDirY == DIRECTION_NORTH)? -1.0f : 1.0f);
 			}
 
 			if (undefinedY) {
@@ -417,8 +561,11 @@ void Grid::UpdateCandidates(const Cell* inParent) {
 				}
 
 				neighbour->potential = Potential1D(bestX->potential, neighbour->cost[bestDirX]);
-				neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, neighbour->potential - bestX->potential);
-				neighbour->edges[bestDirX]->gradPotential.x *= (bestDirX == DIRECTION_WEST)? -1.0f : 1.0f;
+				neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, (neighbour->potential - bestX->potential));
+				neighbour->edges[bestDirX]->gradPotential.x *= ((bestDirX == DIRECTION_EAST)? -1.0f : 1.0f);
+
+				// neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, (neighbour->potential - bestX->potential), 0.0f);
+				// neighbour->edges[bestDirX]->gradPotential.y *= ((bestDirX == DIRECTION_WEST)? -1.0f : 1.0f);
 			}
 		}
 
@@ -457,8 +604,10 @@ void Grid::UpdateSimObjectLocation(const unsigned int inSimObjectID) {
 	const Cell* worldCell = World2Cell(worldPos);
 	const vec3f& worldVel = worldCell->GetInterpolatedVelocity(worldDir);
 
-	mCOH->SetSimObjectRawPosition(inSimObjectID, worldPos + worldVel);
-	mCOH->SetSimObjectRawDirection(inSimObjectID, worldVel.norm());
+	if (!std::isnan(worldVel.x) && !std::isnan(worldVel.y) && !std::isnan(worldVel.z)) {
+		mCOH->SetSimObjectRawPosition(inSimObjectID, worldPos + worldVel);
+		mCOH->SetSimObjectRawDirection(inSimObjectID, worldVel.norm());
+	}
 }
 
 void Grid::Reset() {
@@ -473,6 +622,9 @@ Grid::Cell::Edge* Grid::CreateEdge() {
 	return &mEdges.back();
 }
 
+vec3f Grid::Cell::GetNormalizedPotentialGradient(unsigned int dir) const {
+	return (edges[dir]->gradPotential / edges[dir]->gradPotential.len2D());
+}
 vec3f Grid::Cell::GetInterpolatedVelocity(const vec3f& dir) const {
 	// <dir> always falls into one of four quadrants
 	// therefore, we need to sample the speed-field
@@ -545,28 +697,35 @@ vec3f Grid::Grid2World(const Cell* inCell) const {
 
 
 void Grid::Cell::ResetFull() {
-	ResetDynamicVars();
+	ResetGlobalStaticVars();
+	ResetGlobalDynamicVars();
+	ResetGroupVars();
 
-	height = 0.0f;
 	numNeighbours = 0;
 
 	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
-		edges[dir]->gradHeight = NVECf;
 		neighbours[dir] = NULL;
 	}
 }
 
-void Grid::Cell::ResetDynamicVars() {
-	ResetGroupVars();
+void Grid::Cell::ResetGlobalStaticVars() {
+	height = 0.0f;
 
+	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
+		edges[dir]->gradHeight = NVECf;
+	}
+}
+
+void Grid::Cell::ResetGlobalDynamicVars() {
 	avgVelocity = NVECf;
 	density     = 0.0f;
-	discomfort  = 0.0f;
 }
 
 void Grid::Cell::ResetGroupVars() {
-	potential = std::numeric_limits<float>::infinity();
-	known = false;
+	potential  = std::numeric_limits<float>::infinity();
+	discomfort = 0.0f;
+
+	known     = false;
 	candidate = false;
 
 	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {

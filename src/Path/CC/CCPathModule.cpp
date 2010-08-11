@@ -43,7 +43,6 @@ void PathModule::OnEvent(const IEvent* e) {
 
 			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
 				const unsigned int objID = *it;
-				// const vec3f& objPos = coh->GetSimObjectPosition(objID);
 
 				PFFG_ASSERT(coh->IsValidSimObjectID(objID));
 
@@ -64,13 +63,13 @@ void PathModule::OnEvent(const IEvent* e) {
 }
 
 void PathModule::Init() {
-	std::cout << "[CCPathModule::Init]" << std::endl;
+	printf("[CCPathModule::Init]\n");
 	mGrid.Init(8, coh);
 }
 
 void PathModule::Update() {
-	static const std::string s = "[CCPathModule::Update]";
 	#ifdef CCPATHMODULE_PROFILE
+	static const std::string s = "[CCPathModule::Update]";
 	const unsigned int t = ScopedTimer::GetTaskTime(s);
 	#endif
 
@@ -83,10 +82,10 @@ void PathModule::Update() {
 		std::map<unsigned int, std::set<unsigned int> >::iterator objectGroupIt;
 		std::set<unsigned int>::iterator objectIDsIt;
 
-		// Reset all the cells in the grid
+		// reset all the cells in the grid
 		mGrid.Reset();
 
-		// Convert the crowd into a density field
+		// convert the crowd into a density field (rho)
 		for (simObjectIt = mSimObjectIDs.begin(); simObjectIt != mSimObjectIDs.end(); ++simObjectIt) {
 			const unsigned int objID = simObjectIt->first;
 			const vec3f& objPos = coh->GetSimObjectPosition(objID);
@@ -97,23 +96,24 @@ void PathModule::Update() {
 			mGrid.AddDensityAndVelocity(objPos, objVel);
 		}
 
-		// Now that we know the cumulative density per cell,
-		// we can compute the average velocity field
+		// now that we know the cumulative density per cell,
+		// we can compute the average velocity field (v-bar)
 		mGrid.ComputeAvgVelocity();
 
 		for (objectGroupIt = mObjectGroups.begin(); objectGroupIt != mObjectGroups.end(); ++objectGroupIt) {
 			const unsigned int groupID = objectGroupIt->first;
 			const std::set<unsigned int>& groupObjectIDs = objectGroupIt->second;
 
-			// for each active group <groupID>, first construct the speed- and the
-			// unit-cost field; then construct the potential- and gradient-fields
+			// for each active group <groupID>, first construct the speed- and
+			// unit-cost field (f and C); second, calculate the potential- and
+			// gradient-fields (phi and delta-phi)
 			//
-			// NOTE: This first resets all the group-related variables
-			// NOTE: Discomfort regarding this group can be computed here
-			// NOTE: It might be possible to compute the speedfield and unit-
+			// NOTE: this first resets all the group-related variables
+			// NOTE: discomfort regarding this group can be computed here
+			// NOTE: it might be possible to compute the speedfield and unit-
 			//        costfield in the UpdateGroupPotentialField as cells 
 			//        are picked from the UNKNOWN set, saving N iterations
-			// NOTE: This should get the goal cells from a specific group,
+			// NOTE: this should get the goal cells from a specific group,
 			//       but how will we select them?
 			mGrid.UpdateGroupPotentialField(groupID, mGoals[groupID], groupObjectIDs);
 
@@ -124,7 +124,7 @@ void PathModule::Update() {
 		}
 
 		// Enforce minimum distance between objects
-		// Should this be handled in the EVENT_SIMOBJECT_COLLISION ?
+		// NOTE: should this be handled via EVENT_SIMOBJECT_COLLISION?
 	}
 
 	#ifdef CCPATHMODULE_PROFILE
@@ -134,7 +134,8 @@ void PathModule::Update() {
 }
 
 void PathModule::Kill() {
-	std::cout << "[CCPathModule::Kill]" << std::endl;
+	printf("[CCPathModule::Kill]\n");
+	mGrid.Kill(mObjectGroups);
 }
 
 
@@ -142,6 +143,7 @@ void PathModule::Kill() {
 void PathModule::AddObjectToGroup(unsigned int objID, unsigned int groupID) {
 	if (mObjectGroups.find(groupID) == mObjectGroups.end()) {
 		mObjectGroups[groupID] = std::set<unsigned int>();
+		mGrid.AddGroup(groupID);
 	}
 
 	if (mGoals.find(groupID) == mGoals.end()) {
@@ -164,6 +166,7 @@ bool PathModule::DelObjectFromGroup(unsigned int objID) {
 			mObjectGroups.erase(groupID);
 			mGoals[groupID].clear();
 			mGoals.erase(groupID);
+			mGrid.DelGroup(groupID);
 		}
 
 		return true;
@@ -181,11 +184,11 @@ bool PathModule::DelObjectFromGroup(unsigned int objID) {
 unsigned int PathModule::GetScalarDataArraySizeX(unsigned int dataType) const {
 	switch (dataType) {
 		case DATATYPE_DENSITY:    { return mGrid.GetGridWidth(); } break;
+		case DATATYPE_HEIGHT:     { return mGrid.GetGridWidth(); } break;
 		case DATATYPE_DISCOMFORT: { return mGrid.GetGridWidth(); } break;
 		case DATATYPE_SPEED:      { return mGrid.GetGridWidth(); } break;
 		case DATATYPE_COST:       { return mGrid.GetGridWidth(); } break;
 		case DATATYPE_POTENTIAL:  { return mGrid.GetGridWidth(); } break;
-		case DATATYPE_HEIGHT:     { return mGrid.GetGridWidth(); } break;
 		default: {} break;
 	}
 
@@ -195,11 +198,11 @@ unsigned int PathModule::GetScalarDataArraySizeX(unsigned int dataType) const {
 unsigned int PathModule::GetScalarDataArraySizeZ(unsigned int dataType) const {
 	switch (dataType) {
 		case DATATYPE_DENSITY:    { return mGrid.GetGridHeight(); } break;
+		case DATATYPE_HEIGHT:     { return mGrid.GetGridHeight(); } break;
 		case DATATYPE_DISCOMFORT: { return mGrid.GetGridHeight(); } break;
 		case DATATYPE_SPEED:      { return mGrid.GetGridHeight(); } break;
 		case DATATYPE_COST:       { return mGrid.GetGridHeight(); } break;
 		case DATATYPE_POTENTIAL:  { return mGrid.GetGridHeight(); } break;
-		case DATATYPE_HEIGHT:     { return mGrid.GetGridHeight(); } break;
 		default: {} break;
 	}
 
@@ -209,26 +212,25 @@ unsigned int PathModule::GetScalarDataArraySizeZ(unsigned int dataType) const {
 unsigned int PathModule::GetScalarDataArrayStride(unsigned int dataType) const {
 	switch (dataType) {
 		case DATATYPE_DENSITY:    { return                    1; } break;
+		case DATATYPE_HEIGHT:     { return                    1; } break;
 		case DATATYPE_DISCOMFORT: { return                    1; } break;
 		case DATATYPE_SPEED:      { return Grid::NUM_DIRECTIONS; } break;
 		case DATATYPE_COST:       { return Grid::NUM_DIRECTIONS; } break;
 		case DATATYPE_POTENTIAL:  { return                    1; } break;
-		case DATATYPE_HEIGHT:     { return                    1; } break;
 		default: {} break;
 	}
 
 	return 0;
 }
 
-// FIXME: use groupID for the per-group scalar fields
 const float* PathModule::GetScalarDataArray(unsigned int dataType, unsigned int groupID) const {
 	switch (dataType) {
-		case DATATYPE_DENSITY:    { return mGrid.GetDensityVisDataArray();    } break;
-		case DATATYPE_DISCOMFORT: { return mGrid.GetDiscomfortVisDataArray(); } break;
-		case DATATYPE_SPEED:      { return mGrid.GetSpeedVisDataArray();      } break;
-		case DATATYPE_COST:       { return mGrid.GetCostVisDataArray();       } break;
-		case DATATYPE_POTENTIAL:  { return mGrid.GetPotentialVisDataArray();  } break;
-		case DATATYPE_HEIGHT:     { return mGrid.GetHeightVisDataArray();     } break;
+		case DATATYPE_DENSITY:    { return mGrid.GetDensityVisDataArray();           } break;
+		case DATATYPE_HEIGHT:     { return mGrid.GetHeightVisDataArray();            } break;
+		case DATATYPE_DISCOMFORT: { return mGrid.GetDiscomfortVisDataArray(groupID); } break;
+		case DATATYPE_SPEED:      { return mGrid.GetSpeedVisDataArray(groupID);      } break;
+		case DATATYPE_COST:       { return mGrid.GetCostVisDataArray(groupID);       } break;
+		case DATATYPE_POTENTIAL:  { return mGrid.GetPotentialVisDataArray(groupID);  } break;
 		default: {} break;
 	}
 
@@ -239,10 +241,10 @@ const float* PathModule::GetScalarDataArray(unsigned int dataType, unsigned int 
 
 unsigned int PathModule::GetVectorDataArraySizeX(unsigned int dataType) const {
 	switch (dataType) {
-		case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetGridWidth(); }
 		case DATATYPE_HEIGHT_DELTA:    { return mGrid.GetGridWidth(); }
-		case DATATYPE_VELOCITY:        { return mGrid.GetGridWidth(); }
 		case DATATYPE_VELOCITY_AVG:    { return mGrid.GetGridWidth(); }
+		case DATATYPE_VELOCITY:        { return mGrid.GetGridWidth(); }
+		case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetGridWidth(); }
 		default: {} break;
 	}
 
@@ -250,10 +252,10 @@ unsigned int PathModule::GetVectorDataArraySizeX(unsigned int dataType) const {
 }
 unsigned int PathModule::GetVectorDataArraySizeZ(unsigned int dataType) const {
 	switch (dataType) {
-		case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetGridHeight(); }
 		case DATATYPE_HEIGHT_DELTA:    { return mGrid.GetGridHeight(); }
-		case DATATYPE_VELOCITY:        { return mGrid.GetGridHeight(); }
 		case DATATYPE_VELOCITY_AVG:    { return mGrid.GetGridHeight(); }
+		case DATATYPE_VELOCITY:        { return mGrid.GetGridHeight(); }
+		case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetGridHeight(); }
 		default: {} break;
 	}
 
@@ -261,23 +263,22 @@ unsigned int PathModule::GetVectorDataArraySizeZ(unsigned int dataType) const {
 }
 unsigned int PathModule::GetVectorDataArrayStride(unsigned int dataType) const {
 	switch (dataType) {
-		case DATATYPE_POTENTIAL_DELTA: { return Grid::NUM_DIRECTIONS; }
 		case DATATYPE_HEIGHT_DELTA:    { return Grid::NUM_DIRECTIONS; }
-		case DATATYPE_VELOCITY:        { return Grid::NUM_DIRECTIONS; }
 		case DATATYPE_VELOCITY_AVG:    { return                    1; }
+		case DATATYPE_VELOCITY:        { return Grid::NUM_DIRECTIONS; }
+		case DATATYPE_POTENTIAL_DELTA: { return Grid::NUM_DIRECTIONS; }
 		default: {} break;
 	}
 
 	return 0;
 }
 
-// FIXME: use groupID for the per-group vector fields
 const vec3f* PathModule::GetVectorDataArray(unsigned int dataType, unsigned int groupID) const {
 	switch (dataType) {
-		case DATATYPE_VELOCITY:        { return mGrid.GetVelocityVisDataArray();       } break;
-		case DATATYPE_VELOCITY_AVG:    { return mGrid.GetVelocityAvgVisDataArray();    } break;
-		case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetPotentialDeltaVisDataArray(); } break;
-		case DATATYPE_HEIGHT_DELTA:    { return mGrid.GetHeightDeltaVisDataArray();    } break;
+		case DATATYPE_HEIGHT_DELTA:    { return mGrid.GetHeightDeltaVisDataArray();           } break;
+		case DATATYPE_VELOCITY_AVG:    { return mGrid.GetVelocityAvgVisDataArray();           } break;
+		case DATATYPE_VELOCITY:        { return mGrid.GetVelocityVisDataArray(groupID);       } break;
+		case DATATYPE_POTENTIAL_DELTA: { return mGrid.GetPotentialDeltaVisDataArray(groupID); } break;
 		default: {} break;
 	}
 

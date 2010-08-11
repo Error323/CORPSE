@@ -54,7 +54,7 @@ public:
 	void DrawArray2dT(const int drawType, unsigned int stride = 16);
 	void DrawArray2dT(const int drawType, StripCallback callback, void* data, unsigned int stride = 16);
 
-	//! same as the AddVertex... functions just without automated CheckEnlargeDrawArray
+	//! same as the AddVertex... functions but without automated CheckEnlargeDrawArray
 	inline void AddVertexQ0(float x, float y, float z);
 	inline void AddVertexQ0(const vec3f& f3) { AddVertexQ0(f3.x, f3.y, f3.z); }
 	inline void AddVertex2dQ0(float x, float z);

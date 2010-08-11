@@ -7,14 +7,18 @@
 #include "./UIWidget.hpp"
 #include "../Math/vec3fwd.hpp"
 
+class IPathModule;
 class VertexArray;
 
 namespace ui {
 	struct CCVisualizerWidget: public IUIWidget {
 	public:
 		CCVisualizerWidget(): enabled(false) {
-			texGroupIdx = 0;
-			texGroupID = 0;
+			currentTextureOverlay = NULL;
+			currentVectorOverlay = NULL;
+
+			visGroupIdx = 0;
+			visGroupID = 0;
 		}
 		~CCVisualizerWidget();
 
@@ -22,39 +26,77 @@ namespace ui {
 		void KeyPressed(int);
 
 	private:
-		struct Texture {
-		public:
-			Texture(unsigned int, unsigned int, unsigned int, const float*);
-			~Texture();
+		bool SetNextGroupID(const IPathModule*, bool, unsigned int);
 
-			void Update(const float*);
-			void ToggleEnabled() { enabled = !enabled; }
-			bool IsEnabled() const { return enabled; }
-			unsigned int GetID() const { return id; }
-			unsigned int GetSizeX() const { return sizex; }
-			unsigned int GetSizeY() const { return sizey; }
+		struct Overlay {
+			public:
+				Overlay(unsigned int x, unsigned int y, unsigned int s, unsigned int dt):
+					enabled(true), sizex(x), sizey(y), stride(s), dataType(dt) {
+				}
 
-		private:
-			bool enabled;
+				virtual ~Overlay() {}
 
-			unsigned int id;
-			unsigned int sizex;
-			unsigned int sizey;
-			unsigned int stride;
+				virtual void Update(const float*) {}
+				virtual void Update(const vec3f*) {} 
+				virtual void SetEnabled(bool b) { enabled = b; }
+				virtual bool IsEnabled() const { return enabled; }
+				virtual unsigned int GetSizeX() const { return sizex; }
+				virtual unsigned int GetSizeY() const { return sizey; }
+				virtual unsigned int GetStride() const { return stride; }
+				virtual unsigned int GetDataType() const { return dataType; }
 
-			#ifdef TEXTURE_DATATYPE_FLOAT
-			float* data;
-			#else
-			unsigned char* data;
-			#endif
+			protected:
+				bool enabled;
+
+				unsigned int sizex;
+				unsigned int sizey;
+				unsigned int stride;
+
+				unsigned int dataType;
 		};
 
-		std::map<unsigned int, VertexArray*> vectorOverlays;
-		std::map<unsigned int, Texture*> textureOverlays;
-		std::vector<unsigned int> textureGroupIDs;
+		struct TextureOverlay: public Overlay {
+			public:
+				TextureOverlay(unsigned int, unsigned int, unsigned int, unsigned int, const float*);
+				~TextureOverlay();
 
-		unsigned int texGroupIdx;
-		unsigned int texGroupID;
+				void Update(const float*);
+				unsigned int GetID() const { return id; }
+				#ifdef TEXTURE_DATATYPE_FLOAT
+				float* GetData() { return data; }
+				#else
+				unsigned char* GetData() { return data; }
+				#endif
+			private:
+				unsigned int id;
+
+				#ifdef TEXTURE_DATATYPE_FLOAT
+				float* data;
+				#else
+				unsigned char* data;
+				#endif
+		};
+
+		struct VectorOverlay: public Overlay {
+			public:
+				VectorOverlay(unsigned int, unsigned int, unsigned int, unsigned int, const vec3f*);
+				~VectorOverlay();
+
+				void Update(const vec3f*);
+				VertexArray* GetData() { return data; }
+			private:
+				VertexArray* data;
+		};
+
+		std::map<unsigned int, TextureOverlay*> textureOverlays;
+		std::map<unsigned int, VectorOverlay*> vectorOverlays;
+		std::vector<unsigned int> visGroupIDs;
+
+		VectorOverlay* currentVectorOverlay;
+		TextureOverlay* currentTextureOverlay;
+
+		unsigned int visGroupIdx;
+		unsigned int visGroupID;
 
 		bool enabled;
 	};

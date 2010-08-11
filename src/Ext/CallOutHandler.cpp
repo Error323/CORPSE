@@ -227,7 +227,7 @@ void CallOutHandler::SetSimObjectRawPosition(unsigned int objID, const vec3f& po
 		      PhysicalState  nps = ops;
 
 		// update position and adjust to the local terrain-slope
-		vec3f gpos = pos;
+		vec3f gpos = pos; readMap->SetPosInBounds(gpos);
 			gpos.y = ground->GetHeight(pos.x, pos.z);
 		mat44f mat = ops.mat;
 			mat.SetPos(pos);
