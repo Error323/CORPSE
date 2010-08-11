@@ -346,12 +346,10 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		// FIXME: engine slopes should be in the same format as CC slopes
 		const float topologicalSpeed = 
 			mMaxSpeed +
-			((cell->edges[dir]->gradHeight.dot2D(dirVectors[dir]) - mMinSlope) /  (mMaxSlope - mMinSlope)) * 
+			((cell->edges[dir]->gradHeight.dot2D(dirVectors[dir]) - mMinSlope) / (mMaxSlope - mMinSlope)) * 
 			(mMaxSpeed - minSpeed);
 
-		const float flowSpeed = 
-			ngbCell->avgVelocity.dot2D(dirVectors[dir]);
-
+		const float flowSpeed = ngbCell->avgVelocity.dot2D(dirVectors[dir]);
 		const float speed = 
 			((ngbCell->density - sMinDensity) / (maxDensity - sMinDensity)) * 
 			(topologicalSpeed - flowSpeed) + 

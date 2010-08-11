@@ -26,7 +26,7 @@ namespace ui {
 		void KeyPressed(int);
 
 	private:
-		bool SetNextGroupID(const IPathModule*, bool, unsigned int);
+		bool SetNextVisGroupID(const IPathModule*);
 
 		struct Overlay {
 			public:

@@ -51,6 +51,7 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 	};
 	#undef STRINGIFY
 
+	const CBaseGroundDrawer* g = readMap->GetGroundDrawer();
 	const IPathModule* m = simThread->GetPathModule();
 	unsigned int dataType = PathModule::NUM_DATATYPES;
 
@@ -63,7 +64,10 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 		return;
 	}
 
-	printf("[ui::CCVisualizerWidget::KeyPressed] dataType=%u (%s), visGroupID=%u\n", dataType, dataTypeNames[dataType], visGroupID);
+	printf(
+		"[CCVisWidget::KeyPressed] dataType=%u (%s), visGroupIdx=%u, visGroupID=%u\n",
+		dataType, dataTypeNames[dataType], visGroupIdx, visGroupID
+	);
 
 	if (dataType <= PathModule::DATATYPE_POTENTIAL) {
 		// scalar field; create a texture
@@ -79,16 +83,23 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 			textureOverlays[dataType] = textureOverlay;
 			currentTextureOverlay = textureOverlay;
 
-			readMap->GetGroundDrawer()->SetOverlayTexture(textureOverlay->GetID());
+			g->SetOverlayTexture(textureOverlay->GetID());
 		} else {
-			if (SetNextGroupID(m, true, dataType)) {
+			const bool isGlobalOverlay =
+				(dataType == PathModule::DATATYPE_DENSITY) ||
+				(dataType == PathModule::DATATYPE_HEIGHT);
+			const bool toggleGlobalOverlay =
+				(!textureOverlay->IsEnabled() && isGlobalOverlay);
+
+			if (toggleGlobalOverlay || (!isGlobalOverlay && SetNextVisGroupID(m))) {
 				textureOverlay->SetEnabled(true);
-				textureOverlay->Update(m->GetScalarDataArray(dataType, visGroupID));
-				readMap->GetGroundDrawer()->SetOverlayTexture(textureOverlay->GetID());
+				g->SetOverlayTexture(textureOverlay->GetID());
+
 				currentTextureOverlay = textureOverlay;
 			} else {
 				textureOverlay->SetEnabled(false);
-				readMap->GetGroundDrawer()->SetOverlayTexture(0);
+				g->SetOverlayTexture(0);
+
 				currentTextureOverlay = NULL;
 			}
 		}
@@ -106,9 +117,14 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 			vectorOverlays[dataType] = vectorOverlay;
 			currentVectorOverlay = vectorOverlay;
 		} else {
-			if (SetNextGroupID(m, false, dataType)) {
+			const bool isGlobalOverlay =
+				(dataType == PathModule::DATATYPE_HEIGHT_DELTA) ||
+				(dataType == PathModule::DATATYPE_VELOCITY_AVG);
+			const bool toggleGlobalOverlay =
+				(!vectorOverlay->IsEnabled() && isGlobalOverlay);
+
+			if (toggleGlobalOverlay || (!isGlobalOverlay && SetNextVisGroupID(m))) {
 				vectorOverlay->SetEnabled(true);
-				vectorOverlay->Update(m->GetVectorDataArray(dataType, visGroupID));
 
 				currentVectorOverlay = vectorOverlay;
 			} else {
@@ -119,23 +135,7 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 	}
 }
 
-bool ui::CCVisualizerWidget::SetNextGroupID(const IPathModule* m, bool texture, unsigned int dataType) {
-	bool canCycle = false;
-
-	if (texture) {
-		canCycle =
-			(dataType != PathModule::DATATYPE_DENSITY) &&
-			(dataType != PathModule::DATATYPE_HEIGHT);
-	} else {
-		canCycle =
-			(dataType != PathModule::DATATYPE_HEIGHT_DELTA) &&
-			(dataType != PathModule::DATATYPE_VELOCITY_AVG);
-	}
-
-	if (!canCycle) {
-		return false;
-	}
-
+bool ui::CCVisualizerWidget::SetNextVisGroupID(const IPathModule* m) {
 	// cycle to the next groupID for the non-global overlays
 	const unsigned int numGroupIDs = m->GetNumGroupIDs();
 
