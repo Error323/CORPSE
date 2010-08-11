@@ -28,13 +28,8 @@ ui::CCVisualizerWidget::~CCVisualizerWidget() {
 }
 
 void ui::CCVisualizerWidget::KeyPressed(int key) {
-	if (key == SDLK_v) {
-		enabled = !enabled;
-	}
-
-	if (!enabled) {
-		return;
-	}
+	if (key == SDLK_v) { enabled = !enabled; }
+	if (!enabled) { return; }
 
 	#define STRINGIFY(s) #s
 	static const char* dataTypeNames[PathModule::NUM_DATATYPES] = {
@@ -51,18 +46,12 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 	};
 	#undef STRINGIFY
 
-	CBaseGroundDrawer* g = readMap->GetGroundDrawer();
-	IPathModule* m = simThread->GetPathModule();
 
+	const IPathModule* m = simThread->GetPathModule();
 	unsigned int dataType = PathModule::NUM_DATATYPES;
 
-	if (key >= SDLK_0 && key <= SDLK_9) {
-		dataType = key - SDLK_0;
-	}
-
-	if (dataType >= PathModule::NUM_DATATYPES) {
-		return;
-	}
+	if (key >= SDLK_0 && key <= SDLK_9) { dataType = key - SDLK_0; }
+	if (dataType >= PathModule::NUM_DATATYPES) { return; }
 
 	printf(
 		"[CCVisWidget::KeyPressed] dataType=%u (%s), visGroupIdx=%u, visGroupID=%u\n",
@@ -72,6 +61,7 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 	if (dataType <= PathModule::DATATYPE_POTENTIAL) {
 		// scalar field; create a texture
 		TextureOverlay* textureOverlay = textureOverlays[dataType];
+		CBaseGroundDrawer* g = readMap->GetGroundDrawer();
 
 		if (textureOverlay == NULL) {
 			const unsigned int xsize = m->GetScalarDataArraySizeX(dataType);
