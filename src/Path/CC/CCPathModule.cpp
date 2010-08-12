@@ -97,7 +97,8 @@ void PathModule::Update() {
 			//   objVel is always a zero-vector
 			//   as a result, the flow speed is also zero, so
 			//   that *only* the topological speed determines
-			//   the speed-field
+			//   the speed-field (which is very small, since
+			//   group speeds are in units per frame)
 			mGrid.AddDensityAndVelocity(objPos, objVel);
 		}
 

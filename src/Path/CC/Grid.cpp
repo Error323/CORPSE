@@ -153,7 +153,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 	//   the slope (height difference) from A to B is equal to the inverse
 	//   slope from B to A, therefore we take the absolute value at every
 	//   cell (this means the scale term in f_topo lies in [-1, 1] rather
-	//   than in [0, 1])
+	//   than in [0, 1]) for determining the extrema
 	mMinTerrainSlope =  std::numeric_limits<float>::max();
 	mMaxTerrainSlope = -std::numeric_limits<float>::max();
 
@@ -372,11 +372,11 @@ void Grid::ComputeAvgVelocity() {
 
 
 void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
-	const static vec3f dirVectors[] = {
-		vec3f(  0.0f, 0.0f,  1.0f), // NORTH
-		vec3f(  1.0f, 0.0f,  0.0f), // EAST
-		vec3f(  0.0f, 0.0f, -1.0f), // SOUTH
-		vec3f( -1.0f, 0.0f,  0.0f)  // WEST
+	const static vec3f dirVectors[NUM_DIRECTIONS] = {
+		-ZVECf, // NORTH (world-space)
+		 XVECf, // EAST  (world-space)
+		 ZVECf, // SOUTH (world-space)
+		-XVECf  // WEST  (world-space)
 	};
 
 	const static float speedWeight      = 1.0f;
@@ -404,17 +404,15 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		//
 		//    properly set discomfort for <cell> for this group (maybe via UI?)
 		//    cell->discomfort = 0.0f * ((cell->x * cell->x) + (cell->y * cell->y));
-		// NOTE: engine slopes should be in the same format as CC slopes
-		const float topologicalSpeed = 
-			mMaxGroupSpeed +
-			((edge->gradHeight.dot2D(dirVectors[dir]) - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope)) * 
-			(mMinGroupSpeed - mMaxGroupSpeed);
+		// NOTE: engine slopes should be in the same format as CC slopes?
+		//
+		const float directionalSlope  = edge->gradHeight.dot2D(dirVectors[dir]);
+		const float densitySpeedScale = (ngbCell->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
+		const float slopeSpeedScale   = (directionalSlope - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
+		const float topologicalSpeed  = mMaxGroupSpeed + slopeSpeedScale * (mMinGroupSpeed - mMaxGroupSpeed);
+		const float flowSpeed         = ngbCell->avgVelocity.dot2D(dirVectors[dir]);
 
-		const float flowSpeed = ngbCell->avgVelocity.dot2D(dirVectors[dir]);
-		const float speed =
-			topologicalSpeed +
-			((ngbCell->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY)) * 
-			(topologicalSpeed - flowSpeed);
+		const float speed = topologicalSpeed + densitySpeedScale *  (topologicalSpeed - flowSpeed);
 		const float cost = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
 
 		cell->speed[dir] = speed;
