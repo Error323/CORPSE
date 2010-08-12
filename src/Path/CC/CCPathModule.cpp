@@ -217,12 +217,12 @@ unsigned int PathModule::GetScalarDataArraySizeZ(unsigned int dataType) const {
 
 unsigned int PathModule::GetScalarDataArrayStride(unsigned int dataType) const {
 	switch (dataType) {
-		case DATATYPE_DENSITY:    { return                    1; } break;
-		case DATATYPE_HEIGHT:     { return                    1; } break;
-		case DATATYPE_DISCOMFORT: { return                    1; } break;
-		case DATATYPE_SPEED:      { return Grid::NUM_DIRECTIONS; } break;
-		case DATATYPE_COST:       { return Grid::NUM_DIRECTIONS; } break;
-		case DATATYPE_POTENTIAL:  { return                    1; } break;
+		case DATATYPE_DENSITY:    { return              1; } break;
+		case DATATYPE_HEIGHT:     { return              1; } break;
+		case DATATYPE_DISCOMFORT: { return              1; } break;
+		case DATATYPE_SPEED:      { return Grid::NUM_DIRS; } break;
+		case DATATYPE_COST:       { return Grid::NUM_DIRS; } break;
+		case DATATYPE_POTENTIAL:  { return              1; } break;
 		default: {} break;
 	}
 
@@ -269,10 +269,10 @@ unsigned int PathModule::GetVectorDataArraySizeZ(unsigned int dataType) const {
 }
 unsigned int PathModule::GetVectorDataArrayStride(unsigned int dataType) const {
 	switch (dataType) {
-		case DATATYPE_HEIGHT_DELTA:    { return Grid::NUM_DIRECTIONS; }
-		case DATATYPE_VELOCITY_AVG:    { return                    1; }
-		case DATATYPE_VELOCITY:        { return Grid::NUM_DIRECTIONS; }
-		case DATATYPE_POTENTIAL_DELTA: { return Grid::NUM_DIRECTIONS; }
+		case DATATYPE_HEIGHT_DELTA:    { return Grid::NUM_DIRS; }
+		case DATATYPE_VELOCITY_AVG:    { return              1; }
+		case DATATYPE_VELOCITY:        { return Grid::NUM_DIRS; }
+		case DATATYPE_POTENTIAL_DELTA: { return Grid::NUM_DIRS; }
 		default: {} break;
 	}
 

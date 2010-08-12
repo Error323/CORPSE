@@ -84,4 +84,3 @@ void PhysicalState::Update(const SimObject* owner) {
 	mat.SetPos(pos);
 	mat.SetYDirXZ(ground->GetSmoothNormal(pos.x, pos.z));
 }
-

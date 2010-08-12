@@ -227,11 +227,14 @@ void CallOutHandler::SetSimObjectRawPosition(unsigned int objID, const vec3f& po
 		      PhysicalState  nps = ops;
 
 		// update position and adjust to the local terrain-slope
-		vec3f gpos = pos; readMap->SetPosInBounds(gpos);
-			gpos.y = ground->GetHeight(pos.x, pos.z);
+		vec3f gpos = pos;
 		mat44f mat = ops.mat;
-			mat.SetPos(pos);
-			mat.SetYDirXZ(ground->GetSmoothNormal(gpos.x, gpos.z));
+
+		readMap->SetPosInBounds(gpos);
+		gpos.y = ground->GetHeight(pos.x, pos.z);
+
+		mat.SetPos(gpos);
+		mat.SetYDirXZ(ground->GetSmoothNormal(gpos.x, gpos.z));
 
 		// copy the new matrix
 		nps.mat = mat;
@@ -248,8 +251,9 @@ void CallOutHandler::SetSimObjectRawDirection(unsigned int objID, const vec3f& d
 		      PhysicalState  nps = ops;
 
 		mat44f mat = ops.mat;
-			mat.SetZDir(dir);
-			mat.SetYDirXZ(ground->GetSmoothNormal(mat.GetPos().x, mat.GetPos().z));
+
+		mat.SetZDir(dir);
+		mat.SetYDirXZ(ground->GetSmoothNormal(mat.GetPos().x, mat.GetPos().z));
 
 		// copy the new matrix
 		nps.mat = mat;

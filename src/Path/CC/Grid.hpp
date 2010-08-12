@@ -15,11 +15,11 @@ class Grid {
 public:
 	enum {
 		// NOTE: the ordering here is relevant (see ComputeSpeedAndUnitCost)
-		DIRECTION_NORTH = 0,
-		DIRECTION_EAST  = 1,
-		DIRECTION_SOUTH = 2,
-		DIRECTION_WEST  = 3,
-		NUM_DIRECTIONS  = 4
+		DIR_N    = 0,
+		DIR_E    = 1,
+		DIR_S    = 2,
+		DIR_W    = 3,
+		NUM_DIRS = 4
 	};
 
 	struct Cell {
@@ -30,17 +30,17 @@ public:
 		};
 
 		Cell(): x(0), y(0), known(false), candidate(false), numNeighbors(0) {
-			edges[DIRECTION_NORTH] = 0; neighbors[DIRECTION_NORTH] = 0;
-			edges[DIRECTION_EAST ] = 0; neighbors[DIRECTION_EAST ] = 0;
-			edges[DIRECTION_SOUTH] = 0; neighbors[DIRECTION_SOUTH] = 0;
-			edges[DIRECTION_WEST ] = 0; neighbors[DIRECTION_WEST ] = 0;
+			edges[DIR_N] = 0; neighbors[DIR_N] = 0;
+			edges[DIR_E] = 0; neighbors[DIR_E] = 0;
+			edges[DIR_S] = 0; neighbors[DIR_S] = 0;
+			edges[DIR_W] = 0; neighbors[DIR_W] = 0;
 		}
 
 		Cell(unsigned int _x, unsigned int _y): x(_x), y(_y), known(false), candidate(false), numNeighbors(0) {
-			edges[DIRECTION_NORTH] = 0; neighbors[DIRECTION_NORTH] = 0;
-			edges[DIRECTION_EAST ] = 0; neighbors[DIRECTION_EAST ] = 0;
-			edges[DIRECTION_SOUTH] = 0; neighbors[DIRECTION_SOUTH] = 0;
-			edges[DIRECTION_WEST ] = 0; neighbors[DIRECTION_WEST ] = 0;
+			edges[DIR_N] = 0; neighbors[DIR_N] = 0;
+			edges[DIR_E] = 0; neighbors[DIR_E] = 0;
+			edges[DIR_S] = 0; neighbors[DIR_S] = 0;
+			edges[DIR_W] = 0; neighbors[DIR_W] = 0;
 		}
 
 		// for less() (NOTE: candidates are sorted in increasing order)
@@ -55,6 +55,7 @@ public:
 
 		vec3f GetNormalisedPotentialGradient(const std::vector<Edge>&, unsigned int) const;
 		vec3f GetInterpolatedVelocity(const std::vector<Edge>&, const vec3f&) const;
+		vec3f avgVelocity;
 
 		unsigned int x, y;
 		bool  known;
@@ -63,12 +64,11 @@ public:
 		float potential;
 		float density;
 		float height;
-		float speed[NUM_DIRECTIONS];
-		float cost[NUM_DIRECTIONS];
-		vec3f avgVelocity;
+		float speed[NUM_DIRS];
+		float cost[NUM_DIRS];
 
-		unsigned int edges[NUM_DIRECTIONS];
-		unsigned int neighbors[NUM_DIRECTIONS];
+		unsigned int edges[NUM_DIRS];
+		unsigned int neighbors[NUM_DIRS];
 		unsigned int numNeighbors;
 	};
 
