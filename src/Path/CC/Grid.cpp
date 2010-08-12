@@ -140,6 +140,7 @@ void Grid::Kill(const std::map<unsigned int, std::set<unsigned int> >& groupIDs)
 void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 	PFFG_ASSERT(inDownScale >= 1);
 
+	// NOTE: if mDownScale > 1, the engine's height-map must be downsampled
 	mDownScale  = inDownScale;
 	mCOH        = inCOH;
 	mWidth      = mCOH->GetHeightMapSizeX() / mDownScale;
@@ -147,12 +148,15 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 	mSquareSize = mCOH->GetSquareSize()     * mDownScale;
 
 	// NOTE:
-	//   if the terrain is completely flat, these will be zero (DIV0)
-	//   the slope from A to B is equal to the inverse slope from B to A
+	//   if the terrain is completely flat, these will be zero (causing DIV0's)
+	//
+	//   the slope (height difference) from A to B is equal to the inverse
+	//   slope from B to A, therefore we take the absolute value at every
+	//   cell (this means the scale term in f_topo lies in [-1, 1] rather
+	//   than in [0, 1])
 	mMinTerrainSlope =  std::numeric_limits<float>::max();
 	mMaxTerrainSlope = -std::numeric_limits<float>::max();
 
-	// NOTE: if mDownScale != 1, the engine's height-map must be downsampled
 	printf("[Grid::Init] GridRes: %dx%d %d\n", mWidth, mHeight, mSquareSize);
 
 
@@ -254,11 +258,11 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 				dir = DIRECTION_NORTH;
 
 				edge = &mInitEdges[cell->edges[dir]];
-				edge->gradHeight = vec3f(-squareSizeFlt, 0.0f, cell->height - mInitCells[GRID_ID(x, y - 1)].height);
+				edge->gradHeight = vec3f(-squareSizeFlt, 0.0f, mInitCells[GRID_ID(x, y - 1)].height - cell->height);
 				cell->neighbors[cell->numNeighbors++] = GRID_ID(x, y - 1);
 
-				mMinTerrainSlope = std::min(mMinTerrainSlope, edge->gradHeight.z);
-				mMaxTerrainSlope = std::max(mMaxTerrainSlope, edge->gradHeight.z);
+				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.z));
+				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(edge->gradHeight.z));
 				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = edge->gradHeight;
 			}
 
@@ -266,11 +270,11 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 				dir = DIRECTION_SOUTH;
 
 				edge = &mInitEdges[cell->edges[dir]];
-				edge->gradHeight = vec3f( squareSizeFlt, 0.0f, cell->height - mInitCells[GRID_ID(x, y + 1)].height);
+				edge->gradHeight = vec3f( squareSizeFlt, 0.0f, mInitCells[GRID_ID(x, y + 1)].height - cell->height);
 				cell->neighbors[cell->numNeighbors++] = GRID_ID(x, y + 1);
 
-				mMinTerrainSlope = std::min(mMinTerrainSlope, edge->gradHeight.z);
-				mMaxTerrainSlope = std::max(mMaxTerrainSlope, edge->gradHeight.z);
+				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.z));
+				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(edge->gradHeight.z));
 				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = edge->gradHeight;
 			}
 
@@ -278,11 +282,11 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 				dir = DIRECTION_WEST;
 
 				edge = &mInitEdges[cell->edges[dir]];
-				edge->gradHeight = vec3f(cell->height - mInitCells[GRID_ID(x - 1, y)].height, 0.0f, -squareSizeFlt);
+				edge->gradHeight = vec3f(mInitCells[GRID_ID(x - 1, y)].height - cell->height, 0.0f, -squareSizeFlt);
 				cell->neighbors[cell->numNeighbors++] = GRID_ID(x - 1, y);
 
-				mMinTerrainSlope = std::min(mMinTerrainSlope, edge->gradHeight.x);
-				mMaxTerrainSlope = std::max(mMaxTerrainSlope, edge->gradHeight.x);
+				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.x));
+				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(edge->gradHeight.x));
 				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = edge->gradHeight;
 			}
 
@@ -290,11 +294,11 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 				dir = DIRECTION_EAST;
 
 				edge = &mInitEdges[cell->edges[dir]];
-				edge->gradHeight = vec3f(cell->height - mInitCells[GRID_ID(x + 1, y)].height, 0.0f, squareSizeFlt);
+				edge->gradHeight = vec3f(mInitCells[GRID_ID(x + 1, y)].height - cell->height, 0.0f, squareSizeFlt);
 				cell->neighbors[cell->numNeighbors++] = GRID_ID(x + 1, y);
 
-				mMinTerrainSlope = std::min(mMinTerrainSlope, edge->gradHeight.x);
-				mMaxTerrainSlope = std::max(mMaxTerrainSlope, edge->gradHeight.x);
+				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.x));
+				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(edge->gradHeight.x));
 				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = edge->gradHeight;
 			}
 		}

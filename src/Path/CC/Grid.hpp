@@ -118,8 +118,8 @@ private:
 	unsigned int mDownScale;
 	unsigned int numResets;
 
-	float mMinGroupSlope, mMinTerrainSlope; // ?, sMin (normalized)
-	float mMaxGroupSlope, mMaxTerrainSlope; // ?, sMax (normalized)
+	float mMinGroupSlope, mMinTerrainSlope; // ?, sMin (not normalized)
+	float mMaxGroupSlope, mMaxTerrainSlope; // ?, sMax (not normalized)
 	float mMinGroupSpeed;                   // fMin
 	float mMaxGroupSpeed;                   // fMax
 	float mMaxGroupRadius;
