@@ -460,6 +460,15 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 	PFFG_ASSERT(!inGoalCells.empty());
 	PFFG_ASSERT(mCandidates.empty());
 
+	// cycle the buffers so the per-group variables of the
+	// previously processed group do not influence this one
+	//
+	// NOTE: this must be done here rather than at the end
+	// of the update so that UpdateSimObjectLocation reads
+	// from the correct buffer
+	mFrontBufferIdx = (mFrontBufferIdx + 1) & 1;
+	mBackBufferIdx = (mBackBufferIdx + 1) & 1;
+
 	mMinGroupSlope  =  std::numeric_limits<float>::max();
 	mMaxGroupSlope  = -std::numeric_limits<float>::max();
 	mMinGroupSpeed  =                               0.0f;
@@ -547,11 +556,6 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 
 		mCandidates.pop();
 	}
-
-	// flip the buffers so the per-group variables of the
-	// previously processed group do not influence the next
-	mFrontBufferIdx = (mFrontBufferIdx + 1) & 1;
-	mBackBufferIdx = (mBackBufferIdx + 1) & 1;
 }
 
 void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
