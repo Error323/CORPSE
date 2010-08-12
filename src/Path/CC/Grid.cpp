@@ -157,7 +157,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 	mMinTerrainSlope =  std::numeric_limits<float>::max();
 	mMaxTerrainSlope = -std::numeric_limits<float>::max();
 
-	printf("[Grid::Init] GridRes: %dx%d %d\n", mWidth, mHeight, mSquareSize);
+	printf("[Grid::Init] resolution: %dx%d %d\n", mWidth, mHeight, mSquareSize);
 
 
 	const unsigned int numCells = mWidth * mHeight;
@@ -349,6 +349,11 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 	Bf->density += powf(std::min<float>(       dX, 1.0f - dY), EXP_DENSITY); Bb->density = Bf->density;
 	Cf->density += powf(std::min<float>(       dX,        dY), EXP_DENSITY); Cb->density = Cf->density;
 	Df->density += powf(std::min<float>(1.0f - dX,        dY), EXP_DENSITY); Db->density = Df->density;
+
+	mMaxDensity = std::max(mMaxDensity, Af->density);
+	mMaxDensity = std::max(mMaxDensity, Bf->density);
+	mMaxDensity = std::max(mMaxDensity, Cf->density);
+	mMaxDensity = std::max(mMaxDensity, Df->density);
 }
 
 void Grid::ComputeAvgVelocity() {
@@ -361,6 +366,10 @@ void Grid::ComputeAvgVelocity() {
 		Cell* cf = &frontCells[idx];
 		Cell* cb = &backCells[idx];
 
+		// normalise the densities, so comparisons with
+		// MIN_DENSITY and MAX_DENSITY are well-defined
+		// when constructing the speed-field
+		cf->density     /= mMaxDensity;
 		cf->avgVelocity /= cf->density;
 		cb->avgVelocity  = cf->avgVelocity;
 
@@ -373,10 +382,10 @@ void Grid::ComputeAvgVelocity() {
 
 void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 	const static vec3f dirVectors[NUM_DIRECTIONS] = {
-		-ZVECf, // NORTH (world-space)
-		 XVECf, // EAST  (world-space)
-		 ZVECf, // SOUTH (world-space)
-		-XVECf  // WEST  (world-space)
+		-ZVECf, // N (world-space)
+		 XVECf, // E (world-space)
+		 ZVECf, // S (world-space)
+		-XVECf  // W (world-space)
 	};
 
 	const static float speedWeight      = 1.0f;
@@ -405,6 +414,14 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		//    properly set discomfort for <cell> for this group (maybe via UI?)
 		//    cell->discomfort = 0.0f * ((cell->x * cell->x) + (cell->y * cell->y));
 		// NOTE: engine slopes should be in the same format as CC slopes?
+		// NOTE:
+		//    if the flow-speed is zero in a region, then the cost
+		//    for cells with normalised density >= MAX_DENSITY will
+		//    be FLOAT_MAX everywhere and the potential-field update
+		//    can trigger asserts
+		//
+		//    (the potential-field will also become invisible due
+		//    to the normalisation by FLOAT_MAX)
 		//
 		const float directionalSlope  = edge->gradHeight.dot2D(dirVectors[dir]);
 		const float densitySpeedScale = (ngbCell->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
@@ -416,13 +433,13 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		float speed = interpolatedSpeed;
 		float cost = 0.0f;
 
-		if (ngbCell->density >= MAX_DENSITY) { speed = flowSpeed; }
+	//	if (ngbCell->density >= MAX_DENSITY) { speed = flowSpeed; }
 		if (ngbCell->density <= MIN_DENSITY) { speed = topologicalSpeed; }
 
-		if (speed > 0.0f) {
+		if (speed > 0.01f) {
 			cost = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
 		} else {
-			cost = std::numeric_limits<float>::infinity();
+			cost = std::numeric_limits<float>::max();
 		}
 
 		cell->speed[dir] = speed;
@@ -506,10 +523,10 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 
 		UpdateCandidates(groupID, frontCell);
 
-		frontEdges[ frontCell->edges[DIRECTION_NORTH] ].velocity = (frontCell->GetNormalizedPotentialGradient(frontEdges, DIRECTION_NORTH) * -frontCell->speed[DIRECTION_NORTH]);
-		frontEdges[ frontCell->edges[DIRECTION_SOUTH] ].velocity = (frontCell->GetNormalizedPotentialGradient(frontEdges, DIRECTION_SOUTH) * -frontCell->speed[DIRECTION_SOUTH]);
-		frontEdges[ frontCell->edges[DIRECTION_EAST ] ].velocity = (frontCell->GetNormalizedPotentialGradient(frontEdges, DIRECTION_EAST ) * -frontCell->speed[DIRECTION_EAST ]);
-		frontEdges[ frontCell->edges[DIRECTION_WEST ] ].velocity = (frontCell->GetNormalizedPotentialGradient(frontEdges, DIRECTION_WEST ) * -frontCell->speed[DIRECTION_WEST ]);
+		frontEdges[ frontCell->edges[DIRECTION_NORTH] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIRECTION_NORTH) * -frontCell->speed[DIRECTION_NORTH]);
+		frontEdges[ frontCell->edges[DIRECTION_SOUTH] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIRECTION_SOUTH) * -frontCell->speed[DIRECTION_SOUTH]);
+		frontEdges[ frontCell->edges[DIRECTION_EAST ] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIRECTION_EAST ) * -frontCell->speed[DIRECTION_EAST ]);
+		frontEdges[ frontCell->edges[DIRECTION_WEST ] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIRECTION_WEST ) * -frontCell->speed[DIRECTION_WEST ]);
 		backEdges[ frontCell->edges[DIRECTION_NORTH] ].velocity = NVECf;
 		backEdges[ frontCell->edges[DIRECTION_SOUTH] ].velocity = NVECf;
 		backEdges[ frontCell->edges[DIRECTION_EAST ] ].velocity = NVECf;
@@ -605,6 +622,8 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 				minPotCellPtrY = dirCells[DIRECTION_SOUTH];
 			}
 
+			PFFG_ASSERT(minPotCellPtrX != NULL && minPotCellPtrY != NULL);
+
 			frontNgb->potential = Potential2D(
 				minPotCellPtrX->potential, frontNgb->cost[minPotCellDirX], 
 				minPotCellPtrY->potential, frontNgb->cost[minPotCellDirY]
@@ -641,6 +660,8 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 					minPotCellPtrY = dirCells[DIRECTION_SOUTH];
 				}
 
+				PFFG_ASSERT(minPotCellPtrY != NULL);
+
 				frontNgb->potential = Potential1D(minPotCellPtrY->potential, frontNgb->cost[minPotCellDirY]);
 				frontEdges[ frontNgb->edges[minPotCellDirY] ].gradPotential = vec3f((frontNgb->potential - minPotCellPtrY->potential), 0.0f, mSquareSize);
 				frontEdges[ frontNgb->edges[minPotCellDirY] ].gradPotential.z *= ((minPotCellDirY == DIRECTION_NORTH)? -1.0f : 1.0f);
@@ -658,6 +679,8 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 					minPotCellDirX = DIRECTION_WEST;
 					minPotCellPtrX = dirCells[DIRECTION_WEST];
 				}
+
+				PFFG_ASSERT(minPotCellPtrX != NULL);
 
 				frontNgb->potential = Potential1D(minPotCellPtrX->potential, frontNgb->cost[minPotCellDirX]);
 				frontEdges[ frontNgb->edges[minPotCellDirX] ].gradPotential = vec3f(mSquareSize, 0.0f, (frontNgb->potential - minPotCellPtrX->potential));
@@ -725,11 +748,13 @@ void Grid::Reset() {
 	mBuffers[mBackBufferIdx].cells.assign(mInitCells.begin(), mInitCells.end());
 	mBuffers[mBackBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());
 	mTouchedCells.clear();
+
+	mMaxDensity = -std::numeric_limits<float>::max();
 }
 
 
 
-vec3f Grid::Cell::GetNormalizedPotentialGradient(const std::vector<Cell::Edge>& gridEdges, unsigned int dir) const {
+vec3f Grid::Cell::GetNormalisedPotentialGradient(const std::vector<Cell::Edge>& gridEdges, unsigned int dir) const {
 	const Edge* edge = &gridEdges[edges[dir]];
 	const vec3f& edgeGradPot = edge->gradPotential;
 	const float edgeGradPotLen = edgeGradPot.len2D();

@@ -14,7 +14,7 @@ class ICallOutHandler;
 class Grid {
 public:
 	enum {
-		// NOTE: This order should not be changed!
+		// NOTE: the ordering here is relevant (see ComputeSpeedAndUnitCost)
 		DIRECTION_NORTH = 0,
 		DIRECTION_EAST  = 1,
 		DIRECTION_SOUTH = 2,
@@ -53,7 +53,7 @@ public:
 		void ResetGlobalDynamicVars();
 		void ResetGroupVars();
 
-		vec3f GetNormalizedPotentialGradient(const std::vector<Edge>&, unsigned int) const;
+		vec3f GetNormalisedPotentialGradient(const std::vector<Edge>&, unsigned int) const;
 		vec3f GetInterpolatedVelocity(const std::vector<Edge>&, const vec3f&) const;
 
 		unsigned int x, y;
@@ -118,11 +118,12 @@ private:
 	unsigned int mDownScale;
 	unsigned int numResets;
 
-	float mMinGroupSlope, mMinTerrainSlope; // ?, sMin (not normalized)
-	float mMaxGroupSlope, mMaxTerrainSlope; // ?, sMax (not normalized)
+	float mMinGroupSlope, mMinTerrainSlope; // ?, sMin (not normalised)
+	float mMaxGroupSlope, mMaxTerrainSlope; // ?, sMax (not normalised)
 	float mMinGroupSpeed;                   // fMin
 	float mMaxGroupSpeed;                   // fMax
 	float mMaxGroupRadius;
+	float mMaxDensity;
 
 	// FMM vars
 	std::priority_queue<Cell*, std::vector<Cell*, std::allocator<Cell*> >, Cell> mCandidates;
