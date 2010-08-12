@@ -411,9 +411,15 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		const float slopeSpeedScale   = (directionalSlope - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
 		const float topologicalSpeed  = mMaxGroupSpeed + slopeSpeedScale * (mMinGroupSpeed - mMaxGroupSpeed);
 		const float flowSpeed         = ngbCell->avgVelocity.dot2D(dirVectors[dir]);
+		const float interpolatedSpeed = topologicalSpeed + densitySpeedScale * (topologicalSpeed - flowSpeed);
 
-		const float speed = topologicalSpeed + densitySpeedScale *  (topologicalSpeed - flowSpeed);
-		const float cost = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
+		float speed = interpolatedSpeed;
+		float cost = 0.0f;
+
+		if (ngbCell->density >= MAX_DENSITY) { speed = flowSpeed; }
+		if (ngbCell->density <= MIN_DENSITY) { speed = topologicalSpeed; }
+
+		cost = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
 
 		cell->speed[dir] = speed;
 		cell->cost[dir] = cost;
