@@ -419,7 +419,11 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		if (ngbCell->density >= MAX_DENSITY) { speed = flowSpeed; }
 		if (ngbCell->density <= MIN_DENSITY) { speed = topologicalSpeed; }
 
-		cost = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
+		if (speed > 0.0f) {
+			cost = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
+		} else {
+			cost = std::numeric_limits<float>::infinity();
+		}
 
 		cell->speed[dir] = speed;
 		cell->cost[dir] = cost;
