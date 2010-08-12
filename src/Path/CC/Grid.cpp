@@ -318,8 +318,8 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 	const vec3f posf = vec3f(inPos.x / mSquareSize, 0.0f, inPos.z / mSquareSize);
 	const vec3i posi = World2Grid(inPos);
 
-	const int i = (posf.x > posi.x + 0.5f) ? posi.x + 1 : posi.x;
-	const int j = (posf.z > posi.z + 0.5f) ? posi.z + 1 : posi.z;
+	const unsigned int i = (posf.x > posi.x + 0.5f) ? posi.x + 1 : posi.x;
+	const unsigned int j = (posf.z > posi.z + 0.5f) ? posi.z + 1 : posi.z;
 
 	PFFG_ASSERT(i > 0 && j > 0 && i < mWidth && j < mHeight);
  
@@ -824,7 +824,7 @@ unsigned int Grid::World2Cell(const vec3f& inWorldPos) const {
 	const vec3i& gridPos = World2Grid(inWorldPos);
 	const unsigned int gridIdx = GRID_INDEX(gridPos.x, gridPos.z);
 
-	PFFG_ASSERT_MSG(gridIdx < mCells.size(), "world(%2.2f, %2.2f) grid(%d, %d)", inWorldPos.x, inWorldPos.z, gridPos.x, gridPos.z);
+	PFFG_ASSERT_MSG(gridIdx < mInitCells.size(), "world(%2.2f, %2.2f) grid(%d, %d)", inWorldPos.x, inWorldPos.z, gridPos.x, gridPos.z);
 	return gridIdx;
 }
 
