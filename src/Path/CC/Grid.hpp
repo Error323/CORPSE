@@ -108,8 +108,9 @@ public:
 	unsigned int World2Cell(const vec3f&) const;
 
 private:
-	static const float sLambda;
-	static const float sMinDensity;
+	static const float EXP_DENSITY = 2.0f;    // density exponent (lambda)
+	static const float MIN_DENSITY = 0.25f;   // if rho <= rhoMin, f == fTopo
+	static const float MAX_DENSITY = 0.75f;   // if rho >= rhoMax, f == fFlow
 
 	unsigned int mWidth;
 	unsigned int mHeight;
@@ -117,10 +118,11 @@ private:
 	unsigned int mDownScale;
 	unsigned int numResets;
 
-	float mMinSlope;
-	float mMaxSlope;
-	float mMaxSpeed;
-	float mMaxRadius;
+	float mMinGroupSlope, mMinTerrainSlope; // ?, sMin (normalized)
+	float mMaxGroupSlope, mMaxTerrainSlope; // ?, sMax (normalized)
+	float mMinGroupSpeed;                   // fMin
+	float mMaxGroupSpeed;                   // fMax
+	float mMaxGroupRadius;
 
 	// FMM vars
 	std::priority_queue<Cell*, std::vector<Cell*, std::allocator<Cell*> >, Cell> mCandidates;

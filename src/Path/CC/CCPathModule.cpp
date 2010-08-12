@@ -93,6 +93,11 @@ void PathModule::Update() {
 				coh->GetSimObjectDirection(objID) *
 				coh->GetSimObjectCurrentForwardSpeed(objID);
 
+			// FIXME:
+			//   objVel is always a zero-vector
+			//   as a result, the flow speed is also zero, so
+			//   that *only* the topological speed determines
+			//   the speed-field
 			mGrid.AddDensityAndVelocity(objPos, objVel);
 		}
 
