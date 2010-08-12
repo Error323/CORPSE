@@ -7,8 +7,9 @@
 #include "../../Sim/SimObjectDef.hpp"
 #include "../../System/Debugger.hpp"
 
-#define GRID_ID(x, y) (((y) * (mWidth)) + (x))
+#define GRID_INDEX(x, y) (((y) * (mWidth)) + (x))
 #define ELEVATION(x, y) (mCOH->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * mWidth) + (mDownScale * (x))])
+#define CLAMP(f, fmin, fmax) std::max(fmin, std::min(fmax, (f)))
 
 void Grid::AddGroup(unsigned int groupID) {
 	mDiscomfortVisData[groupID] = std::vector<float>();
@@ -198,7 +199,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 
 			// bind the east face of the cell west of the current cell
 			if (x > 0) {
-				cellIdx = GRID_ID(x - 1, y);
+				cellIdx = GRID_INDEX(x - 1, y);
 				PFFG_ASSERT(cellIdx < mInitCells.size());
 
 				Cell* westCell = &mInitCells[cellIdx];
@@ -207,7 +208,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 
 			// bind the south face of the cell north of the current cell
 			if (y > 0) {
-				cellIdx = GRID_ID(x, y - 1);
+				cellIdx = GRID_INDEX(x, y - 1);
 				PFFG_ASSERT(cellIdx < mInitCells.size());
 
 				Cell* northCell = &mInitCells[cellIdx];
@@ -234,21 +235,21 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 	// perform a full reset of the cells and compute their heights
 	for (unsigned int y = 0; y < mHeight; y++) {
 		for (unsigned int x = 0; x < mWidth; x++) {
-			Cell* curCell = &mInitCells[GRID_ID(x, y)];
+			Cell* curCell = &mInitCells[GRID_INDEX(x, y)];
 
 			// set potential to +inf, etc.
 			curCell->ResetFull();
 			// set the height, assuming the heightmap is static
 			curCell->height = ELEVATION(x, y);
 
-			mHeightVisData[GRID_ID(x, y)] = curCell->height;
+			mHeightVisData[GRID_INDEX(x, y)] = curCell->height;
 		}
 	}
 
 	// compute gradient-heights and neighbors
 	for (unsigned int y = 0; y < mHeight; y++) {
 		for (unsigned int x = 0; x < mWidth; x++) {
-			unsigned int idx = GRID_ID(x, y);
+			unsigned int idx = GRID_INDEX(x, y);
 			unsigned int dir = 0;
 
 			Cell* cell = &mInitCells[idx];
@@ -258,8 +259,8 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 				dir = DIRECTION_NORTH;
 
 				edge = &mInitEdges[cell->edges[dir]];
-				edge->gradHeight = vec3f(-squareSizeFlt, 0.0f, mInitCells[GRID_ID(x, y - 1)].height - cell->height);
-				cell->neighbors[cell->numNeighbors++] = GRID_ID(x, y - 1);
+				edge->gradHeight = vec3f(-squareSizeFlt, 0.0f, mInitCells[GRID_INDEX(x, y - 1)].height - cell->height);
+				cell->neighbors[cell->numNeighbors++] = GRID_INDEX(x, y - 1);
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.z));
 				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(edge->gradHeight.z));
@@ -270,8 +271,8 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 				dir = DIRECTION_SOUTH;
 
 				edge = &mInitEdges[cell->edges[dir]];
-				edge->gradHeight = vec3f( squareSizeFlt, 0.0f, mInitCells[GRID_ID(x, y + 1)].height - cell->height);
-				cell->neighbors[cell->numNeighbors++] = GRID_ID(x, y + 1);
+				edge->gradHeight = vec3f( squareSizeFlt, 0.0f, mInitCells[GRID_INDEX(x, y + 1)].height - cell->height);
+				cell->neighbors[cell->numNeighbors++] = GRID_INDEX(x, y + 1);
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.z));
 				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(edge->gradHeight.z));
@@ -282,8 +283,8 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 				dir = DIRECTION_WEST;
 
 				edge = &mInitEdges[cell->edges[dir]];
-				edge->gradHeight = vec3f(mInitCells[GRID_ID(x - 1, y)].height - cell->height, 0.0f, -squareSizeFlt);
-				cell->neighbors[cell->numNeighbors++] = GRID_ID(x - 1, y);
+				edge->gradHeight = vec3f(mInitCells[GRID_INDEX(x - 1, y)].height - cell->height, 0.0f, -squareSizeFlt);
+				cell->neighbors[cell->numNeighbors++] = GRID_INDEX(x - 1, y);
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.x));
 				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(edge->gradHeight.x));
@@ -294,8 +295,8 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 				dir = DIRECTION_EAST;
 
 				edge = &mInitEdges[cell->edges[dir]];
-				edge->gradHeight = vec3f(mInitCells[GRID_ID(x + 1, y)].height - cell->height, 0.0f, squareSizeFlt);
-				cell->neighbors[cell->numNeighbors++] = GRID_ID(x + 1, y);
+				edge->gradHeight = vec3f(mInitCells[GRID_INDEX(x + 1, y)].height - cell->height, 0.0f, squareSizeFlt);
+				cell->neighbors[cell->numNeighbors++] = GRID_INDEX(x + 1, y);
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.x));
 				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(edge->gradHeight.x));
@@ -326,10 +327,10 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 	std::vector<Cell>& backCells = mBuffers[mBackBufferIdx].cells;
 
 	const unsigned int
-		idxA = GRID_ID(i - 1, j - 1),
-		idxB = GRID_ID(i    , j - 1),
-		idxC = GRID_ID(i    , j    ),
-		idxD = GRID_ID(i - 1, j    );
+		idxA = GRID_INDEX(i - 1, j - 1),
+		idxB = GRID_INDEX(i    , j - 1),
+		idxC = GRID_INDEX(i    , j    ),
+		idxD = GRID_INDEX(i - 1, j    );
 
 	Cell *Af = &frontCells[idxA], *Ab = &backCells[idxA]; mTouchedCells.insert(idxA);
 	Cell *Bf = &frontCells[idxB], *Bb = &backCells[idxB]; mTouchedCells.insert(idxB);
@@ -391,7 +392,7 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 	const static float speedWeight      = 1.0f;
 	const static float discomfortWeight = 100.0f;
 
-	const unsigned int cellGridIdx = GRID_ID(cell->x, cell->y);
+	const unsigned int cellGridIdx = GRID_INDEX(cell->x, cell->y);
 	const vec3f& cellWorldPos = Grid2World(cell);
 
 	const std::vector<Cell      >& frontCells = mBuffers[mFrontBufferIdx].cells;
@@ -399,7 +400,7 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 
 	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		const vec3i& ngbGridPos = World2Grid(cellWorldPos + dirVectors[dir] * mMaxGroupRadius);
-		const unsigned int ngbGridIdx = GRID_ID(ngbGridPos.x, ngbGridPos.z);
+		const unsigned int ngbGridIdx = GRID_INDEX(ngbGridPos.x, ngbGridPos.z);
 
 		PFFG_ASSERT(ngbGridIdx < frontCells.size());
 
@@ -418,7 +419,9 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		//    if the flow-speed is zero in a region, then the cost
 		//    for cells with normalised density >= MAX_DENSITY will
 		//    be FLOAT_MAX everywhere and the potential-field update
-		//    can trigger asserts
+		//    can trigger asserts; this will also happen for cells
+		//    with density <= MIN_DENSITY whenever topologicalSpeed
+		//    is less than or equal to zero
 		//
 		//    (the potential-field will also become invisible due
 		//    to the normalisation by FLOAT_MAX)
@@ -426,7 +429,7 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		const float directionalSlope  = edge->gradHeight.dot2D(dirVectors[dir]);
 		const float densitySpeedScale = (ngbCell->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
 		const float slopeSpeedScale   = (directionalSlope - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
-		const float topologicalSpeed  = mMaxGroupSpeed + slopeSpeedScale * (mMinGroupSpeed - mMaxGroupSpeed);
+		const float topologicalSpeed  = mMaxGroupSpeed + CLAMP(slopeSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
 		const float flowSpeed         = ngbCell->avgVelocity.dot2D(dirVectors[dir]);
 		const float interpolatedSpeed = topologicalSpeed + densitySpeedScale * (topologicalSpeed - flowSpeed);
 
@@ -516,7 +519,7 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 		frontCell = mCandidates.top();
 		frontCell->known = true;
 
-		cellIdx = GRID_ID(frontCell->x, frontCell->y);
+		cellIdx = GRID_INDEX(frontCell->x, frontCell->y);
 
 		backCell = &backCells[cellIdx];
 		backCell->ResetGroupVars();
@@ -580,10 +583,10 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 
 		ComputeSpeedAndUnitCost(groupID, frontNgb);
 
-		dirCells[DIRECTION_NORTH] = (frontNgb->y >           0) ? &frontCells[GRID_ID(frontNgb->x    , frontNgb->y - 1)] : NULL;
-		dirCells[DIRECTION_SOUTH] = (frontNgb->y < mHeight - 1) ? &frontCells[GRID_ID(frontNgb->x    , frontNgb->y + 1)] : NULL;
-		dirCells[DIRECTION_WEST]  = (frontNgb->x >           0) ? &frontCells[GRID_ID(frontNgb->x - 1, frontNgb->y    )] : NULL;
-		dirCells[DIRECTION_EAST]  = (frontNgb->x < mWidth -  1) ? &frontCells[GRID_ID(frontNgb->x + 1, frontNgb->y    )] : NULL;
+		dirCells[DIRECTION_NORTH] = (frontNgb->y >           0) ? &frontCells[GRID_INDEX(frontNgb->x    , frontNgb->y - 1)] : NULL;
+		dirCells[DIRECTION_SOUTH] = (frontNgb->y < mHeight - 1) ? &frontCells[GRID_INDEX(frontNgb->x    , frontNgb->y + 1)] : NULL;
+		dirCells[DIRECTION_WEST]  = (frontNgb->x >           0) ? &frontCells[GRID_INDEX(frontNgb->x - 1, frontNgb->y    )] : NULL;
+		dirCells[DIRECTION_EAST]  = (frontNgb->x < mWidth -  1) ? &frontCells[GRID_INDEX(frontNgb->x + 1, frontNgb->y    )] : NULL;
 
 		for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 			if (dirCells[dir] == NULL) {
@@ -815,7 +818,7 @@ vec3i Grid::World2Grid(const vec3f& inWorldPos) const {
 // get the 1D grid-cell index corresponding to a world-space position
 unsigned int Grid::World2Cell(const vec3f& inWorldPos) const {
 	const vec3i& gridPos = World2Grid(inWorldPos);
-	const unsigned int gridIdx = GRID_ID(gridPos.x, gridPos.z);
+	const unsigned int gridIdx = GRID_INDEX(gridPos.x, gridPos.z);
 
 	PFFG_ASSERT_MSG(gridIdx < mCells.size(), "world(%2.2f, %2.2f) grid(%d, %d)", inWorldPos.x, inWorldPos.z, gridPos.x, gridPos.z);
 	return gridIdx;
