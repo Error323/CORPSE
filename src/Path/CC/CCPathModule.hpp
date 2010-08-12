@@ -83,7 +83,7 @@ private:
 	// are recycled
 	Grid mGrid;
 
-	std::map<unsigned int, std::vector<Grid::Cell*> > mGoals;
+	std::map<unsigned int, std::vector<unsigned int> > mGoals;
 	std::map<unsigned int, const SimObjectDef*> mSimObjectIDs;     // object ID ==> object def
 	std::map<unsigned int, unsigned int> mObjectGroupIDs;          // object ID ==> group ID
 	std::map<unsigned int, std::set<unsigned int> > mObjectGroups; // group ID ==> object IDs

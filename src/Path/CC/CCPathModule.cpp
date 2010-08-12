@@ -123,7 +123,7 @@ void PathModule::Update() {
 			}
 		}
 
-		// Enforce minimum distance between objects
+		// enforce minimum distance between objects
 		// NOTE: should this be handled via EVENT_SIMOBJECT_COLLISION?
 	}
 
@@ -147,7 +147,7 @@ void PathModule::AddObjectToGroup(unsigned int objID, unsigned int groupID) {
 	}
 
 	if (mGoals.find(groupID) == mGoals.end()) {
-		mGoals[groupID] = std::vector<Grid::Cell*>();
+		mGoals[groupID] = std::vector<unsigned int>();
 	}
 
 	mObjectGroupIDs[objID] = groupID;

@@ -132,8 +132,12 @@ void Grid::Kill(const std::map<unsigned int, std::set<unsigned int> >& groupIDs)
 	}
 
 	mTouchedCells.clear();
-	mCells.clear();
-	mEdges.clear();
+	mInitCells.clear();
+	mInitEdges.clear();
+	mBuffers[mFrontBufferIdx].cells.clear();
+	mBuffers[mFrontBufferIdx].edges.clear();
+	mBuffers[mBackBufferIdx].cells.clear();
+	mBuffers[mBackBufferIdx].edges.clear();
 }
 
 void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
@@ -151,6 +155,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 
 	const unsigned int numCells = mWidth * mHeight;
 	const unsigned int numEdges = (mWidth + 1) * mHeight + (mHeight + 1) * mWidth;
+	const float squareSizeFlt = mSquareSize;
 
 	// visualisation data for global scalar fields
 	mDensityVisData.resize(numCells);
@@ -160,65 +165,72 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 	mAvgVelocityVisData.resize(numCells);
 	mHeightDeltaVisData.resize(numCells * NUM_DIRECTIONS);
 
-	mEdges.reserve(numEdges);
-	mEdgesBackup.reserve(numEdges);
-	mCells.reserve(numCells);
-	mCellsBackup.reserve(numCells);
 
-	for (int y = 0; y < mHeight; y++) {
-		for (int x = 0; x < mWidth; x++) {
-			mCells.push_back(Cell(x,y));
-			Cell* curCell = &mCells.back();
+	mInitCells.reserve(numCells);
+	mInitEdges.reserve(numEdges);
 
-			Cell::Edge* edgeW = CreateEdge();
-			Cell::Edge* edgeN = CreateEdge();
+	mBuffers[mFrontBufferIdx].cells.reserve(numCells);
+	mBuffers[mFrontBufferIdx].edges.reserve(numEdges);
+	mBuffers[mBackBufferIdx].cells.reserve(numCells);
+	mBuffers[mBackBufferIdx].edges.reserve(numEdges);
 
-			curCell->edges[DIRECTION_WEST]  = edgeW;
-			curCell->edges[DIRECTION_NORTH] = edgeN;
+	for (unsigned int y = 0; y < mHeight; y++) {
+		for (unsigned int x = 0; x < mWidth; x++) {
+			mInitCells.push_back(Cell(x, y));
+			mInitEdges.push_back(Grid::Cell::Edge());
+			mInitEdges.push_back(Grid::Cell::Edge());
 
-			unsigned int idx = 0;
+			Cell* curCell = &mInitCells.back();
+
+			unsigned int cellIdx = 0;
+			unsigned int edgeIdxW = mInitEdges.size() - 2;
+			unsigned int edgeIdxN = mInitEdges.size() - 1;
+
+			curCell->edges[DIRECTION_WEST]  = edgeIdxW;
+			curCell->edges[DIRECTION_NORTH] = edgeIdxN;
 
 			// Bind the east face of the cell west of the current cell
 			if (x > 0) {
-				idx = GRID_ID(x - 1, y);
-				PFFG_ASSERT(idx < mCells.size());
+				cellIdx = GRID_ID(x - 1, y);
+				PFFG_ASSERT(cellIdx < mInitCells.size());
 
-				Cell* westCell = &mCells[idx];
-				westCell->edges[DIRECTION_EAST] = edgeW;
+				Cell* westCell = &mInitCells[cellIdx];
+				westCell->edges[DIRECTION_EAST] = edgeIdxW;
 			}
 
 			// Bind the south face of the cell north of the current cell
 			if (y > 0) {
-				idx = GRID_ID(x, y - 1);
-				PFFG_ASSERT(idx < mCells.size());
+				cellIdx = GRID_ID(x, y - 1);
+				PFFG_ASSERT(cellIdx < mInitCells.size());
 
-				Cell* northCell = &mCells[idx];
-				northCell->edges[DIRECTION_SOUTH] = edgeN;
+				Cell* northCell = &mInitCells[cellIdx];
+				northCell->edges[DIRECTION_SOUTH] = edgeIdxN;
 			}
 
 			// Bind a new face to the southern face of the border cell
 			if (y == mHeight - 1) {
-				curCell->edges[DIRECTION_SOUTH] = CreateEdge();
+				mInitEdges.push_back(Grid::Cell::Edge());
+				curCell->edges[DIRECTION_SOUTH] = mInitEdges.size() - 1;
 			}
 
 			// Bind a new face to the eastern face of the border cell
 			if (x == mWidth - 1) {
-				curCell->edges[DIRECTION_EAST] = CreateEdge();
+				mInitEdges.push_back(Grid::Cell::Edge());
+				curCell->edges[DIRECTION_EAST] = mInitEdges.size() - 1;
 			}
 		}
 	}
 
-	PFFG_ASSERT(mCells.size() == numCells);
-	PFFG_ASSERT(mEdges.size() == numEdges);
+	PFFG_ASSERT(mInitCells.size() == numCells);
+	PFFG_ASSERT(mInitEdges.size() == numEdges);
 
 	// Perform a full reset on the cells and compute the height
-	for (int y = 0; y < mHeight; y++) {
-		for (int x = 0; x < mWidth; x++) {
-			Cell* curCell = &mCells[GRID_ID(x, y)];
+	for (unsigned int y = 0; y < mHeight; y++) {
+		for (unsigned int x = 0; x < mWidth; x++) {
+			Cell* curCell = &mInitCells[GRID_ID(x, y)];
 
 			// set potential to +inf, etc.
 			curCell->ResetFull();
-
 			// set the height, assuming the heightmap is static
 			curCell->height = ELEVATION(x, y);
 
@@ -226,52 +238,65 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 		}
 	}
 
-	// Compute gradient-heights and neighbours
-	for (int y = 0; y < mHeight; y++) {
-		for (int x = 0; x < mWidth; x++) {
+	// Compute gradient-heights and neighbors
+	for (unsigned int y = 0; y < mHeight; y++) {
+		for (unsigned int x = 0; x < mWidth; x++) {
 			unsigned int idx = GRID_ID(x, y);
 			unsigned int dir = 0;
 
-			Cell* cell = &mCells[idx];
+			Cell* cell = &mInitCells[idx];
+			Cell::Edge* edge = NULL;
 
 			if (y > 0) {
 				dir = DIRECTION_NORTH;
-				cell->edges[dir]->gradHeight = vec3f(-mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y - 1)].height);
-				cell->neighbours[cell->numNeighbours++] = &mCells[GRID_ID(x, y - 1)];
 
-				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = cell->edges[dir]->gradHeight;
+				edge = &mInitEdges[cell->edges[dir]];
+				edge->gradHeight = vec3f(-squareSizeFlt, 0.0f, cell->height - mInitCells[GRID_ID(x, y - 1)].height);
+				cell->neighbors[cell->numNeighbors++] = GRID_ID(x, y - 1);
+
+				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = edge->gradHeight;
 			}
 
 			if (y < mHeight - 1) {
 				dir = DIRECTION_SOUTH;
-				cell->edges[dir]->gradHeight = vec3f( mSquareSize, 0.0f, cell->height - mCells[GRID_ID(x, y + 1)].height);
-				cell->neighbours[cell->numNeighbours++] = &mCells[GRID_ID(x, y + 1)];
 
-				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = cell->edges[dir]->gradHeight;
+				edge = &mInitEdges[cell->edges[dir]];
+				edge->gradHeight = vec3f( squareSizeFlt, 0.0f, cell->height - mInitCells[GRID_ID(x, y + 1)].height);
+				cell->neighbors[cell->numNeighbors++] = GRID_ID(x, y + 1);
+
+				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = edge->gradHeight;
 			}
 
 			if (x > 0) {
 				dir = DIRECTION_WEST;
-				cell->edges[dir]->gradHeight = vec3f(cell->height - mCells[GRID_ID(x-1, y)].height, 0.0f, -mSquareSize);
-				cell->neighbours[cell->numNeighbours++] = &mCells[GRID_ID(x - 1, y)];
 
-				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = cell->edges[dir]->gradHeight;
+				edge = &mInitEdges[cell->edges[dir]];
+				edge->gradHeight = vec3f(cell->height - mInitCells[GRID_ID(x - 1, y)].height, 0.0f, -squareSizeFlt);
+				cell->neighbors[cell->numNeighbors++] = GRID_ID(x - 1, y);
+
+				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = edge->gradHeight;
 			}
 
 			if (x < mWidth - 1) {
 				dir = DIRECTION_EAST;
-				cell->edges[dir]->gradHeight = vec3f(cell->height - mCells[GRID_ID(x+1, y)].height, 0.0f, mSquareSize);
-				cell->neighbours[cell->numNeighbours++] = &mCells[GRID_ID(x + 1, y)];
 
-				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = cell->edges[dir]->gradHeight;
+				edge = &mInitEdges[cell->edges[dir]];
+				edge->gradHeight = vec3f(cell->height - mInitCells[GRID_ID(x + 1, y)].height, 0.0f, squareSizeFlt);
+				cell->neighbors[cell->numNeighbors++] = GRID_ID(x + 1, y);
+
+				mHeightDeltaVisData[idx * NUM_DIRECTIONS + dir] = edge->gradHeight;
 			}
 		}
 	}
 	
-	// Make a backup
-	mCellsBackup.assign(mCells.begin(), mCells.end());
-	mEdgesBackup.assign(mEdges.begin(), mEdges.end());
+	// initialize both buffers with a copy of the static-global grid state
+	mBuffers[mFrontBufferIdx].cells.assign(mInitCells.begin(), mInitCells.end());
+	mBuffers[mFrontBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());
+	mBuffers[mBackBufferIdx].cells.assign(mInitCells.begin(), mInitCells.end());
+	mBuffers[mBackBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());
 }
+
+
 
 void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 	const vec3f posf = vec3f(inPos.x / mSquareSize, 0.0f, inPos.z / mSquareSize);
@@ -281,35 +306,55 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 	const int j = (posf.z > posi.z + 0.5f) ? posi.z + 1 : posi.z;
 
 	PFFG_ASSERT(i > 0 && j > 0 && i < mWidth && j < mHeight);
+ 
+	std::vector<Cell>& frontCells = mBuffers[mFrontBufferIdx].cells;
+	std::vector<Cell>& backCells = mBuffers[mBackBufferIdx].cells;
 
-	Cell* A = &mCells[GRID_ID(i - 1, j - 1)]; mTouchedCells[GRID_ID(i - 1, j - 1)] = A; 
-	Cell* B = &mCells[GRID_ID(i    , j - 1)]; mTouchedCells[GRID_ID(i    , j - 1)] = B;
-	Cell* C = &mCells[GRID_ID(i    , j    )]; mTouchedCells[GRID_ID(i    , j    )] = C;
-	Cell* D = &mCells[GRID_ID(i - 1, j    )]; mTouchedCells[GRID_ID(i - 1, j    )] = D;
+	const unsigned int
+		idxA = GRID_ID(i - 1, j - 1),
+		idxB = GRID_ID(i    , j - 1),
+		idxC = GRID_ID(i    , j    ),
+		idxD = GRID_ID(i - 1, j    );
 
-	// Add velocity
-	C->avgVelocity += inVel;
+	Cell *Af = &frontCells[idxA], *Ab = &backCells[idxA]; mTouchedCells.insert(idxA);
+	Cell *Bf = &frontCells[idxB], *Bb = &backCells[idxB]; mTouchedCells.insert(idxB);
+	Cell *Cf = &frontCells[idxC], *Cb = &backCells[idxC]; mTouchedCells.insert(idxC);
+	Cell *Df = &frontCells[idxD], *Db = &backCells[idxD]; mTouchedCells.insert(idxD);
 
-	// Compute delta-X and delta-Y
-	const float dX = posf.x - A->x + 0.5f;
-	const float dY = posf.z - A->y + 0.5f;
+	// add velocity (why only to C?)
+	Cf->avgVelocity += inVel;
+	Cb->avgVelocity += inVel;
 
-	// Splat density
-	A->density += pow(std::min<float>(1.0f - dX, 1.0f - dY), sLambda);
-	B->density += pow(std::min<float>(       dX, 1.0f - dY), sLambda);
-	C->density += pow(std::min<float>(       dX,        dY), sLambda);
-	D->density += pow(std::min<float>(1.0f - dX,        dY), sLambda);
+	// compute delta-X and delta-Y
+	const float dX = posf.x - Af->x + 0.5f;
+	const float dY = posf.z - Af->y + 0.5f;
+
+	// splat the density
+	Af->density += powf(std::min<float>(1.0f - dX, 1.0f - dY), sLambda); Ab->density = Af->density;
+	Bf->density += powf(std::min<float>(       dX, 1.0f - dY), sLambda); Bb->density = Bf->density;
+	Cf->density += powf(std::min<float>(       dX,        dY), sLambda); Cb->density = Cf->density;
+	Df->density += powf(std::min<float>(1.0f - dX,        dY), sLambda); Db->density = Df->density;
 }
 
 void Grid::ComputeAvgVelocity() {
-	std::map<unsigned int, Cell*>::iterator i;
+	std::vector<Cell>& frontCells = mBuffers[mFrontBufferIdx].cells;
+	std::vector<Cell>& backCells = mBuffers[mBackBufferIdx].cells;
 
-	for (i = mTouchedCells.begin(); i != mTouchedCells.end(); i++) {
-		i->second->avgVelocity        /= i->second->density;
-		mDensityVisData[i->first]      = i->second->density;
-		mAvgVelocityVisData[i->first]  = i->second->avgVelocity;
+	for (std::set<unsigned int>::iterator it = mTouchedCells.begin(); it != mTouchedCells.end(); ++it) {
+		const unsigned int idx = *it;
+
+		Cell* cf = &frontCells[idx];
+		Cell* cb = &backCells[idx];
+
+		cf->avgVelocity /= cf->density;
+		cb->avgVelocity  = cf->avgVelocity;
+
+		mDensityVisData[idx]     = cf->density;
+		mAvgVelocityVisData[idx] = cf->avgVelocity;
 	}
 }
+
+
 
 void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 	const static vec3f dirVectors[] = {
@@ -327,26 +372,29 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 	const unsigned int cellGridIdx = GRID_ID(cell->x, cell->y);
 	const vec3f& cellWorldPos = Grid2World(cell);
 
-	// TODO: properly set discomfort
-	cell->ResetGroupVars();
-	cell->discomfort = 0.0f * ((cell->x * cell->x) + (cell->y * cell->y));
+	const std::vector<Cell      >& frontCells = mBuffers[mFrontBufferIdx].cells;
+	const std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
 
 	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		const vec3i& ngbGridPos = World2Grid(cellWorldPos + dirVectors[dir] * mMaxRadius);
 		const unsigned int ngbGridIdx = GRID_ID(ngbGridPos.x, ngbGridPos.z);
 
-		PFFG_ASSERT(ngbGridIdx < mCells.size());
+		PFFG_ASSERT(ngbGridIdx < frontCells.size());
 
-		const Cell* ngbCell = &mCells[ngbGridIdx];
+		const Cell* ngbCell = &frontCells[ngbGridIdx];
+		const Cell::Edge* edge = &frontEdges[ cell->edges[dir] ];
 
-		// Compute the speed- and unit-cost fields
+		// compute the speed- and unit-cost fields
 		// TODO:
 		//    evaluate speed and discomfort at cell into which
-		//   an agent would move if it chose direction <dir>
-		// FIXME: engine slopes should be in the same format as CC slopes
+		//    an agent would move if it chose direction <dir>
+		//
+		//    properly set discomfort for <cell> for this group (maybe via UI?)
+		//    cell->discomfort = 0.0f * ((cell->x * cell->x) + (cell->y * cell->y));
+		// NOTE: engine slopes should be in the same format as CC slopes
 		const float topologicalSpeed = 
 			mMaxSpeed +
-			((cell->edges[dir]->gradHeight.dot2D(dirVectors[dir]) - mMinSlope) / (mMaxSlope - mMinSlope)) * 
+			((edge->gradHeight.dot2D(dirVectors[dir]) - mMinSlope) / (mMaxSlope - mMinSlope)) * 
 			(mMaxSpeed - minSpeed);
 
 		const float flowSpeed = ngbCell->avgVelocity.dot2D(dirVectors[dir]);
@@ -359,7 +407,7 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		cell->speed[dir] = speed;
 		cell->cost[dir] = cost;
 
-		// FIXME: do we even want to visualize these as textures?
+		// NOTE: do we even want to visualize these as textures?
 		mSpeedVisData[groupID][cellGridIdx * NUM_DIRECTIONS + dir] = speed;
 		mCostVisData[groupID][cellGridIdx * NUM_DIRECTIONS + dir] = cost;
 	}
@@ -367,7 +415,7 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 	mDiscomfortVisData[groupID][cellGridIdx] = cell->discomfort;
 }
 
-void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<Cell*>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
+void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<unsigned int>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
 	PFFG_ASSERT(!inGoalCells.empty());
 	PFFG_ASSERT(mCandidates.empty());
 
@@ -389,23 +437,32 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<Cel
 	std::vector<vec3f>& velVisData      = mVelocityVisData[groupID];
 	std::vector<vec3f>& potDeltaVisData = mPotentialDeltaVisData[groupID];
 
+	std::vector<Cell      >& frontCells = mBuffers[mFrontBufferIdx].cells;
+	std::vector<Cell      >& backCells  = mBuffers[mBackBufferIdx].cells;
+	std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
+	std::vector<Cell::Edge>& backEdges  = mBuffers[mBackBufferIdx].edges;
+
+	Cell* frontCell = NULL;
+	Cell* backCell = NULL;
+
 	unsigned int cellIdx = 0;
 
-	// add goal-cells to the known set and their neighbours to the candidate-set
+	// add goal-cells to the known set and their neighbors to the candidate-set
 	for (size_t i = 0; i < inGoalCells.size(); i++) {
-		Cell* cell = inGoalCells[i];
+		cellIdx = inGoalCells[i];
 
-		ComputeSpeedAndUnitCost(groupID, cell);
+		frontCell = &frontCells[cellIdx];
+		backCell = &backCells[cellIdx];
 
-		// must come after ComputeSpeedAndUnitCost (whichs calls ResetGroupVars)
-		cell->known = true;
-		cell->candidate = true;
-		cell->potential = 0.0f;
-		cellIdx = GRID_ID(cell->x, cell->y);
+		frontCell->known = true;
+		frontCell->candidate = true;
+		frontCell->potential = 0.0f;
+		backCell->ResetGroupVars();
 
-		UpdateCandidates(groupID, cell);
+		ComputeSpeedAndUnitCost(groupID, frontCell);
+		UpdateCandidates(groupID, frontCell);
 
-		potVisData[cellIdx] = cell->potential;
+		potVisData[cellIdx] = frontCell->potential;
 		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_NORTH] = NVECf;
 		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_SOUTH] = NVECf;
 		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_EAST ] = NVECf;
@@ -417,53 +474,85 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<Cel
 	}
 
 	while (!mCandidates.empty()) {
-		Cell* cell = mCandidates.top(); mCandidates.pop();
-		cell->known = true;
-		cellIdx = GRID_ID(cell->x, cell->y);
+		frontCell = mCandidates.top();
+		frontCell->known = true;
 
-		UpdateCandidates(groupID, cell);
+		cellIdx = GRID_ID(frontCell->x, frontCell->y);
 
-		potVisData[cellIdx] = cell->potential;
-		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_NORTH] = (cell->GetNormalizedPotentialGradient(DIRECTION_NORTH) * -cell->speed[DIRECTION_NORTH]);
-		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_SOUTH] = (cell->GetNormalizedPotentialGradient(DIRECTION_SOUTH) * -cell->speed[DIRECTION_SOUTH]);
-		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_EAST ] = (cell->GetNormalizedPotentialGradient(DIRECTION_EAST ) * -cell->speed[DIRECTION_EAST ]);
-		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_WEST ] = (cell->GetNormalizedPotentialGradient(DIRECTION_WEST ) * -cell->speed[DIRECTION_WEST ]);
-		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_NORTH] = cell->edges[DIRECTION_NORTH]->gradPotential;
-		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_SOUTH] = cell->edges[DIRECTION_SOUTH]->gradPotential;
-		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_EAST ] = cell->edges[DIRECTION_EAST ]->gradPotential;
-		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_WEST ] = cell->edges[DIRECTION_WEST ]->gradPotential;
+		backCell = &backCells[cellIdx];
+		backCell->ResetGroupVars();
+
+		UpdateCandidates(groupID, frontCell);
+
+		frontEdges[ frontCell->edges[DIRECTION_NORTH] ].velocity = (frontCell->GetNormalizedPotentialGradient(frontEdges, DIRECTION_NORTH) * -frontCell->speed[DIRECTION_NORTH]);
+		frontEdges[ frontCell->edges[DIRECTION_SOUTH] ].velocity = (frontCell->GetNormalizedPotentialGradient(frontEdges, DIRECTION_SOUTH) * -frontCell->speed[DIRECTION_SOUTH]);
+		frontEdges[ frontCell->edges[DIRECTION_EAST ] ].velocity = (frontCell->GetNormalizedPotentialGradient(frontEdges, DIRECTION_EAST ) * -frontCell->speed[DIRECTION_EAST ]);
+		frontEdges[ frontCell->edges[DIRECTION_WEST ] ].velocity = (frontCell->GetNormalizedPotentialGradient(frontEdges, DIRECTION_WEST ) * -frontCell->speed[DIRECTION_WEST ]);
+		backEdges[ frontCell->edges[DIRECTION_NORTH] ].velocity = NVECf;
+		backEdges[ frontCell->edges[DIRECTION_SOUTH] ].velocity = NVECf;
+		backEdges[ frontCell->edges[DIRECTION_EAST ] ].velocity = NVECf;
+		backEdges[ frontCell->edges[DIRECTION_WEST ] ].velocity = NVECf;
+
+		potVisData[cellIdx] = frontCell->potential;
+		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_NORTH] = frontEdges[ frontCell->edges[DIRECTION_NORTH] ].velocity;
+		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_SOUTH] = frontEdges[ frontCell->edges[DIRECTION_SOUTH] ].velocity;
+		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_EAST ] = frontEdges[ frontCell->edges[DIRECTION_EAST ] ].velocity;
+		velVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_WEST ] = frontEdges[ frontCell->edges[DIRECTION_WEST ] ].velocity;
+		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_NORTH] = frontEdges[ frontCell->edges[DIRECTION_NORTH] ].gradPotential;
+		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_SOUTH] = frontEdges[ frontCell->edges[DIRECTION_SOUTH] ].gradPotential;
+		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_EAST ] = frontEdges[ frontCell->edges[DIRECTION_EAST ] ].gradPotential;
+		potDeltaVisData[cellIdx * NUM_DIRECTIONS + DIRECTION_WEST ] = frontEdges[ frontCell->edges[DIRECTION_WEST ] ].gradPotential;
+
+		mCandidates.pop();
 	}
+
+	// flip the buffers so the per-group variables of the
+	// previously processed group do not influence the next
+	mFrontBufferIdx = (mFrontBufferIdx + 1) & 1;
+	mBackBufferIdx = (mBackBufferIdx + 1) & 1;
 }
 
 void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
-	for (int i = 0; i < inParent->numNeighbours; i++) {
-		Cell* neighbour = inParent->neighbours[i];
+	std::vector<Cell      >& frontCells = mBuffers[mFrontBufferIdx].cells;
+	std::vector<Cell      >& backCells  = mBuffers[mBackBufferIdx].cells;
+	std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
+	std::vector<Cell::Edge>& backEdges  = mBuffers[mBackBufferIdx].edges;
 
-		if (neighbour->known || neighbour->candidate) {
+	static float       dirCosts[NUM_DIRECTIONS] = {0.0f};
+	static bool        dirValid[NUM_DIRECTIONS] = {false};
+	static const Cell* dirCells[NUM_DIRECTIONS] = {NULL};
+
+	const Cell* minPotCellPtrX = NULL;
+	const Cell* minPotCellPtrY = NULL;
+	int         minPotCellDirX = -1;
+	int         minPotCellDirY = -1;
+
+	for (unsigned int i = 0; i < inParent->numNeighbors; i++) {
+		const unsigned int ngbIdx = inParent->neighbors[i];
+
+		Cell* frontNgb = &frontCells[ngbIdx];
+		Cell* backNgb = &backCells[ngbIdx];
+
+		backNgb->ResetGroupVars();
+
+		if (frontNgb->known || frontNgb->candidate) {
 			continue;
 		}
 
-		ComputeSpeedAndUnitCost(groupID, neighbour);
+		ComputeSpeedAndUnitCost(groupID, frontNgb);
 
-		const int x = neighbour->x;
-		const int y = neighbour->y;
-
-		float dirCosts[NUM_DIRECTIONS] = {0.0f};
-		Cell* dirCells[NUM_DIRECTIONS] = {NULL};
-		bool  dirValid[NUM_DIRECTIONS] = {false};
-
-		dirCells[DIRECTION_NORTH] = (y >           0) ? &mCells[GRID_ID(x    , y - 1)] : NULL;
-		dirCells[DIRECTION_SOUTH] = (y < mHeight - 1) ? &mCells[GRID_ID(x    , y + 1)] : NULL;
-		dirCells[DIRECTION_WEST]  = (x >           0) ? &mCells[GRID_ID(x - 1, y    )] : NULL;
-		dirCells[DIRECTION_EAST]  = (x < mWidth -  1) ? &mCells[GRID_ID(x + 1, y    )] : NULL;
+		dirCells[DIRECTION_NORTH] = (frontNgb->y >           0) ? &frontCells[GRID_ID(frontNgb->x    , frontNgb->y - 1)] : NULL;
+		dirCells[DIRECTION_SOUTH] = (frontNgb->y < mHeight - 1) ? &frontCells[GRID_ID(frontNgb->x    , frontNgb->y + 1)] : NULL;
+		dirCells[DIRECTION_WEST]  = (frontNgb->x >           0) ? &frontCells[GRID_ID(frontNgb->x - 1, frontNgb->y    )] : NULL;
+		dirCells[DIRECTION_EAST]  = (frontNgb->x < mWidth -  1) ? &frontCells[GRID_ID(frontNgb->x + 1, frontNgb->y    )] : NULL;
 
 		for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 			if (dirCells[dir] == NULL) {
 				dirValid[dir] = false;
 				dirCosts[dir] = std::numeric_limits<float>::infinity();
 			} else {
-				dirCosts[dir] = dirCells[dir]->potential + dirCells[dir]->cost[dir];
-				dirValid[dir] = dirCosts[dir] != std::numeric_limits<float>::infinity();
+				dirCosts[dir] = (dirCells[dir]->potential + dirCells[dir]->cost[dir]);
+				dirValid[dir] = (dirCosts[dir] != std::numeric_limits<float>::infinity());
 			}
 		}
 
@@ -478,36 +567,33 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 			PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
 			PFFG_ASSERT(dirValid[DIRECTION_EAST ] || dirValid[DIRECTION_WEST ]);
 
-			Cell* bestX = NULL;
-			Cell* bestY = NULL;
-			int   bestDirX = -1;
-			int   bestDirY = -1;
-
 			if (dirCosts[DIRECTION_EAST] < dirCosts[DIRECTION_WEST]) {
-				bestDirX = DIRECTION_EAST;
-				bestX = dirCells[DIRECTION_EAST];
+				minPotCellDirX = DIRECTION_EAST;
+				minPotCellPtrX = dirCells[DIRECTION_EAST];
 			} else {
-				bestDirX = DIRECTION_WEST;
-				bestX = dirCells[DIRECTION_WEST];
+				minPotCellDirX = DIRECTION_WEST;
+				minPotCellPtrX = dirCells[DIRECTION_WEST];
 			}
 
 			if (dirCosts[DIRECTION_NORTH] < dirCosts[DIRECTION_SOUTH]) {
-				bestDirY = DIRECTION_NORTH;
-				bestY = dirCells[DIRECTION_NORTH];
+				minPotCellDirY = DIRECTION_NORTH;
+				minPotCellPtrY = dirCells[DIRECTION_NORTH];
 			} else {
-				bestDirY = DIRECTION_SOUTH;
-				bestY = dirCells[DIRECTION_SOUTH];
+				minPotCellDirY = DIRECTION_SOUTH;
+				minPotCellPtrY = dirCells[DIRECTION_SOUTH];
 			}
 
-			neighbour->potential = Potential2D(
-				bestX->potential, neighbour->cost[bestDirX], 
-				bestY->potential, neighbour->cost[bestDirY]
+			frontNgb->potential = Potential2D(
+				minPotCellPtrX->potential, frontNgb->cost[minPotCellDirX], 
+				minPotCellPtrY->potential, frontNgb->cost[minPotCellDirY]
 			);
 
-			neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, (neighbour->potential - bestX->potential));
-			neighbour->edges[bestDirY]->gradPotential = vec3f((neighbour->potential - bestY->potential), 0.0f, mSquareSize);
-			neighbour->edges[bestDirX]->gradPotential.x *= ((bestDirX == DIRECTION_EAST) ? -1.0f : 1.0f);
-			neighbour->edges[bestDirY]->gradPotential.z *= ((bestDirY == DIRECTION_NORTH)? -1.0f : 1.0f);
+			frontEdges[ frontNgb->edges[minPotCellDirX] ].gradPotential = vec3f(mSquareSize, 0.0f, (frontNgb->potential - minPotCellPtrX->potential));
+			frontEdges[ frontNgb->edges[minPotCellDirY] ].gradPotential = vec3f((frontNgb->potential - minPotCellPtrY->potential), 0.0f, mSquareSize);
+			frontEdges[ frontNgb->edges[minPotCellDirX] ].gradPotential.x *= ((minPotCellDirX == DIRECTION_EAST) ? -1.0f : 1.0f);
+			frontEdges[ frontNgb->edges[minPotCellDirY] ].gradPotential.z *= ((minPotCellDirY == DIRECTION_NORTH)? -1.0f : 1.0f);
+			backEdges[ frontNgb->edges[minPotCellDirX] ].gradPotential = NVECf;
+			backEdges[ frontNgb->edges[minPotCellDirY] ].gradPotential = NVECf;
 
 			// NOTE:
 			//    gradHeight is stored as vec3f(squareSize, 0.0f, deltaHeight) for DIR_N and
@@ -516,60 +602,50 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 			//    therefore gradPotential "should" be stored the same way, but this makes no
 			//    sense for rendering purposes (since all vectors end up in the xz-plane)
 			//
-			// neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, (neighbour->potential - bestX->potential),        0.0f);
-			// neighbour->edges[bestDirY]->gradPotential = vec3f(       0.0f, (neighbour->potential - bestY->potential), mSquareSize);
-			// neighbour->edges[bestDirX]->gradPotential.y *= ((bestDirX == DIRECTION_EAST) ? -1.0f : 1.0f);
-			// neighbour->edges[bestDirY]->gradPotential.y *= ((bestDirY == DIRECTION_NORTH)? -1.0f : 1.0f);
+			// frontNgb->edges[minPotCellDirX]->gradPotential = vec3f(mSquareSize, (frontNgb->potential - minPotCellPtrX->potential),        0.0f);
+			// frontNgb->edges[minPotCellDirY]->gradPotential = vec3f(       0.0f, (frontNgb->potential - minPotCellPtrY->potential), mSquareSize);
+			// frontNgb->edges[minPotCellDirX]->gradPotential.y *= ((minPotCellDirX == DIRECTION_EAST) ? -1.0f : 1.0f);
+			// frontNgb->edges[minPotCellDirY]->gradPotential.y *= ((minPotCellDirY == DIRECTION_NORTH)? -1.0f : 1.0f);
 		} else {
 			if (undefinedX) {
 				PFFG_ASSERT(dirValid[DIRECTION_NORTH] || dirValid[DIRECTION_SOUTH]);
 				PFFG_ASSERT(!undefinedY);
 
-				Cell* bestY = NULL;
-				int   bestDirY = -1;
-
 				if (dirCosts[DIRECTION_NORTH] < dirCosts[DIRECTION_SOUTH]) {
-					bestDirY = DIRECTION_NORTH;
-					bestY = dirCells[DIRECTION_NORTH];
+					minPotCellDirY = DIRECTION_NORTH;
+					minPotCellPtrY = dirCells[DIRECTION_NORTH];
 				} else {
-					bestDirY = DIRECTION_SOUTH;
-					bestY = dirCells[DIRECTION_SOUTH];
+					minPotCellDirY = DIRECTION_SOUTH;
+					minPotCellPtrY = dirCells[DIRECTION_SOUTH];
 				}
 
-				neighbour->potential = Potential1D(bestY->potential, neighbour->cost[bestDirY]);
-				neighbour->edges[bestDirY]->gradPotential = vec3f((neighbour->potential - bestY->potential), 0.0f, mSquareSize);
-				neighbour->edges[bestDirY]->gradPotential.z *= ((bestDirY == DIRECTION_NORTH)? -1.0f : 1.0f);
-
-				// neighbour->edges[bestDirY]->gradPotential = vec3f(0.0f, (neighbour->potential - bestY->potential), mSquareSize);
-				// neighbour->edges[bestDirY]->gradPotential.y *= ((bestDirY == DIRECTION_NORTH)? -1.0f : 1.0f);
+				frontNgb->potential = Potential1D(minPotCellPtrY->potential, frontNgb->cost[minPotCellDirY]);
+				frontEdges[ frontNgb->edges[minPotCellDirY] ].gradPotential = vec3f((frontNgb->potential - minPotCellPtrY->potential), 0.0f, mSquareSize);
+				frontEdges[ frontNgb->edges[minPotCellDirY] ].gradPotential.z *= ((minPotCellDirY == DIRECTION_NORTH)? -1.0f : 1.0f);
+				backEdges[ frontNgb->edges[minPotCellDirY] ].gradPotential = NVECf;
 			}
 
 			if (undefinedY) {
 				PFFG_ASSERT(dirValid[DIRECTION_EAST] || dirValid[DIRECTION_WEST]);
 				PFFG_ASSERT(!undefinedX);
 
-				Cell* bestX = NULL;
-				int   bestDirX = -1;
-
 				if (dirCosts[DIRECTION_EAST] < dirCosts[DIRECTION_WEST]) {
-					bestDirX = DIRECTION_EAST;
-					bestX = dirCells[DIRECTION_EAST];
+					minPotCellDirX = DIRECTION_EAST;
+					minPotCellPtrX = dirCells[DIRECTION_EAST];
 				} else {
-					bestDirX = DIRECTION_WEST;
-					bestX = dirCells[DIRECTION_WEST];
+					minPotCellDirX = DIRECTION_WEST;
+					minPotCellPtrX = dirCells[DIRECTION_WEST];
 				}
 
-				neighbour->potential = Potential1D(bestX->potential, neighbour->cost[bestDirX]);
-				neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, 0.0f, (neighbour->potential - bestX->potential));
-				neighbour->edges[bestDirX]->gradPotential.x *= ((bestDirX == DIRECTION_EAST)? -1.0f : 1.0f);
-
-				// neighbour->edges[bestDirX]->gradPotential = vec3f(mSquareSize, (neighbour->potential - bestX->potential), 0.0f);
-				// neighbour->edges[bestDirX]->gradPotential.y *= ((bestDirX == DIRECTION_WEST)? -1.0f : 1.0f);
+				frontNgb->potential = Potential1D(minPotCellPtrX->potential, frontNgb->cost[minPotCellDirX]);
+				frontEdges[ frontNgb->edges[minPotCellDirX] ].gradPotential = vec3f(mSquareSize, 0.0f, (frontNgb->potential - minPotCellPtrX->potential));
+				frontEdges[ frontNgb->edges[minPotCellDirX] ].gradPotential.x *= ((minPotCellDirX == DIRECTION_EAST)? -1.0f : 1.0f);
+				backEdges[ frontNgb->edges[minPotCellDirX] ].gradPotential = NVECf;
 			}
 		}
 
-		neighbour->candidate = true;
-		mCandidates.push(neighbour);
+		frontNgb->candidate = true;
+		mCandidates.push(frontNgb);
 	}
 }
 
@@ -600,31 +676,50 @@ void Grid::UpdateSimObjectLocation(const unsigned int inSimObjectID) {
 	const vec3f& worldPos = mCOH->GetSimObjectPosition(inSimObjectID);
 	const vec3f& worldDir = mCOH->GetSimObjectDirection(inSimObjectID);
 
-	const Cell* worldCell = World2Cell(worldPos);
-	const vec3f& worldVel = worldCell->GetInterpolatedVelocity(worldDir);
+	const std::vector<Cell      >& frontCells = mBuffers[mFrontBufferIdx].cells;
+	const std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
 
-	if (!std::isnan(worldVel.x) && !std::isnan(worldVel.y) && !std::isnan(worldVel.z)) {
+	const unsigned int worldCellIdx = World2Cell(worldPos);
+	const Cell* worldCell = &frontCells[worldCellIdx];
+	const vec3f& worldVel = worldCell->GetInterpolatedVelocity(frontEdges, worldDir);
+
+	if (std::isnan(worldVel.x) || std::isnan(worldVel.y) || std::isnan(worldVel.z)) { return; }
+	if (std::isinf(worldVel.x) || std::isinf(worldVel.y) || std::isinf(worldVel.z)) { return; }
+
+	if (worldVel.sqLen3D() > 0.01f) {
 		mCOH->SetSimObjectRawPosition(inSimObjectID, worldPos + worldVel);
 		mCOH->SetSimObjectRawDirection(inSimObjectID, worldVel.norm());
 	}
 }
 
 void Grid::Reset() {
+	// at the start of every frame, restore both grid buffers (cells
+	// and edges) to the blank initial-state again from the backups
+	// made in Init to undo the dynamic global (and per-group) data
+	// write-operations
 	numResets += 1;
-	mCells.assign(mCellsBackup.begin(), mCellsBackup.end());
-	mEdges.assign(mEdgesBackup.begin(), mEdgesBackup.end());
+	mBuffers[mFrontBufferIdx].cells.assign(mInitCells.begin(), mInitCells.end());
+	mBuffers[mFrontBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());
+	mBuffers[mBackBufferIdx].cells.assign(mInitCells.begin(), mInitCells.end());
+	mBuffers[mBackBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());
 	mTouchedCells.clear();
 }
 
-Grid::Cell::Edge* Grid::CreateEdge() {
-	mEdges.push_back(Grid::Cell::Edge());
-	return &mEdges.back();
+
+
+vec3f Grid::Cell::GetNormalizedPotentialGradient(const std::vector<Cell::Edge>& gridEdges, unsigned int dir) const {
+	const Edge* edge = &gridEdges[edges[dir]];
+	const vec3f& edgeGradPot = edge->gradPotential;
+	const float edgeGradPotLen = edgeGradPot.len2D();
+
+	if (edgeGradPotLen > 0.0f) {
+		return (edgeGradPot / edgeGradPotLen);
+	}
+
+	return NVECf;
 }
 
-vec3f Grid::Cell::GetNormalizedPotentialGradient(unsigned int dir) const {
-	return (edges[dir]->gradPotential / edges[dir]->gradPotential.len2D());
-}
-vec3f Grid::Cell::GetInterpolatedVelocity(const vec3f& dir) const {
+vec3f Grid::Cell::GetInterpolatedVelocity(const std::vector<Cell::Edge>& gridEdges, const vec3f& dir) const {
 	// <dir> always falls into one of four quadrants
 	// therefore, we need to sample the speed-field
 	// and potential-gradient along two of the four
@@ -653,11 +748,8 @@ vec3f Grid::Cell::GetInterpolatedVelocity(const vec3f& dir) const {
 		b = -dir.z;
 	}
 
-	// NOTE: these have already been calculated to fill mVelocityVisData
-	// vel += mVelocityVisData[GRID_ID(x, y) * NUM_DIRECTIONS + i] * a;
-	// vel += mVelocityVisData[GRID_ID(x, y) * NUM_DIRECTIONS + j] * b;
-	vel += (GetNormalizedPotentialGradient(i) * -speed[i]) * a;
-	vel += (GetNormalizedPotentialGradient(j) * -speed[j]) * b;
+	vel += (gridEdges[ edges[i] ].velocity * a);
+	vel += (gridEdges[ edges[j] ].velocity * b);
 
 	return vel;
 }
@@ -666,21 +758,20 @@ vec3f Grid::Cell::GetInterpolatedVelocity(const vec3f& dir) const {
 
 // convert a world-space position to <x, y> grid-indices
 vec3i Grid::World2Grid(const vec3f& inWorldPos) const {
-	const int gx = int(inWorldPos.x / mSquareSize);
-	const int gz = int(inWorldPos.z / mSquareSize);
-	const int cx = std::max(0, std::min(mWidth - 1, gx));
-	const int cz = std::max(0, std::min(mHeight - 1, gz));
+	const int gx = (inWorldPos.x / mSquareSize);
+	const int gz = (inWorldPos.z / mSquareSize);
+	const int cx = std::max(0, std::min(int(mWidth - 1), gx));
+	const int cz = std::max(0, std::min(int(mHeight - 1), gz));
 	return vec3i(cx, 0, cz);
 }
 
-// get the grid-cell corresponding to a world-space position
-Grid::Cell* Grid::World2Cell(const vec3f& inWorldPos) {
+// get the 1D grid-cell index corresponding to a world-space position
+unsigned int Grid::World2Cell(const vec3f& inWorldPos) const {
 	const vec3i& gridPos = World2Grid(inWorldPos);
 	const unsigned int gridIdx = GRID_ID(gridPos.x, gridPos.z);
 
 	PFFG_ASSERT_MSG(gridIdx < mCells.size(), "world(%2.2f, %2.2f) grid(%d, %d)", inWorldPos.x, inWorldPos.z, gridPos.x, gridPos.z);
-
-	return &mCells[gridIdx];
+	return gridIdx;
 }
 
 // convert a cell's <x, y> grid-indices to world-space coordinates
@@ -700,19 +791,15 @@ void Grid::Cell::ResetFull() {
 	ResetGlobalDynamicVars();
 	ResetGroupVars();
 
-	numNeighbours = 0;
+	numNeighbors = 0;
 
 	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
-		neighbours[dir] = NULL;
+		neighbors[dir] = 0;
 	}
 }
 
 void Grid::Cell::ResetGlobalStaticVars() {
 	height = 0.0f;
-
-	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
-		edges[dir]->gradHeight = NVECf;
-	}
 }
 
 void Grid::Cell::ResetGlobalDynamicVars() {
@@ -730,7 +817,5 @@ void Grid::Cell::ResetGroupVars() {
 	for (unsigned int dir = 0; dir < NUM_DIRECTIONS; dir++) {
 		speed[dir] = 0.0f;
 		cost[dir]  = 0.0f;
-		edges[dir]->gradPotential = NVECf;
-		edges[dir]->velocity = NVECf;
 	}
 }

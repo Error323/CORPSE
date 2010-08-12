@@ -23,18 +23,24 @@ public:
 	};
 
 	struct Cell {
-		Cell(): x(0), y(0), known(false), candidate(false), numNeighbours(0) {
-			edges[DIRECTION_NORTH] = NULL; neighbours[DIRECTION_NORTH] = NULL;
-			edges[DIRECTION_EAST ] = NULL; neighbours[DIRECTION_EAST ] = NULL;
-			edges[DIRECTION_SOUTH] = NULL; neighbours[DIRECTION_SOUTH] = NULL;
-			edges[DIRECTION_WEST ] = NULL; neighbours[DIRECTION_WEST ] = NULL;
+		struct Edge {
+			vec3f velocity;
+			vec3f gradPotential;
+			vec3f gradHeight;
+		};
+
+		Cell(): x(0), y(0), known(false), candidate(false), numNeighbors(0) {
+			edges[DIRECTION_NORTH] = 0; neighbors[DIRECTION_NORTH] = 0;
+			edges[DIRECTION_EAST ] = 0; neighbors[DIRECTION_EAST ] = 0;
+			edges[DIRECTION_SOUTH] = 0; neighbors[DIRECTION_SOUTH] = 0;
+			edges[DIRECTION_WEST ] = 0; neighbors[DIRECTION_WEST ] = 0;
 		}
 
-		Cell(unsigned int _x, unsigned int _y): x(_x), y(_y), known(false), candidate(false), numNeighbours(0) {
-			edges[DIRECTION_NORTH] = NULL; neighbours[DIRECTION_NORTH] = NULL;
-			edges[DIRECTION_EAST ] = NULL; neighbours[DIRECTION_EAST ] = NULL;
-			edges[DIRECTION_SOUTH] = NULL; neighbours[DIRECTION_SOUTH] = NULL;
-			edges[DIRECTION_WEST ] = NULL; neighbours[DIRECTION_WEST ] = NULL;
+		Cell(unsigned int _x, unsigned int _y): x(_x), y(_y), known(false), candidate(false), numNeighbors(0) {
+			edges[DIRECTION_NORTH] = 0; neighbors[DIRECTION_NORTH] = 0;
+			edges[DIRECTION_EAST ] = 0; neighbors[DIRECTION_EAST ] = 0;
+			edges[DIRECTION_SOUTH] = 0; neighbors[DIRECTION_SOUTH] = 0;
+			edges[DIRECTION_WEST ] = 0; neighbors[DIRECTION_WEST ] = 0;
 		}
 
 		// for less() (NOTE: candidates are sorted in increasing order)
@@ -47,14 +53,8 @@ public:
 		void ResetGlobalDynamicVars();
 		void ResetGroupVars();
 
-		vec3f GetNormalizedPotentialGradient(unsigned int) const;
-		vec3f GetInterpolatedVelocity(const vec3f&) const;
-
-		struct Edge {
-			vec3f gradPotential;
-			vec3f velocity;
-			vec3f gradHeight;
-		};
+		vec3f GetNormalizedPotentialGradient(const std::vector<Edge>&, unsigned int) const;
+		vec3f GetInterpolatedVelocity(const std::vector<Edge>&, const vec3f&) const;
 
 		unsigned int x, y;
 		bool  known;
@@ -65,25 +65,28 @@ public:
 		float height;
 		float speed[NUM_DIRECTIONS];
 		float cost[NUM_DIRECTIONS];
-		Edge* edges[NUM_DIRECTIONS];
 		vec3f avgVelocity;
-		Cell* neighbours[NUM_DIRECTIONS];
-		int   numNeighbours;
+
+		unsigned int edges[NUM_DIRECTIONS];
+		unsigned int neighbors[NUM_DIRECTIONS];
+		unsigned int numNeighbors;
 	};
 
-	Grid(): mWidth(0), mHeight(0), mSquareSize(0), mDownScale(0), numResets(0) {}
-	~Grid() {}
+	Grid(): mWidth(0), mHeight(0), mSquareSize(0), mDownScale(0), numResets(0) {
+		mFrontBufferIdx = 0;
+		mBackBufferIdx = 1;
+	}
 
 	void Init(const int, ICallOutHandler*);
 	void Kill(const std::map<unsigned int, std::set<unsigned int> >&);
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
 	void ComputeAvgVelocity();
-	void UpdateGroupPotentialField(unsigned int, const std::vector<Cell*>&, const std::set<unsigned int>&);
+	void UpdateGroupPotentialField(unsigned int, const std::vector<unsigned int>&, const std::set<unsigned int>&);
 	void UpdateSimObjectLocation(const unsigned int);
 	void Reset();
 
-	int GetGridWidth() const { return mWidth; }
-	int GetGridHeight() const { return mHeight; }
+	unsigned int GetGridWidth() const { return mWidth; }
+	unsigned int GetGridHeight() const { return mHeight; }
 
 	void AddGroup(unsigned int);
 	void DelGroup(unsigned int);
@@ -102,17 +105,17 @@ public:
 	const vec3f* GetVelocityVisDataArray(unsigned int) const;
 	const vec3f* GetPotentialDeltaVisDataArray(unsigned int) const;
 
-	Cell* World2Cell(const vec3f&);
+	unsigned int World2Cell(const vec3f&) const;
 
 private:
 	static const float sLambda;
 	static const float sMinDensity;
 
-	int mWidth;
-	int mHeight;
-	int mSquareSize;
-	int mDownScale;
-	int numResets;
+	unsigned int mWidth;
+	unsigned int mHeight;
+	unsigned int mSquareSize;
+	unsigned int mDownScale;
+	unsigned int numResets;
 
 	float mMinSlope;
 	float mMaxSlope;
@@ -138,13 +141,30 @@ private:
 
 	ICallOutHandler* mCOH;
 
-	std::map<unsigned int, Cell*> mTouchedCells;
-	std::vector<Cell> mCells;
-	std::vector<Cell> mCellsBackup;
-	std::vector<Cell::Edge> mEdges;
-	std::vector<Cell::Edge> mEdgesBackup;
+	// cells that were modified by the AddDensityAndVelocity step
+	// (which sets the Cell::avgVelocity and Cell::density globals)
+	std::set<unsigned int> mTouchedCells;
 
-	Cell::Edge* CreateEdge();
+
+	// these contain the grid-state after initializing only
+	// the *static* global data; their contents are used to
+	// clear both buffers at the start of each frame
+	std::vector<Cell      > mInitCells;
+	std::vector<Cell::Edge> mInitEdges;
+
+	// these contain the grid-state after also initializing
+	// the dynamic global data; the buffers are cycled after
+	// processing a group
+	struct Buffer {
+		std::vector<Cell      > cells;
+		std::vector<Cell::Edge> edges;
+	};
+	Buffer mBuffers[2];
+
+	unsigned int mFrontBufferIdx;
+	unsigned int mBackBufferIdx;
+
+
 
 	vec3i World2Grid(const vec3f&) const;
 	vec3f Grid2World(const Cell*) const;
