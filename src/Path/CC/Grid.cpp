@@ -163,7 +163,6 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 
 	const unsigned int numCells = mWidth * mHeight;
 	const unsigned int numEdges = (mWidth + 1) * mHeight + (mHeight + 1) * mWidth;
-	const float squareSizeFlt = mSquareSize;
 
 	// visualisation data for global scalar fields
 	mDensityVisData.resize(numCells);
@@ -253,13 +252,15 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 			unsigned int dir = 0;
 
 			Cell* cell = &mInitCells[idx];
+			Cell* ngb = NULL;
 			Cell::Edge* edge = NULL;
 
 			if (y > 0) {
 				dir = DIR_N;
 
 				edge = &mInitEdges[cell->edges[dir]];
-				edge->gradHeight = vec3f(-squareSizeFlt, 0.0f, mInitCells[GRID_INDEX(x, y - 1)].height - cell->height);
+				ngb = &mInitCells[GRID_INDEX(x, y - 1)];
+				edge->gradHeight = vec3f(0.0f, 0.0f, (ngb->height - cell->height) * -1.0f);
 				cell->neighbors[cell->numNeighbors++] = GRID_INDEX(x, y - 1);
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.z));
@@ -271,7 +272,8 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 				dir = DIR_S;
 
 				edge = &mInitEdges[cell->edges[dir]];
-				edge->gradHeight = vec3f( squareSizeFlt, 0.0f, mInitCells[GRID_INDEX(x, y + 1)].height - cell->height);
+				ngb = &mInitCells[GRID_INDEX(x, y + 1)];
+				edge->gradHeight = vec3f(0.0f, 0.0f, (ngb->height - cell->height));
 				cell->neighbors[cell->numNeighbors++] = GRID_INDEX(x, y + 1);
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.z));
@@ -283,7 +285,8 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 				dir = DIR_W;
 
 				edge = &mInitEdges[cell->edges[dir]];
-				edge->gradHeight = vec3f(mInitCells[GRID_INDEX(x - 1, y)].height - cell->height, 0.0f, -squareSizeFlt);
+				ngb = &mInitCells[GRID_INDEX(x - 1, y)];
+				edge->gradHeight = vec3f((ngb->height - cell->height) * -1.0f, 0.0f, 0.0f);
 				cell->neighbors[cell->numNeighbors++] = GRID_INDEX(x - 1, y);
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.x));
@@ -295,7 +298,8 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 				dir = DIR_E;
 
 				edge = &mInitEdges[cell->edges[dir]];
-				edge->gradHeight = vec3f(mInitCells[GRID_INDEX(x + 1, y)].height - cell->height, 0.0f, squareSizeFlt);
+				ngb = &mInitCells[GRID_INDEX(x + 1, y)];
+				edge->gradHeight = vec3f((ngb->height - cell->height), 0.0f, 0.0f);
 				cell->neighbors[cell->numNeighbors++] = GRID_INDEX(x + 1, y);
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.x));
@@ -528,10 +532,10 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 
 		UpdateCandidates(groupID, frontCell);
 
-		frontEdges[ frontCell->edges[DIR_N] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_N) * frontCell->speed[DIR_N]);
-		frontEdges[ frontCell->edges[DIR_S] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_S) * frontCell->speed[DIR_S]);
-		frontEdges[ frontCell->edges[DIR_E] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_E) * frontCell->speed[DIR_E]);
-		frontEdges[ frontCell->edges[DIR_W] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_W) * frontCell->speed[DIR_W]);
+		frontEdges[ frontCell->edges[DIR_N] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_N) * -frontCell->speed[DIR_N]);
+		frontEdges[ frontCell->edges[DIR_S] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_S) * -frontCell->speed[DIR_S]);
+		frontEdges[ frontCell->edges[DIR_E] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_E) * -frontCell->speed[DIR_E]);
+		frontEdges[ frontCell->edges[DIR_W] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_W) * -frontCell->speed[DIR_W]);
 		backEdges[ frontCell->edges[DIR_N] ].velocity = NVECf;
 		backEdges[ frontCell->edges[DIR_S] ].velocity = NVECf;
 		backEdges[ frontCell->edges[DIR_E] ].velocity = NVECf;
@@ -633,10 +637,13 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 				minPotCellPtrY->potential, frontNgb->cost[minPotCellDirY]
 			);
 
+			// the world-space direction of the gradient vector must always
+			// match the direction along which the potential increases, but
+			// for DIR_N and DIR_W these are inverted
 			const float gradientX = (minPotCellPtrX->potential - frontNgb->potential);
 			const float gradientY = (minPotCellPtrY->potential - frontNgb->potential);
-			const float scaleX = ((gradientX > 0.0f && minPotCellDirX == DIR_W) || (gradientX < 0.0f && minPotCellDirX == DIR_E))? -1.0f: 1.0f;
-			const float scaleY = ((gradientY > 0.0f && minPotCellDirY == DIR_N) || (gradientY < 0.0f && minPotCellDirY == DIR_S))? -1.0f: 1.0f;
+			const float scaleX = (minPotCellDirX == DIR_W)? -1.0f: 1.0f;
+			const float scaleY = (minPotCellDirY == DIR_N)? -1.0f: 1.0f;
 			const vec3f gradient = vec3f(gradientX * scaleX, 0.0f, gradientY * scaleY);
 
 			frontEdgeX = &frontEdges[frontNgb->edges[minPotCellDirX]];
@@ -665,10 +672,7 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 				frontNgb->potential = Potential1D(minPotCellPtrY->potential, frontNgb->cost[minPotCellDirY]);
 
 				const float gradientY = (minPotCellPtrY->potential - frontNgb->potential);
-				const float scaleY =
-					((gradientY > 0.0f && minPotCellDirY == DIR_N) ||
-					 (gradientY < 0.0f && minPotCellDirY == DIR_S))?
-					-1.0f: 1.0f;
+				const float scaleY = (minPotCellDirY == DIR_N)? -1.0f: 1.0f;
 				const vec3f gradient = vec3f(0.0f, 0.0f, gradientY * scaleY);
 
 				frontEdgeY = &frontEdges[frontNgb->edges[minPotCellDirY]];
@@ -694,10 +698,7 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 				frontNgb->potential = Potential1D(minPotCellPtrX->potential, frontNgb->cost[minPotCellDirX]);
 
 				const float gradientX = (minPotCellPtrX->potential - frontNgb->potential);
-				const float scaleX =
-					((gradientX > 0.0f && minPotCellDirX == DIR_W) ||
-					 (gradientX < 0.0f && minPotCellDirX == DIR_E))?
-					-1.0f: 1.0f;
+				const float scaleX = (minPotCellDirX == DIR_W)? -1.0f: 1.0f;
 				const vec3f gradient = vec3f(gradientX * scaleX, 0.0f, 0.0f);
 
 				frontEdgeX = &frontEdges[frontNgb->edges[minPotCellDirX]];
