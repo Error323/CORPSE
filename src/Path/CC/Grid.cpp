@@ -13,20 +13,20 @@
 
 void Grid::AddGroup(unsigned int groupID) {
 	mDiscomfortVisData[groupID] = std::vector<float>();
-	mDiscomfortVisData[groupID].resize(mWidth * mHeight);
+	mDiscomfortVisData[groupID].resize(mWidth * mHeight, 0.0f);
 	mSpeedVisData[groupID] = std::vector<float>();
-	mSpeedVisData[groupID].resize(mWidth * mHeight * NUM_DIRS);
+	mSpeedVisData[groupID].resize(mWidth * mHeight * NUM_DIRS, 0.0f);
 	mCostVisData[groupID] = std::vector<float>();
-	mCostVisData[groupID].resize(mWidth * mHeight * NUM_DIRS);
+	mCostVisData[groupID].resize(mWidth * mHeight * NUM_DIRS, 0.0f);
 
 	mPotentialVisData[groupID] = std::vector<float>();
-	mPotentialVisData[groupID].resize(mWidth * mHeight);
+	mPotentialVisData[groupID].resize(mWidth * mHeight, 0.0f);
 
 	mVelocityVisData[groupID] = std::vector<vec3f>();
-	mVelocityVisData[groupID].resize(mWidth * mHeight * NUM_DIRS);
+	mVelocityVisData[groupID].resize(mWidth * mHeight * NUM_DIRS, NVECf);
 
 	mPotentialDeltaVisData[groupID] = std::vector<vec3f>();
-	mPotentialDeltaVisData[groupID].resize(mWidth * mHeight * NUM_DIRS);
+	mPotentialDeltaVisData[groupID].resize(mWidth * mHeight * NUM_DIRS, NVECf);
 }
 
 void Grid::DelGroup(unsigned int groupID) {
