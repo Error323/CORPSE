@@ -13,7 +13,7 @@ template<typename T> struct vec3 {
 	vec3<T>(T _x, T _y, T _z): x(_x),   y(_y),   z(_z)   {}
 	vec3<T>(const vec3<T>& v): x(v.x),  y(v.y),  z(v.z)  {}
 
-	inline bool operator == (const vec3<T>& v) {
+	inline bool operator == (const vec3<T>& v) const {
 		#define EPS    T(0.0000001f)
 		#define ABS(x) (((x) > T(0))? (x): -(x))
 		return (ABS(x - v.x) < EPS && ABS(y - v.y) < EPS && ABS(z - v.z) < EPS);

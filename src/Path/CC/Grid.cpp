@@ -751,8 +751,11 @@ void Grid::UpdateSimObjectLocation(const unsigned int inSimObjectID) {
 	if (std::isinf(worldVel.x) || std::isinf(worldVel.y) || std::isinf(worldVel.z)) { return; }
 
 	if (worldVel.sqLen3D() > 0.01f) {
-		mCOH->SetSimObjectRawPosition(inSimObjectID, worldPos + worldVel);
+		// change the direction first, so the object's
+		// new hasMoved state is not overwritten again
+		// TODO: smoother interpolation
 		mCOH->SetSimObjectRawDirection(inSimObjectID, worldVel.norm());
+		mCOH->SetSimObjectRawPosition(inSimObjectID, worldPos + worldVel);
 	}
 }
 

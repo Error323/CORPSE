@@ -98,17 +98,12 @@ void SimObjectHandler::Update(unsigned int frame) {
 		SimObject* o = simObjects[*it];
 
 		const unsigned int objectID = o->GetID();
-		const bool objectGridUpdate =
-			(o->GetPhysicalState().currentForwardSpeed > 0.0f) ||
-			(o->GetWantedPhysicalState(true).wantedForwardSpeed > 0.0f);
-
-		if (objectGridUpdate) { /// pos != oldPos
-			mSimObjectGrid->DelObject(o, simObjectGridCells[objectID] );
-		}
+		const bool objectMoved = o->HasMoved();
 
 		o->Update();
 
-		if (objectGridUpdate) {
+		if (objectMoved) {
+			mSimObjectGrid->DelObject(o, simObjectGridCells[objectID] );
 			mSimObjectGrid->AddObject(o, simObjectGridCells[objectID] );
 		}
 	}
