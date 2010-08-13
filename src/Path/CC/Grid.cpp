@@ -260,6 +260,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 
 				edge = &mInitEdges[cell->edges[dir]];
 				ngb = &mInitCells[GRID_INDEX(x, y - 1)];
+
 				edge->gradHeight = vec3f(0.0f, 0.0f, (ngb->height - cell->height) * -1.0f);
 				cell->neighbors[cell->numNeighbors++] = GRID_INDEX(x, y - 1);
 
@@ -273,6 +274,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 
 				edge = &mInitEdges[cell->edges[dir]];
 				ngb = &mInitCells[GRID_INDEX(x, y + 1)];
+
 				edge->gradHeight = vec3f(0.0f, 0.0f, (ngb->height - cell->height));
 				cell->neighbors[cell->numNeighbors++] = GRID_INDEX(x, y + 1);
 
@@ -286,6 +288,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 
 				edge = &mInitEdges[cell->edges[dir]];
 				ngb = &mInitCells[GRID_INDEX(x - 1, y)];
+
 				edge->gradHeight = vec3f((ngb->height - cell->height) * -1.0f, 0.0f, 0.0f);
 				cell->neighbors[cell->numNeighbors++] = GRID_INDEX(x - 1, y);
 
@@ -299,6 +302,7 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 
 				edge = &mInitEdges[cell->edges[dir]];
 				ngb = &mInitCells[GRID_INDEX(x + 1, y)];
+
 				edge->gradHeight = vec3f((ngb->height - cell->height), 0.0f, 0.0f);
 				cell->neighbors[cell->numNeighbors++] = GRID_INDEX(x + 1, y);
 
