@@ -318,8 +318,8 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 	const vec3f posf = vec3f(inPos.x / mSquareSize, 0.0f, inPos.z / mSquareSize);
 	const vec3i posi = World2Grid(inPos);
 
-	const unsigned int i = (posf.x > posi.x + 0.5f) ? posi.x + 1 : posi.x;
-	const unsigned int j = (posf.z > posi.z + 0.5f) ? posi.z + 1 : posi.z;
+	const unsigned int i = std::max(1, std::min(int(mWidth - 1), (posf.x > (posi.x + 0.5f))? posi.x + 1: posi.x));
+	const unsigned int j = std::max(1, std::min(int(mHeight - 1), (posf.z > (posi.z + 0.5f))? posi.z + 1: posi.z));
 
 	PFFG_ASSERT(i > 0 && j > 0 && i < mWidth && j < mHeight);
  
