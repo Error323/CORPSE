@@ -16,7 +16,6 @@ public:
 		//    see the proper value via GetRadius() until the next
 		//    sim-frame
 		mdlRadius = 0.0f;
-		hasMoved = false;
 	}
 
 	virtual ~SimObject() {
@@ -38,16 +37,11 @@ public:
 	const mat44f& GetMat() const { return physicalState.mat; }
 	void SetMat(const mat44f& m) { physicalState.mat = m; }
 	const vec3f& GetPos() const { return (physicalState.mat).GetPos(); } // wrapper
-	bool HasMoved() const { return hasMoved; }
+	bool HasMoved() const { return physicalState.moved; }
 
 	// get or set this object's current physical state
 	const PhysicalState& GetPhysicalState() const { return physicalState; }
-	void SetPhysicalState(const PhysicalState& s) {
-		const vec3f pos = GetPos();
-
-		physicalState = s;
-		hasMoved = (pos != GetPos());
-	}
+	void SetPhysicalState(const PhysicalState& s) { physicalState = s; }
 
 	const WantedPhysicalState& GetWantedPhysicalState(bool) const;
 	void PushWantedPhysicalState(const WantedPhysicalState&, bool, bool);
@@ -64,8 +58,6 @@ private:
 
 	PhysicalState physicalState;
 	std::list<WantedPhysicalState> wantedPhysicalStates;
-
-	bool hasMoved;
 };
 
 #endif

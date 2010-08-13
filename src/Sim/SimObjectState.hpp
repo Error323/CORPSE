@@ -8,10 +8,11 @@
 
 class SimObject;
 struct PhysicalState {
-	PhysicalState(): currentForwardSpeed(0.0f) {
+	PhysicalState(): currentForwardSpeed(0.0f), moved(false) {
 	}
 
 	PhysicalState& operator = (const PhysicalState& state) {
+		moved = (state.mat.GetPos() != mat.GetPos());
 		mat = state.mat; currentForwardSpeed = state.currentForwardSpeed;
 		return *this;
 	}
@@ -43,6 +44,7 @@ struct PhysicalState {
 
 	// speed-scale this object is currently moving at
 	float currentForwardSpeed;
+	bool moved;
 };
 
 struct WantedPhysicalState {
