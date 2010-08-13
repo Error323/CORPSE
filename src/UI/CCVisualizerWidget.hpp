@@ -16,6 +16,7 @@ namespace ui {
 		CCVisualizerWidget(): enabled(false) {
 			currentTextureOverlay = NULL;
 			currentVectorOverlay = NULL;
+			mModule = NULL;
 
 			visGroupIdx = 0;
 			visGroupID = 0;
@@ -26,7 +27,7 @@ namespace ui {
 		void KeyPressed(int);
 
 	private:
-		bool SetNextVisGroupID(const IPathModule*);
+		bool SetNextVisGroupID();
 
 		struct Overlay {
 			public:
@@ -87,6 +88,8 @@ namespace ui {
 
 		VectorOverlay* currentVectorOverlay;
 		TextureOverlay* currentTextureOverlay;
+
+		const IPathModule* mModule;
 
 		unsigned int visGroupIdx;
 		unsigned int visGroupID;

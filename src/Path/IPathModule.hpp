@@ -24,10 +24,13 @@ public:
 	virtual unsigned int GetNumGroupIDs() const = 0;
 	virtual unsigned int GetGroupIDs(unsigned int* array, unsigned int size) const = 0;
 
+	virtual bool IsGlobalDataType(unsigned int) const = 0;
+	virtual unsigned int GetNumScalarDataTypes() const = 0;
 	virtual unsigned int GetScalarDataArraySizeX(unsigned int dataType) const = 0;
 	virtual unsigned int GetScalarDataArraySizeZ(unsigned int dataType) const = 0;
 	virtual unsigned int GetScalarDataArrayStride(unsigned int dataType) const = 0;
 	virtual const float* GetScalarDataArray(unsigned int dataType, unsigned int groupID) const = 0;
+	virtual unsigned int GetNumVectorDataTypes() const = 0;
 	virtual unsigned int GetVectorDataArraySizeX(unsigned int dataType) const = 0;
 	virtual unsigned int GetVectorDataArraySizeZ(unsigned int dataType) const = 0;
 	virtual unsigned int GetVectorDataArrayStride(unsigned int dataType) const = 0;

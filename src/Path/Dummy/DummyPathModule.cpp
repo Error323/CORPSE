@@ -6,7 +6,7 @@
 #include "../../Sim/SimObjectDef.hpp"
 #include "../../Sim/SimObjectState.hpp"
 
-void PathModule::OnEvent(const IEvent* e) {
+void DummyPathModule::OnEvent(const IEvent* e) {
 	switch (e->GetType()) {
 		case EVENT_SIMOBJECT_CREATED: {
 			const SimObjectCreatedEvent* ee = dynamic_cast<const SimObjectCreatedEvent*>(e);
@@ -77,11 +77,11 @@ void PathModule::OnEvent(const IEvent* e) {
 	}
 }
 
-void PathModule::Init() {
+void DummyPathModule::Init() {
 	std::cout << "[DummyPathModule::Init]" << std::endl;
 }
 
-void PathModule::Update() {
+void DummyPathModule::Update() {
 	// steer the sim-objects around the map based on user commands
 	for (std::map<unsigned int, const SimObjectDef*>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
 		const unsigned int objID = it->first;
@@ -127,13 +127,13 @@ void PathModule::Update() {
 	}
 }
 
-void PathModule::Kill() {
+void DummyPathModule::Kill() {
 	std::cout << "[DummyPathModule::Kill]" << std::endl;
 }
 
 
 
-void PathModule::AddObjectToGroup(unsigned int objID, unsigned int groupID) {
+void DummyPathModule::AddObjectToGroup(unsigned int objID, unsigned int groupID) {
 	if (objectGroups.find(groupID) == objectGroups.end()) {
 		objectGroups[groupID] = std::set<unsigned int>();
 	}
@@ -142,7 +142,7 @@ void PathModule::AddObjectToGroup(unsigned int objID, unsigned int groupID) {
 	objectGroups[groupID].insert(objID);
 }
 
-bool PathModule::DelObjectFromGroup(unsigned int objID) {
+bool DummyPathModule::DelObjectFromGroup(unsigned int objID) {
 	if (objectGroupIDs.find(objID) != objectGroupIDs.end()) {
 		const unsigned int groupID = objectGroupIDs[objID];
 

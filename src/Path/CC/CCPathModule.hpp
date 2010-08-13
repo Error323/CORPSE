@@ -10,9 +10,9 @@
 
 class IEvent;
 class SimObjectDef;
-class PathModule: public IPathModule {
+class CCPathModule: public IPathModule {
 public:
-	PathModule(ICallOutHandler* icoh): IPathModule(icoh) {
+	CCPathModule(ICallOutHandler* icoh): IPathModule(icoh) {
 		// NOTE:
 		//    do not use call-outs here or in destructor,
 		//    SimObjectHandler does not exist yet or is
@@ -33,40 +33,29 @@ public:
 	void Update();
 	void Kill();
 
-	enum {
-		// scalar fields
-		DATATYPE_DENSITY         =  0, // rho (global,    stored at cell-centers, 1 scalar  per cell)
-		DATATYPE_HEIGHT          =  1, // h   (global,    stored at cell-centers, 1 scalar  per cell)
-		DATATYPE_DISCOMFORT      =  2, // g   (per-group, stored at cell-centers, 1 scalar  per cell)
-		DATATYPE_SPEED           =  3, // f   (per-group, stored at cell-edges,   4 scalars per cell)
-		DATATYPE_COST            =  4, // C   (per-group, stored at cell-edges,   4 scalars per cell)
-		DATATYPE_POTENTIAL       =  5, // phi (per-group, stored at cell-centers, 1 scalar  per cell)
-
-		// vector fields
-		DATATYPE_HEIGHT_DELTA    =  6, // delta-h   (global,    stored at cell-edges,   4 vectors per cell)
-		DATATYPE_VELOCITY_AVG    =  7, // v-bar     (global,    stored at cell-centers, 1 vector  per cell)
-		DATATYPE_VELOCITY        =  8, // v         (per-group, stored at cell-edges,   4 vectors per cell)
-		DATATYPE_POTENTIAL_DELTA =  9, // delta-phi (per-group, stored at cell-edges,   4 vectors per cell)
-
-		NUM_DATATYPES            = 10,
-	};
-
-	unsigned int GetNumGroupIDs() const { return mObjectGroups.size(); }
+	unsigned int GetNumGroupIDs() const { return mGroups.size(); }
 	unsigned int GetGroupIDs(unsigned int* array, unsigned int size) const {
 		unsigned int n = 0;
 
-		std::map<unsigned int, std::set<unsigned int> >::const_iterator it;
-		for (it = mObjectGroups.begin(); it != mObjectGroups.end() && n < size; ++it) {
+		std::map<unsigned int, MGroup*>::const_iterator it;
+		for (it = mGroups.begin(); it != mGroups.end() && n < size; ++it) {
 			array[n++] = it->first;
 		}
 
 		return n;
 	}
 
+	bool IsGlobalDataType(unsigned int dataType) const {
+		return
+			(dataType == Grid::DATATYPE_DENSITY || dataType == Grid::DATATYPE_HEIGHT ||
+			 dataType == Grid::DATATYPE_HEIGHT_DELTA  || dataType == Grid::DATATYPE_VELOCITY_AVG);
+	}
+	unsigned int GetNumScalarDataTypes() const { return Grid::NUM_SCALAR_DATATYPES; }
 	unsigned int GetScalarDataArraySizeX(unsigned int) const;
 	unsigned int GetScalarDataArraySizeZ(unsigned int) const;
 	unsigned int GetScalarDataArrayStride(unsigned int) const;
 	const float* GetScalarDataArray(unsigned int, unsigned int) const;
+	unsigned int GetNumVectorDataTypes() const { return Grid::NUM_VECTOR_DATATYPES; }
 	unsigned int GetVectorDataArraySizeX(unsigned int) const;
 	unsigned int GetVectorDataArraySizeZ(unsigned int) const;
 	unsigned int GetVectorDataArrayStride(unsigned int) const;
@@ -75,6 +64,7 @@ public:
 private:
 	void AddObjectToGroup(unsigned int, unsigned int);
 	bool DelObjectFromGroup(unsigned int);
+	bool DelGroup(unsigned int);
 
 	unsigned int numGroupIDs;
 
@@ -83,13 +73,43 @@ private:
 	// are recycled
 	Grid mGrid;
 
-	std::map<unsigned int, std::vector<unsigned int> > mGoals;
-	std::map<unsigned int, const SimObjectDef*> mSimObjectIDs;     // object ID ==> object def
-	std::map<unsigned int, unsigned int> mObjectGroupIDs;          // object ID ==> group ID
-	std::map<unsigned int, std::set<unsigned int> > mObjectGroups; // group ID ==> object IDs
+	struct MObject {
+		public:
+			MObject(): mGroupID(-1), mObjectDef(NULL) {}
+			MObject(const SimObjectDef* def): mGroupID(-1), mObjectDef(def) {}
+
+			void SetGroupID(unsigned int gID) { mGroupID = gID; }
+			unsigned int GetGroupID() const { return mGroupID; }
+
+		private:
+			unsigned int mGroupID;
+			const SimObjectDef* mObjectDef;
+	};
+
+	struct MGroup {
+		public:
+			MGroup(): mGoalID(-1) {}
+			~MGroup() { mObjectIDs.clear(); }
+
+			void DelObject(unsigned int objectID) { mObjectIDs.erase(objectID); }
+			void AddObject(unsigned int objectID) { mObjectIDs.insert(objectID); }
+			unsigned int GetSize() const { return mObjectIDs.size(); }
+			bool IsEmpty() const { return mObjectIDs.empty(); }
+			const std::set<unsigned int>& GetObjectIDs() const { return mObjectIDs; }
+
+			void SetGoal(const unsigned int goalID) { mGoalID = goalID; }
+			unsigned int GetGoal() const { return mGoalID; }
+
+		private:
+			unsigned int mGoalID;
+			std::set<unsigned int> mObjectIDs;  // unit member ID's
+	};
+
+	std::map<unsigned int, MGroup*> mGroups;
+	std::map<unsigned int, MObject*> mObjects;
 };
 
-IPathModule* CALL_CONV GetPathModuleInstance(ICallOutHandler* icoh) { return (new PathModule(icoh)); }
-void         CALL_CONV FreePathModuleInstance(IPathModule* m) { delete ((PathModule*) m); }
+IPathModule* CALL_CONV GetPathModuleInstance(ICallOutHandler* icoh) { return (new CCPathModule(icoh)); }
+void         CALL_CONV FreePathModuleInstance(IPathModule* m) { delete ((CCPathModule*) m); }
 
 #endif

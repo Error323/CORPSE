@@ -21,6 +21,27 @@ public:
 		NUM_DIRS = 4
 	};
 
+	enum {
+		// scalar fields
+		DATATYPE_DENSITY         = 0, // rho (global,    stored at cell-centers, 1 scalar  per cell)
+		DATATYPE_HEIGHT          = 1, // h   (global,    stored at cell-centers, 1 scalar  per cell)
+		DATATYPE_DISCOMFORT      = 2, // g   (per-group, stored at cell-centers, 1 scalar  per cell)
+		DATATYPE_SPEED           = 3, // f   (per-group, stored at cell-edges,   4 scalars per cell)
+		DATATYPE_COST            = 4, // C   (per-group, stored at cell-edges,   4 scalars per cell)
+		DATATYPE_POTENTIAL       = 5, // phi (per-group, stored at cell-centers, 1 scalar  per cell)
+
+		NUM_SCALAR_DATATYPES     = 6,
+	};
+	enum {
+		// vector fields
+		DATATYPE_HEIGHT_DELTA    = 6, // delta-h   (global,    stored at cell-edges,   4 vectors per cell)
+		DATATYPE_VELOCITY_AVG    = 7, // v-bar     (global,    stored at cell-centers, 1 vector  per cell)
+		DATATYPE_VELOCITY        = 8, // v         (per-group, stored at cell-edges,   4 vectors per cell)
+		DATATYPE_POTENTIAL_DELTA = 9, // delta-phi (per-group, stored at cell-edges,   4 vectors per cell)
+
+		NUM_VECTOR_DATATYPES     = 4,
+	};
+
 	struct Cell {
 		struct Edge {
 			vec3f velocity;
@@ -81,12 +102,12 @@ public:
 		mBackBufferIdx = 1;
 	}
 
-	void Init(const int, ICallOutHandler*);
-	void Kill(const std::map<unsigned int, std::set<unsigned int> >&);
+	void Init(unsigned int, ICallOutHandler*);
+	void Kill();
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
 	void ComputeAvgVelocity();
 	void UpdateGroupPotentialField(unsigned int, const std::vector<unsigned int>&, const std::set<unsigned int>&);
-	void UpdateSimObjectLocation(const unsigned int);
+	void UpdateSimObjectLocation(unsigned int);
 	void Reset();
 
 	unsigned int GetGridWidth() const { return mWidth; }

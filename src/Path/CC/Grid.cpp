@@ -115,7 +115,7 @@ const vec3f* Grid::GetHeightDeltaVisDataArray() const {
 
 
 
-void Grid::Kill(const std::map<unsigned int, std::set<unsigned int> >& groupIDs) {
+void Grid::Kill() {
 	// clear the global scalar field visualisation data
 	mDensityVisData.clear();
 	mHeightVisData.clear();
@@ -123,11 +123,6 @@ void Grid::Kill(const std::map<unsigned int, std::set<unsigned int> >& groupIDs)
 	// clear the global vector field visualisation data
 	mAvgVelocityVisData.clear();
 	mHeightDeltaVisData.clear();
-
-	// clear the per-group visualisation data
-	for (std::map<unsigned int, std::set<unsigned int> >::const_iterator it = groupIDs.begin(); it != groupIDs.end(); ++it) {
-		DelGroup(it->first);
-	}
 
 	mTouchedCells.clear();
 	mInitCells.clear();
@@ -138,12 +133,12 @@ void Grid::Kill(const std::map<unsigned int, std::set<unsigned int> >& groupIDs)
 	mBuffers[mBackBufferIdx].edges.clear();
 }
 
-void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
-	PFFG_ASSERT(inDownScale >= 1);
+void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
+	PFFG_ASSERT(downScaleFactor >= 1);
 
 	// NOTE: if mDownScale > 1, the engine's height-map must be downsampled
-	mDownScale  = inDownScale;
-	mCOH        = inCOH;
+	mDownScale  = downScaleFactor;
+	mCOH        = coh;
 	mWidth      = mCOH->GetHeightMapSizeX() / mDownScale;
 	mHeight     = mCOH->GetHeightMapSizeZ() / mDownScale;
 	mSquareSize = mCOH->GetSquareSize()     * mDownScale;
@@ -322,9 +317,9 @@ void Grid::Init(const int inDownScale, ICallOutHandler* inCOH) {
 
 
 
-void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
-	const vec3f posf = vec3f(inPos.x / mSquareSize, 0.0f, inPos.z / mSquareSize);
-	const vec3i posi = World2Grid(inPos);
+void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
+	const vec3f posf = vec3f(pos.x / mSquareSize, 0.0f, pos.z / mSquareSize);
+	const vec3i posi = World2Grid(pos);
 
 	const unsigned int i = std::max(1, std::min(int(mWidth - 1), (posf.x > (posi.x + 0.5f))? posi.x + 1: posi.x));
 	const unsigned int j = std::max(1, std::min(int(mHeight - 1), (posf.z > (posi.z + 0.5f))? posi.z + 1: posi.z));
@@ -332,7 +327,7 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 	PFFG_ASSERT(i > 0 && j > 0 && i < mWidth && j < mHeight);
  
 	std::vector<Cell>& frontCells = mBuffers[mFrontBufferIdx].cells;
-	std::vector<Cell>& backCells = mBuffers[mBackBufferIdx].cells;
+	std::vector<Cell>& backCells  = mBuffers[mBackBufferIdx ].cells;
 
 	const unsigned int
 		idxA = GRID_INDEX(i - 1, j - 1),
@@ -345,9 +340,9 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 	Cell *Cf = &frontCells[idxC], *Cb = &backCells[idxC]; mTouchedCells.insert(idxC);
 	Cell *Df = &frontCells[idxD], *Db = &backCells[idxD]; mTouchedCells.insert(idxD);
 
-	// add velocity (why only to C?)
-	Cf->avgVelocity += inVel;
-	Cb->avgVelocity += inVel;
+	// add velocity (NOTE: why only to C?)
+	Cf->avgVelocity += vel;
+	Cb->avgVelocity += vel;
 
 	// compute delta-X and delta-Y
 	const float dX = posf.x - Af->x + 0.5f;
@@ -367,7 +362,7 @@ void Grid::AddDensityAndVelocity(const vec3f& inPos, const vec3f& inVel) {
 
 void Grid::ComputeAvgVelocity() {
 	std::vector<Cell>& frontCells = mBuffers[mFrontBufferIdx].cells;
-	std::vector<Cell>& backCells = mBuffers[mBackBufferIdx].cells;
+	std::vector<Cell>& backCells  = mBuffers[mBackBufferIdx ].cells;
 
 	for (std::set<unsigned int>::iterator it = mTouchedCells.begin(); it != mTouchedCells.end(); ++it) {
 		const unsigned int idx = *it;
@@ -449,7 +444,7 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		cell->speed[dir] = speed;
 		cell->cost[dir] = cost;
 
-		// NOTE: do we even want to visualize these as textures?
+		// NOTE: how best to visualize these textures?
 		mSpeedVisData[groupID][cellGridIdx * NUM_DIRS + dir] = speed;
 		mCostVisData[groupID][cellGridIdx * NUM_DIRS + dir] = cost;
 	}
@@ -457,8 +452,8 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 	mDiscomfortVisData[groupID][cellGridIdx] = cell->discomfort;
 }
 
-void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<unsigned int>& inGoalCells, const std::set<unsigned int>& inSimObjectIds) {
-	PFFG_ASSERT(!inGoalCells.empty());
+void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<unsigned int>& goalCells, const std::set<unsigned int>& simObjectIDs) {
+	PFFG_ASSERT(!goalCells.empty());
 	PFFG_ASSERT(mCandidates.empty());
 
 	// cycle the buffers so the per-group variables of the
@@ -476,7 +471,7 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 	mMaxGroupSpeed  = -std::numeric_limits<float>::max();
 	mMaxGroupRadius = -std::numeric_limits<float>::max();
 
-	for (std::set<unsigned int>::iterator i = inSimObjectIds.begin(); i != inSimObjectIds.end(); i++) {
+	for (std::set<unsigned int>::iterator i = simObjectIDs.begin(); i != simObjectIDs.end(); i++) {
 		const SimObjectDef* simObjectDef = mCOH->GetSimObjectDef(*i);
 
 		mMinGroupSlope  = std::min<float>(mMinGroupSlope,  simObjectDef->GetMinSlopeAngleCosine());
@@ -490,9 +485,9 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 	std::vector<vec3f>& potDeltaVisData = mPotentialDeltaVisData[groupID];
 
 	std::vector<Cell      >& frontCells = mBuffers[mFrontBufferIdx].cells;
-	std::vector<Cell      >& backCells  = mBuffers[mBackBufferIdx].cells;
+	std::vector<Cell      >& backCells  = mBuffers[mBackBufferIdx ].cells;
 	std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
-	std::vector<Cell::Edge>& backEdges  = mBuffers[mBackBufferIdx].edges;
+	std::vector<Cell::Edge>& backEdges  = mBuffers[mBackBufferIdx ].edges;
 
 	Cell* frontCell = NULL;
 	Cell* backCell = NULL;
@@ -500,8 +495,8 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 	unsigned int cellIdx = 0;
 
 	// add goal-cells to the known set and their neighbors to the candidate-set
-	for (size_t i = 0; i < inGoalCells.size(); i++) {
-		cellIdx = inGoalCells[i];
+	for (size_t i = 0; i < goalCells.size(); i++) {
+		cellIdx = goalCells[i];
 
 		frontCell = &frontCells[cellIdx];
 		backCell = &backCells[cellIdx];
@@ -559,11 +554,11 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 	}
 }
 
-void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
+void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 	std::vector<Cell      >& frontCells = mBuffers[mFrontBufferIdx].cells;
-	std::vector<Cell      >& backCells  = mBuffers[mBackBufferIdx].cells;
+	std::vector<Cell      >& backCells  = mBuffers[mBackBufferIdx ].cells;
 	std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
-	std::vector<Cell::Edge>& backEdges  = mBuffers[mBackBufferIdx].edges;
+	std::vector<Cell::Edge>& backEdges  = mBuffers[mBackBufferIdx ].edges;
 
 	static float       dirCosts[NUM_DIRS] = {0.0f};
 	static bool        dirValid[NUM_DIRS] = {false};
@@ -579,8 +574,8 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 	Cell::Edge* backEdgeX  = NULL;
 	Cell::Edge* backEdgeY  = NULL;
 
-	for (unsigned int i = 0; i < inParent->numNeighbors; i++) {
-		const unsigned int ngbIdx = inParent->neighbors[i];
+	for (unsigned int i = 0; i < parent->numNeighbors; i++) {
+		const unsigned int ngbIdx = parent->neighbors[i];
 
 		Cell* frontNgb = &frontCells[ngbIdx];
 		Cell* backNgb = &backCells[ngbIdx];
@@ -741,9 +736,9 @@ float Grid::Potential2D(const float p1, const float c1, const float p2, const fl
 
 
 
-void Grid::UpdateSimObjectLocation(const unsigned int inSimObjectID) {
-	const vec3f& worldPos = mCOH->GetSimObjectPosition(inSimObjectID);
-	const vec3f& worldDir = mCOH->GetSimObjectDirection(inSimObjectID);
+void Grid::UpdateSimObjectLocation(unsigned int simObjectID) {
+	const vec3f& worldPos = mCOH->GetSimObjectPosition(simObjectID);
+	const vec3f& worldDir = mCOH->GetSimObjectDirection(simObjectID);
 
 	const std::vector<Cell      >& frontCells = mBuffers[mFrontBufferIdx].cells;
 	const std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
@@ -759,8 +754,8 @@ void Grid::UpdateSimObjectLocation(const unsigned int inSimObjectID) {
 		// change the direction first, so the object's
 		// new hasMoved state is not overwritten again
 		// TODO: smoother interpolation
-		mCOH->SetSimObjectRawDirection(inSimObjectID, worldVel.norm());
-		mCOH->SetSimObjectRawPosition(inSimObjectID, worldPos + worldVel);
+		mCOH->SetSimObjectRawDirection(simObjectID, worldVel.norm());
+		mCOH->SetSimObjectRawPosition(simObjectID, worldPos + worldVel);
 	}
 }
 
@@ -831,20 +826,20 @@ vec3f Grid::Cell::GetInterpolatedVelocity(const std::vector<Cell::Edge>& gridEdg
 
 
 // convert a world-space position to <x, y> grid-indices
-vec3i Grid::World2Grid(const vec3f& inWorldPos) const {
-	const int gx = (inWorldPos.x / mSquareSize);
-	const int gz = (inWorldPos.z / mSquareSize);
+vec3i Grid::World2Grid(const vec3f& worldPos) const {
+	const int gx = (worldPos.x / mSquareSize);
+	const int gz = (worldPos.z / mSquareSize);
 	const int cx = std::max(0, std::min(int(mWidth - 1), gx));
 	const int cz = std::max(0, std::min(int(mHeight - 1), gz));
 	return vec3i(cx, 0, cz);
 }
 
 // get the 1D grid-cell index corresponding to a world-space position
-unsigned int Grid::World2Cell(const vec3f& inWorldPos) const {
-	const vec3i& gridPos = World2Grid(inWorldPos);
+unsigned int Grid::World2Cell(const vec3f& worldPos) const {
+	const vec3i& gridPos = World2Grid(worldPos);
 	const unsigned int gridIdx = GRID_INDEX(gridPos.x, gridPos.z);
 
-	PFFG_ASSERT_MSG(gridIdx < mInitCells.size(), "world(%2.2f, %2.2f) grid(%d, %d)", inWorldPos.x, inWorldPos.z, gridPos.x, gridPos.z);
+	PFFG_ASSERT_MSG(gridIdx < mInitCells.size(), "world(%2.2f, %2.2f) grid(%d, %d)", worldPos.x, worldPos.z, gridPos.x, gridPos.z);
 	return gridIdx;
 }
 

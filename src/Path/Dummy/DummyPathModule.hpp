@@ -9,9 +9,9 @@
 
 class IEvent;
 class SimObjectDef;
-class PathModule: public IPathModule {
+class DummyPathModule: public IPathModule {
 public:
-	PathModule(ICallOutHandler* icoh): IPathModule(icoh) {
+	DummyPathModule(ICallOutHandler* icoh): IPathModule(icoh) {
 		// NOTE:
 		//    do not use call-outs here or in destructor,
 		//    SimObjectHandler does not exist yet or is
@@ -44,10 +44,13 @@ public:
 		return n;
 	}
 
+	bool IsGlobalDataType(unsigned int) const { return false; }
+	unsigned int GetNumScalarDataTypes() const { return 0; }
 	unsigned int GetScalarDataArraySizeX(unsigned int) const { return 0; }
 	unsigned int GetScalarDataArraySizeZ(unsigned int) const { return 0; }
 	unsigned int GetScalarDataArrayStride(unsigned int) const { return 0; }
 	const float* GetScalarDataArray(unsigned int, unsigned int) const { return NULL; }
+	unsigned int GetNumVectorDataTypes() const { return 0; }
 	unsigned int GetVectorDataArraySizeX(unsigned int) const { return 0; }
 	unsigned int GetVectorDataArraySizeZ(unsigned int) const { return 0; }
 	unsigned int GetVectorDataArrayStride(unsigned int) const { return 0; }
@@ -66,7 +69,7 @@ private:
 	std::map<unsigned int, std::set<unsigned int> > objectGroups; // group ID ==> object IDs
 };
 
-IPathModule* CALL_CONV GetPathModuleInstance(ICallOutHandler* icoh) { return (new PathModule(icoh)); }
-void         CALL_CONV FreePathModuleInstance(IPathModule* m) { delete ((PathModule*) m); }
+IPathModule* CALL_CONV GetPathModuleInstance(ICallOutHandler* icoh) { return (new DummyPathModule(icoh)); }
+void         CALL_CONV FreePathModuleInstance(IPathModule* m) { delete ((DummyPathModule*) m); }
 
 #endif

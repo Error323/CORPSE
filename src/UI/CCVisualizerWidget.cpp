@@ -13,7 +13,7 @@
 #include "../Renderer/RenderThread.hpp"
 #include "../Renderer/VertexArray.hpp"
 #include "../Sim/SimThread.hpp"
-#include "../Path/CC/CCPathModule.hpp"
+#include "../Path/IPathModule.hpp"
 
 ui::CCVisualizerWidget::~CCVisualizerWidget() {
 	for (std::map<unsigned int, TextureOverlay*>::iterator it = textureOverlays.begin(); it != textureOverlays.end(); ++it) {
@@ -31,43 +31,30 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 	if (key == SDLK_v) { enabled = !enabled; }
 	if (!enabled) { return; }
 
-	#define STRINGIFY(s) #s
-	static const char* dataTypeNames[PathModule::NUM_DATATYPES] = {
-		STRINGIFY(PathModule::DATATYPE_DENSITY),
-		STRINGIFY(PathModule::DATATYPE_HEIGHT),
-		STRINGIFY(PathModule::DATATYPE_DISCOMFORT),
-		STRINGIFY(PathModule::DATATYPE_SPEED),
-		STRINGIFY(PathModule::DATATYPE_COST),
-		STRINGIFY(PathModule::DATATYPE_POTENTIAL),
-		STRINGIFY(PathModule::DATATYPE_HEIGHT_DELTA),
-		STRINGIFY(PathModule::DATATYPE_VELOCITY_AVG),
-		STRINGIFY(PathModule::DATATYPE_VELOCITY),
-		STRINGIFY(PathModule::DATATYPE_POTENTIAL_DELTA),
-	};
-	#undef STRINGIFY
+	if (mModule == NULL) {
+		mModule = simThread->GetPathModule();
+	}
 
+	unsigned int dataType = mModule->GetNumScalarDataTypes() + mModule->GetNumVectorDataTypes();
 
-	const IPathModule* m = simThread->GetPathModule();
-	unsigned int dataType = PathModule::NUM_DATATYPES;
+	if (key >= SDLK_0 && key <= SDLK_9) {
+		dataType = key - SDLK_0;
+	} else {
+		return;
+	}
 
-	if (key >= SDLK_0 && key <= SDLK_9) { dataType = key - SDLK_0; }
-	if (dataType >= PathModule::NUM_DATATYPES) { return; }
+	printf("[CCVisWidget::KeyPress] dataType=%u, visGroupIdx=%u, visGroupID=%u\n", dataType, visGroupIdx, visGroupID);
 
-	printf(
-		"[CCVisWidget::KeyPressed] dataType=%u (%s), visGroupIdx=%u, visGroupID=%u\n",
-		dataType, dataTypeNames[dataType], visGroupIdx, visGroupID
-	);
-
-	if (dataType <= PathModule::DATATYPE_POTENTIAL) {
+	if (dataType < mModule->GetNumScalarDataTypes()) {
 		// scalar field; create a texture
 		TextureOverlay* textureOverlay = textureOverlays[dataType];
 		CBaseGroundDrawer* g = readMap->GetGroundDrawer();
 
 		if (textureOverlay == NULL) {
-			const unsigned int xsize = m->GetScalarDataArraySizeX(dataType);
-			const unsigned int zsize = m->GetScalarDataArraySizeZ(dataType);
-			const unsigned int stride = m->GetScalarDataArrayStride(dataType);
-			const float* data = m->GetScalarDataArray(dataType, visGroupID);
+			const unsigned int xsize = mModule->GetScalarDataArraySizeX(dataType);
+			const unsigned int zsize = mModule->GetScalarDataArraySizeZ(dataType);
+			const unsigned int stride = mModule->GetScalarDataArrayStride(dataType);
+			const float* data = mModule->GetScalarDataArray(dataType, visGroupID);
 
 			textureOverlay = new TextureOverlay(xsize, zsize, stride, dataType, data);
 			textureOverlays[dataType] = textureOverlay;
@@ -75,13 +62,10 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 
 			g->SetOverlayTexture(textureOverlay->GetID());
 		} else {
-			const bool isGlobalOverlay =
-				(dataType == PathModule::DATATYPE_DENSITY) ||
-				(dataType == PathModule::DATATYPE_HEIGHT);
-			const bool toggleGlobalOverlay =
-				(!textureOverlay->IsEnabled() && isGlobalOverlay);
+			const bool isGlobalOverlay = mModule->IsGlobalDataType(dataType);
+			const bool toggleGlobalOverlay = (!textureOverlay->IsEnabled() && isGlobalOverlay);
 
-			if (toggleGlobalOverlay || (!isGlobalOverlay && SetNextVisGroupID(m))) {
+			if (toggleGlobalOverlay || (!isGlobalOverlay && SetNextVisGroupID())) {
 				textureOverlay->SetEnabled(true);
 				g->SetOverlayTexture(textureOverlay->GetID());
 
@@ -98,22 +82,19 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 		VectorOverlay* vectorOverlay = vectorOverlays[dataType];
 
 		if (vectorOverlay == NULL) {
-			const unsigned int xsize = m->GetVectorDataArraySizeX(dataType);
-			const unsigned int zsize = m->GetVectorDataArraySizeZ(dataType);
-			const unsigned int stride = m->GetVectorDataArrayStride(dataType);
-			const vec3f* data = m->GetVectorDataArray(dataType, visGroupID);
+			const unsigned int xsize = mModule->GetVectorDataArraySizeX(dataType);
+			const unsigned int zsize = mModule->GetVectorDataArraySizeZ(dataType);
+			const unsigned int stride = mModule->GetVectorDataArrayStride(dataType);
+			const vec3f* data = mModule->GetVectorDataArray(dataType, visGroupID);
 
 			vectorOverlay = new VectorOverlay(xsize, zsize, stride, dataType, data);
 			vectorOverlays[dataType] = vectorOverlay;
 			currentVectorOverlay = vectorOverlay;
 		} else {
-			const bool isGlobalOverlay =
-				(dataType == PathModule::DATATYPE_HEIGHT_DELTA) ||
-				(dataType == PathModule::DATATYPE_VELOCITY_AVG);
-			const bool toggleGlobalOverlay =
-				(!vectorOverlay->IsEnabled() && isGlobalOverlay);
+			const bool isGlobalOverlay = mModule->IsGlobalDataType(dataType);
+			const bool toggleGlobalOverlay = (!vectorOverlay->IsEnabled() && isGlobalOverlay);
 
-			if (toggleGlobalOverlay || (!isGlobalOverlay && SetNextVisGroupID(m))) {
+			if (toggleGlobalOverlay || (!isGlobalOverlay && SetNextVisGroupID())) {
 				vectorOverlay->SetEnabled(true);
 
 				currentVectorOverlay = vectorOverlay;
@@ -125,9 +106,9 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 	}
 }
 
-bool ui::CCVisualizerWidget::SetNextVisGroupID(const IPathModule* m) {
+bool ui::CCVisualizerWidget::SetNextVisGroupID() {
 	// cycle to the next groupID for the non-global overlays
-	const unsigned int numGroupIDs = m->GetNumGroupIDs();
+	const unsigned int numGroupIDs = mModule->GetNumGroupIDs();
 
 	if (numGroupIDs == 0) {
 		return false;
@@ -135,7 +116,7 @@ bool ui::CCVisualizerWidget::SetNextVisGroupID(const IPathModule* m) {
 
 	// get the current group ID's
 	visGroupIDs.resize(numGroupIDs);
-	m->GetGroupIDs(&visGroupIDs[0], numGroupIDs);
+	mModule->GetGroupIDs(&visGroupIDs[0], numGroupIDs);
 
 	// allow disabling active overlays when the
 	// current index exceeds the number of IDs
@@ -158,17 +139,15 @@ void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 	if (simThread->GetFrame() != simFrame) {
 		simFrame = simThread->GetFrame();
 
-		const IPathModule* module = simThread->GetPathModule();
-
 		if (currentTextureOverlay != NULL && currentTextureOverlay->IsEnabled()) {
 			// update the texture data
 			// if the group corresponding to <visGroupID> no longer exists,
 			// this causes the texture to be filled with default values (0)
-			currentTextureOverlay->Update(module->GetScalarDataArray(currentTextureOverlay->GetDataType(), visGroupID));
+			currentTextureOverlay->Update(mModule->GetScalarDataArray(currentTextureOverlay->GetDataType(), visGroupID));
 		}
 
 		if (currentVectorOverlay != NULL) {
-			currentVectorOverlay->Update(module->GetVectorDataArray(currentVectorOverlay->GetDataType(), visGroupID));
+			currentVectorOverlay->Update(mModule->GetVectorDataArray(currentVectorOverlay->GetDataType(), visGroupID));
 		}
 	}
 
@@ -245,10 +224,12 @@ void ui::CCVisualizerWidget::TextureOverlay::Update(const float* ndata) {
 		// normalize
 		#ifdef TEXTURE_DATATYPE_FLOAT
 		for (unsigned int i = 0; i < (sizex * sizey * stride); i += bpp) {
+			// note: size of {n}data must be a multiple of bpp
 			data[i] = (ndata[i] - ndataMin) / (ndataMax - ndataMin);
 		}
 		#else
 		for (unsigned int i = 0; i < (sizex * sizey * stride * bpp); i += bpp) {
+			// note: size of {n}data must be a multiple of bpp
 			data[i + 0] = (ndata[i / 4] < 0.0f)? 0: ((ndata[i / 4] / ndataMax) * 255);
 			data[i + 1] =                                                          0;
 			data[i + 2] = (ndata[i / 4] > 0.0f)? 0: ((ndata[i / 4] / ndataMin) * 255);
@@ -261,7 +242,8 @@ void ui::CCVisualizerWidget::TextureOverlay::Update(const float* ndata) {
 			data[i] = 0.0f;
 		}
 		#else
-		for (unsigned int i = 0; i < (sizex * sizey * stride * 4); i += bpp) {
+		for (unsigned int i = 0; i < (sizex * sizey * stride * bpp); i += bpp) {
+			// note: size of data must be a multiple of bpp
 			data[i + 0] =   0;
 			data[i + 1] =   0;
 			data[i + 2] =   0;
@@ -355,9 +337,7 @@ void ui::CCVisualizerWidget::VectorOverlay::Update(const vec3f* ndata) {
 
 			case 4: {
 				for (unsigned int i = 0; i < numVectors; i += stride) {
-					// note: 4-vector visualisation data is filled in NSEW
-					// order, but the enum values of NSWE are 0231 instead
-					// of 0123 (therefore S maps to dirColors[2], etc.)
+					// note: size of ndata must be a multiple of stride
 					const vec3f& vN = ndata[i + 0];
 					const vec3f& vS = ndata[i + 1];
 					const vec3f& vE = ndata[i + 2];
