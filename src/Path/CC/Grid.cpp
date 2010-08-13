@@ -642,7 +642,9 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 
 			const float gradientX = (minPotCellPtrX->potential - frontNgb->potential);
 			const float gradientY = (minPotCellPtrY->potential - frontNgb->potential);
-			const vec3f gradient = vec3f(gradientX, 0.0f, gradientY);
+			const float scaleX = ((gradientX > 0.0f && minPotCellDirX == DIR_W) || (gradientX < 0.0f && minPotCellDirX == DIR_E))? -1.0f: 1.0f;
+			const float scaleY = ((gradientY > 0.0f && minPotCellDirY == DIR_N) || (gradientY < 0.0f && minPotCellDirY == DIR_S))? -1.0f: 1.0f;
+			const vec3f gradient = vec3f(gradientX * scaleX, 0.0f, gradientY * scaleY);
 
 			frontEdgeX = &frontEdges[frontNgb->edges[minPotCellDirX]];
 			frontEdgeY = &frontEdges[frontNgb->edges[minPotCellDirY]];
@@ -651,8 +653,6 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 
 			frontEdgeX->gradPotential = gradient;
 			frontEdgeY->gradPotential = gradient;
-		//	frontEdgeX->gradPotential.x *= ((minPotCellDirX == DIR_E)? -1.0f: 1.0f);
-		//	frontEdgeY->gradPotential.z *= ((minPotCellDirY == DIR_N)? -1.0f: 1.0f);
 			backEdgeX->gradPotential = NVECf;
 			backEdgeY->gradPotential = NVECf;
 		} else {
@@ -671,11 +671,17 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 
 				frontNgb->potential = Potential1D(minPotCellPtrY->potential, frontNgb->cost[minPotCellDirY]);
 
+				const float gradientY = (minPotCellPtrY->potential - frontNgb->potential);
+				const float scaleY =
+					((gradientY > 0.0f && minPotCellDirY == DIR_N) ||
+					 (gradientY < 0.0f && minPotCellDirY == DIR_S))?
+					-1.0f: 1.0f;
+				const vec3f gradient = vec3f(0.0f, 0.0f, gradientY * scaleY);
+
 				frontEdgeY = &frontEdges[frontNgb->edges[minPotCellDirY]];
 				backEdgeY  = &backEdges[frontNgb->edges[minPotCellDirY]];
 
-				frontEdgeY->gradPotential = vec3f(0.0f, 0.0f, minPotCellPtrY->potential - frontNgb->potential);
-			//	frontEdgeY->gradPotential.z *= ((minPotCellDirY == DIR_N)? -1.0f: 1.0f);
+				frontEdgeY->gradPotential = gradient;
 				backEdgeY->gradPotential = NVECf;
 			}
 
@@ -694,11 +700,17 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 
 				frontNgb->potential = Potential1D(minPotCellPtrX->potential, frontNgb->cost[minPotCellDirX]);
 
+				const float gradientX = (minPotCellPtrX->potential - frontNgb->potential);
+				const float scaleX =
+					((gradientX > 0.0f && minPotCellDirX == DIR_W) ||
+					 (gradientX < 0.0f && minPotCellDirX == DIR_E))?
+					-1.0f: 1.0f;
+				const vec3f gradient = vec3f(gradientX * scaleX, 0.0f, 0.0f);
+
 				frontEdgeX = &frontEdges[frontNgb->edges[minPotCellDirX]];
 				backEdgeX  = &backEdges[frontNgb->edges[minPotCellDirX]];
 
-				frontEdgeX->gradPotential = vec3f(minPotCellPtrX->potential - frontNgb->potential, 0.0f, 0.0f);
-			//	frontEdgeX->gradPotential.x *= ((minPotCellDirX == DIR_E)? -1.0f: 1.0f);
+				frontEdgeX->gradPotential = gradient;
 				backEdgeX->gradPotential = NVECf;
 			}
 		}
