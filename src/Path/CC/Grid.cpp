@@ -382,13 +382,6 @@ void Grid::ComputeAvgVelocity() {
 
 
 void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
-	const static vec3f dirVectors[NUM_DIRS] = {
-		-ZVECf, // N (world-space)
-		 XVECf, // E (world-space)
-		 ZVECf, // S (world-space)
-		-XVECf  // W (world-space)
-	};
-
 	const static float speedWeight      = 1.0f;
 	const static float discomfortWeight = 100.0f;
 
@@ -399,7 +392,7 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 	const std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
 
 	for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
-		const vec3i& ngbGridPos = World2Grid(cellWorldPos + dirVectors[dir] * mMaxGroupRadius);
+		const vec3i& ngbGridPos = World2Grid(cellWorldPos + mDirVectors[dir] * mMaxGroupRadius);
 		const unsigned int ngbGridIdx = GRID_INDEX(ngbGridPos.x, ngbGridPos.z);
 
 		PFFG_ASSERT(ngbGridIdx < frontCells.size());
@@ -426,11 +419,11 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		//    (the potential-field will also become invisible due
 		//    to the normalisation by FLOAT_MAX)
 		//
-		const float directionalSlope  = edge->gradHeight.dot2D(dirVectors[dir]);
+		const float directionalSlope  = edge->gradHeight.dot2D(mDirVectors[dir]);
 		const float densitySpeedScale = (ngbCell->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
 		const float slopeSpeedScale   = (directionalSlope - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
 		const float topologicalSpeed  = mMaxGroupSpeed + CLAMP(slopeSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
-		const float flowSpeed         = ngbCell->avgVelocity.dot2D(dirVectors[dir]);
+		const float flowSpeed         = ngbCell->avgVelocity.dot2D(mDirVectors[dir]);
 		const float interpolatedSpeed = topologicalSpeed + densitySpeedScale * (topologicalSpeed - flowSpeed);
 
 		float speed = interpolatedSpeed;
@@ -535,10 +528,10 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 
 		UpdateCandidates(groupID, frontCell);
 
-		frontEdges[ frontCell->edges[DIR_N] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_N) * -frontCell->speed[DIR_N]);
-		frontEdges[ frontCell->edges[DIR_S] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_S) * -frontCell->speed[DIR_S]);
-		frontEdges[ frontCell->edges[DIR_E] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_E) * -frontCell->speed[DIR_E]);
-		frontEdges[ frontCell->edges[DIR_W] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_W) * -frontCell->speed[DIR_W]);
+		frontEdges[ frontCell->edges[DIR_N] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_N) * frontCell->speed[DIR_N]);
+		frontEdges[ frontCell->edges[DIR_S] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_S) * frontCell->speed[DIR_S]);
+		frontEdges[ frontCell->edges[DIR_E] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_E) * frontCell->speed[DIR_E]);
+		frontEdges[ frontCell->edges[DIR_W] ].velocity = (frontCell->GetNormalisedPotentialGradient(frontEdges, DIR_W) * frontCell->speed[DIR_W]);
 		backEdges[ frontCell->edges[DIR_N] ].velocity = NVECf;
 		backEdges[ frontCell->edges[DIR_S] ].velocity = NVECf;
 		backEdges[ frontCell->edges[DIR_E] ].velocity = NVECf;
@@ -594,8 +587,8 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 
 		dirCells[DIR_N] = (frontNgb->y >           0) ? &frontCells[GRID_INDEX(frontNgb->x    , frontNgb->y - 1)] : NULL;
 		dirCells[DIR_S] = (frontNgb->y < mHeight - 1) ? &frontCells[GRID_INDEX(frontNgb->x    , frontNgb->y + 1)] : NULL;
-		dirCells[DIR_W] = (frontNgb->x >           0) ? &frontCells[GRID_INDEX(frontNgb->x - 1, frontNgb->y    )] : NULL;
 		dirCells[DIR_E] = (frontNgb->x < mWidth -  1) ? &frontCells[GRID_INDEX(frontNgb->x + 1, frontNgb->y    )] : NULL;
+		dirCells[DIR_W] = (frontNgb->x >           0) ? &frontCells[GRID_INDEX(frontNgb->x - 1, frontNgb->y    )] : NULL;
 
 		for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
 			if (dirCells[dir] == NULL) {
@@ -607,7 +600,7 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* inParent) {
 			}
 		}
 
-		const bool undefinedX = (!dirValid[DIR_W] && !dirValid[DIR_E]);
+		const bool undefinedX = (!dirValid[DIR_E] && !dirValid[DIR_W]);
 		const bool undefinedY = (!dirValid[DIR_N] && !dirValid[DIR_S]);
 
 		// at least one dimension must ALWAYS be defined

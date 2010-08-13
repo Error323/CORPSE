@@ -102,7 +102,7 @@ void SimObjectHandler::Update(unsigned int frame) {
 			(o->GetPhysicalState().currentForwardSpeed > 0.0f) ||
 			(o->GetWantedPhysicalState(true).wantedForwardSpeed > 0.0f);
 
-		if (objectGridUpdate) {
+		if (objectGridUpdate) { /// pos != oldPos
 			mSimObjectGrid->DelObject(o, simObjectGridCells[objectID] );
 		}
 

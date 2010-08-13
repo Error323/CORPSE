@@ -78,6 +78,9 @@ void PathModule::Update() {
 		ScopedTimer timer(s);
 		#endif
 
+		std::list<unsigned int> arrivedObjects;
+		std::list<unsigned int>::iterator arrivedObjectsIt;
+
 		std::map<unsigned int, const SimObjectDef*>::iterator simObjectIt;
 		std::map<unsigned int, std::set<unsigned int> >::iterator objectGroupIt;
 		std::set<unsigned int>::iterator objectIDsIt;
@@ -108,6 +111,7 @@ void PathModule::Update() {
 
 		for (objectGroupIt = mObjectGroups.begin(); objectGroupIt != mObjectGroups.end(); ++objectGroupIt) {
 			const unsigned int groupID = objectGroupIt->first;
+			const unsigned int groupGoalCell = mGoals[groupID][0];
 			const std::set<unsigned int>& groupObjectIDs = objectGroupIt->second;
 
 			// for each active group <groupID>, first construct the speed- and
@@ -125,12 +129,23 @@ void PathModule::Update() {
 
 			// finally, update the locations of objects in this group ("advection")
 			for (objectIDsIt = groupObjectIDs.begin(); objectIDsIt != groupObjectIDs.end(); ++objectIDsIt) {
-				mGrid.UpdateSimObjectLocation(*objectIDsIt);
+				const unsigned int objectID = *objectIDsIt;
+				const unsigned int objectCell = mGrid.World2Cell(coh->GetSimObjectPosition(objectID));
+
+				if (objectCell == groupGoalCell) {
+					arrivedObjects.push_back(objectID);
+				} else {
+					mGrid.UpdateSimObjectLocation(objectID);
+				}
 			}
 		}
 
 		// enforce minimum distance between objects
 		// NOTE: should this be handled via EVENT_SIMOBJECT_COLLISION?
+
+		for (arrivedObjectsIt = arrivedObjects.begin(); arrivedObjectsIt != arrivedObjects.end(); ++arrivedObjectsIt) {
+			DelObjectFromGroup(*arrivedObjectsIt);
+		}
 	}
 
 	#ifdef CCPATHMODULE_PROFILE

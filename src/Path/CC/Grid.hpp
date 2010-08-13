@@ -14,10 +14,9 @@ class ICallOutHandler;
 class Grid {
 public:
 	enum {
-		// NOTE: the ordering here is relevant (see ComputeSpeedAndUnitCost)
 		DIR_N    = 0,
-		DIR_E    = 1,
-		DIR_S    = 2,
+		DIR_S    = 1,
+		DIR_E    = 2,
 		DIR_W    = 3,
 		NUM_DIRS = 4
 	};
@@ -73,6 +72,11 @@ public:
 	};
 
 	Grid(): mWidth(0), mHeight(0), mSquareSize(0), mDownScale(0), numResets(0) {
+		mDirVectors[DIR_N] = -ZVECf;
+		mDirVectors[DIR_S] =  ZVECf;
+		mDirVectors[DIR_E] =  XVECf;
+		mDirVectors[DIR_W] = -XVECf;
+ 
 		mFrontBufferIdx = 0;
 		mBackBufferIdx = 1;
 	}
@@ -168,6 +172,9 @@ private:
 	unsigned int mBackBufferIdx;
 
 
+
+	// world-space directions corresponding to NSEW
+	vec3f mDirVectors[NUM_DIRS];
 
 	vec3i World2Grid(const vec3f&) const;
 	vec3f Grid2World(const Cell*) const;
