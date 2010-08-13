@@ -1,7 +1,7 @@
 #ifndef PFFG_SIMOBJECT_SELECTOR_HDR
 #define PFFG_SIMOBJECT_SELECTOR_HDR
 
-#include <list>
+#include <set>
 
 #include "../Math/vec3fwd.hpp"
 #include "../Math/vec3.hpp"
@@ -39,7 +39,8 @@ namespace ui {
 		vec3f selectionCoors3D[4];
 		vec3f selectionBounds3D[2];
 
-		std::list<unsigned int> selectedObjectIDs;
+		// must be a set (objects can occupy multiple cells)
+		std::set<unsigned int> selectedObjectIDs;
 
 		bool shiftPressed;
 	};

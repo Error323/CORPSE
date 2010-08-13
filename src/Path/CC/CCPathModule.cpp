@@ -65,6 +65,8 @@ void CCPathModule::OnEvent(const IEvent* e) {
 			MGroup* newGroup = new MGroup();
 			mGroups[groupID] = newGroup;
 
+			PFFG_ASSERT(newGroup != NULL);
+
 			newGroup->SetGoal(mGrid.World2Cell(goalPos));
 			mGrid.AddGroup(groupID);
 
@@ -187,8 +189,7 @@ void CCPathModule::Update() {
 	}
 
 	#ifdef CCPATHMODULE_PROFILE
-	printf("%s time: %ums\n", s.c_str(), (ScopedTimer::GetTaskTime(s) - t));;
-	printf("\n");
+	printf("%s time: %ums\n\n", s.c_str(), (ScopedTimer::GetTaskTime(s) - t));;
 	#endif
 }
 
@@ -214,7 +215,9 @@ void CCPathModule::Kill() {
 
 bool CCPathModule::DelObjectFromGroup(unsigned int objectID) {
 	MObject* object = mObjects[objectID]; // already created
-	MGroup* oldGroup = NULL;
+	MGroup* group = NULL;
+
+	PFFG_ASSERT(object != NULL);
 
 	typedef std::map<unsigned int, MGroup*> Map;
 	typedef std::map<unsigned int, MGroup*>::iterator MapIt;
@@ -224,14 +227,14 @@ bool CCPathModule::DelObjectFromGroup(unsigned int objectID) {
 	if (git != mGroups.end()) {
 		const unsigned int groupID = object->GetGroupID();
 
-		oldGroup = (git->second);
-		oldGroup->DelObject(objectID);
+		group = (git->second);
+		group->DelObject(objectID);
 
-		if (oldGroup->IsEmpty()) {
+		if (group->IsEmpty()) {
 			// old group is now empty, delete it
 			mGrid.DelGroup(groupID);
 			mGroups.erase(groupID);
-			delete oldGroup;
+			delete group;
 		}
 
 		object->SetGroupID(-1);
@@ -243,12 +246,12 @@ bool CCPathModule::DelObjectFromGroup(unsigned int objectID) {
 }
 
 void CCPathModule::AddObjectToGroup(unsigned int groupID, unsigned int objectID) {
-	MGroup* newGroup = mGroups[groupID]; // already created
+	MGroup* group = mGroups[groupID]; // already created
 	MObject* object = mObjects[objectID];
 
-	PFFG_ASSERT(newGroup != NULL && object != NULL);
+	PFFG_ASSERT(group != NULL && object != NULL);
 
-	newGroup->AddObject(objectID);
+	group->AddObject(objectID);
 	object->SetGroupID(groupID);
 }
 

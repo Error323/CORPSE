@@ -8,7 +8,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 #-------------------------------------------------------------------------------
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_MODULE_PATH "${CORPSE_SOURCE_DIR}/cmake/packages")
-SET(CMAKE_CXX_FLAGS "-Wall -Wextra")
+SET(CMAKE_CXX_FLAGS "-Wall -Wextra -fno-strict-aliasing")
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -rdynamic -DDEBUG")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -fno-strict-aliasing")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -fno-strict-aliasing -g -rdynamic -DDEBUG")

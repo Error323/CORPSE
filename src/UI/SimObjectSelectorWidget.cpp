@@ -158,16 +158,16 @@ void ui::SimObjectSelectorWidget::FillSelection() {
 
 					// assumes the quad is convex
 					if (geom::PointInTriangle(selectionCoors3D[0], selectionCoors3D[1], avgSelectionCoor3D, pos)) {
-						selectedObjectIDs.push_back((*it)->GetID()); continue;
+						selectedObjectIDs.insert((*it)->GetID()); continue;
 					}
 					if (geom::PointInTriangle(selectionCoors3D[1], selectionCoors3D[2], avgSelectionCoor3D, pos)) {
-						selectedObjectIDs.push_back((*it)->GetID()); continue;
+						selectedObjectIDs.insert((*it)->GetID()); continue;
 					}
 					if (geom::PointInTriangle(selectionCoors3D[2], selectionCoors3D[3], avgSelectionCoor3D, pos)) {
-						selectedObjectIDs.push_back((*it)->GetID()); continue;
+						selectedObjectIDs.insert((*it)->GetID()); continue;
 					}
 					if (geom::PointInTriangle(selectionCoors3D[3], selectionCoors3D[0], avgSelectionCoor3D, pos)) {
-						selectedObjectIDs.push_back((*it)->GetID()); continue;
+						selectedObjectIDs.insert((*it)->GetID()); continue;
 					}
 				}
 			}
@@ -203,7 +203,7 @@ void ui::SimObjectSelectorWidget::OrderSelection(int x, int y) {
 
 			bool hasValidObject = false;
 
-			for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
+			for (std::set<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
 				if (simObjectHandler->IsValidSimObjectID(*it)) {
 					m << (*it); hasValidObject = true;
 				} else {
@@ -314,7 +314,7 @@ void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 				glLineWidth(4.0f);
 
 				// draw marker squares around selected objects
-				for (std::list<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
+				for (std::set<unsigned int>::const_iterator it = selectedObjectIDs.begin(); it != selectedObjectIDs.end(); ++it) {
 					if (!simObjectHandler->IsValidSimObjectID(*it)) {
 						continue;
 					}
