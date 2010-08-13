@@ -43,7 +43,7 @@ void CCPathModule::OnEvent(const IEvent* e) {
 				// the number of units in this order (very inefficient)
 				//
 				// for a queued order we also do NOT want multiple "sinks"
-				// per group, just for immediate "line" formation orders
+				// per group; only for immediate "line" formation orders
 				// however, even a line order just consists of individual
 				// movement commands, so multiple sinks are unnecessary
 				//
@@ -71,12 +71,19 @@ void CCPathModule::OnEvent(const IEvent* e) {
 			mGrid.AddGroup(groupID);
 
 			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
-				const unsigned int objID = *it;
+				const unsigned int objectID = *it;
 
-				PFFG_ASSERT(coh->IsValidSimObjectID(objID));
+				PFFG_ASSERT(coh->IsValidSimObjectID(objectID));
 
-				DelObjectFromGroup(objID);
-				AddObjectToGroup(groupID, objID);
+				DelObjectFromGroup(objectID);
+				AddObjectToGroup(groupID, objectID);
+
+				// needed to show the proper movement line indicator
+				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objectID, true);
+					wps.wantedPos = goalPos;
+					wps.wantedDir = (goalPos - coh->GetSimObjectPosition(objectID)).norm();
+					wps.wantedForwardSpeed = 0.0f;
+				coh->PushSimObjectWantedPhysicalState(objectID, wps, ee->GetQueued(), false);
 			}
 		} break;
 

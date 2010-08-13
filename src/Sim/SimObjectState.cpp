@@ -13,6 +13,10 @@ void PhysicalState::Update(const SimObject* owner) {
 	const WantedPhysicalState& wps = owner->GetWantedPhysicalState(true);
 	const vec3f& wantedDir = wps.wantedDir;
 
+	if (wps.wantedForwardSpeed <= 0.0f && currentForwardSpeed <= 0.0f) {
+		return;
+	}
+
 	vec3f currentPos = mat.GetPos();
 	vec3f forwardDir = mat.GetZDir();
 		forwardDir.y = 0.0f;
