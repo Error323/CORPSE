@@ -43,10 +43,8 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 		return;
 	}
 
-	printf("[CCVisWidget::KeyPress] key=%d, dataType=%u, groupIdx=%u, groupID=%u\n", key, dataType, visGroupIdx, visGroupID);
-
 	if (dataType < mModule->GetNumScalarDataTypes()) {
-		// scalar field; create a texture
+		// scalar field; create a texture overlay
 		TextureOverlay* textureOverlay = textureOverlays[dataType];
 		CBaseGroundDrawer* g = readMap->GetGroundDrawer();
 
@@ -54,7 +52,11 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 			const unsigned int xsize = mModule->GetScalarDataArraySizeX(dataType);
 			const unsigned int zsize = mModule->GetScalarDataArraySizeZ(dataType);
 			const unsigned int stride = mModule->GetScalarDataArrayStride(dataType);
-			const float* data = mModule->GetScalarDataArray(dataType, visGroupID);
+			const float* data = mModule->GetScalarDataArray(dataType, texVisGroupID);
+
+			if (!mModule->IsGlobalDataType(dataType)) {
+				SetNextVisGroupID(true);
+			}
 
 			textureOverlay = new TextureOverlay(xsize, zsize, stride, dataType, data);
 			textureOverlays[dataType] = textureOverlay;
@@ -62,51 +64,62 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 
 			g->SetOverlayTexture(textureOverlay->GetID());
 		} else {
-			const bool isGlobalOverlay = mModule->IsGlobalDataType(dataType);
-			const bool toggleGlobalOverlay = (!textureOverlay->IsEnabled() && isGlobalOverlay);
-
-			if (toggleGlobalOverlay || (!isGlobalOverlay && SetNextVisGroupID())) {
+			if (!textureOverlay->IsEnabled()) {
 				textureOverlay->SetEnabled(true);
 				g->SetOverlayTexture(textureOverlay->GetID());
 
+				if (!mModule->IsGlobalDataType(dataType)) {
+					SetNextVisGroupID(true);
+				}
+
 				currentTextureOverlay = textureOverlay;
 			} else {
-				textureOverlay->SetEnabled(false);
-				g->SetOverlayTexture(0);
+				if (mModule->IsGlobalDataType(dataType) || !SetNextVisGroupID(true)) {
+					textureOverlay->SetEnabled(false);
+					g->SetOverlayTexture(0);
 
-				currentTextureOverlay = NULL;
+					currentTextureOverlay = NULL;
+				}
 			}
 		}
 	} else {
-		// vector field, create a vertex array
+		// vector field, create a vertex overlay
 		VectorOverlay* vectorOverlay = vectorOverlays[dataType];
 
 		if (vectorOverlay == NULL) {
 			const unsigned int xsize = mModule->GetVectorDataArraySizeX(dataType);
 			const unsigned int zsize = mModule->GetVectorDataArraySizeZ(dataType);
 			const unsigned int stride = mModule->GetVectorDataArrayStride(dataType);
-			const vec3f* data = mModule->GetVectorDataArray(dataType, visGroupID);
+			const vec3f* data = mModule->GetVectorDataArray(dataType, vecVisGroupID);
+
+			if (!mModule->IsGlobalDataType(dataType)) {
+				SetNextVisGroupID(false);
+			}
 
 			vectorOverlay = new VectorOverlay(xsize, zsize, stride, dataType, data);
 			vectorOverlays[dataType] = vectorOverlay;
 			currentVectorOverlay = vectorOverlay;
 		} else {
-			const bool isGlobalOverlay = mModule->IsGlobalDataType(dataType);
-			const bool toggleGlobalOverlay = (!vectorOverlay->IsEnabled() && isGlobalOverlay);
-
-			if (toggleGlobalOverlay || (!isGlobalOverlay && SetNextVisGroupID())) {
+			if (!vectorOverlay->IsEnabled()) {
 				vectorOverlay->SetEnabled(true);
+
+				if (!mModule->IsGlobalDataType(dataType)) {
+					SetNextVisGroupID(false);
+				}
 
 				currentVectorOverlay = vectorOverlay;
 			} else {
-				vectorOverlay->SetEnabled(false);
-				currentVectorOverlay = NULL;
+				if (mModule->IsGlobalDataType(dataType) || !SetNextVisGroupID(false)) {
+					vectorOverlay->SetEnabled(false);
+
+					currentVectorOverlay = NULL;
+				}
 			}
 		}
 	}
 }
 
-bool ui::CCVisualizerWidget::SetNextVisGroupID() {
+bool ui::CCVisualizerWidget::SetNextVisGroupID(bool texture) {
 	// cycle to the next groupID for the non-global overlays
 	const unsigned int numGroupIDs = mModule->GetNumGroupIDs();
 
@@ -114,18 +127,30 @@ bool ui::CCVisualizerWidget::SetNextVisGroupID() {
 		return false;
 	}
 
+	// allow disabling active overlays when the
+	// current index exceeds the number of IDs
+	if (texture) {
+		if (texVisGroupIdx >= numGroupIDs) {
+			texVisGroupIdx = 0;
+			return false;
+		}
+	} else {
+		if (vecVisGroupIdx >= numGroupIDs) {
+			vecVisGroupIdx = 0;
+			return false;
+		}
+	}
+
 	// get the current group ID's
 	visGroupIDs.resize(numGroupIDs);
 	mModule->GetGroupIDs(&visGroupIDs[0], numGroupIDs);
 
-	// allow disabling active overlays when the
-	// current index exceeds the number of IDs
-	if (visGroupIdx >= numGroupIDs) {
-		visGroupIdx = 0;
-		return false;
+	if (texture) {
+		texVisGroupID = visGroupIDs[texVisGroupIdx++];
+	} else {
+		vecVisGroupID = visGroupIDs[vecVisGroupIdx++];
 	}
 
-	visGroupID = visGroupIDs[visGroupIdx++];
 	return true;
 }
 
@@ -143,11 +168,11 @@ void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 			// update the texture data
 			// if the group corresponding to <visGroupID> no longer exists,
 			// this causes the texture to be filled with default values (0)
-			currentTextureOverlay->Update(mModule->GetScalarDataArray(currentTextureOverlay->GetDataType(), visGroupID));
+			currentTextureOverlay->Update(mModule->GetScalarDataArray(currentTextureOverlay->GetDataType(), texVisGroupID));
 		}
 
 		if (currentVectorOverlay != NULL) {
-			currentVectorOverlay->Update(mModule->GetVectorDataArray(currentVectorOverlay->GetDataType(), visGroupID));
+			currentVectorOverlay->Update(mModule->GetVectorDataArray(currentVectorOverlay->GetDataType(), vecVisGroupID));
 		}
 	}
 
