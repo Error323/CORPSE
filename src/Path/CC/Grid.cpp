@@ -509,7 +509,7 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 		ComputeSpeedAndUnitCost(groupID, frontCell);
 		UpdateCandidates(groupID, frontCell);
 
-		potVisData[cellIdx] = frontCell->potential;
+		potVisData[cellIdx] = (frontCell->potential == std::numeric_limits<float>::infinity())? -1.0f: frontCell->potential;
 		velVisData[cellIdx * NUM_DIRS + DIR_N] = NVECf;
 		velVisData[cellIdx * NUM_DIRS + DIR_S] = NVECf;
 		velVisData[cellIdx * NUM_DIRS + DIR_E] = NVECf;
@@ -540,7 +540,7 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 		backEdges[ frontCell->edges[DIR_E] ].velocity = NVECf;
 		backEdges[ frontCell->edges[DIR_W] ].velocity = NVECf;
 
-		potVisData[cellIdx] = frontCell->potential;
+		potVisData[cellIdx] = (frontCell->potential == std::numeric_limits<float>::infinity())? -1.0f: frontCell->potential;
 		velVisData[cellIdx * NUM_DIRS + DIR_N] = frontEdges[ frontCell->edges[DIR_N] ].velocity * (mSquareSize >> 1);
 		velVisData[cellIdx * NUM_DIRS + DIR_S] = frontEdges[ frontCell->edges[DIR_S] ].velocity * (mSquareSize >> 1);
 		velVisData[cellIdx * NUM_DIRS + DIR_E] = frontEdges[ frontCell->edges[DIR_E] ].velocity * (mSquareSize >> 1);

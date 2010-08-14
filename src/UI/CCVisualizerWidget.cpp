@@ -43,7 +43,7 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 		return;
 	}
 
-	printf("[CCVisWidget::KeyPress] dataType=%u, visGroupIdx=%u, visGroupID=%u\n", dataType, visGroupIdx, visGroupID);
+	printf("[CCVisWidget::KeyPress] key=%d, dataType=%u, groupIdx=%u, groupID=%u\n", key, dataType, visGroupIdx, visGroupID);
 
 	if (dataType < mModule->GetNumScalarDataTypes()) {
 		// scalar field; create a texture
