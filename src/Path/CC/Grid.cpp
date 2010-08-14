@@ -414,13 +414,10 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		// NOTE:
 		//    if the flow-speed is zero in a region, then the cost
 		//    for cells with normalised density >= MAX_DENSITY will
-		//    be FLOAT_MAX everywhere and the potential-field update
+		//    be infinite everywhere and the potential-field update
 		//    can trigger asserts; this will also happen for cells
 		//    with density <= MIN_DENSITY whenever topologicalSpeed
 		//    is less than or equal to zero
-		//
-		//    (the potential-field will also become invisible due
-		//    to the normalisation by FLOAT_MAX)
 		//
 		const float directionalSlope  = edge->gradHeight.dot2D(mDirVectors[dir]);
 		const float densitySpeedScale = (ngbCell->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
@@ -432,19 +429,26 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 		float speed = interpolatedSpeed;
 		float cost = 0.0f;
 
-	//	if (ngbCell->density >= MAX_DENSITY) { speed = flowSpeed; }
+		if (ngbCell->density >= MAX_DENSITY) { speed = flowSpeed; }
 		if (ngbCell->density <= MIN_DENSITY) { speed = topologicalSpeed; }
 
-		if (speed > 0.01f) {
+		if (std::fabs(speed) > 0.1f) {
 			cost = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
 		} else {
-			cost = std::numeric_limits<float>::max();
+			// should this case be allowed to happen?
+			// (infinite costs very heavily influence
+			// behavior of potential-field generation)
+			//
+			// cost = std::numeric_limits<float>::infinity();
+			// cost = std::numeric_limits<float>::max();
+			speed = 0.1f;
+			cost  = (speedWeight * speed + discomfortWeight * cell->discomfort) / speed;
 		}
 
 		cell->speed[dir] = speed;
 		cell->cost[dir] = cost;
 
-		// NOTE: how best to visualize these textures?
+		// NOTE: how best to visualize these textures? one channel per direction?
 		mSpeedVisData[groupID][cellGridIdx * NUM_DIRS + dir] = speed;
 		mCostVisData[groupID][cellGridIdx * NUM_DIRS + dir] = cost;
 	}
@@ -491,6 +495,9 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 
 	Cell* frontCell = NULL;
 	Cell* backCell = NULL;
+
+	numInfinitePotentialCases = 0;
+	numIllegalDirectionCases = 0;
 
 	unsigned int cellIdx = 0;
 
@@ -552,6 +559,8 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 
 		mCandidates.pop();
 	}
+
+	PFFG_ASSERT(numInfinitePotentialCases == 0 && numIllegalDirectionCases == 0);
 }
 
 void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
@@ -631,29 +640,33 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 			PFFG_ASSERT(dirValid[DIR_E] || dirValid[DIR_W]);
 			PFFG_ASSERT(minPotCellPtrX != NULL && minPotCellPtrY != NULL);
 
-			frontNgb->potential = Potential2D(
-				minPotCellPtrX->potential, frontNgb->cost[minPotCellDirX], 
-				minPotCellPtrY->potential, frontNgb->cost[minPotCellDirY]
-			);
+			if (minPotCellPtrX != NULL && minPotCellPtrY != NULL) {
+				frontNgb->potential = Potential2D(
+					minPotCellPtrX->potential, frontNgb->cost[minPotCellDirX], 
+					minPotCellPtrY->potential, frontNgb->cost[minPotCellDirY]
+				);
 
-			// the world-space direction of the gradient vector must always
-			// match the direction along which the potential increases, but
-			// for DIR_N and DIR_W these are inverted
-			const float gradientX = (minPotCellPtrX->potential - frontNgb->potential);
-			const float gradientY = (minPotCellPtrY->potential - frontNgb->potential);
-			const float scaleX = (minPotCellDirX == DIR_W)? -1.0f: 1.0f;
-			const float scaleY = (minPotCellDirY == DIR_N)? -1.0f: 1.0f;
-			const vec3f gradient = vec3f(gradientX * scaleX, 0.0f, gradientY * scaleY);
+				// the world-space direction of the gradient vector must always
+				// match the direction along which the potential increases, but
+				// for DIR_N and DIR_W these are inverted
+				const float gradientX = (minPotCellPtrX->potential - frontNgb->potential);
+				const float gradientY = (minPotCellPtrY->potential - frontNgb->potential);
+				const float scaleX = (minPotCellDirX == DIR_W)? -1.0f: 1.0f;
+				const float scaleY = (minPotCellDirY == DIR_N)? -1.0f: 1.0f;
+				const vec3f gradient = vec3f(gradientX * scaleX, 0.0f, gradientY * scaleY);
 
-			frontEdgeX = &frontEdges[frontNgb->edges[minPotCellDirX]];
-			frontEdgeY = &frontEdges[frontNgb->edges[minPotCellDirY]];
-			backEdgeX  = &backEdges[frontNgb->edges[minPotCellDirX]];
-			backEdgeY  = &backEdges[frontNgb->edges[minPotCellDirY]];
+				frontEdgeX = &frontEdges[frontNgb->edges[minPotCellDirX]];
+				frontEdgeY = &frontEdges[frontNgb->edges[minPotCellDirY]];
+				backEdgeX  = &backEdges[frontNgb->edges[minPotCellDirX]];
+				backEdgeY  = &backEdges[frontNgb->edges[minPotCellDirY]];
 
-			frontEdgeX->gradPotential = gradient;
-			frontEdgeY->gradPotential = gradient;
-			backEdgeX->gradPotential = NVECf;
-			backEdgeY->gradPotential = NVECf;
+				frontEdgeX->gradPotential = gradient;
+				frontEdgeY->gradPotential = gradient;
+				backEdgeX->gradPotential = NVECf;
+				backEdgeY->gradPotential = NVECf;
+			} else {
+				numIllegalDirectionCases += 1;
+			}
 		} else {
 			if (undefinedX) {
 				if (dirCosts[DIR_N] < dirCosts[DIR_S]) {
@@ -668,17 +681,21 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 				PFFG_ASSERT(!undefinedY);
 				PFFG_ASSERT(minPotCellPtrY != NULL);
 
-				frontNgb->potential = Potential1D(minPotCellPtrY->potential, frontNgb->cost[minPotCellDirY]);
+				if (minPotCellPtrY != NULL) {
+					frontNgb->potential = Potential1D(minPotCellPtrY->potential, frontNgb->cost[minPotCellDirY]);
 
-				const float gradientY = (minPotCellPtrY->potential - frontNgb->potential);
-				const float scaleY = (minPotCellDirY == DIR_N)? -1.0f: 1.0f;
-				const vec3f gradient = vec3f(0.0f, 0.0f, gradientY * scaleY);
+					const float gradientY = (minPotCellPtrY->potential - frontNgb->potential);
+					const float scaleY = (minPotCellDirY == DIR_N)? -1.0f: 1.0f;
+					const vec3f gradient = vec3f(0.0f, 0.0f, gradientY * scaleY);
 
-				frontEdgeY = &frontEdges[frontNgb->edges[minPotCellDirY]];
-				backEdgeY  = &backEdges[frontNgb->edges[minPotCellDirY]];
+					frontEdgeY = &frontEdges[frontNgb->edges[minPotCellDirY]];
+					backEdgeY  = &backEdges[frontNgb->edges[minPotCellDirY]];
 
-				frontEdgeY->gradPotential = gradient;
-				backEdgeY->gradPotential = NVECf;
+					frontEdgeY->gradPotential = gradient;
+					backEdgeY->gradPotential = NVECf;
+				} else {
+					numIllegalDirectionCases += 1;
+				}
 			}
 
 			if (undefinedY) {
@@ -694,22 +711,28 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 				PFFG_ASSERT(!undefinedX);
 				PFFG_ASSERT(minPotCellPtrX != NULL);
 
-				frontNgb->potential = Potential1D(minPotCellPtrX->potential, frontNgb->cost[minPotCellDirX]);
+				if (minPotCellPtrX != NULL) {
+					frontNgb->potential = Potential1D(minPotCellPtrX->potential, frontNgb->cost[minPotCellDirX]);
 
-				const float gradientX = (minPotCellPtrX->potential - frontNgb->potential);
-				const float scaleX = (minPotCellDirX == DIR_W)? -1.0f: 1.0f;
-				const vec3f gradient = vec3f(gradientX * scaleX, 0.0f, 0.0f);
+					const float gradientX = (minPotCellPtrX->potential - frontNgb->potential);
+					const float scaleX = (minPotCellDirX == DIR_W)? -1.0f: 1.0f;
+					const vec3f gradient = vec3f(gradientX * scaleX, 0.0f, 0.0f);
 
-				frontEdgeX = &frontEdges[frontNgb->edges[minPotCellDirX]];
-				backEdgeX  = &backEdges[frontNgb->edges[minPotCellDirX]];
+					frontEdgeX = &frontEdges[frontNgb->edges[minPotCellDirX]];
+					backEdgeX  = &backEdges[frontNgb->edges[minPotCellDirX]];
 
-				frontEdgeX->gradPotential = gradient;
-				backEdgeX->gradPotential = NVECf;
+					frontEdgeX->gradPotential = gradient;
+					backEdgeX->gradPotential = NVECf;
+				} else {
+					numIllegalDirectionCases += 1;
+				}
 			}
 		}
 
 		frontNgb->candidate = true;
 		mCandidates.push(frontNgb);
+
+		numInfinitePotentialCases += int(frontNgb->potential == std::numeric_limits<float>::infinity());
 	}
 }
 

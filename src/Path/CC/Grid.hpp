@@ -150,6 +150,10 @@ private:
 	float mMaxGroupRadius;
 	float mMaxDensity;
 
+	// potential-field construction debug variables
+	unsigned int numInfinitePotentialCases;
+	unsigned int numIllegalDirectionCases;
+
 	// FMM vars
 	std::priority_queue<Cell*, std::vector<Cell*, std::allocator<Cell*> >, Cell> mCandidates;
 
