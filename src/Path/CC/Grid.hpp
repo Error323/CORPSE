@@ -150,7 +150,8 @@ private:
 	float mMaxGroupRadius;
 	float mMaxDensity;
 
-	// potential-field construction debug variables
+	// used by UpdateGroupPotentialField() to
+	// validate potential-field construction
 	unsigned int numInfinitePotentialCases;
 	unsigned int numIllegalDirectionCases;
 
