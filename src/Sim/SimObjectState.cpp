@@ -51,21 +51,31 @@ void PhysicalState::Update(const SimObject* owner) {
 	}
 
 
-	const bool posSlope = ((mat.GetZDir()).y >  0.05f);
-	const bool negSlope = ((mat.GetZDir()).y < -0.05f);
+	// slope lies in [0=horizontal, 1=vertical],
+	// so we have no information about the sign
+	const float zdiry = (mat.GetZDir()).y;
+	const float slope = ground->GetSlope(currentPos.x, currentPos.z);
 
-	const float posSlopeSpeedMod = std::max(0.5f, 1.0f - ground->GetSlope(currentPos.x, currentPos.z));
-	const float negSlopeSpeedMod = std::min(2.0f, 1.0f / posSlopeSpeedMod);
-	const float posSlopeMaxSpeed = posSlopeSpeedMod * wps.wantedSpeed;
-	const float negSlopeMaxSpeed = negSlopeSpeedMod * wps.wantedSpeed;
+	// slow down on positive slopes, speed up on negative slopes
+	//    positive slope and forward  motion ==> slow down to lower  positive speed
+	//    positive slope and backward motion ==> speed up  to higher negative speed
+	//    negative slope and forward  motion ==> speed up  to higher positive speed
+	//    negative slope and backward motion ==> slow down to lower  negative speed
+	const bool forwardMotion = (speed >  0.05f);
+	const bool bckwardMotion = (speed < -0.05f);
+	const bool positiveSlope = (zdiry >  0.05f);
+	const bool negativeSlope = (zdiry < -0.05f);
 
-	// on slopes, temporarily override wantedSpeed
-	//   horizontal terrain ==> normal.y ~= 1 ==> slope ~= 0
-	//   vertical   terrain ==> normal.y ~= 0 ==> slope ~= 1
-	if (posSlope || negSlope) {
-		if (posSlope && speed > posSlopeMaxSpeed) { speed *= posSlopeSpeedMod; }
-		if (negSlope && speed < negSlopeMaxSpeed) { speed *= negSlopeSpeedMod; }
-	}
+	const bool allowSlopeAcc =
+		(forwardMotion && negativeSlope && (speed < def->GetMaxForwardSpeed() * 1.75f)) ||
+		(bckwardMotion && positiveSlope && (speed < def->GetMaxForwardSpeed() * 1.75f));
+	const bool allowSlopeDec =
+		(forwardMotion && positiveSlope && (speed > def->GetMaxForwardSpeed() * 0.25f)) ||
+		(bckwardMotion && negativeSlope && (speed > def->GetMaxForwardSpeed() * 0.25f));
+
+	if (allowSlopeAcc) { speed += (speed * slope * (forwardMotion?  1.0f: -1.0f)); }
+	if (allowSlopeDec) { speed -= (speed * slope * (bckwardMotion? -1.0f:  1.0f)); }
+
 
 	if (wps.wantedSpeed > 0.0f) {
 		if (speed <= wps.wantedSpeed) {
