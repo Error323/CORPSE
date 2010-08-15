@@ -243,7 +243,7 @@ void ui::CCVisualizerWidget::TextureOverlay::Update(const float* ndata) {
 					ndataMax[0] = std::max(ndataMax[0], ndata[i]);
 				}
 
-				// one float-value per cell, visualize as R 0 0 255 or 0 0 R 255
+				// one float-value per cell, visualize as R 0 0 255 or 0 0 B 255
 				for (unsigned int i = 0; i < srcArraySize; i += stride) {
 					data[(i * bpp) + 0] = (ndata[i] < 0.0f)? 0: ((ndata[i] / ndataMax[0]) * 255);
 					data[(i * bpp) + 1] =                                                     0;
