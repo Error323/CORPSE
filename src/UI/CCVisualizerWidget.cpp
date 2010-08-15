@@ -330,11 +330,11 @@ void ui::CCVisualizerWidget::VectorOverlay::Draw() {
 
 void ui::CCVisualizerWidget::VectorOverlay::Update(const vec3f* ndata) {
 	static const unsigned char dirColors[5][4] = {
-		{255,   0,   0, 255}, // red
-		{  0, 255,   0, 255}, // green
-		{  0,   0, 255, 255}, // blue
-		{255, 255,   0, 255}, // yellow
-		{255, 255, 255, 255}, // white
+		{255,   0,   0, 255}, // N (red)
+		{  0, 255,   0, 255}, // S (green)
+		{  0,   0, 255, 255}, // E (blue)
+		{255, 255,   0, 255}, // W (yellow)
+		{255, 255, 255, 255}, // M (white)
 	};
 
 	if (ndata != NULL) {
@@ -352,12 +352,11 @@ void ui::CCVisualizerWidget::VectorOverlay::Update(const vec3f* ndata) {
 				for (unsigned int i = 0; i < numVectors; i += stride) {
 					const vec3f& v = ndata[i];
 
-					// NSEW ==> 0231
 					const unsigned int c =
-						(v.x >= 0.0f && v.z >= 0.0f)? 2:
-						(v.x >= 0.0f && v.z <  0.0f)? 0:
-						(v.x <  0.0f && v.z >= 0.0f)? 3:
-						(v.x <  0.0f && v.z <  0.0f)? 1:
+						(v.x >= 0.0f && v.z <  0.0f)? 0: // "N" quadrant
+						(v.x >= 0.0f && v.z >= 0.0f)? 1: // "S" quadrant
+						(v.x <  0.0f && v.z >= 0.0f)? 2: // "E" quadrant
+						(v.x <  0.0f && v.z <  0.0f)? 3: // "W" quadrant
 						4;
 					const unsigned int gx = i % sizex;
 					const unsigned int gz = i / sizex;
@@ -397,13 +396,13 @@ void ui::CCVisualizerWidget::VectorOverlay::Update(const vec3f* ndata) {
 					data->AddVertexQC(vec3f(wx + vN.x,  wy + H2W, wz + vN.z), dirColors[0]);
 
 					data->AddVertexQC(vec3f(wx,         wy + H2W, wz       ), dirColors[4]);
-					data->AddVertexQC(vec3f(wx + vS.x,  wy + H2W, wz + vS.z), dirColors[2]);
+					data->AddVertexQC(vec3f(wx + vS.x,  wy + H2W, wz + vS.z), dirColors[1]);
 
 					data->AddVertexQC(vec3f(wx,         wy + H2W, wz       ), dirColors[4]);
-					data->AddVertexQC(vec3f(wx + vE.x,  wy + H2W, wz + vE.z), dirColors[3]);
+					data->AddVertexQC(vec3f(wx + vE.x,  wy + H2W, wz + vE.z), dirColors[2]);
 
 					data->AddVertexQC(vec3f(wx,         wy + H2W, wz       ), dirColors[4]);
-					data->AddVertexQC(vec3f(wx + vW.x,  wy + H2W, wz + vW.z), dirColors[1]);
+					data->AddVertexQC(vec3f(wx + vW.x,  wy + H2W, wz + vW.z), dirColors[3]);
 				}
 			} break;
 
