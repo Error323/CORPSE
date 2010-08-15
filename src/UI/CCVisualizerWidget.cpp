@@ -243,7 +243,9 @@ void ui::CCVisualizerWidget::TextureOverlay::Update(const float* ndata) {
 					ndataMax[0] = std::max(ndataMax[0], ndata[i]);
 				}
 
-				// one float-value per cell, visualize as R 0 0 255 or 0 0 B 255
+				// one float scalar value per cell, visualize these as
+				// <R, 0, 0, 255> (if positive) or as <0, 0, B, 255>
+				// (if negative)
 				for (unsigned int i = 0; i < srcArraySize; i += stride) {
 					data[(i * bpp) + 0] = (ndata[i] < 0.0f)? 0: ((ndata[i] / ndataMax[0]) * 255);
 					data[(i * bpp) + 1] =                                                     0;
@@ -260,12 +262,15 @@ void ui::CCVisualizerWidget::TextureOverlay::Update(const float* ndata) {
 					ndataMin[3] = std::min(ndataMin[3], ndata[i + 3]), ndataMax[3] = std::max(ndataMax[3], ndata[i + 3]);
 				}
 
-				// four float-values per cell, visualize as R G B A
+				// four float scalar values per cell, visualize these as
+				// <R, G, B, A> individually normalized per channel (the
+				// A value is problematic, and this normalization scheme
+				// also precludes showing negative field elements)
 				for (unsigned int i = 0; i < srcArraySize; i += stride) {
-					data[i + 0] = (ndata[i + 0] / ndataMax[0]) * 255;
-					data[i + 1] = (ndata[i + 1] / ndataMax[1]) * 255;
-					data[i + 2] = (ndata[i + 2] / ndataMax[2]) * 255;
-					data[i + 3] = (ndata[i + 3] / ndataMax[3]) * 255;
+					data[i + 0] = ((ndata[i + 0] - ndataMin[0]) / (ndataMax[0] - ndataMin[0])) * 255;
+					data[i + 1] = ((ndata[i + 1] - ndataMin[1]) / (ndataMax[1] - ndataMin[1])) * 255;
+					data[i + 2] = ((ndata[i + 2] - ndataMin[2]) / (ndataMax[2] - ndataMin[2])) * 255;
+					data[i + 3] = ((ndata[i + 3] - ndataMin[3]) / (ndataMax[3] - ndataMin[3])) * 255;
 				}
 			} break;
 
