@@ -64,12 +64,7 @@ namespace ui {
 				unsigned int GetID() const { return id; }
 			private:
 				unsigned int id;
-
-				#ifdef TEXTURE_DATATYPE_FLOAT
-				float* data;
-				#else
 				unsigned char* data;
-				#endif
 		};
 
 		struct VectorOverlay: public Overlay {

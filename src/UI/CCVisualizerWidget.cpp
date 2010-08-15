@@ -206,11 +206,7 @@ ui::CCVisualizerWidget::TextureOverlay::TextureOverlay(
 ):
 	Overlay(x, y, s, dt),
 	id(0),
-	#ifdef TEXTURE_DATATYPE_FLOAT
-	data(new float[sizex * sizey * stride])
-	#else
-	data(new unsigned char[sizex * sizey * stride * 4])
-	#endif
+	data(new unsigned char[sizex * sizey * 4]) // bpp == 4
 {
 	Update(ndata);
 }
@@ -221,60 +217,68 @@ ui::CCVisualizerWidget::TextureOverlay::~TextureOverlay() {
 }
 
 void ui::CCVisualizerWidget::TextureOverlay::Update(const float* ndata) {
-	// note: ndata only represents one channel
+	// note: ndata only represents one channel if stride == 1
 	static const int intFormat = GL_RGBA;
-
-	#ifdef TEXTURE_DATATYPE_FLOAT
-	static const int extFormat = GL_RED;
-	static const int dataType  = GL_FLOAT;
-	static const int bpp       = 1;
-	#else
 	static const int extFormat = GL_RGBA;
 	static const int dataType  = GL_UNSIGNED_BYTE;
 	static const int bpp       = 4;
-	#endif
 
-	float ndataMin =  std::numeric_limits<float>::max();
-	float ndataMax = -std::numeric_limits<float>::max();
+	const unsigned int srcArraySize = sizex * sizey * stride;
+	// const unsigned int dstArraySize = sizex * sizey * bpp;
 
-	if (ndata != NULL) {
-		// find the extrema
-		for (unsigned int i = 0; i < (sizex * sizey * stride); i += 1) {
-			ndataMin = std::min(ndataMin, ndata[i]);
-			ndataMax = std::max(ndataMax, ndata[i]);
-		}
+	static float ndataMin[bpp] = {0.0f};
+	static float ndataMax[bpp] = {0.0f};
+
+	for (int i = 0; i < bpp; i++) {
+		ndataMin[i] =  std::numeric_limits<float>::max();
+		ndataMax[i] = -std::numeric_limits<float>::max();
 	}
 
 	if (ndata != NULL) {
-		// normalize
-		#ifdef TEXTURE_DATATYPE_FLOAT
-		for (unsigned int i = 0; i < (sizex * sizey * stride); i += bpp) {
-			// note: size of {n}data must be a multiple of bpp
-			data[i] = (ndata[i] - ndataMin) / (ndataMax - ndataMin);
+		// find the extrema and normalize
+		switch (stride) {
+			case 1: {
+				for (unsigned int i = 0; i < srcArraySize; i += stride) {
+					ndataMin[0] = std::min(ndataMin[0], ndata[i]);
+					ndataMax[0] = std::max(ndataMax[0], ndata[i]);
+				}
+
+				// one float-value per cell, visualize as R 0 0 255 or 0 0 R 255
+				for (unsigned int i = 0; i < srcArraySize; i += stride) {
+					data[(i * bpp) + 0] = (ndata[i] < 0.0f)? 0: ((ndata[i] / ndataMax[0]) * 255);
+					data[(i * bpp) + 1] =                                                     0;
+					data[(i * bpp) + 2] = (ndata[i] > 0.0f)? 0: ((ndata[i] / ndataMin[0]) * 255);
+					data[(i * bpp) + 3] =                                                   255;
+				}
+			} break;
+
+			case 4: {
+				for (unsigned int i = 0; i < srcArraySize; i += stride) {
+					ndataMin[0] = std::min(ndataMin[0], ndata[i + 0]), ndataMax[0] = std::max(ndataMax[0], ndata[i + 0]);
+					ndataMin[1] = std::min(ndataMin[1], ndata[i + 1]), ndataMax[1] = std::max(ndataMax[1], ndata[i + 1]);
+					ndataMin[2] = std::min(ndataMin[2], ndata[i + 2]), ndataMax[2] = std::max(ndataMax[2], ndata[i + 2]);
+					ndataMin[3] = std::min(ndataMin[3], ndata[i + 3]), ndataMax[3] = std::max(ndataMax[3], ndata[i + 3]);
+				}
+
+				// four float-values per cell, visualize as R G B A
+				for (unsigned int i = 0; i < srcArraySize; i += stride) {
+					data[i + 0] = (ndata[i + 0] / ndataMax[0]) * 255;
+					data[i + 1] = (ndata[i + 1] / ndataMax[1]) * 255;
+					data[i + 2] = (ndata[i + 2] / ndataMax[2]) * 255;
+					data[i + 3] = (ndata[i + 3] / ndataMax[3]) * 255;
+				}
+			} break;
+
+			default: {
+			} break;
 		}
-		#else
-		for (unsigned int i = 0; i < (sizex * sizey * stride * bpp); i += bpp) {
-			// note: size of {n}data must be a multiple of bpp
-			data[i + 0] = (ndata[i / 4] < 0.0f)? 0: ((ndata[i / 4] / ndataMax) * 255);
-			data[i + 1] =                                                          0;
-			data[i + 2] = (ndata[i / 4] > 0.0f)? 0: ((ndata[i / 4] / ndataMin) * 255);
-			data[i + 3] =                                                        255;
-		}
-		#endif
 	} else {
-		#ifdef TEXTURE_DATATYPE_FLOAT
-		for (unsigned int i = 0; i < (sizex * sizey * stride); i += bpp) {
-			data[i] = 0.0f;
-		}
-		#else
-		for (unsigned int i = 0; i < (sizex * sizey * stride * bpp); i += bpp) {
-			// note: size of data must be a multiple of bpp
+		for (unsigned int i = 0; i < srcArraySize; i += stride) {
 			data[i + 0] =   0;
 			data[i + 1] =   0;
 			data[i + 2] =   0;
 			data[i + 3] = 255;
 		}
-		#endif
 	}
 
 	if (id != 0) {
