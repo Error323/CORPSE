@@ -364,7 +364,7 @@ void Grid::ComputeAvgVelocity() {
 	std::vector<Cell>& frontCells = mBuffers[mFrontBufferIdx].cells;
 	std::vector<Cell>& backCells  = mBuffers[mBackBufferIdx ].cells;
 
-	for (std::set<unsigned int>::iterator it = mTouchedCells.begin(); it != mTouchedCells.end(); ++it) {
+	for (std::set<unsigned int>::const_iterator it = mTouchedCells.begin(); it != mTouchedCells.end(); ++it) {
 		const unsigned int idx = *it;
 
 		Cell* cf = &frontCells[idx];
@@ -793,6 +793,14 @@ void Grid::Reset() {
 	mBuffers[mFrontBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());
 	mBuffers[mBackBufferIdx].cells.assign(mInitCells.begin(), mInitCells.end());
 	mBuffers[mBackBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());
+
+	for (std::set<unsigned int>::const_iterator it = mTouchedCells.begin(); it != mTouchedCells.end(); ++it) {
+		const unsigned int idx = *it;
+
+		mDensityVisData[idx]     = 0.0f;
+		mAvgVelocityVisData[idx] = NVECf;
+	}
+
 	mTouchedCells.clear();
 
 	mMaxDensity = -std::numeric_limits<float>::max();

@@ -333,7 +333,7 @@ void ui::CCVisualizerWidget::VectorOverlay::Update(const vec3f* ndata) {
 		{255,   0,   0, 255}, // red
 		{  0, 255,   0, 255}, // green
 		{  0,   0, 255, 255}, // blue
-		{  0,   0,   0, 255}, // black
+		{255, 255,   0, 255}, // yellow
 		{255, 255, 255, 255}, // white
 	};
 
@@ -347,25 +347,27 @@ void ui::CCVisualizerWidget::VectorOverlay::Update(const vec3f* ndata) {
 		const unsigned int G2Hz = readMap->mapy / sizey;
 		const unsigned int H2W  = readMap->SQUARE_SIZE;
 
-		// if stride equals 4, then
-		//    vectors 0 - 3 belong to cell 0
-		//    vectors 4 - 7 belong to cell 1
-		//    vectors 8 -11 belong to cell 2
-		// so cell is given by i / stride
 		switch (stride) {
 			case 1: {
 				for (unsigned int i = 0; i < numVectors; i += stride) {
 					const vec3f& v = ndata[i];
 
+					// NSEW ==> 0231
+					const unsigned int c =
+						(v.x >= 0.0f && v.z >= 0.0f)? 2:
+						(v.x >= 0.0f && v.z <  0.0f)? 0:
+						(v.x <  0.0f && v.z >= 0.0f)? 3:
+						(v.x <  0.0f && v.z <  0.0f)? 1:
+						4;
 					const unsigned int gx = i % sizex;
 					const unsigned int gz = i / sizex;
-					const float wx = (((gx * G2Hx) + (H2W >> 1)) * H2W);
-					const float wz = (((gz * G2Hz) + (H2W >> 1)) * H2W);
+					const float wx = (gx * G2Hx * H2W) + ((G2Hx * H2W) >> 1);
+					const float wz = (gz * G2Hz * H2W) + ((G2Hz * H2W) >> 1);
 					const float wy = ground->GetHeight(wx, wz);
+					const float s = v.len3D();
 
-					// NOTE: how to color these?
-					data->AddVertexQC(vec3f(wx, wy,               wz), dirColors[4]);
-					data->AddVertexQC(vec3f(wx, wy + v.sqLen3D(), wz), dirColors[0]);
+					data->AddVertexQC(vec3f(wx,           wy + (G2Hx * H2W), wz          ), dirColors[4]);
+					data->AddVertexQC(vec3f(wx + v.x * s, wy + (G2Hx * H2W), wz + v.z * s), dirColors[c]);
 				}
 			} break;
 
@@ -377,13 +379,18 @@ void ui::CCVisualizerWidget::VectorOverlay::Update(const vec3f* ndata) {
 					const vec3f& vE = ndata[i + 2];
 					const vec3f& vW = ndata[i + 3];
 
+					// if stride equals 4, then
+					//    vectors 0 - 3 belong to cell 0
+					//    vectors 4 - 7 belong to cell 1
+					//    vectors 8 -11 belong to cell 2
+					// so cell is given by i / stride
 					const unsigned int j = i / stride;
 					const unsigned int gx = j % sizex;
 					const unsigned int gz = j / sizex;
 
 					// get the world-space coordinates of the cell's center
-					const float wx = (((gx * G2Hx) + (H2W >> 1)) * H2W);
-					const float wz = (((gz * G2Hz) + (H2W >> 1)) * H2W);
+					const float wx = (gx * G2Hx * H2W) + ((G2Hx * H2W) >> 1);
+					const float wz = (gz * G2Hz * H2W) + ((G2Hz * H2W) >> 1);
 					const float wy = ground->GetHeight(wx, wz);
 
 					data->AddVertexQC(vec3f(wx,         wy + H2W, wz       ), dirColors[4]);
