@@ -231,7 +231,7 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 			//  all texels)
 			const vec3f rPos =
 				mat.GetPos() +
-				(mat.GetZDir() * obj->GetPhysicalState().currentForwardSpeed * server->GetLastTickDeltaRatio()) +
+				(mat.GetZDir() * obj->GetPhysicalState().speed * server->GetLastTickDeltaRatio()) +
 				vec3f(0.0f, obj->GetRadius(), 0.0f);
 			const mat44f rMat(rPos, mat.GetXDir(), mat.GetYDir(), mat.GetZDir());
 

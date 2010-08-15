@@ -50,7 +50,7 @@ void DummyPathModule::OnEvent(const IEvent* e) {
 				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID, true);
 					wps.wantedPos = goalPos;
 					wps.wantedDir = (goalPos - objPos).norm();
-					wps.wantedForwardSpeed = simObjectIDs[objID]->GetMaxForwardSpeed();
+					wps.wantedSpeed = simObjectIDs[objID]->GetMaxForwardSpeed();
 
 				coh->PushSimObjectWantedPhysicalState(objID, wps, ee->GetQueued(), false);
 
@@ -67,8 +67,8 @@ void DummyPathModule::OnEvent(const IEvent* e) {
 			const unsigned int collideeID = ee->GetCollideeID();
 
 			// TODO: react to this more intelligently
-			coh->SetSimObjectWantedForwardSpeed(colliderID, 0.0f);
-			coh->SetSimObjectWantedForwardSpeed(collideeID, 0.0f);
+			coh->SetSimObjectWantedSpeed(colliderID, 0.0f);
+			coh->SetSimObjectWantedSpeed(collideeID, 0.0f);
 			*/
 		} break;
 
@@ -94,8 +94,8 @@ void DummyPathModule::Update() {
 		const vec3f  vec = wps.wantedPos - pos;
 		const float  dst = vec.sqLen3D();
 
-		const float brakeTime = coh->GetSimObjectCurrentForwardSpeed(objID) / objDef->GetMaxDeccelerationRate();
-		const float brakeDist = coh->GetSimObjectCurrentForwardSpeed(objID) * brakeTime; // conservative
+		const float brakeTime = coh->GetSimObjectSpeed(objID) / objDef->GetMaxDeccelerationRate();
+		const float brakeDist = coh->GetSimObjectSpeed(objID) * brakeTime; // conservative
 
 		// if only one waypoint left in queue:
 		//    set wanted speed to 0 and replace the front of the queue
@@ -105,7 +105,7 @@ void DummyPathModule::Update() {
 		//
 		if (coh->GetSimObjectNumWantedPhysicalStates(objID) <= 1) {
 			if ((brakeDist * brakeDist) >= dst) {
-				wps.wantedForwardSpeed = 0.0f;
+				wps.wantedSpeed = 0.0f;
 			} else {
 				wps.wantedDir = vec / dst;
 			}
@@ -119,7 +119,7 @@ void DummyPathModule::Update() {
 
 			wps.wantedPos = (nwps.wantedPos);
 			wps.wantedDir = (nwps.wantedPos - pos).norm();
-			wps.wantedForwardSpeed = nwps.wantedForwardSpeed;
+			wps.wantedSpeed = nwps.wantedSpeed;
 		}
 
 		coh->PopSimObjectWantedPhysicalStates(objID, 1, true);

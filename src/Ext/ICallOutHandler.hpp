@@ -37,15 +37,17 @@ public:
 	virtual const mat44f& GetSimObjectMatrix(unsigned int objID) const = 0;
 	virtual const vec3f& GetSimObjectPosition(unsigned int objID) const = 0;
 	virtual const vec3f& GetSimObjectDirection(unsigned int objID) const = 0;
-	virtual float GetSimObjectCurrentForwardSpeed(unsigned int objID) const = 0;
+	virtual float GetSimObjectSpeed(unsigned int objID) const = 0;
 	virtual float GetSimObjectRadius(unsigned int objID) const = 0;
 
 	virtual unsigned int GetSimObjectNumWantedPhysicalStates(unsigned int objID) const = 0;
 	virtual void PushSimObjectWantedPhysicalState(unsigned int objID, const WantedPhysicalState& state, bool queued, bool front) const = 0;
 	virtual bool PopSimObjectWantedPhysicalStates(unsigned int objID, unsigned int numStates, bool front) const = 0;
 	virtual const WantedPhysicalState& GetSimObjectWantedPhysicalState(unsigned int objID, bool front) const = 0;
+	virtual void SetSimObjectPhysicsUpdates(unsigned int objID, bool state) const = 0;
 
 	virtual void SetSimObjectRawPosition(unsigned int objID, const vec3f& pos) const = 0;
+	virtual void SetSimObjectRawSpeed(unsigned int objID, float speed) const = 0;
 	virtual void SetSimObjectRawDirection(unsigned int objID, const vec3f& dir) const = 0;
 };
 

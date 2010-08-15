@@ -38,16 +38,18 @@ public:
 	const mat44f& GetSimObjectMatrix(unsigned int) const;
 	const vec3f& GetSimObjectPosition(unsigned int) const;
 	const vec3f& GetSimObjectDirection(unsigned int) const;
-	float GetSimObjectCurrentForwardSpeed(unsigned int) const;
+	float GetSimObjectSpeed(unsigned int) const;
 	float GetSimObjectRadius(unsigned int) const;
 
 	unsigned int GetSimObjectNumWantedPhysicalStates(unsigned int) const;
 	void PushSimObjectWantedPhysicalState(unsigned int, const WantedPhysicalState&, bool, bool) const;
 	bool PopSimObjectWantedPhysicalStates(unsigned int, unsigned int, bool) const;
 	const WantedPhysicalState& GetSimObjectWantedPhysicalState(unsigned int, bool) const;
+	void SetSimObjectPhysicsUpdates(unsigned int, bool) const;
 
-	void SetSimObjectRawPosition(unsigned int objID, const vec3f& pos) const;
-	void SetSimObjectRawDirection(unsigned int objID, const vec3f& dir) const;
+	void SetSimObjectRawPosition(unsigned int, const vec3f&) const;
+	void SetSimObjectRawSpeed(unsigned int, float) const;
+	void SetSimObjectRawDirection(unsigned int, const vec3f&) const;
 };
 
 #endif

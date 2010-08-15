@@ -8,12 +8,16 @@
 
 class SimObject;
 struct PhysicalState {
-	PhysicalState(): currentForwardSpeed(0.0f), moved(false) {
+	PhysicalState(): enabled(true), moved(false) {
+		speed = 0.0f;
 	}
 
 	PhysicalState& operator = (const PhysicalState& state) {
 		moved = (state.mat.GetPos() != mat.GetPos());
-		mat = state.mat; currentForwardSpeed = state.currentForwardSpeed;
+		enabled = state.enabled;
+
+		mat = state.mat;
+		speed = state.speed;
 		return *this;
 	}
 
@@ -23,7 +27,7 @@ struct PhysicalState {
 		mat.SetYDir(mat.GetYDir() + state.mat.GetYDir());
 		mat.SetZDir(mat.GetZDir() + state.mat.GetZDir());
 
-		currentForwardSpeed += state.currentForwardSpeed;
+		speed += state.speed;
 		return *this;
 	}
 	PhysicalState& operator / (float s) {
@@ -33,7 +37,7 @@ struct PhysicalState {
 		mat.SetYDir((mat.GetYDir() / s).norm());
 		mat.SetZDir((mat.GetZDir() / s).norm());
 
-		currentForwardSpeed /= s;
+		speed /= s;
 		return *this;
 	}
 
@@ -43,12 +47,14 @@ struct PhysicalState {
 	mat44f mat;
 
 	// speed-scale this object is currently moving at
-	float currentForwardSpeed;
+	float speed;
+
+	bool enabled;
 	bool moved;
 };
 
 struct WantedPhysicalState {
-	WantedPhysicalState(): wantedForwardSpeed(0.0f) {
+	WantedPhysicalState(): wantedSpeed(0.0f) {
 	}
 
 	// where this object wants to be in world-space
@@ -57,7 +63,8 @@ struct WantedPhysicalState {
 	vec3f wantedDir;
 
 	// speed-scale this object wants to be moving at
-	float wantedForwardSpeed;
+	// if negative, the object wants to go backwards
+	float wantedSpeed;
 };
 
 #endif

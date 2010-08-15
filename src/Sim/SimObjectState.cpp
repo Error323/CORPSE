@@ -5,17 +5,13 @@
 #include "../Map/Ground.hpp"
 
 void PhysicalState::Update(const SimObject* owner) {
-	if ((owner->GetWantedPhysicalStates()).empty()) {
+	if (!enabled || (owner->GetWantedPhysicalStates()).empty()) {
 		return;
 	}
 
 	const SimObjectDef* def = owner->GetDef();
 	const WantedPhysicalState& wps = owner->GetWantedPhysicalState(true);
 	const vec3f& wantedDir = wps.wantedDir;
-
-	if (wps.wantedForwardSpeed <= 0.0f && currentForwardSpeed <= 0.0f) {
-		return;
-	}
 
 	vec3f currentPos = mat.GetPos();
 	vec3f forwardDir = mat.GetZDir();
@@ -60,29 +56,40 @@ void PhysicalState::Update(const SimObject* owner) {
 
 	const float posSlopeSpeedMod = std::max(0.5f, 1.0f - ground->GetSlope(currentPos.x, currentPos.z));
 	const float negSlopeSpeedMod = std::min(2.0f, 1.0f / posSlopeSpeedMod);
-	const float posSlopeMaxSpeed = posSlopeSpeedMod * wps.wantedForwardSpeed;
-	const float negSlopeMaxSpeed = negSlopeSpeedMod * wps.wantedForwardSpeed;
+	const float posSlopeMaxSpeed = posSlopeSpeedMod * wps.wantedSpeed;
+	const float negSlopeMaxSpeed = negSlopeSpeedMod * wps.wantedSpeed;
 
-	// on slopes, temporarily override wantedForwardSpeed
+	// on slopes, temporarily override wantedSpeed
 	//   horizontal terrain ==> normal.y ~= 1 ==> slope ~= 0
 	//   vertical   terrain ==> normal.y ~= 0 ==> slope ~= 1
 	if (posSlope || negSlope) {
-		if (posSlope && currentForwardSpeed > posSlopeMaxSpeed) { currentForwardSpeed *= posSlopeSpeedMod; }
-		if (negSlope && currentForwardSpeed < negSlopeMaxSpeed) { currentForwardSpeed *= negSlopeSpeedMod; }
+		if (posSlope && speed > posSlopeMaxSpeed) { speed *= posSlopeSpeedMod; }
+		if (negSlope && speed < negSlopeMaxSpeed) { speed *= negSlopeSpeedMod; }
 	}
 
-	if (currentForwardSpeed <= wps.wantedForwardSpeed) {
-		// accelerate (at maximum acceleration-rate) to match wantedSpeed
-		currentForwardSpeed += def->GetMaxAccelerationRate();
-		currentForwardSpeed = std::min(currentForwardSpeed, wps.wantedForwardSpeed);
-	} else {
-		// deccelerate (at maximum decceleration-rate) to match wantedSpeed
-		currentForwardSpeed -= def->GetMaxDeccelerationRate();
-		currentForwardSpeed = std::max(currentForwardSpeed, 0.0f);
+	if (wps.wantedSpeed > 0.0f) {
+		if (speed <= wps.wantedSpeed) {
+			// accelerate (at maximum acceleration-rate) to match wantedSpeed
+			speed += def->GetMaxAccelerationRate();
+			speed = std::min(speed, wps.wantedSpeed);
+		} else {
+			// deccelerate (at maximum decceleration-rate) to match wantedSpeed
+			speed -= def->GetMaxDeccelerationRate();
+			speed = std::max(speed, 0.0f);
+		}
+	}
+	if (wps.wantedSpeed < 0.0f) {
+		if (speed >= wps.wantedSpeed) {
+			speed -= def->GetMaxAccelerationRate();
+			speed = std::max(speed, wps.wantedSpeed);
+		} else {
+			speed += def->GetMaxDeccelerationRate();
+			speed = std::min(speed, 0.0f);
+		}
 	}
 
 	// note: no gravity, since we only simulate earth-bound objects
-	vec3f pos = mat.GetPos() + (mat.GetZDir() * currentForwardSpeed);
+	vec3f pos = mat.GetPos() + (mat.GetZDir() * speed);
 		pos.y = ground->GetHeight(pos.x, pos.z);
 
 	mat.SetPos(pos);

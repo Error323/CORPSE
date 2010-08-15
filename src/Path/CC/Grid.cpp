@@ -778,6 +778,7 @@ void Grid::UpdateSimObjectLocation(unsigned int simObjectID) {
 		// new hasMoved state is not overwritten again
 		// TODO: smoother interpolation
 		mCOH->SetSimObjectRawDirection(simObjectID, worldVel.norm());
+		mCOH->SetSimObjectRawSpeed(simObjectID, worldVel.len3D());
 		mCOH->SetSimObjectRawPosition(simObjectID, worldPos + worldVel);
 	}
 }

@@ -14,6 +14,7 @@ void CCPathModule::OnEvent(const IEvent* e) {
 			const unsigned int objectID = ee->GetObjectID();
 
 			mObjects[objectID] = new MObject(coh->GetSimObjectDef(objectID));
+			coh->SetSimObjectPhysicsUpdates(objectID, false);
 		} break;
 
 		case EVENT_SIMOBJECT_DESTROYED: {
@@ -82,7 +83,7 @@ void CCPathModule::OnEvent(const IEvent* e) {
 				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objectID, true);
 					wps.wantedPos = goalPos;
 					wps.wantedDir = (goalPos - coh->GetSimObjectPosition(objectID)).norm();
-					wps.wantedForwardSpeed = 0.0f;
+					wps.wantedSpeed = 0.0f;
 				coh->PushSimObjectWantedPhysicalState(objectID, wps, ee->GetQueued(), false);
 			}
 		} break;
@@ -133,14 +134,13 @@ void CCPathModule::Update() {
 			const vec3f& objPos = coh->GetSimObjectPosition(objID);
 			const vec3f objVel =
 				coh->GetSimObjectDirection(objID) *
-				coh->GetSimObjectCurrentForwardSpeed(objID);
+				coh->GetSimObjectSpeed(objID);
 
-			// FIXME:
-			//   objVel is always a zero-vector, hence avgVel is too
-			//   as a result, the flow speed is also zero everywhere,
-			//   so that *only* the topological speed determines the
-			//   speed-field (which is very small, since group speeds
-			//   are in units per frame)
+			// NOTE:
+			//   if objVel is a zero-vector, then avgVel will not change
+			//   therefore the flow speed can stay zero in a region, so
+			//   that *only* the topological speed determines the speed
+			//   field there
 			mGrid.AddDensityAndVelocity(objPos, objVel);
 		}
 
