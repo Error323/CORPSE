@@ -137,8 +137,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	PFFG_ASSERT(downScaleFactor >= 1);
 
 	// NOTE: if mDownScale > 1, the engine's height-map must be downsampled
-	mDownScale  = downScaleFactor;
 	mCOH        = coh;
+	mDownScale  = downScaleFactor;
 	mWidth      = mCOH->GetHeightMapSizeX() / mDownScale;
 	mHeight     = mCOH->GetHeightMapSizeZ() / mDownScale;
 	mSquareSize = mCOH->GetSquareSize()     * mDownScale;
@@ -261,7 +261,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.z));
 				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(edge->gradHeight.z));
-				mHeightDeltaVisData[idx * NUM_DIRS + dir] = edge->gradHeight * mCOH->GetSquareSize();
+
+				mHeightDeltaVisData[idx * NUM_DIRS + dir] = edge->gradHeight * ((mSquareSize / mDownScale) >> 1);
 			}
 
 			if (y < mHeight - 1) {
@@ -275,7 +276,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.z));
 				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(edge->gradHeight.z));
-				mHeightDeltaVisData[idx * NUM_DIRS + dir] = edge->gradHeight * mCOH->GetSquareSize();
+
+				mHeightDeltaVisData[idx * NUM_DIRS + dir] = edge->gradHeight * ((mSquareSize / mDownScale) >> 1);
 			}
 
 			if (x > 0) {
@@ -289,7 +291,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.x));
 				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(edge->gradHeight.x));
-				mHeightDeltaVisData[idx * NUM_DIRS + dir] = edge->gradHeight * mCOH->GetSquareSize();
+
+				mHeightDeltaVisData[idx * NUM_DIRS + dir] = edge->gradHeight * ((mSquareSize / mDownScale) >> 1);
 			}
 
 			if (x < mWidth - 1) {
@@ -303,7 +306,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(edge->gradHeight.x));
 				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(edge->gradHeight.x));
-				mHeightDeltaVisData[idx * NUM_DIRS + dir] = edge->gradHeight * mCOH->GetSquareSize();
+
+				mHeightDeltaVisData[idx * NUM_DIRS + dir] = edge->gradHeight * ((mSquareSize / mDownScale) >> 1);
 			}
 		}
 	}
