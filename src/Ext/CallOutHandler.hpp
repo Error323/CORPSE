@@ -48,8 +48,9 @@ public:
 	void SetSimObjectPhysicsUpdates(unsigned int, bool) const;
 
 	void SetSimObjectRawPosition(unsigned int, const vec3f&) const;
-	void SetSimObjectRawSpeed(unsigned int, float) const;
 	void SetSimObjectRawDirection(unsigned int, const vec3f&) const;
+	void SetSimObjectRawSpeed(unsigned int, float) const;
+	void SetSimObjectRawPhysicalState(unsigned int, const vec3f&, const vec3f&, float) const;
 };
 
 #endif

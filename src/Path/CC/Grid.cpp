@@ -777,9 +777,7 @@ void Grid::UpdateSimObjectLocation(unsigned int simObjectID) {
 		// change the direction first, so the object's
 		// new hasMoved state is not overwritten again
 		// TODO: smoother interpolation
-		mCOH->SetSimObjectRawDirection(simObjectID, worldVel.norm());
-		mCOH->SetSimObjectRawSpeed(simObjectID, worldVel.len3D());
-		mCOH->SetSimObjectRawPosition(simObjectID, worldPos + worldVel);
+		mCOH->SetSimObjectRawPhysicalState(simObjectID, worldPos + worldVel, worldVel.norm(), worldVel.len3D());
 	}
 }
 
@@ -788,6 +786,7 @@ void Grid::Reset() {
 	// and edges) to the blank initial-state again from the backups
 	// made in Init to undo the dynamic global (and per-group) data
 	// write-operations
+	// NOTE: can we avoid this with triple-buffering?
 	numResets += 1;
 	mBuffers[mFrontBufferIdx].cells.assign(mInitCells.begin(), mInitCells.end());
 	mBuffers[mFrontBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());

@@ -47,8 +47,9 @@ public:
 	virtual void SetSimObjectPhysicsUpdates(unsigned int objID, bool state) const = 0;
 
 	virtual void SetSimObjectRawPosition(unsigned int objID, const vec3f& pos) const = 0;
-	virtual void SetSimObjectRawSpeed(unsigned int objID, float speed) const = 0;
 	virtual void SetSimObjectRawDirection(unsigned int objID, const vec3f& dir) const = 0;
+	virtual void SetSimObjectRawSpeed(unsigned int objID, float speed) const = 0;
+	virtual void SetSimObjectRawPhysicalState(unsigned int objID, const vec3f& pos, const vec3f& dir, float speed) const = 0;
 };
 
 #endif

@@ -253,20 +253,6 @@ void CallOutHandler::SetSimObjectRawPosition(unsigned int objID, const vec3f& po
 	}
 }
 
-void CallOutHandler::SetSimObjectRawSpeed(unsigned int objID, float speed) const {
-	if (IsValidSimObjectID(objID)) {
-		SimObject* so = simObjectHandler->GetSimObject(objID);
-
-		const PhysicalState& ops = so->GetPhysicalState();
-		      PhysicalState  nps = ops;
-
-		// directly set the new speed, no clamping
-		nps.speed = speed;
-
-		so->SetPhysicalState(nps);
-	}
-}
-
 void CallOutHandler::SetSimObjectRawDirection(unsigned int objID, const vec3f& dir) const {
 	if (IsValidSimObjectID(objID)) {
 		SimObject* so = simObjectHandler->GetSimObject(objID);
@@ -281,6 +267,44 @@ void CallOutHandler::SetSimObjectRawDirection(unsigned int objID, const vec3f& d
 
 		// copy the new matrix
 		nps.mat = mat;
+
+		so->SetPhysicalState(nps);
+	}
+}
+
+void CallOutHandler::SetSimObjectRawSpeed(unsigned int objID, float speed) const {
+	if (IsValidSimObjectID(objID)) {
+		SimObject* so = simObjectHandler->GetSimObject(objID);
+
+		const PhysicalState& ops = so->GetPhysicalState();
+		      PhysicalState  nps = ops;
+
+		// directly set the new speed, no clamping
+		nps.speed = speed;
+
+		so->SetPhysicalState(nps);
+	}
+}
+
+void CallOutHandler::SetSimObjectRawPhysicalState(unsigned int objID, const vec3f& pos, const vec3f& dir, float speed) const {
+	if (IsValidSimObjectID(objID)) {
+		SimObject* so = simObjectHandler->GetSimObject(objID);
+
+		const PhysicalState& ops = so->GetPhysicalState();
+		      PhysicalState  nps = ops;
+
+		vec3f gpos = pos;
+		mat44f mat = ops.mat;
+
+		readMap->SetPosInBounds(gpos);
+		gpos.y = ground->GetHeight(pos.x, pos.z);
+
+		mat.SetPos(gpos);
+		mat.SetZDir(dir);
+		mat.SetYDirXZ(ground->GetSmoothNormal(gpos.x, gpos.z));
+
+		nps.mat = mat;
+		nps.speed = speed;
 
 		so->SetPhysicalState(nps);
 	}
