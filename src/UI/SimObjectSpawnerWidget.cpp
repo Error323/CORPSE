@@ -22,7 +22,7 @@ void ui::SimObjectSpawnerWidget::MouseReleased(int button, int, int) {
 		return;
 	}
 
-	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+	const Camera* camera = rThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {
 		if (simObjectHandler->IsValidSimObjectID(cursorObjID)) {
@@ -52,7 +52,7 @@ void ui::SimObjectSpawnerWidget::MouseReleased(int button, int, int) {
 }
 
 void ui::SimObjectSpawnerWidget::MouseMoved(int x, int y, int, int) {
-	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+	const Camera* camera = rThread->GetCamCon()->GetCurrCam();
 	const vec3f& dir = camera->GetPixelDir(x, y);
 	const float dst = ground->LineGroundCol(camera->pos, camera->pos + dir * camera->zFarDistance);
 	const vec3f pos = camera->pos + dir * dst;
@@ -75,7 +75,7 @@ void ui::SimObjectSpawnerWidget::MouseMoved(int x, int y, int, int) {
 }
 
 void ui::SimObjectSpawnerWidget::Update(const vec3i&, const vec3i&) {
-	Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+	Camera* camera = rThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {
 		const SimObject* cursorObj = simObjectHandler->GetClosestSimObject(cursorPos, 64.0f);

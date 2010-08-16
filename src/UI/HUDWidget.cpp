@@ -5,6 +5,7 @@
 #include "./UI.hpp"
 #include "./HUDWidget.hpp"
 #include "../Math/vec3.hpp"
+#include "../Path/IPathModule.hpp"
 #include "../Renderer/CameraController.hpp"
 #include "../Renderer/Camera.hpp"
 #include "../Renderer/RenderThread.hpp"
@@ -13,44 +14,47 @@
 #include "../System/EngineAux.hpp"
 
 void ui::HUDWidget::Update(const vec3i&, const vec3i& size) {
-	const Camera* c = renderThread->GetCamCon()->GetCurrCam();
+	const IPathModule* m = sThread->GetPathModule();
+	const Camera* c = rThread->GetCamCon()->GetCurrCam();
 	const char* s1 = (c->projMode == Camera::CAM_PROJ_MODE_PERSP) ? "Persp.": "Ortho.";
 	const char* s2 = (c->Active()? "active": "inactive");
 
 	static unsigned int tick = SDL_GetTicks();
-	static unsigned int sFrame = simThread->GetFrame(), sFPS = 0;
-	static unsigned int rFrame = renderThread->GetFrame(), rFPS = 0;
+	static unsigned int sFrame = sThread->GetFrame(), sFPS = 0;
+	static unsigned int rFrame = rThread->GetFrame(), rFPS = 0;
 
-	static char sFrameBuf[64] = {'\0'};
-	static char rFrameBuf[64] = {'\0'};
-	static char camPosBuf[128] = {'\0'};
-	static char camDirBuf[128] = {'\0'};
-	static char camModeBuf[128] = {'\0'};
-	static char mouseLookBuf[64] = {'\0'};
+	static char sFrameStrBuf[64]    = {'\0'};
+	static char rFrameStrBuf[64]    = {'\0'};
+	static char camPosStrBuf[128]   = {'\0'};
+	static char camDirStrBuf[128]   = {'\0'};
+	static char camModeStrBuf[128]  = {'\0'};
+	static char mouseLookStrBuf[64] = {'\0'};
+	static char numGroupsStrBuf[64] = {'\0'};
 
 	if ((SDL_GetTicks() - tick) >= 1000) {
 		tick   = SDL_GetTicks();
-		sFPS   = simThread->GetFrame() - sFrame;
-		rFPS   = renderThread->GetFrame() - rFrame;
-		sFrame = simThread->GetFrame();
-		rFrame = renderThread->GetFrame();
+		sFPS   = sThread->GetFrame() - sFrame;
+		rFPS   = rThread->GetFrame() - rFrame;
+		sFrame = sThread->GetFrame();
+		rFrame = rThread->GetFrame();
 	}
 
-	snprintf(sFrameBuf, 64, "s-frame: %u (rate: %u f/s)", simThread->GetFrame(), sFPS);
-	snprintf(rFrameBuf, 64, "r-frame: %u (rate: %u f/s)", renderThread->GetFrame(), rFPS);
-	snprintf(camPosBuf, 128, "cam-pos: <%.2f, %.2f, %.2f>", c->pos.x, c->pos.y, c->pos.z);
-	snprintf(camDirBuf, 128, "cam-dir: <%.2f, %.2f, %.2f>", c->zdir.x, c->zdir.y, c->zdir.z);
-	snprintf(mouseLookBuf, 64, "mouse-look: %s", (AUX->GetMouseLook()? "enabled": "disabled"));
+	snprintf(sFrameStrBuf, 64, "s-frame: %u (rate: %u f/s)", sThread->GetFrame(), sFPS);
+	snprintf(rFrameStrBuf, 64, "r-frame: %u (rate: %u f/s)", rThread->GetFrame(), rFPS);
+	snprintf(camPosStrBuf, 128, "cam-pos: <%.2f, %.2f, %.2f>", c->pos.x, c->pos.y, c->pos.z);
+	snprintf(camDirStrBuf, 128, "cam-dir: <%.2f, %.2f, %.2f>", c->zdir.x, c->zdir.y, c->zdir.z);
+	snprintf(mouseLookStrBuf, 64, "mouse-look: %s", (AUX->GetMouseLook()? "enabled": "disabled"));
+	snprintf(numGroupsStrBuf, 64, "units: %u, groups: %u", simObjectHandler->GetNumSimObjects(), m->GetNumGroupIDs());
 
 	switch (c->moveMode) {
 		case Camera::CAM_MOVE_MODE_FPS: {
-			snprintf(camModeBuf, 128, "cam-mode: FPS (%s), %s", s1, s2);
+			snprintf(camModeStrBuf, 128, "cam-mode: FPS (%s), %s", s1, s2);
 		} break;
 		case Camera::CAM_MOVE_MODE_ORBIT: {
-			snprintf(camModeBuf, 128, "cam-mode: Orbit (%s), %s", s1, s2);
+			snprintf(camModeStrBuf, 128, "cam-mode: Orbit (%s), %s", s1, s2);
 		} break;
 		case Camera::CAM_MOVE_MODE_OVERHEAD: {
-			snprintf(camModeBuf, 128, "cam-mode: Overhead (%s), %s", s1, s2);
+			snprintf(camModeStrBuf, 128, "cam-mode: Overhead (%s), %s", s1, s2);
 		} break;
 	}
 
@@ -69,14 +73,16 @@ void ui::HUDWidget::Update(const vec3i&, const vec3i& size) {
 		glPushMatrix();
 			glLoadIdentity();
 			gUI->GetFont()->FaceSize(yoff * 0.5f);
-			glTranslatef(xmin,  ymax,        0.0f); gUI->GetFont()->Render(sFrameBuf);
-			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(rFrameBuf);
+			glTranslatef(xmin,  ymax,        0.0f); gUI->GetFont()->Render(sFrameStrBuf);
+			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(rFrameStrBuf);
 			glTranslatef(0.0f, -yoff * 0.5f, 0.0f);
-			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(camPosBuf);
-			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(camDirBuf);
-			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(camModeBuf);
+			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(camPosStrBuf);
+			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(camDirStrBuf);
+			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(camModeStrBuf);
 			glTranslatef(0.0f, -yoff * 0.5f, 0.0f);
-			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(mouseLookBuf);
+			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(mouseLookStrBuf);
+			glTranslatef(0.0f, -yoff * 0.5f, 0.0f);
+			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(numGroupsStrBuf);
 			gUI->GetFont()->FaceSize(yoff);
 		glPopMatrix();
 		glPopAttrib();

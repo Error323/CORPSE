@@ -48,8 +48,8 @@ void DummyPathModule::OnEvent(const IEvent* e) {
 
 				// note: direction is based on our current position
 				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID, true);
-					wps.wantedPos = goalPos;
-					wps.wantedDir = (goalPos - objPos).norm();
+					wps.wantedPos   = goalPos;
+					wps.wantedDir   = (goalPos - objPos).norm();
 					wps.wantedSpeed = simObjectIDs[objID]->GetMaxForwardSpeed();
 
 				coh->PushSimObjectWantedPhysicalState(objID, wps, ee->GetQueued(), false);
@@ -99,7 +99,7 @@ void DummyPathModule::Update() {
 
 		// if only one waypoint left in queue:
 		//    set wanted speed to 0 and replace the front of the queue
-		// if more than one waypoint left in queue:
+		// otherwise:
 		//    pop front waypoint in queue
 		//    update wanted direction of new front waypoint
 		//
@@ -117,8 +117,8 @@ void DummyPathModule::Update() {
 			// peek at the next wanted state
 			const WantedPhysicalState& nwps = coh->GetSimObjectWantedPhysicalState(objID, true);
 
-			wps.wantedPos = (nwps.wantedPos);
-			wps.wantedDir = (nwps.wantedPos - pos).norm();
+			wps.wantedPos   = (nwps.wantedPos);
+			wps.wantedDir   = (nwps.wantedPos - pos).norm();
 			wps.wantedSpeed = nwps.wantedSpeed;
 		}
 

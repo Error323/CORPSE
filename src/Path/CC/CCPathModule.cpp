@@ -14,7 +14,6 @@ void CCPathModule::OnEvent(const IEvent* e) {
 			const unsigned int objectID = ee->GetObjectID();
 
 			mObjects[objectID] = new MObject(coh->GetSimObjectDef(objectID));
-			coh->SetSimObjectPhysicsUpdates(objectID, false);
 		} break;
 
 		case EVENT_SIMOBJECT_DESTROYED: {
@@ -81,10 +80,12 @@ void CCPathModule::OnEvent(const IEvent* e) {
 
 				// needed to show the proper movement line indicator
 				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objectID, true);
-					wps.wantedPos = goalPos;
-					wps.wantedDir = (goalPos - coh->GetSimObjectPosition(objectID)).norm();
+					wps.wantedPos   = goalPos;
+					wps.wantedDir   = (goalPos - coh->GetSimObjectPosition(objectID)).norm();
 					wps.wantedSpeed = 0.0f;
+
 				coh->PushSimObjectWantedPhysicalState(objectID, wps, ee->GetQueued(), false);
+				coh->SetSimObjectPhysicsUpdates(objectID, false);
 			}
 		} break;
 
@@ -273,6 +274,18 @@ bool CCPathModule::DelGroup(unsigned int groupID) {
 	const std::set<unsigned int>& gObjectIDs = group->GetObjectIDs();
 
 	for (std::set<unsigned int>::const_iterator git = gObjectIDs.begin(); git != gObjectIDs.end(); ++git) {
+		WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(*git, true);
+			wps.wantedPos   = coh->GetSimObjectPosition(*git);
+			wps.wantedDir   = coh->GetSimObjectDirection(*git);
+			wps.wantedSpeed = 0.0f;
+
+		// let the engine stop the unit's movement
+		// this is possibly not what we want, the
+		// CC grid only "knows" about units while
+		// they are in groups
+		coh->PushSimObjectWantedPhysicalState(*git, wps, false, true);
+		coh->SetSimObjectPhysicsUpdates(*git, true);
+
 		mObjects[*git]->SetGroupID(-1);
 	}
 

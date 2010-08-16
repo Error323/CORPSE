@@ -50,34 +50,34 @@ void PhysicalState::Update(const SimObject* owner) {
 		}
 	}
 
+	{
+		// slope lies in [0=horizontal, 1=vertical],
+		// so we have no information about the sign
+		const float zdiry = (mat.GetZDir()).y;
+		const float slope = ground->GetSlope(currentPos.x, currentPos.z);
 
-	// slope lies in [0=horizontal, 1=vertical],
-	// so we have no information about the sign
-	const float zdiry = (mat.GetZDir()).y;
-	const float slope = ground->GetSlope(currentPos.x, currentPos.z);
+		// slow down on positive slopes, speed up on negative slopes
+		//    positive slope and forward  motion ==> slow down to lower  positive speed
+		//    positive slope and backward motion ==> speed up  to higher negative speed
+		//    negative slope and forward  motion ==> speed up  to higher positive speed
+		//    negative slope and backward motion ==> slow down to lower  negative speed
+		const bool forwardMotion = (speed >  0.05f);
+		const bool bckwardMotion = (speed < -0.05f);
+		const bool positiveSlope = (zdiry >  0.05f);
+		const bool negativeSlope = (zdiry < -0.05f);
 
-	// slow down on positive slopes, speed up on negative slopes
-	//    positive slope and forward  motion ==> slow down to lower  positive speed
-	//    positive slope and backward motion ==> speed up  to higher negative speed
-	//    negative slope and forward  motion ==> speed up  to higher positive speed
-	//    negative slope and backward motion ==> slow down to lower  negative speed
-	const bool forwardMotion = (speed >  0.05f);
-	const bool bckwardMotion = (speed < -0.05f);
-	const bool positiveSlope = (zdiry >  0.05f);
-	const bool negativeSlope = (zdiry < -0.05f);
+		const bool allowSlopeAcc =
+			(forwardMotion && negativeSlope && (speed < def->GetMaxForwardSpeed() * 1.75f)) ||
+			(bckwardMotion && positiveSlope && (speed < def->GetMaxForwardSpeed() * 1.75f));
+		const bool allowSlopeDec =
+			(forwardMotion && positiveSlope && (speed > def->GetMaxForwardSpeed() * 0.25f)) ||
+			(bckwardMotion && negativeSlope && (speed > def->GetMaxForwardSpeed() * 0.25f));
 
-	const bool allowSlopeAcc =
-		(forwardMotion && negativeSlope && (speed < def->GetMaxForwardSpeed() * 1.75f)) ||
-		(bckwardMotion && positiveSlope && (speed < def->GetMaxForwardSpeed() * 1.75f));
-	const bool allowSlopeDec =
-		(forwardMotion && positiveSlope && (speed > def->GetMaxForwardSpeed() * 0.25f)) ||
-		(bckwardMotion && negativeSlope && (speed > def->GetMaxForwardSpeed() * 0.25f));
+		if (allowSlopeAcc) { speed += (speed * slope * (forwardMotion?  1.0f: -1.0f)); }
+		if (allowSlopeDec) { speed -= (speed * slope * (bckwardMotion? -1.0f:  1.0f)); }
+	}
 
-	if (allowSlopeAcc) { speed += (speed * slope * (forwardMotion?  1.0f: -1.0f)); }
-	if (allowSlopeDec) { speed -= (speed * slope * (bckwardMotion? -1.0f:  1.0f)); }
-
-
-	if (wps.wantedSpeed > 0.0f) {
+	if (wps.wantedSpeed >= 0.0f) {
 		if (speed <= wps.wantedSpeed) {
 			// accelerate (at maximum acceleration-rate) to match wantedSpeed
 			speed += def->GetMaxAccelerationRate();
@@ -87,8 +87,7 @@ void PhysicalState::Update(const SimObject* owner) {
 			speed -= def->GetMaxDeccelerationRate();
 			speed = std::max(speed, 0.0f);
 		}
-	}
-	if (wps.wantedSpeed < 0.0f) {
+	} else {
 		if (speed >= wps.wantedSpeed) {
 			speed -= def->GetMaxAccelerationRate();
 			speed = std::max(speed, wps.wantedSpeed);

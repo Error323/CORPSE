@@ -8,12 +8,12 @@
 #include "../Map/Ground.hpp"
 #include "../Map/ReadMap.hpp"
 #include "../Math/vec3.hpp"
+#include "../Path/IPathModule.hpp"
 #include "../Renderer/CameraController.hpp"
 #include "../Renderer/Camera.hpp"
 #include "../Renderer/RenderThread.hpp"
 #include "../Renderer/VertexArray.hpp"
 #include "../Sim/SimThread.hpp"
-#include "../Path/IPathModule.hpp"
 
 ui::CCVisualizerWidget::~CCVisualizerWidget() {
 	for (std::map<unsigned int, TextureOverlay*>::iterator it = textureOverlays.begin(); it != textureOverlays.end(); ++it) {
@@ -32,7 +32,7 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 	if (!enabled) { return; }
 
 	if (mModule == NULL) {
-		mModule = simThread->GetPathModule();
+		mModule = sThread->GetPathModule();
 	}
 
 	unsigned int dataType = mModule->GetNumScalarDataTypes() + mModule->GetNumVectorDataTypes();
@@ -155,14 +155,14 @@ bool ui::CCVisualizerWidget::SetNextVisGroupID(bool texture) {
 }
 
 void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
-	static unsigned int simFrame = simThread->GetFrame();
+	static unsigned int simFrame = sThread->GetFrame();
 
 	if (!enabled) {
 		return;
 	}
 
-	if (simThread->GetFrame() != simFrame) {
-		simFrame = simThread->GetFrame();
+	if (sThread->GetFrame() != simFrame) {
+		simFrame = sThread->GetFrame();
 
 		if (currentTextureOverlay != NULL && currentTextureOverlay->IsEnabled()) {
 			// update the texture data
@@ -177,7 +177,7 @@ void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 	}
 
 	if (currentVectorOverlay != NULL && currentVectorOverlay->IsEnabled()) {
-		Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+		Camera* camera = rThread->GetCamCon()->GetCurrCam();
 
 		glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
 		glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();

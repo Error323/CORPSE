@@ -4,6 +4,7 @@
 
 #include "./Grid.hpp"
 #include "../../Ext/ICallOutHandler.hpp"
+#include "../../Math/Trig.hpp"
 #include "../../Sim/SimObjectDef.hpp"
 #include "../../System/Debugger.hpp"
 
@@ -764,24 +765,60 @@ float Grid::Potential2D(const float p1, const float c1, const float p2, const fl
 
 
 void Grid::UpdateSimObjectLocation(unsigned int simObjectID) {
-	const vec3f& worldPos = mCOH->GetSimObjectPosition(simObjectID);
-	const vec3f& worldDir = mCOH->GetSimObjectDirection(simObjectID);
+	const SimObjectDef* objDef = mCOH->GetSimObjectDef(simObjectID);
+
+	const vec3f& objectPos = mCOH->GetSimObjectPosition(simObjectID);
+	const vec3f& objectDir = mCOH->GetSimObjectDirection(simObjectID);
 
 	const std::vector<Cell      >& frontCells = mBuffers[mFrontBufferIdx].cells;
 	const std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
 
-	const unsigned int worldCellIdx = World2Cell(worldPos);
-	const Cell* worldCell = &frontCells[worldCellIdx];
-	const vec3f& worldVel = worldCell->GetInterpolatedVelocity(frontEdges, worldDir);
+	// TODO: smoother interpolation
+	const unsigned int cellIdx = World2Cell(objectPos);
+	const Cell* cell = &frontCells[cellIdx];
+	const vec3f& cellVel = cell->GetInterpolatedVelocity(frontEdges, objectDir);
 
-	if (std::isnan(worldVel.x) || std::isnan(worldVel.y) || std::isnan(worldVel.z)) { return; }
-	if (std::isinf(worldVel.x) || std::isinf(worldVel.y) || std::isinf(worldVel.z)) { return; }
+	if (std::isnan(cellVel.x) || std::isnan(cellVel.y) || std::isnan(cellVel.z)) { PFFG_ASSERT_MSG(false, "Inf velocity-field for cell %u", cellIdx); return; }
+	if (std::isinf(cellVel.x) || std::isinf(cellVel.y) || std::isinf(cellVel.z)) { PFFG_ASSERT_MSG(false, "NaN velocity-field for cell %u", cellIdx); return; }
 
-	if (worldVel.sqLen3D() > 0.01f) {
-		// change the direction first, so the object's
-		// new hasMoved state is not overwritten again
-		// TODO: smoother interpolation
-		mCOH->SetSimObjectRawPhysicalState(simObjectID, worldPos + worldVel, worldVel.norm(), worldVel.len3D());
+	if (cellVel.sqLen3D() > 0.01f) {
+		const float objectSpeed = mCOH->GetSimObjectSpeed(simObjectID);
+		const float maxAccRate = objDef->GetMaxAccelerationRate();
+		const float maxDecRate = objDef->GetMaxDeccelerationRate();
+
+		// in theory, the velocity-field should never cause units
+		// in any group to exceed that group's speed limitations
+		float wantedSpeed = std::min(cellVel.len3D(), objDef->GetMaxForwardSpeed());
+
+		// note: should accelerate and deccelerate more quickly on slopes
+		if (objectSpeed < wantedSpeed) { wantedSpeed = objectSpeed + maxAccRate; }
+		if (objectSpeed > wantedSpeed) { wantedSpeed = objectSpeed - maxDecRate; }
+
+		// note: also scale wantedSpeed by the required absolute turning angle?
+		vec3f wantedDir = cellVel / wantedSpeed;
+
+		{
+			float forwardGlobalAngleRad = atan2f(-objectDir.z, -objectDir.x);
+			float wantedGlobalAngleRad = atan2f(-wantedDir.z, -wantedDir.x);
+			float deltaGlobalAngleRad = 0.0f;
+
+			if (forwardGlobalAngleRad < 0.0f) { forwardGlobalAngleRad += (M_PI * 2.0f); }
+			if (wantedGlobalAngleRad < 0.0f) { wantedGlobalAngleRad += (M_PI * 2.0f); }
+
+			deltaGlobalAngleRad = (forwardGlobalAngleRad - wantedGlobalAngleRad);
+
+			// take the shorter of the two possible turns
+			// (positive angle means a right turn and vv)
+			if (deltaGlobalAngleRad >  M_PI) { deltaGlobalAngleRad = -((M_PI * 2.0f) - deltaGlobalAngleRad); }
+			if (deltaGlobalAngleRad < -M_PI) { deltaGlobalAngleRad =  ((M_PI * 2.0f) + deltaGlobalAngleRad); }
+
+			wantedDir = objectDir.rotateY(DEG2RAD(objDef->GetMaxTurningRate()) * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
+		}
+
+		// note: when using the individual Set*Raw* callouts,
+		// change the position last so that the object's new
+		// hasMoved state is not overwritten again
+		mCOH->SetSimObjectRawPhysicalState(simObjectID, objectPos + wantedDir * wantedSpeed, wantedDir, wantedSpeed);
 	}
 }
 

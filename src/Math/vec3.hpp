@@ -164,10 +164,9 @@ template<typename T> struct vec3 {
 
 	inline vec3<T>& randomize();
 
-	inline vec3<T> rotateX(T a) const { return vec3<T>(x, cosf(a) * y + -sinf(a) * z,     sinf(a) * y + cosf(a) * z   ); }
-	inline vec3<T> rotateY(T a) const { return vec3<T>(   cosf(a) * x +  sinf(a) * z, y, -sinf(a) * x + cosf(a) * z   ); }
-	inline vec3<T> rotateZ(T a) const { return vec3<T>(   cosf(a) * x + -sinf(a) * y,     sinf(a) * x + cosf(a) * y, z); }
-
+	inline vec3<T> rotateX(T a) const { return vec3<T>(x,  cosf(a) * y + -sinf(a) * z,       sinf(a) * y + cosf(a) * z    ); }
+	inline vec3<T> rotateY(T a) const { return vec3<T>(    cosf(a) * x +  sinf(a) * z,  y,  -sinf(a) * x + cosf(a) * z    ); }
+	inline vec3<T> rotateZ(T a) const { return vec3<T>(    cosf(a) * x + -sinf(a) * y,       sinf(a) * x + cosf(a) * y,  z); }
 
 	std::string str() const;
 	unsigned int hash() const {

@@ -35,6 +35,6 @@ private:
 	unsigned int frame;
 };
 
-#define simThread (CSimThread::GetInstance())
+#define sThread (CSimThread::GetInstance())
 
 #endif

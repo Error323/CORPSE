@@ -148,7 +148,7 @@ void SimObjectHandler::AddObject(SimObject* o, bool inConstructor) {
 
 	mSimObjectGrid->AddObject(o, simObjectGridCells[o->GetID()] );
 
-	SimObjectCreatedEvent e(((inConstructor)? 0: simThread->GetFrame()), o->GetID());
+	SimObjectCreatedEvent e(((inConstructor)? 0: sThread->GetFrame()), o->GetID());
 	eventHandler->NotifyReceivers(&e);
 }
 
@@ -162,7 +162,7 @@ void SimObjectHandler::DelObject(SimObject* o, bool inDestructor) {
 	mSimObjectGrid->DelObject( o, simObjectGridCells[o->GetID()] );
 	simObjectGridCells[o->GetID()].clear();
 
-	SimObjectDestroyedEvent e(((inDestructor)? -1: simThread->GetFrame()), o->GetID());
+	SimObjectDestroyedEvent e(((inDestructor)? -1: sThread->GetFrame()), o->GetID());
 	eventHandler->NotifyReceivers(&e);
 
 	simObjects[o->GetID()] = NULL;
@@ -261,7 +261,7 @@ void SimObjectHandler::PredictSimObjectCollisions(unsigned int numFrames) {
 
 	// advance the simulation
 	for (unsigned int n = 0; n < numFrames; n++) {
-		Update(simThread->GetFrame() + n);
+		Update(sThread->GetFrame() + n);
 	}
 
 	// restore the states

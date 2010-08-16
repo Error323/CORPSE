@@ -45,7 +45,7 @@ void ui::SimObjectSelectorWidget::MousePressed(int button, int x, int y) {
 		return;
 	}
 
-	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+	const Camera* camera = rThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {
 		ClearSelection();
@@ -61,7 +61,7 @@ void ui::SimObjectSelectorWidget::MousePressed(int button, int x, int y) {
 }
 
 void ui::SimObjectSelectorWidget::MouseMoved(int x, int y, int, int) {
-	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+	const Camera* camera = rThread->GetCamCon()->GetCurrCam();
 
 	if (!haveSelection) { return; }
 	if (!activeSelection) { return; }
@@ -123,7 +123,7 @@ void ui::SimObjectSelectorWidget::MouseReleased(int button, int x, int y) {
 }
 
 void ui::SimObjectSelectorWidget::FillSelection() {
-	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+	const Camera* camera = rThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {
 		PFFG_ASSERT(haveSelection);
@@ -180,7 +180,7 @@ void ui::SimObjectSelectorWidget::OrderSelection(int x, int y) {
 	if (!haveSelection) { return; }
 	if (selectedObjectIDs.empty()) { return; }
 
-	const Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+	const Camera* camera = rThread->GetCamCon()->GetCurrCam();
 
 	if (!camera->Active()) {
 		const vec3f& dir = camera->GetPixelDir(x, y);
@@ -220,7 +220,7 @@ void ui::SimObjectSelectorWidget::OrderSelection(int x, int y) {
 }
 
 void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
-	Camera* camera = renderThread->GetCamCon()->GetCurrCam();
+	Camera* camera = rThread->GetCamCon()->GetCurrCam();
 
 	glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
@@ -299,7 +299,7 @@ void ui::SimObjectSelectorWidget::Update(const vec3i&, const vec3i&) {
 			static int stipplePattern = 0x000000FF;
 
 			{
-				if ((renderThread->GetFrame() % 4) == 0) {
+				if ((rThread->GetFrame() % 4) == 0) {
 					const int lsb = (stipplePattern & 1);
 					stipplePattern >>= 1;
 					stipplePattern |= (lsb << 15);
