@@ -782,7 +782,7 @@ void Grid::UpdateSimObjectLocation(unsigned int objectID) {
 	if (std::isinf(cellVel.x) || std::isinf(cellVel.y) || std::isinf(cellVel.z)) { PFFG_ASSERT_MSG(false, "NaN velocity-field for cell %u", cellIdx); return; }
 
 	if (cellVel.sqLen3D() > 0.01f) {
-		#ifdef DIRECT__VELOCITY_FIELD_INTERPOLATION
+		#ifdef DIRECT_VELOCITY_FIELD_INTERPOLATION
 		mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + cellVel, cellVel.norm(), cellVel.len3D());
 		#else
 		const float objectSpeed = mCOH->GetSimObjectSpeed(objectID);
