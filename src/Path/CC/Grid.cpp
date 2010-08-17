@@ -461,7 +461,7 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 	mDiscomfortVisData[groupID][cellGridIdx] = cell->discomfort;
 }
 
-void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<unsigned int>& goalCells, const std::set<unsigned int>& simObjectIDs) {
+void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<unsigned int>& goalCells, const std::set<unsigned int>& objectIDs) {
 	PFFG_ASSERT(!goalCells.empty());
 	PFFG_ASSERT(mCandidates.empty());
 
@@ -480,7 +480,7 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 	mMaxGroupSpeed  = -std::numeric_limits<float>::max();
 	mMaxGroupRadius = -std::numeric_limits<float>::max();
 
-	for (std::set<unsigned int>::iterator i = simObjectIDs.begin(); i != simObjectIDs.end(); i++) {
+	for (std::set<unsigned int>::iterator i = objectIDs.begin(); i != objectIDs.end(); i++) {
 		const SimObjectDef* simObjectDef = mCOH->GetSimObjectDef(*i);
 
 		mMinGroupSlope  = std::min<float>(mMinGroupSlope,  simObjectDef->GetMinSlopeAngleCosine());
@@ -764,11 +764,11 @@ float Grid::Potential2D(const float p1, const float c1, const float p2, const fl
 
 
 
-void Grid::UpdateSimObjectLocation(unsigned int simObjectID) {
-	const SimObjectDef* objDef = mCOH->GetSimObjectDef(simObjectID);
+void Grid::UpdateSimObjectLocation(unsigned int objectID) {
+	const SimObjectDef* objDef = mCOH->GetSimObjectDef(objectID);
 
-	const vec3f& objectPos = mCOH->GetSimObjectPosition(simObjectID);
-	const vec3f& objectDir = mCOH->GetSimObjectDirection(simObjectID);
+	const vec3f& objectPos = mCOH->GetSimObjectPosition(objectID);
+	const vec3f& objectDir = mCOH->GetSimObjectDirection(objectID);
 
 	const std::vector<Cell      >& frontCells = mBuffers[mFrontBufferIdx].cells;
 	const std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
@@ -782,13 +782,18 @@ void Grid::UpdateSimObjectLocation(unsigned int simObjectID) {
 	if (std::isinf(cellVel.x) || std::isinf(cellVel.y) || std::isinf(cellVel.z)) { PFFG_ASSERT_MSG(false, "NaN velocity-field for cell %u", cellIdx); return; }
 
 	if (cellVel.sqLen3D() > 0.01f) {
-		const float objectSpeed = mCOH->GetSimObjectSpeed(simObjectID);
+		#ifdef DIRECT__VELOCITY_FIELD_INTERPOLATION
+		mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + cellVel, cellVel.norm(), cellVel.len3D());
+		#else
+		const float objectSpeed = mCOH->GetSimObjectSpeed(objectID);
 		const float maxAccRate = objDef->GetMaxAccelerationRate();
 		const float maxDecRate = objDef->GetMaxDeccelerationRate();
 
 		// in theory, the velocity-field should never cause units
 		// in any group to exceed that group's speed limitations
-		float wantedSpeed = std::min(cellVel.len3D(), objDef->GetMaxForwardSpeed());
+		// (note that this is not true on slopes)
+		// float wantedSpeed = std::min(cellVel.len3D(), objDef->GetMaxForwardSpeed());
+		float wantedSpeed = cellVel.len3D();
 
 		// note: should accelerate and deccelerate more quickly on slopes
 		if (objectSpeed < wantedSpeed) { wantedSpeed = objectSpeed + maxAccRate; }
@@ -818,7 +823,8 @@ void Grid::UpdateSimObjectLocation(unsigned int simObjectID) {
 		// note: when using the individual Set*Raw* callouts,
 		// change the position last so that the object's new
 		// hasMoved state is not overwritten again
-		mCOH->SetSimObjectRawPhysicalState(simObjectID, objectPos + wantedDir * wantedSpeed, wantedDir, wantedSpeed);
+		mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + wantedDir * wantedSpeed, wantedDir, wantedSpeed);
+		#endif
 	}
 }
 
