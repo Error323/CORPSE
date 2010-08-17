@@ -110,7 +110,7 @@ void CCPathModule::OnEvent(const IEvent* e) {
 					wps.wantedSpeed = 0.0f;
 				}
 
-				coh->PushSimObjectWantedPhysicalState(objectID, wps, ee->GetQueued(), false);
+				coh->PushSimObjectWantedPhysicalState(objectID, wps, false, false);
 				coh->SetSimObjectPhysicsUpdates(objectID, false);
 			}
 
@@ -202,10 +202,8 @@ void CCPathModule::Update() {
 				const unsigned int objectCell = mGrid.World2Cell(coh->GetSimObjectPosition(objectID));
 
 				for (SetIt ggit = groupGoalIDs.begin(); ggit != groupGoalIDs.end(); ++ggit) {
-					if (objectCell == *ggit) {
+					if (!mGrid.UpdateSimObjectLocation(objectID, objectCell, *ggit)) {
 						numArrivedObjects += 1;
-					} else {
-						mGrid.UpdateSimObjectLocation(objectID);
 					}
 				}
 			}

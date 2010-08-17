@@ -107,7 +107,7 @@ public:
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
 	void ComputeAvgVelocity();
 	void UpdateGroupPotentialField(unsigned int, const std::set<unsigned int>&, const std::set<unsigned int>&);
-	void UpdateSimObjectLocation(unsigned int);
+	bool UpdateSimObjectLocation(unsigned int, unsigned int, unsigned int);
 	void Reset();
 
 	unsigned int GetGridWidth() const { return mWidth; }

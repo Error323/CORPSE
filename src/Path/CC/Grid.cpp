@@ -764,7 +764,7 @@ float Grid::Potential2D(const float p1, const float c1, const float p2, const fl
 
 
 
-void Grid::UpdateSimObjectLocation(unsigned int objectID) {
+bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCellID, unsigned int goalCellID) {
 	const SimObjectDef* objDef = mCOH->GetSimObjectDef(objectID);
 
 	const vec3f& objectPos = mCOH->GetSimObjectPosition(objectID);
@@ -774,12 +774,12 @@ void Grid::UpdateSimObjectLocation(unsigned int objectID) {
 	const std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
 
 	// TODO: smoother interpolation
-	const unsigned int cellIdx = World2Cell(objectPos);
-	const Cell* cell = &frontCells[cellIdx];
-	const vec3f& cellVel = cell->GetInterpolatedVelocity(frontEdges, objectDir);
+	const Cell* objectCell = &frontCells[objectCellID];
+	const Cell* goalCell = &frontCells[goalCellID];
+	const vec3f& cellVel = objectCell->GetInterpolatedVelocity(frontEdges, objectDir);
 
-	if (std::isnan(cellVel.x) || std::isnan(cellVel.y) || std::isnan(cellVel.z)) { PFFG_ASSERT_MSG(false, "Inf velocity-field for cell %u", cellIdx); return; }
-	if (std::isinf(cellVel.x) || std::isinf(cellVel.y) || std::isinf(cellVel.z)) { PFFG_ASSERT_MSG(false, "NaN velocity-field for cell %u", cellIdx); return; }
+	PFFG_ASSERT_MSG(!(std::isnan(cellVel.x) || std::isnan(cellVel.y) || std::isnan(cellVel.z)), "Inf velocity-field for cell %u", cellIdx);
+	PFFG_ASSERT_MSG(!(std::isinf(cellVel.x) || std::isinf(cellVel.y) || std::isinf(cellVel.z)), "NaN velocity-field for cell %u", cellIdx);
 
 	if (cellVel.sqLen3D() > 0.01f) {
 		#ifdef DIRECT_VELOCITY_FIELD_INTERPOLATION
@@ -798,6 +798,15 @@ void Grid::UpdateSimObjectLocation(unsigned int objectID) {
 		// note: should accelerate and deccelerate more quickly on slopes
 		if (objectSpeed < wantedSpeed) { wantedSpeed = objectSpeed + maxAccRate; }
 		if (objectSpeed > wantedSpeed) { wantedSpeed = objectSpeed - maxDecRate; }
+
+		if (objectCell == goalCell) {
+			// just come to a stop if in a goal cell
+			wantedSpeed = 0.0f;
+
+			if (std::fabs(objectSpeed) <= 0.01f) {
+				return false;
+			}
+		}
 
 		// note: also scale wantedSpeed by the required absolute turning angle?
 		vec3f wantedDir = cellVel / wantedSpeed;
@@ -826,6 +835,8 @@ void Grid::UpdateSimObjectLocation(unsigned int objectID) {
 		mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + wantedDir * wantedSpeed, wantedDir, wantedSpeed);
 		#endif
 	}
+
+	return true;
 }
 
 void Grid::Reset() {
