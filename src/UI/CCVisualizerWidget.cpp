@@ -208,6 +208,7 @@ ui::CCVisualizerWidget::TextureOverlay::TextureOverlay(
 	id(0),
 	data(new unsigned char[sizex * sizey * 4]) // bpp == 4
 {
+	memset(data, 0, sizex * sizey * 4);
 	Update(ndata);
 }
 
