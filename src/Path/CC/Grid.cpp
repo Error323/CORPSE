@@ -916,7 +916,7 @@ vec3i Grid::WorldPosToGridIdx(const vec3f& worldPos) const {
 }
 
 // get the 1D grid-cell index corresponding to a world-space position
-unsigned int Grid::World2Cell(const vec3f& worldPos) const {
+unsigned int Grid::WorldPosToCellID(const vec3f& worldPos) const {
 	const vec3i& gridPos = WorldPosToGridIdx(worldPos);
 	const unsigned int gridIdx = GRID_INDEX(gridPos.x, gridPos.z);
 
