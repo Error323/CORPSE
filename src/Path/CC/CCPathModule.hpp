@@ -62,6 +62,9 @@ public:
 	const vec3f* GetVectorDataArray(unsigned int, unsigned int) const;
 
 private:
+	void UpdateGrid();
+	void UpdateGroups();
+
 	void AddObjectToGroup(unsigned int, unsigned int);
 	bool DelObjectFromGroup(unsigned int);
 	bool DelGroup(unsigned int);
@@ -75,15 +78,19 @@ private:
 
 	struct MObject {
 		public:
-			MObject(): mGroupID(-1), mObjectDef(NULL) {}
+			MObject(): mGroupID(-1), mObjectDef(NULL), mArrived(false) {}
 			MObject(const SimObjectDef* def): mGroupID(-1), mObjectDef(def) {}
 
 			void SetGroupID(unsigned int gID) { mGroupID = gID; }
 			unsigned int GetGroupID() const { return mGroupID; }
 
+			void SetArrived(bool b) { mArrived = b; }
+			bool HasArrived() const { return mArrived; }
+
 		private:
 			unsigned int mGroupID;
 			const SimObjectDef* mObjectDef;
+			bool mArrived;
 	};
 
 	struct MGroup {

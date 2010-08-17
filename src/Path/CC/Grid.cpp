@@ -6,6 +6,7 @@
 #include "../../Ext/ICallOutHandler.hpp"
 #include "../../Math/Trig.hpp"
 #include "../../Sim/SimObjectDef.hpp"
+#include "../../Sim/SimObjectState.hpp"
 #include "../../System/Debugger.hpp"
 
 #define GRID_INDEX(x, y) (((y) * (mWidth)) + (x))
@@ -320,11 +321,35 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	mBuffers[mBackBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());
 }
 
+void Grid::Reset() {
+	// at the start of every frame, restore both grid buffers (cells
+	// and edges) to the blank initial-state again from the backups
+	// made in Init to undo the dynamic global (and per-group) data
+	// write-operations
+	// NOTE: can we avoid this with triple-buffering?
+	numResets += 1;
+	mBuffers[mFrontBufferIdx].cells.assign(mInitCells.begin(), mInitCells.end());
+	mBuffers[mFrontBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());
+	mBuffers[mBackBufferIdx].cells.assign(mInitCells.begin(), mInitCells.end());
+	mBuffers[mBackBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());
+
+	for (std::set<unsigned int>::const_iterator it = mTouchedCells.begin(); it != mTouchedCells.end(); ++it) {
+		const unsigned int idx = *it;
+
+		mDensityVisData[idx]     = 0.0f;
+		mAvgVelocityVisData[idx] = NVECf;
+	}
+
+	mTouchedCells.clear();
+
+	mMaxDensity = -std::numeric_limits<float>::max();
+}
+
 
 
 void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
 	const vec3f posf = vec3f(pos.x / mSquareSize, 0.0f, pos.z / mSquareSize);
-	const vec3i posi = World2Grid(pos);
+	const vec3i posi = WorldPosToGridIdx(pos);
 
 	const unsigned int i = std::max(1, std::min(int(mWidth - 1), (posf.x > (posi.x + 0.5f))? posi.x + 1: posi.x));
 	const unsigned int j = std::max(1, std::min(int(mHeight - 1), (posf.z > (posi.z + 0.5f))? posi.z + 1: posi.z));
@@ -394,18 +419,18 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 	const static float discomfortWeight = 100.0f;
 
 	const unsigned int cellGridIdx = GRID_INDEX(cell->x, cell->y);
-	const vec3f& cellWorldPos = Grid2World(cell);
+	const vec3f& cellWorldPos = GridIdxToWorldPos(cell);
 
 	const std::vector<Cell      >& frontCells = mBuffers[mFrontBufferIdx].cells;
 	const std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
 
 	for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
-		const vec3i& ngbGridPos = World2Grid(cellWorldPos + mDirVectors[dir] * mMaxGroupRadius);
-		const unsigned int ngbGridIdx = GRID_INDEX(ngbGridPos.x, ngbGridPos.z);
+		const vec3i&       ngbCellIdx3D = WorldPosToGridIdx(cellWorldPos + mDirVectors[dir] * mMaxGroupRadius);
+		const unsigned int ngbCellIdx1D = GRID_INDEX(ngbCellIdx3D.x, ngbCellIdx3D.z);
 
-		PFFG_ASSERT(ngbGridIdx < frontCells.size());
+		PFFG_ASSERT(ngbCellIdx1D < frontCells.size());
 
-		const Cell* ngbCell = &frontCells[ngbGridIdx];
+		const Cell* ngbCell = &frontCells[ngbCellIdx1D];
 		const Cell::Edge* edge = &frontEdges[ cell->edges[dir] ];
 
 		// compute the speed- and unit-cost fields
@@ -764,8 +789,8 @@ float Grid::Potential2D(const float p1, const float c1, const float p2, const fl
 
 
 
-bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCellID, unsigned int goalCellID) {
-	const SimObjectDef* objDef = mCOH->GetSimObjectDef(objectID);
+bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCellID) {
+	const SimObjectDef* objectDef = mCOH->GetSimObjectDef(objectID);
 
 	const vec3f& objectPos = mCOH->GetSimObjectPosition(objectID);
 	const vec3f& objectDir = mCOH->GetSimObjectDirection(objectID);
@@ -773,43 +798,34 @@ bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCel
 	const std::vector<Cell      >& frontCells = mBuffers[mFrontBufferIdx].cells;
 	const std::vector<Cell::Edge>& frontEdges = mBuffers[mFrontBufferIdx].edges;
 
-	// TODO: smoother interpolation
 	const Cell* objectCell = &frontCells[objectCellID];
-	const Cell* goalCell = &frontCells[goalCellID];
-	const vec3f& cellVel = objectCell->GetInterpolatedVelocity(frontEdges, objectDir);
+	const vec3f& objectCellVel = objectCell->GetInterpolatedVelocity(frontEdges, objectDir);
 
-	PFFG_ASSERT_MSG(!(std::isnan(cellVel.x) || std::isnan(cellVel.y) || std::isnan(cellVel.z)), "Inf velocity-field for cell %u", cellIdx);
-	PFFG_ASSERT_MSG(!(std::isinf(cellVel.x) || std::isinf(cellVel.y) || std::isinf(cellVel.z)), "NaN velocity-field for cell %u", cellIdx);
+	PFFG_ASSERT_MSG(!(std::isnan(objectCellVel.x) || std::isnan(objectCellVel.y) || std::isnan(objectCellVel.z)), "Inf velocity-field for cell %u", cellIdx);
+	PFFG_ASSERT_MSG(!(std::isinf(objectCellVel.x) || std::isinf(objectCellVel.y) || std::isinf(objectCellVel.z)), "NaN velocity-field for cell %u", cellIdx);
 
-	if (cellVel.sqLen3D() > 0.01f) {
+	if (objectCellVel.sqLen3D() > 0.01f) {
 		#ifdef DIRECT_VELOCITY_FIELD_INTERPOLATION
-		mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + cellVel, cellVel.norm(), cellVel.len3D());
+		// TODO: smoother interpolation
+		mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + objectCellVel, objectCellVel.norm(), objectCellVel.len3D());
 		#else
 		const float objectSpeed = mCOH->GetSimObjectSpeed(objectID);
-		const float maxAccRate = objDef->GetMaxAccelerationRate();
-		const float maxDecRate = objDef->GetMaxDeccelerationRate();
+		const float maxAccRate = objectDef->GetMaxAccelerationRate();
+		const float maxDecRate = objectDef->GetMaxDeccelerationRate();
 
 		// in theory, the velocity-field should never cause units
 		// in any group to exceed that group's speed limitations
 		// (note that this is not true on slopes)
-		// float wantedSpeed = std::min(cellVel.len3D(), objDef->GetMaxForwardSpeed());
-		float wantedSpeed = cellVel.len3D();
+		// float wantedSpeed = std::min(objectCellVel.len3D(), objectDef->GetMaxForwardSpeed());
+		float wantedSpeed = objectCellVel.len3D();
 
 		// note: should accelerate and deccelerate more quickly on slopes
 		if (objectSpeed < wantedSpeed) { wantedSpeed = objectSpeed + maxAccRate; }
 		if (objectSpeed > wantedSpeed) { wantedSpeed = objectSpeed - maxDecRate; }
 
-		if (objectCell == goalCell) {
-			// just come to a stop if in a goal cell
-			wantedSpeed = 0.0f;
-
-			if (std::fabs(objectSpeed) <= 0.01f) {
-				return false;
-			}
-		}
 
 		// note: also scale wantedSpeed by the required absolute turning angle?
-		vec3f wantedDir = cellVel / wantedSpeed;
+		vec3f wantedDir = objectCellVel / wantedSpeed;
 
 		{
 			float forwardGlobalAngleRad = atan2f(-objectDir.z, -objectDir.x);
@@ -826,7 +842,7 @@ bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCel
 			if (deltaGlobalAngleRad >  M_PI) { deltaGlobalAngleRad = -((M_PI * 2.0f) - deltaGlobalAngleRad); }
 			if (deltaGlobalAngleRad < -M_PI) { deltaGlobalAngleRad =  ((M_PI * 2.0f) + deltaGlobalAngleRad); }
 
-			wantedDir = objectDir.rotateY(DEG2RAD(objDef->GetMaxTurningRate()) * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
+			wantedDir = objectDir.rotateY(DEG2RAD(objectDef->GetMaxTurningRate()) * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
 		}
 
 		// note: when using the individual Set*Raw* callouts,
@@ -837,30 +853,6 @@ bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCel
 	}
 
 	return true;
-}
-
-void Grid::Reset() {
-	// at the start of every frame, restore both grid buffers (cells
-	// and edges) to the blank initial-state again from the backups
-	// made in Init to undo the dynamic global (and per-group) data
-	// write-operations
-	// NOTE: can we avoid this with triple-buffering?
-	numResets += 1;
-	mBuffers[mFrontBufferIdx].cells.assign(mInitCells.begin(), mInitCells.end());
-	mBuffers[mFrontBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());
-	mBuffers[mBackBufferIdx].cells.assign(mInitCells.begin(), mInitCells.end());
-	mBuffers[mBackBufferIdx].edges.assign(mInitEdges.begin(), mInitEdges.end());
-
-	for (std::set<unsigned int>::const_iterator it = mTouchedCells.begin(); it != mTouchedCells.end(); ++it) {
-		const unsigned int idx = *it;
-
-		mDensityVisData[idx]     = 0.0f;
-		mAvgVelocityVisData[idx] = NVECf;
-	}
-
-	mTouchedCells.clear();
-
-	mMaxDensity = -std::numeric_limits<float>::max();
 }
 
 
@@ -915,7 +907,7 @@ vec3f Grid::Cell::GetInterpolatedVelocity(const std::vector<Cell::Edge>& gridEdg
 
 
 // convert a world-space position to <x, y> grid-indices
-vec3i Grid::World2Grid(const vec3f& worldPos) const {
+vec3i Grid::WorldPosToGridIdx(const vec3f& worldPos) const {
 	const int gx = (worldPos.x / mSquareSize);
 	const int gz = (worldPos.z / mSquareSize);
 	const int cx = std::max(0, std::min(int(mWidth - 1), gx));
@@ -925,7 +917,7 @@ vec3i Grid::World2Grid(const vec3f& worldPos) const {
 
 // get the 1D grid-cell index corresponding to a world-space position
 unsigned int Grid::World2Cell(const vec3f& worldPos) const {
-	const vec3i& gridPos = World2Grid(worldPos);
+	const vec3i& gridPos = WorldPosToGridIdx(worldPos);
 	const unsigned int gridIdx = GRID_INDEX(gridPos.x, gridPos.z);
 
 	PFFG_ASSERT_MSG(gridIdx < mInitCells.size(), "world(%2.2f, %2.2f) grid(%d, %d)", worldPos.x, worldPos.z, gridPos.x, gridPos.z);
@@ -933,10 +925,10 @@ unsigned int Grid::World2Cell(const vec3f& worldPos) const {
 }
 
 // convert a cell's <x, y> grid-indices to world-space coordinates
-vec3f Grid::Grid2World(const Cell* inCell) const {
-	const float wx = inCell->x * mSquareSize;
-	const float wz = inCell->y * mSquareSize;
-	return vec3f(wx, ELEVATION(inCell->x, inCell->y), wz);
+vec3f Grid::GridIdxToWorldPos(const Cell* c) const {
+	const float wx = c->x * mSquareSize;
+	const float wz = c->y * mSquareSize;
+	return vec3f(wx, ELEVATION(c->x, c->y), wz);
 }
 
 

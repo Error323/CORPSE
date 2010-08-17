@@ -82,7 +82,7 @@ void CCPathModule::OnEvent(const IEvent* e) {
 
 				groupPos /= objectIDs.size();
 			} else {
-				newGroup->AddGoal(mGrid.World2Cell(goalPos));
+				newGroup->AddGoal(mGrid.WorldPosToCellID(goalPos));
 			}
 
 			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
@@ -100,14 +100,14 @@ void CCPathModule::OnEvent(const IEvent* e) {
 				if (ee->GetQueued()) {
 					wps.wantedPos   = goalPos + (objectPos - groupPos);
 					wps.wantedDir   = (wps.wantedPos - objectPos).norm();
-					wps.wantedSpeed = 0.0f;
+					wps.wantedSpeed = coh->GetSimObjectDef(objectID)->GetMaxForwardSpeed();
 
 					// World2Cell clamps the position via World2Grid
-					newGroup->AddGoal(mGrid.World2Cell(wps.wantedPos));
+					newGroup->AddGoal(mGrid.WorldPosToCellID(wps.wantedPos));
 				} else {
 					wps.wantedPos   = goalPos;
 					wps.wantedDir   = (goalPos - coh->GetSimObjectPosition(objectID)).norm();
-					wps.wantedSpeed = 0.0f;
+					wps.wantedSpeed = coh->GetSimObjectDef(objectID)->GetMaxForwardSpeed();
 				}
 
 				coh->PushSimObjectWantedPhysicalState(objectID, wps, false, false);
@@ -144,79 +144,8 @@ void CCPathModule::Update() {
 		ScopedTimer timer(s);
 		#endif
 
-		typedef std::list<unsigned int> List;
-		typedef std::list<unsigned int>::const_iterator ListIt;
-		typedef std::set<unsigned int> Set;
-		typedef std::set<unsigned int>::const_iterator SetIt;
-
-		List idleGroups;
-		ListIt idleGroupsIt;
-
-		// reset all grid-cells to the global-static state
-		mGrid.Reset();
-
-		// convert the crowd into a density field (rho)
-		for (std::map<unsigned int, MObject*>::iterator it = mObjects.begin(); it != mObjects.end(); ++it) {
-			const unsigned int objID = it->first;
-			const vec3f& objPos = coh->GetSimObjectPosition(objID);
-			const vec3f objVel =
-				coh->GetSimObjectDirection(objID) *
-				coh->GetSimObjectSpeed(objID);
-
-			// NOTE:
-			//   if objVel is a zero-vector, then avgVel will not change
-			//   therefore the flow speed can stay zero in a region, so
-			//   that *only* the topological speed determines the speed
-			//   field there
-			mGrid.AddDensityAndVelocity(objPos, objVel);
-		}
-
-		// now that we know the cumulative density per cell,
-		// we can compute the average velocity field (v-bar)
-		mGrid.ComputeAvgVelocity();
-
-		for (std::map<unsigned int, MGroup*>::iterator it = mGroups.begin(); it != mGroups.end(); ++it) {
-			const MGroup*      group         = it->second;
-			const unsigned int groupID       = it->first;
-
-			const Set& groupGoalIDs = group->GetGoals();
-			const Set& groupObjectIDs = group->GetObjectIDs();
-
-			// for each active group <groupID>, first construct the speed- and
-			// unit-cost field (f and C); second, calculate the potential- and
-			// gradient-fields (phi and delta-phi)
-			//
-			// NOTE: discomfort regarding this group can be computed here
-			// NOTE: it might be possible to compute the speed- and cost-
-			//       fields in the UpdateGroupPotentialField as cells are
-			//       picked from the UNKNOWN set, saving N iterations
-			mGrid.UpdateGroupPotentialField(groupID, groupGoalIDs, groupObjectIDs);
-
-			unsigned int numArrivedObjects = 0;
-
-			// finally, update the locations of objects in this group ("advection")
-			// (the complexity of this is O(M * K) with M the number of units and K
-			// the number of goals)
-			for (SetIt goit = groupObjectIDs.begin(); goit != groupObjectIDs.end(); ++goit) {
-				const unsigned int objectID = *goit;
-				const unsigned int objectCell = mGrid.World2Cell(coh->GetSimObjectPosition(objectID));
-
-				for (SetIt ggit = groupGoalIDs.begin(); ggit != groupGoalIDs.end(); ++ggit) {
-					if (!mGrid.UpdateSimObjectLocation(objectID, objectCell, *ggit)) {
-						numArrivedObjects += 1;
-					}
-				}
-			}
-
-			if (numArrivedObjects >= groupObjectIDs.size()) {
-				// all units have arrived, mark the group for deletion
-				idleGroups.push_back(groupID);
-			}
-		}
-
-		for (idleGroupsIt = idleGroups.begin(); idleGroupsIt != idleGroups.end(); ++idleGroupsIt) {
-			DelGroup(*idleGroupsIt);
-		}
+		UpdateGrid();
+		UpdateGroups();
 
 		// TODO: enforce minimum distance between objects
 		// NOTE: should this be handled via EVENT_SIMOBJECT_COLLISION?
@@ -244,6 +173,112 @@ void CCPathModule::Kill() {
 
 
 
+
+
+
+void CCPathModule::UpdateGrid() {
+	// reset all grid-cells to the global-static state
+	mGrid.Reset();
+
+	// convert the crowd into a density field (rho)
+	for (std::map<unsigned int, MObject*>::iterator it = mObjects.begin(); it != mObjects.end(); ++it) {
+		const unsigned int objID = it->first;
+		const vec3f& objPos = coh->GetSimObjectPosition(objID);
+		const vec3f objVel =
+			coh->GetSimObjectDirection(objID) *
+			coh->GetSimObjectSpeed(objID);
+
+		// NOTE:
+		//   if objVel is a zero-vector, then avgVel will not change
+		//   therefore the flow speed can stay zero in a region, so
+		//   that *only* the topological speed determines the speed
+		//   field there
+		mGrid.AddDensityAndVelocity(objPos, objVel);
+	}
+
+	// now that we know the cumulative density per cell,
+	// we can compute the average velocity field (v-bar)
+	mGrid.ComputeAvgVelocity();
+}
+
+void CCPathModule::UpdateGroups() {
+	typedef std::list<unsigned int> List;
+	typedef std::list<unsigned int>::const_iterator ListIt;
+	typedef std::set<unsigned int> Set;
+	typedef std::set<unsigned int>::const_iterator SetIt;
+
+	List idleGroups;
+	ListIt idleGroupsIt;
+
+	for (std::map<unsigned int, MGroup*>::iterator it = mGroups.begin(); it != mGroups.end(); ++it) {
+		const MGroup*      group         = it->second;
+		const unsigned int groupID       = it->first;
+
+		const Set& groupGoalIDs = group->GetGoals();
+		const Set& groupObjectIDs = group->GetObjectIDs();
+
+		// for each active group <groupID>, first construct the speed- and
+		// unit-cost field (f and C); second, calculate the potential- and
+		// gradient-fields (phi and delta-phi)
+		//
+		// NOTE: discomfort regarding this group can be computed here
+		// NOTE: it might be possible to compute the speed- and cost-
+		//       fields in the UpdateGroupPotentialField as cells are
+		//       picked from the UNKNOWN set, saving N iterations
+		mGrid.UpdateGroupPotentialField(groupID, groupGoalIDs, groupObjectIDs);
+
+
+		unsigned int numArrivedObjects = 0;
+
+		// finally, update the locations of objects in this group ("advection")
+		// (the complexity of this is O(M * K) with M the number of units and K
+		// the number of goals)
+		for (SetIt goit = groupObjectIDs.begin(); goit != groupObjectIDs.end(); ++goit) {
+			const unsigned int objectID = *goit;
+			const unsigned int objectCellID = mGrid.WorldPosToCellID(coh->GetSimObjectPosition(objectID));
+
+			if (mObjects[objectID]->HasArrived()) {
+				numArrivedObjects += 1;
+				continue;
+			}
+
+			mGrid.UpdateSimObjectLocation(objectID, objectCellID);
+
+			const vec3f& objectPos = coh->GetSimObjectPosition(objectID);
+			const vec3f& objectDir = coh->GetSimObjectDirection(objectID);
+
+			for (SetIt ggit = groupGoalIDs.begin(); ggit != groupGoalIDs.end(); ++ggit) {
+				const Grid::Cell* goalCell = mGrid.GetCell(*ggit);
+				const vec3f goalPos = mGrid.GetCellPos(goalCell);
+
+				if ((objectPos - goalPos).sqLen2D() < (mGrid.GetSquareSize() * mGrid.GetSquareSize())) {
+					mObjects[objectID]->SetArrived(true);
+
+					WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objectID, true);
+
+					// just come to a halt if close to some goal cell
+					// (by letting the engine stop the unit's movement)
+					wps.wantedPos   = objectPos;
+					wps.wantedDir   = objectDir;
+					wps.wantedSpeed = 0.0f;
+
+					coh->PushSimObjectWantedPhysicalState(objectID, wps, false, true);
+					coh->SetSimObjectPhysicsUpdates(objectID, true);
+					break;
+				}
+			}
+		}
+
+		if (numArrivedObjects >= groupObjectIDs.size()) {
+			// all units have arrived, mark the group for deletion
+			idleGroups.push_back(groupID);
+		}
+	}
+
+	for (idleGroupsIt = idleGroups.begin(); idleGroupsIt != idleGroups.end(); ++idleGroupsIt) {
+		DelGroup(*idleGroupsIt);
+	}
+}
 
 
 
@@ -287,6 +322,7 @@ void CCPathModule::AddObjectToGroup(unsigned int groupID, unsigned int objectID)
 
 	group->AddObject(objectID);
 	object->SetGroupID(groupID);
+	object->SetArrived(false);
 }
 
 bool CCPathModule::DelGroup(unsigned int groupID) {
@@ -300,18 +336,6 @@ bool CCPathModule::DelGroup(unsigned int groupID) {
 	const std::set<unsigned int>& gObjectIDs = group->GetObjectIDs();
 
 	for (std::set<unsigned int>::const_iterator git = gObjectIDs.begin(); git != gObjectIDs.end(); ++git) {
-		WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(*git, true);
-			wps.wantedPos   = coh->GetSimObjectPosition(*git);
-			wps.wantedDir   = coh->GetSimObjectDirection(*git);
-			wps.wantedSpeed = 0.0f;
-
-		// let the engine stop the unit's movement
-		// this is possibly not what we want, the
-		// CC grid only "knows" about units while
-		// they are in groups
-		coh->PushSimObjectWantedPhysicalState(*git, wps, false, true);
-		coh->SetSimObjectPhysicsUpdates(*git, true);
-
 		mObjects[*git]->SetGroupID(-1);
 	}
 

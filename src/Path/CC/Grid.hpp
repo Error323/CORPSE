@@ -104,14 +104,11 @@ public:
 
 	void Init(unsigned int, ICallOutHandler*);
 	void Kill();
+	void Reset();
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
 	void ComputeAvgVelocity();
 	void UpdateGroupPotentialField(unsigned int, const std::set<unsigned int>&, const std::set<unsigned int>&);
-	bool UpdateSimObjectLocation(unsigned int, unsigned int, unsigned int);
-	void Reset();
-
-	unsigned int GetGridWidth() const { return mWidth; }
-	unsigned int GetGridHeight() const { return mHeight; }
+	bool UpdateSimObjectLocation(unsigned int, unsigned int);
 
 	void AddGroup(unsigned int);
 	void DelGroup(unsigned int);
@@ -130,7 +127,13 @@ public:
 	const vec3f* GetVelocityVisDataArray(unsigned int) const;
 	const vec3f* GetPotentialDeltaVisDataArray(unsigned int) const;
 
-	unsigned int World2Cell(const vec3f&) const;
+	unsigned int WorldPosToCellID(const vec3f&) const;
+	const Cell* GetCell(unsigned int idx) const { return &mInitCells[idx]; }
+	vec3f GetCellPos(const Cell* c) const { return vec3f((c->x * mSquareSize) + (mSquareSize >> 1), 0.0f, (c->y * mSquareSize) + (mSquareSize >> 1)); }
+
+	unsigned int GetGridWidth() const { return mWidth; }
+	unsigned int GetGridHeight() const { return mHeight; }
+	unsigned int GetSquareSize() const { return mSquareSize; }
 
 private:
 	static const float EXP_DENSITY = 2.0f;    // density exponent (lambda)
@@ -198,14 +201,13 @@ private:
 	unsigned int mBackBufferIdx;
 
 
-
 	// world-space directions corresponding to NSEW
 	vec3f mDirVectors[NUM_DIRS];
 
-	vec3i World2Grid(const vec3f&) const;
-	vec3f Grid2World(const Cell*) const;
-	void UpdateCandidates(unsigned int, const Cell*);
+	vec3i WorldPosToGridIdx(const vec3f&) const;
+	vec3f GridIdxToWorldPos(const Cell*) const;
 
+	void UpdateCandidates(unsigned int, const Cell*);
 	void ComputeSpeedAndUnitCost(unsigned int, Cell*);
 	float Potential2D(const float, const float, const float, const float) const;
 	float Potential1D(const float, const float) const;
