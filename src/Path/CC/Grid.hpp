@@ -106,7 +106,7 @@ public:
 	void Kill();
 	void AddDensityAndVelocity(const vec3f&, const vec3f&);
 	void ComputeAvgVelocity();
-	void UpdateGroupPotentialField(unsigned int, const std::vector<unsigned int>&, const std::set<unsigned int>&);
+	void UpdateGroupPotentialField(unsigned int, const std::set<unsigned int>&, const std::set<unsigned int>&);
 	void UpdateSimObjectLocation(unsigned int);
 	void Reset();
 

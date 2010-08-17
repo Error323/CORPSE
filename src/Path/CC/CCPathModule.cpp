@@ -34,44 +34,60 @@ void CCPathModule::OnEvent(const IEvent* e) {
 		case EVENT_SIMOBJECT_MOVEORDER: {
 			const SimObjectMoveOrderEvent* ee = dynamic_cast<const SimObjectMoveOrderEvent*>(e);
 
-			if (ee->GetQueued()) {
-				// too complicated: if this order is queued, we would want
-				// to preserve the remaining orders of the previous groups
-				// that these objects were in and merge them
-				//
-				// possible solution: create as many singleton-groups as
-				// the number of units in this order (very inefficient)
-				//
-				// for a queued order we also do NOT want multiple "sinks"
-				// per group; only for immediate "line" formation orders
-				// however, even a line order just consists of individual
-				// movement commands, so multiple sinks are unnecessary
-				//
-				// for now, we define the "group has arrived" criterion
-				// as "all members are within a predetermined threshold
-				// range"
-				//
-				// [UpdateGroupPotentialField should get the goal cells
-				// from a specific group, but how will we select them?]
-				return;
-			}
+			// handling queued orders is too complicated: we would want
+			// to preserve the remaining orders of the previous groups
+			// that these objects were in and merge them
+			//
+			// possible solution: create as many singleton-groups as
+			// the number of units in this order (very inefficient)
+			//
+			// for a queued order we also do NOT want multiple sinks
+			// per group; only for immediate "line" formation orders
+			// however, even a line order just consists of individual
+			// movement commands, so multiple sinks are unnecessary?
+			//
+			// a point-move order involving multiple units could be
+			// implemented by adding as many potential-field sinks,
+			// but what should the arrival-check look like in that
+			// case? "all units within range of at least one goal"?
+			// (queued orders are handled like this now; note that
+			// there is *no* guarantee that any unit will arrive at
+			// its own "preferred" individual goal offset)
+			//
+			// for now, we define the "group has arrived" criterion
+			// as "all members are within a predetermined threshold
+			// range of the group's single goal-cell"
+			//
+			// [UpdateGroupPotentialField should get the goal cells
+			// from a specific group, but how will we select them?]
+
+			// create a new group
+			const unsigned int groupID = numGroupIDs++;
 
 			const std::list<unsigned int>& objectIDs = ee->GetObjectIDs();
 			const vec3f& goalPos = ee->GetGoalPos();
 
-			// create a new group
-			const unsigned int groupID = numGroupIDs++;
+			vec3f groupPos;
 
 			MGroup* newGroup = new MGroup();
 			mGroups[groupID] = newGroup;
 
 			PFFG_ASSERT(newGroup != NULL);
 
-			newGroup->SetGoal(mGrid.World2Cell(goalPos));
-			mGrid.AddGroup(groupID);
+			if (ee->GetQueued()) {
+				// get the geometric average position
+				for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
+					groupPos += coh->GetSimObjectPosition(*it);
+				}
+
+				groupPos /= objectIDs.size();
+			} else {
+				newGroup->AddGoal(mGrid.World2Cell(goalPos));
+			}
 
 			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
 				const unsigned int objectID = *it;
+				const vec3f& objectPos = coh->GetSimObjectPosition(objectID);
 
 				PFFG_ASSERT(coh->IsValidSimObjectID(objectID));
 
@@ -80,13 +96,25 @@ void CCPathModule::OnEvent(const IEvent* e) {
 
 				// needed to show the proper movement line indicator
 				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objectID, true);
+
+				if (ee->GetQueued()) {
+					wps.wantedPos   = goalPos + (objectPos - groupPos);
+					wps.wantedDir   = (wps.wantedPos - objectPos).norm();
+					wps.wantedSpeed = 0.0f;
+
+					// World2Cell clamps the position via World2Grid
+					newGroup->AddGoal(mGrid.World2Cell(wps.wantedPos));
+				} else {
 					wps.wantedPos   = goalPos;
 					wps.wantedDir   = (goalPos - coh->GetSimObjectPosition(objectID)).norm();
 					wps.wantedSpeed = 0.0f;
+				}
 
 				coh->PushSimObjectWantedPhysicalState(objectID, wps, ee->GetQueued(), false);
 				coh->SetSimObjectPhysicsUpdates(objectID, false);
 			}
+
+			mGrid.AddGroup(groupID);
 		} break;
 
 		case EVENT_SIMOBJECT_COLLISION: {
@@ -121,8 +149,6 @@ void CCPathModule::Update() {
 		typedef std::set<unsigned int> Set;
 		typedef std::set<unsigned int>::const_iterator SetIt;
 
-		static std::vector<unsigned int> groupGoals(1, -1);
-
 		List idleGroups;
 		ListIt idleGroupsIt;
 
@@ -152,11 +178,9 @@ void CCPathModule::Update() {
 		for (std::map<unsigned int, MGroup*>::iterator it = mGroups.begin(); it != mGroups.end(); ++it) {
 			const MGroup*      group         = it->second;
 			const unsigned int groupID       = it->first;
-			const unsigned int groupGoalCell = group->GetGoal();
 
+			const Set& groupGoalIDs = group->GetGoals();
 			const Set& groupObjectIDs = group->GetObjectIDs();
-
-			groupGoals[0] = groupGoalCell;
 
 			// for each active group <groupID>, first construct the speed- and
 			// unit-cost field (f and C); second, calculate the potential- and
@@ -166,19 +190,23 @@ void CCPathModule::Update() {
 			// NOTE: it might be possible to compute the speed- and cost-
 			//       fields in the UpdateGroupPotentialField as cells are
 			//       picked from the UNKNOWN set, saving N iterations
-			mGrid.UpdateGroupPotentialField(groupID, groupGoals, groupObjectIDs);
+			mGrid.UpdateGroupPotentialField(groupID, groupGoalIDs, groupObjectIDs);
 
 			unsigned int numArrivedObjects = 0;
 
 			// finally, update the locations of objects in this group ("advection")
-			for (SetIt git = groupObjectIDs.begin(); git != groupObjectIDs.end(); ++git) {
-				const unsigned int objectID = *git;
+			// (the complexity of this is O(M * K) with M the number of units and K
+			// the number of goals)
+			for (SetIt goit = groupObjectIDs.begin(); goit != groupObjectIDs.end(); ++goit) {
+				const unsigned int objectID = *goit;
 				const unsigned int objectCell = mGrid.World2Cell(coh->GetSimObjectPosition(objectID));
 
-				if (objectCell == groupGoalCell) {
-					numArrivedObjects += 1;
-				} else {
-					mGrid.UpdateSimObjectLocation(objectID);
+				for (SetIt ggit = groupGoalIDs.begin(); ggit != groupGoalIDs.end(); ++ggit) {
+					if (objectCell == *ggit) {
+						numArrivedObjects += 1;
+					} else {
+						mGrid.UpdateSimObjectLocation(objectID);
+					}
 				}
 			}
 

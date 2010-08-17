@@ -88,8 +88,8 @@ private:
 
 	struct MGroup {
 		public:
-			MGroup(): mGoalID(-1) {}
-			~MGroup() { mObjectIDs.clear(); }
+			MGroup() {}
+			~MGroup() { mObjectIDs.clear(); mGoalIDs.clear(); }
 
 			void DelObject(unsigned int objectID) { mObjectIDs.erase(objectID); }
 			void AddObject(unsigned int objectID) { mObjectIDs.insert(objectID); }
@@ -97,12 +97,12 @@ private:
 			bool IsEmpty() const { return mObjectIDs.empty(); }
 			const std::set<unsigned int>& GetObjectIDs() const { return mObjectIDs; }
 
-			void SetGoal(const unsigned int goalID) { mGoalID = goalID; }
-			unsigned int GetGoal() const { return mGoalID; }
+			void AddGoal(const unsigned int goalID) { mGoalIDs.insert(goalID); }
+			const std::set<unsigned int>& GetGoals() const { return mGoalIDs; }
 
 		private:
-			unsigned int mGoalID;
 			std::set<unsigned int> mObjectIDs;  // unit member ID's
+			std::set<unsigned int> mGoalIDs;
 	};
 
 	std::map<unsigned int, MGroup*> mGroups;

@@ -461,8 +461,8 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* cell) {
 	mDiscomfortVisData[groupID][cellGridIdx] = cell->discomfort;
 }
 
-void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<unsigned int>& goalCells, const std::set<unsigned int>& objectIDs) {
-	PFFG_ASSERT(!goalCells.empty());
+void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsigned int>& goalIDs, const std::set<unsigned int>& objectIDs) {
+	PFFG_ASSERT(!goalIDs.empty());
 	PFFG_ASSERT(mCandidates.empty());
 
 	// cycle the buffers so the per-group variables of the
@@ -507,8 +507,8 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::vector<uns
 	unsigned int cellIdx = 0;
 
 	// add goal-cells to the known set and their neighbors to the candidate-set
-	for (size_t i = 0; i < goalCells.size(); i++) {
-		cellIdx = goalCells[i];
+	for (std::set<unsigned int>::const_iterator it = goalIDs.begin(); it != goalIDs.end(); ++it) {
+		cellIdx = *it;
 
 		frontCell = &frontCells[cellIdx];
 		backCell = &backCells[cellIdx];
