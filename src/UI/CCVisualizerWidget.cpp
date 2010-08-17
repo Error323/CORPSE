@@ -225,7 +225,7 @@ void ui::CCVisualizerWidget::TextureOverlay::Update(const float* ndata) {
 	static const int bpp       = 4;
 
 	const unsigned int srcArraySize = sizex * sizey * stride;
-	// const unsigned int dstArraySize = sizex * sizey * bpp;
+	const unsigned int dstArraySize = sizex * sizey * bpp;
 
 	static float ndataMin[bpp] = {0.0f};
 	static float ndataMax[bpp] = {0.0f};
@@ -279,7 +279,7 @@ void ui::CCVisualizerWidget::TextureOverlay::Update(const float* ndata) {
 			} break;
 		}
 	} else {
-		for (unsigned int i = 0; i < srcArraySize; i += stride) {
+		for (unsigned int i = 0; i < dstArraySize; i += bpp) {
 			data[i + 0] =   0;
 			data[i + 1] =   0;
 			data[i + 2] =   0;
