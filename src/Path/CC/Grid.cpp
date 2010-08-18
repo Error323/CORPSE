@@ -285,13 +285,13 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 			deltaHeights[DIR_S] = (y < (mHeight - 1))? (currCells[GRID_INDEX(x,     y + 1)].height - currCell->height): 0.0f;
 			deltaHeights[DIR_E] = (x < (mWidth  - 1))? (currCells[GRID_INDEX(x + 1, y    )].height - currCell->height): 0.0f;
 			deltaHeights[DIR_W] = (x >            0 )? (currCells[GRID_INDEX(x - 1, y    )].height - currCell->height): 0.0f;
+
 			deltaHeightMax = -std::numeric_limits<float>::max();
 			deltaHeightMax = std::max(deltaHeightMax, deltaHeights[DIR_N]);
 			deltaHeightMax = std::max(deltaHeightMax, deltaHeights[DIR_S]);
 			deltaHeightMax = std::max(deltaHeightMax, deltaHeights[DIR_E]);
 			deltaHeightMax = std::max(deltaHeightMax, deltaHeights[DIR_W]);
 			#endif
-
 
 			if (y > 0) {
 				dir = DIR_N;
