@@ -443,11 +443,11 @@ void Grid::ComputeAvgVelocity() {
 
 
 void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* currCell) {
-	const static float speedWeight      = 1.0f;
-	const static float discomfortWeight = 100.0f;
+	const static float speedWeight      =   1.0f; // alpha
+	const static float discomfortWeight = 100.0f; // gamma
 
 	const unsigned int cellGridIdx = GRID_INDEX(currCell->x, currCell->y);
-	const vec3f& cellWorldPos = GridIdxToWorldPos(cell);
+	const vec3f& cellWorldPos = GridIdxToWorldPos(currCell);
 
 	const std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
 	const std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
