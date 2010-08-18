@@ -13,6 +13,9 @@
 #define ELEVATION(x, y) (mCOH->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * mWidth) + (mDownScale * (x))])
 #define CLAMP(f, fmin, fmax) std::max(fmin, std::min(fmax, (f)))
 
+#define VELOCITY_FIELD_DIRECT_INTERPOLATION   0
+#define VELOCITY_FIELD_BILINEAR_INTERPOLATION 1
+
 void Grid::AddGroup(unsigned int groupID) {
 	mDiscomfortVisData[groupID] = std::vector<float>();
 	mDiscomfortVisData[groupID].resize(mWidth * mHeight, 0.0f);
@@ -831,107 +834,120 @@ bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCel
 	const std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
 
 	const Cell* objectCell = &currCells[objectCellID];
-	const vec3f& objectCellVel = objectCell->GetInterpolatedVelocity(currEdges, objectDir);
+	const vec3f& objectCellVel = GetInterpolatedVelocity(currEdges, objectCell, objectPos, objectDir);
 
 	PFFG_ASSERT_MSG(!(std::isnan(objectCellVel.x) || std::isnan(objectCellVel.y) || std::isnan(objectCellVel.z)), "Inf velocity-field for cell %u", cellIdx);
 	PFFG_ASSERT_MSG(!(std::isinf(objectCellVel.x) || std::isinf(objectCellVel.y) || std::isinf(objectCellVel.z)), "NaN velocity-field for cell %u", cellIdx);
 
 	if (objectCellVel.sqLen3D() > 0.01f) {
-		#ifdef DIRECT_VELOCITY_FIELD_INTERPOLATION
-		// TODO: smoother interpolation
-		mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + objectCellVel, objectCellVel.norm(), objectCellVel.len3D());
+		#if (VELOCITY_FIELD_DIRECT_INTERPOLATION == 1)
+			mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + objectCellVel, objectCellVel.norm(), objectCellVel.len3D());
 		#else
-		const float objectSpeed = mCOH->GetSimObjectSpeed(objectID);
-		const float maxAccRate = objectDef->GetMaxAccelerationRate();
-		const float maxDecRate = objectDef->GetMaxDeccelerationRate();
+			const float objectSpeed = mCOH->GetSimObjectSpeed(objectID);
+			const float maxAccRate = objectDef->GetMaxAccelerationRate();
+			const float maxDecRate = objectDef->GetMaxDeccelerationRate();
 
-		// in theory, the velocity-field should never cause units
-		// in any group to exceed that group's speed limitations
-		// (note that this is not true on slopes)
-		// float wantedSpeed = std::min(objectCellVel.len3D(), objectDef->GetMaxForwardSpeed());
-		float wantedSpeed = objectCellVel.len3D();
+			// in theory, the velocity-field should never cause units
+			// in any group to exceed that group's speed limitations
+			// (note that this is not true on slopes)
+			// float wantedSpeed = std::min(objectCellVel.len3D(), objectDef->GetMaxForwardSpeed());
+			float wantedSpeed = objectCellVel.len3D();
 
-		// note: should accelerate and deccelerate more quickly on slopes
-		if (objectSpeed < wantedSpeed) { wantedSpeed = objectSpeed + maxAccRate; }
-		if (objectSpeed > wantedSpeed) { wantedSpeed = objectSpeed - maxDecRate; }
+			// note: should accelerate and deccelerate more quickly on slopes
+			if (objectSpeed < wantedSpeed) { wantedSpeed = objectSpeed + maxAccRate; }
+			if (objectSpeed > wantedSpeed) { wantedSpeed = objectSpeed - maxDecRate; }
 
 
-		// note: also scale wantedSpeed by the required absolute turning angle?
-		vec3f wantedDir = objectCellVel / wantedSpeed;
+			// note: also scale wantedSpeed by the required absolute turning angle?
+			vec3f wantedDir = objectCellVel / wantedSpeed;
 
-		{
-			float forwardGlobalAngleRad = atan2f(-objectDir.z, -objectDir.x);
-			float wantedGlobalAngleRad = atan2f(-wantedDir.z, -wantedDir.x);
-			float deltaGlobalAngleRad = 0.0f;
+			{
+				float forwardGlobalAngleRad = atan2f(-objectDir.z, -objectDir.x);
+				float wantedGlobalAngleRad = atan2f(-wantedDir.z, -wantedDir.x);
+				float deltaGlobalAngleRad = 0.0f;
 
-			if (forwardGlobalAngleRad < 0.0f) { forwardGlobalAngleRad += (M_PI * 2.0f); }
-			if (wantedGlobalAngleRad < 0.0f) { wantedGlobalAngleRad += (M_PI * 2.0f); }
+				if (forwardGlobalAngleRad < 0.0f) { forwardGlobalAngleRad += (M_PI * 2.0f); }
+				if (wantedGlobalAngleRad < 0.0f) { wantedGlobalAngleRad += (M_PI * 2.0f); }
 
-			deltaGlobalAngleRad = (forwardGlobalAngleRad - wantedGlobalAngleRad);
+				deltaGlobalAngleRad = (forwardGlobalAngleRad - wantedGlobalAngleRad);
 
-			// take the shorter of the two possible turns
-			// (positive angle means a right turn and vv)
-			if (deltaGlobalAngleRad >  M_PI) { deltaGlobalAngleRad = -((M_PI * 2.0f) - deltaGlobalAngleRad); }
-			if (deltaGlobalAngleRad < -M_PI) { deltaGlobalAngleRad =  ((M_PI * 2.0f) + deltaGlobalAngleRad); }
+				// take the shorter of the two possible turns
+				// (positive angle means a right turn and vv)
+				if (deltaGlobalAngleRad >  M_PI) { deltaGlobalAngleRad = -((M_PI * 2.0f) - deltaGlobalAngleRad); }
+				if (deltaGlobalAngleRad < -M_PI) { deltaGlobalAngleRad =  ((M_PI * 2.0f) + deltaGlobalAngleRad); }
 
-			wantedDir = objectDir.rotateY(DEG2RAD(objectDef->GetMaxTurningRate()) * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
-		}
+				wantedDir = objectDir.rotateY(DEG2RAD(objectDef->GetMaxTurningRate()) * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
+			}
 
-		// note: when using the individual Set*Raw* callouts,
-		// change the position last so that the object's new
-		// hasMoved state is not overwritten again
-		mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + wantedDir * wantedSpeed, wantedDir, wantedSpeed);
+			// note: when using the individual Set*Raw* callouts,
+			// change the position last so that the object's new
+			// hasMoved state is not overwritten again
+			mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + wantedDir * wantedSpeed, wantedDir, wantedSpeed);
 		#endif
 	}
 
 	return true;
 }
 
-
-
-vec3f Grid::Cell::GetNormalisedPotentialGradient(const std::vector<Cell::Edge>& gridEdges, unsigned int dir) const {
-	const Edge* edge = &gridEdges[edges[dir]];
-	const vec3f& edgeGradPot = edge->gradPotential;
-	const float edgeGradPotLen = edgeGradPot.len2D();
-
-	if (edgeGradPotLen > 0.0f) {
-		return (edgeGradPot / edgeGradPotLen);
-	}
-
-	return NVECf;
-}
-
-vec3f Grid::Cell::GetInterpolatedVelocity(const std::vector<Cell::Edge>& gridEdges, const vec3f& dir) const {
-	// <dir> always falls into one of four quadrants
-	// therefore, we need to sample the speed-field
-	// and potential-gradient along two of the four
-	// cardinal (NSEW) directions and interpolate
+vec3f Grid::GetInterpolatedVelocity(const std::vector<Cell::Edge>& edges, const Cell* c, const vec3f& pos, const vec3f& dir) const {
 	vec3f vel;
 
 	float a = 0.0f;
 	float b = 0.0f;
 
-	unsigned int i = 0;
-	unsigned int j = 0;
+	#if (VELOCITY_FIELD_BILINEAR_INTERPOLATION == 1)
+		// "standard" bilinear interpolation, except
+		// that sample values are not stored at grid
+		// corners and represent vectors instead of
+		// scalars (note that the unit's direction
+		// vector is not used here)
+		//
+		// first get the relative distance to the
+		// DIR_W (a) and DIR_N (b) edge based on
+		// <pos>
+		a = (pos.x - c->x * mSquareSize) / mSquareSize;
+		b = (pos.z - c->y * mSquareSize) / mSquareSize;
 
-	if (dir.x >= 0.0f) {
-		i = DIR_E;
-		a = dir.x;
-	} else {
-		i = DIR_W;
-		a = -dir.x;
-	}
+		const vec3f& vN = edges[ c->edges[DIR_N] ].velocity;
+		const vec3f& vS = edges[ c->edges[DIR_S] ].velocity;
+		const vec3f& vE = edges[ c->edges[DIR_E] ].velocity;
+		const vec3f& vW = edges[ c->edges[DIR_W] ].velocity;
 
-	if (dir.z >= 0.0f) {
-		j = DIR_N;
-		b = dir.z;
-	} else {
-		j = DIR_S;
-		b = -dir.z;
-	}
+		const vec3f Q11 = (vN + vW) * 0.5f; // top-left sample point
+		const vec3f Q21 = (vN + vE) * 0.5f; // top-right sample point
+		const vec3f Q12 = (vS + vW) * 0.5f; // bottom-left sample point
+		const vec3f Q22 = (vS + vE) * 0.5f; // bottom-right sample point
 
-	vel += (gridEdges[ edges[i] ].velocity * a);
-	vel += (gridEdges[ edges[j] ].velocity * b);
+		vel += (Q11 * (1.0f - a) * (1.0f - b));
+		vel += (Q21 * (0.0f + a) * (1.0f - b));
+		vel += (Q12 * (1.0f - a) * (0.0f + b));
+		vel += (Q22 * (0.0f + a) * (0.0f + b));
+	#else
+		// we know that <dir> always falls into one of four quadrants
+		// therefore, we need to sample the velocity-field along two
+		// of the four cardinal (NSEW) directions and interpolate
+		unsigned int i = 0;
+		unsigned int j = 0;
+
+		if (dir.x >= 0.0f) {
+			i = DIR_E;
+			a = dir.x;
+		} else {
+			i = DIR_W;
+			a = -dir.x;
+		}
+
+		if (dir.z >= 0.0f) {
+			j = DIR_N;
+			b = dir.z;
+		} else {
+			j = DIR_S;
+			b = -dir.z;
+		}
+
+		vel += (edges[ c->edges[i] ].velocity * a);
+		vel += (edges[ c->edges[j] ].velocity * b);
+	#endif
 
 	return vel;
 }
@@ -994,4 +1010,16 @@ void Grid::Cell::ResetGroupVars() {
 	speed[DIR_S] = cost[DIR_S] = 0.0f;
 	speed[DIR_E] = cost[DIR_E] = 0.0f;
 	speed[DIR_W] = cost[DIR_W] = 0.0f;
+}
+
+vec3f Grid::Cell::GetNormalisedPotentialGradient(const std::vector<Cell::Edge>& gridEdges, unsigned int dir) const {
+	const Edge* edge = &gridEdges[edges[dir]];
+	const vec3f& edgeGradPot = edge->gradPotential;
+	const float edgeGradPotLen = edgeGradPot.len2D();
+
+	if (edgeGradPotLen > 0.0f) {
+		return (edgeGradPot / edgeGradPotLen);
+	}
+
+	return NVECf;
 }

@@ -74,7 +74,6 @@ public:
 		void ResetGroupVars();
 
 		vec3f GetNormalisedPotentialGradient(const std::vector<Edge>&, unsigned int) const;
-		vec3f GetInterpolatedVelocity(const std::vector<Edge>&, const vec3f&) const;
 		vec3f avgVelocity;
 
 		unsigned int x, y;
@@ -203,6 +202,7 @@ private:
 	// world-space directions corresponding to NSEW
 	vec3f mDirVectors[NUM_DIRS];
 
+	vec3f GetInterpolatedVelocity(const std::vector<Cell::Edge>&, const Cell*, const vec3f&, const vec3f&) const;
 	vec3i WorldPosToGridIdx(const vec3f&) const;
 	vec3f GridIdxToWorldPos(const Cell*) const;
 
