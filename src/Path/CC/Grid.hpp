@@ -98,8 +98,8 @@ public:
 		mDirVectors[DIR_E] =  XVECf;
 		mDirVectors[DIR_W] = -XVECf;
  
-		mFrontBufferIdx = 0;
-		mBackBufferIdx = 1;
+		mCurrBufferIdx = 0;
+		mPrevBufferIdx = 1;
 	}
 
 	void Init(unsigned int, ICallOutHandler*);
@@ -128,7 +128,7 @@ public:
 	const vec3f* GetPotentialDeltaVisDataArray(unsigned int) const;
 
 	unsigned int WorldPosToCellID(const vec3f&) const;
-	const Cell* GetCell(unsigned int idx) const { return &mInitCells[idx]; }
+	const Cell* GetCell(unsigned int idx) const { return &mBuffers[0].cells[idx]; }
 	vec3f GetCellPos(const Cell* c) const { return vec3f((c->x * mSquareSize) + (mSquareSize >> 1), 0.0f, (c->y * mSquareSize) + (mSquareSize >> 1)); }
 
 	unsigned int GetGridWidth() const { return mWidth; }
@@ -177,28 +177,23 @@ private:
 
 	ICallOutHandler* mCOH;
 
+
 	// cells that were modified by the AddDensityAndVelocity step
-	// (which sets the Cell::avgVelocity and Cell::density globals)
+	// (which sets the Cell::avgVelocity and Cell::density dynamic
+	// globals)
 	std::set<unsigned int> mTouchedCells;
 
-
-	// these contain the grid-state after initializing only
-	// the *static* global data; their contents are used to
-	// clear both buffers at the start of each frame
-	std::vector<Cell      > mInitCells;
-	std::vector<Cell::Edge> mInitEdges;
-
-	// these contain the grid-state after also initializing
-	// the dynamic global data; the buffers are cycled after
-	// processing a group
+	// these buffers are cycled after processing a group; during
+	// UpdateGroupPotentialField, one buffer is made dirty (wrt.
+	// the per-group dynamic data) while the other is cleaned
 	struct Buffer {
 		std::vector<Cell      > cells;
 		std::vector<Cell::Edge> edges;
 	};
 	Buffer mBuffers[2];
 
-	unsigned int mFrontBufferIdx;
-	unsigned int mBackBufferIdx;
+	unsigned int mCurrBufferIdx;
+	unsigned int mPrevBufferIdx;
 
 
 	// world-space directions corresponding to NSEW
