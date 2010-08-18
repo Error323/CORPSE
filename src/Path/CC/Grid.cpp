@@ -986,8 +986,8 @@ void Grid::Cell::ResetGroupVars() {
 	known     = false;
 	candidate = false;
 
-	for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
-		speed[dir] = 0.0f;
-		cost[dir]  = 0.0f;
-	}
+	speed[DIR_N] = cost[DIR_N] = 0.0f;
+	speed[DIR_S] = cost[DIR_S] = 0.0f;
+	speed[DIR_E] = cost[DIR_E] = 0.0f;
+	speed[DIR_W] = cost[DIR_W] = 0.0f;
 }
