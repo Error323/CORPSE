@@ -84,6 +84,10 @@ public:
 		float potential;
 		float density;
 		float height;
+
+		// NOTE:
+		//    redundant, f(A --> B) is the same as f(B --> A) but
+		//    now stored twice (A.speed[DIR_N] and B.speed[DIR_S])
 		float speed[NUM_DIRS];
 		float cost[NUM_DIRS];
 
