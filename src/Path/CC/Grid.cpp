@@ -13,6 +13,7 @@
 #define ELEVATION(x, y) (mCOH->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * mWidth) + (mDownScale * (x))])
 #define CLAMP(f, fmin, fmax) std::max(fmin, std::min(fmax, (f)))
 
+#define HEIGHT_FIELD_GRADIENT_MAX_DIRECTION   1
 #define VELOCITY_FIELD_DIRECT_INTERPOLATION   0
 #define VELOCITY_FIELD_BILINEAR_INTERPOLATION 1
 
@@ -158,6 +159,10 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 	printf("[Grid::Init] resolution: %dx%d %d\n", mWidth, mHeight, mSquareSize);
 
+	#if (HEIGHT_FIELD_GRADIENT_MAX_DIRECTION == 1)
+	static float deltaHeights[NUM_DIRS] = {0.0f};
+	static float deltaHeightMax = 0.0f;
+	#endif
 
 	const unsigned int numCells = mWidth * mHeight;
 	const unsigned int numEdges = (mWidth + 1) * mHeight + (mHeight + 1) * mWidth;
@@ -275,6 +280,19 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 			Cell::Edge* currEdge = NULL;
 			Cell::Edge* prevEdge = NULL;
 
+			#if (HEIGHT_FIELD_GRADIENT_MAX_DIRECTION == 1)
+			deltaHeights[DIR_N] = (y >            0 )? (currCells[GRID_INDEX(x,     y - 1)].height - currCell->height): 0.0f;
+			deltaHeights[DIR_S] = (y < (mHeight - 1))? (currCells[GRID_INDEX(x,     y + 1)].height - currCell->height): 0.0f;
+			deltaHeights[DIR_E] = (x < (mWidth  - 1))? (currCells[GRID_INDEX(x + 1, y    )].height - currCell->height): 0.0f;
+			deltaHeights[DIR_W] = (x >            0 )? (currCells[GRID_INDEX(x - 1, y    )].height - currCell->height): 0.0f;
+			deltaHeightMax = -std::numeric_limits<float>::max();
+			deltaHeightMax = std::max(deltaHeightMax, deltaHeights[DIR_N]);
+			deltaHeightMax = std::max(deltaHeightMax, deltaHeights[DIR_S]);
+			deltaHeightMax = std::max(deltaHeightMax, deltaHeights[DIR_E]);
+			deltaHeightMax = std::max(deltaHeightMax, deltaHeights[DIR_W]);
+			#endif
+
+
 			if (y > 0) {
 				dir = DIR_N;
 
@@ -283,8 +301,14 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 				currNgb = &currCells[GRID_INDEX(x, y - 1)];
 				prevNgb = &prevCells[GRID_INDEX(x, y - 1)];
 
+				#if (HEIGHT_FIELD_GRADIENT_MAX_DIRECTION == 1)
+				currEdge->gradHeight = vec3f(0.0f, 0.0f, deltaHeightMax * -1.0f);
+				prevEdge->gradHeight = vec3f(0.0f, 0.0f, deltaHeightMax * -1.0f);
+				#else
 				currEdge->gradHeight = vec3f(0.0f, 0.0f, (currNgb->height - currCell->height) * -1.0f);
 				prevEdge->gradHeight = vec3f(0.0f, 0.0f, (prevNgb->height - prevCell->height) * -1.0f);
+				#endif
+
 				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX(x, y - 1);
 				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX(x, y - 1);
 
@@ -302,8 +326,14 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 				currNgb = &currCells[GRID_INDEX(x, y + 1)];
 				prevNgb = &prevCells[GRID_INDEX(x, y + 1)];
 
+				#if (HEIGHT_FIELD_GRADIENT_MAX_DIRECTION == 1)
+				currEdge->gradHeight = vec3f(0.0f, 0.0f, deltaHeightMax);
+				prevEdge->gradHeight = vec3f(0.0f, 0.0f, deltaHeightMax);
+				#else
 				currEdge->gradHeight = vec3f(0.0f, 0.0f, (currNgb->height - currCell->height));
 				prevEdge->gradHeight = vec3f(0.0f, 0.0f, (prevNgb->height - prevCell->height));
+				#endif
+
 				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX(x, y + 1);
 				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX(x, y + 1);
 
@@ -321,8 +351,14 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 				currNgb = &currCells[GRID_INDEX(x - 1, y)];
 				prevNgb = &prevCells[GRID_INDEX(x - 1, y)];
 
+				#if (HEIGHT_FIELD_GRADIENT_MAX_DIRECTION == 1)
+				currEdge->gradHeight = vec3f(deltaHeightMax * -1.0f, 0.0f, 0.0f);
+				prevEdge->gradHeight = vec3f(deltaHeightMax * -1.0f, 0.0f, 0.0f);
+				#else
 				currEdge->gradHeight = vec3f((currNgb->height - currCell->height) * -1.0f, 0.0f, 0.0f);
 				prevEdge->gradHeight = vec3f((prevNgb->height - prevCell->height) * -1.0f, 0.0f, 0.0f);
+				#endif
+
 				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX(x - 1, y);
 				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX(x - 1, y);
 
@@ -340,8 +376,14 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 				currNgb = &currCells[GRID_INDEX(x + 1, y)];
 				prevNgb = &prevCells[GRID_INDEX(x + 1, y)];
 
+				#if (HEIGHT_FIELD_GRADIENT_MAX_DIRECTION == 1)
+				currEdge->gradHeight = vec3f(deltaHeightMax, 0.0f, 0.0f);
+				prevEdge->gradHeight = vec3f(deltaHeightMax, 0.0f, 0.0f);
+				#else
 				currEdge->gradHeight = vec3f((currNgb->height - currCell->height), 0.0f, 0.0f);
 				prevEdge->gradHeight = vec3f((prevNgb->height - prevCell->height), 0.0f, 0.0f);
+				#endif
+
 				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX(x + 1, y);
 				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX(x + 1, y);
 
@@ -448,7 +490,7 @@ void Grid::ComputeAvgVelocity() {
 void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* currCell) {
 	const static float speedWeight      = 1.0f; // alpha
 	const static float discomfortWeight = 4.0f; // gamma
-	const static float maxHeightDelta   = mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight();
+	const static float deltaHeightMax   = mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight();
 
 	const unsigned int cellGridIdx = GRID_INDEX(currCell->x, currCell->y);
 	const vec3f& cellWorldPos = GridIdxToWorldPos(currCell);
@@ -460,7 +502,7 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* currCell) {
 	//    properly set discomfort for <cell> for this group (maybe via UI?)
 	//    for now, avoid higher areas (problem: discomfort is a much larger
 	//    term than speed, but needs to be around same order of magnitude)
-	currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / maxHeightDelta;
+	currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / deltaHeightMax;
 
 	for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
 		const vec3i&       ngbCellIdx3D = WorldPosToGridIdx(cellWorldPos + mDirVectors[dir] * mMaxGroupRadius);
