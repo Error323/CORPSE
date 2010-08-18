@@ -903,7 +903,7 @@ vec3f Grid::GetInterpolatedVelocity(const std::vector<Cell::Edge>& edges, const 
 		// vector is not used here)
 		//
 		// first get the relative distance to the
-		// DIR_W (a) and DIR_N (b) edge based on
+		// DIR_W (a) and DIR_N (b) edges based on
 		// <pos>
 		a = (pos.x - c->x * mSquareSize) / mSquareSize;
 		b = (pos.z - c->y * mSquareSize) / mSquareSize;
@@ -913,15 +913,15 @@ vec3f Grid::GetInterpolatedVelocity(const std::vector<Cell::Edge>& edges, const 
 		const vec3f& vE = edges[ c->edges[DIR_E] ].velocity;
 		const vec3f& vW = edges[ c->edges[DIR_W] ].velocity;
 
-		const vec3f Q11 = (vN + vW) * 0.5f; // top-left sample point
-		const vec3f Q21 = (vN + vE) * 0.5f; // top-right sample point
-		const vec3f Q12 = (vS + vW) * 0.5f; // bottom-left sample point
-		const vec3f Q22 = (vS + vE) * 0.5f; // bottom-right sample point
+		const vec3f vTL = (vN + vW) * 0.5f; // top-left sample point
+		const vec3f vTR = (vN + vE) * 0.5f; // top-right sample point
+		const vec3f vBL = (vS + vW) * 0.5f; // bottom-left sample point
+		const vec3f vBR = (vS + vE) * 0.5f; // bottom-right sample point
 
-		vel += (Q11 * (1.0f - a) * (1.0f - b));
-		vel += (Q21 * (0.0f + a) * (1.0f - b));
-		vel += (Q12 * (1.0f - a) * (0.0f + b));
-		vel += (Q22 * (0.0f + a) * (0.0f + b));
+		vel += (vTL * (1.0f - a) * (1.0f - b));
+		vel += (vTR * (0.0f + a) * (1.0f - b));
+		vel += (vBL * (1.0f - a) * (0.0f + b));
+		vel += (vBR * (0.0f + a) * (0.0f + b));
 	#else
 		// we know that <dir> always falls into one of four quadrants
 		// therefore, we need to sample the velocity-field along two
