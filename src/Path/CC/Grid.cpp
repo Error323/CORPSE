@@ -443,14 +443,21 @@ void Grid::ComputeAvgVelocity() {
 
 
 void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* currCell) {
-	const static float speedWeight      =   1.0f; // alpha
-	const static float discomfortWeight = 100.0f; // gamma
+	const static float speedWeight      = 1.0f; // alpha
+	const static float discomfortWeight = 4.0f; // gamma
+	const static float maxHeightDelta   = mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight();
 
 	const unsigned int cellGridIdx = GRID_INDEX(currCell->x, currCell->y);
 	const vec3f& cellWorldPos = GridIdxToWorldPos(currCell);
 
 	const std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
 	const std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
+
+	// TODO:
+	//    properly set discomfort for <cell> for this group (maybe via UI?)
+	//    for now, avoid higher areas (problem: discomfort is a much larger
+	//    term than speed, but needs to be around same order of magnitude)
+	currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / maxHeightDelta;
 
 	for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
 		const vec3i&       ngbCellIdx3D = WorldPosToGridIdx(cellWorldPos + mDirVectors[dir] * mMaxGroupRadius);
@@ -465,9 +472,6 @@ void Grid::ComputeSpeedAndUnitCost(unsigned int groupID, Cell* currCell) {
 		// TODO:
 		//    evaluate speed and discomfort at cell into which
 		//    an agent would move if it chose direction <dir>
-		//
-		//    properly set discomfort for <cell> for this group (maybe via UI?)
-		//    currCell->discomfort = 0.0f * ((currCell->x * currCell->x) + (currCell->y * currCell->y));
 		// NOTE: engine slopes should be in the same format as CC slopes?
 		// NOTE:
 		//    if the flow-speed is zero in a region, then the cost
