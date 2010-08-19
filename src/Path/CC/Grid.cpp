@@ -289,19 +289,19 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 				currNgb = &currCells[GRID_INDEX(x, y - 1)];
 				prevNgb = &prevCells[GRID_INDEX(x, y - 1)];
 
-				currEdge->gradHeight = vec3f(0.0f, 0.0f, (currNgb->height - currCell->height));
-				prevEdge->gradHeight = vec3f(0.0f, 0.0f, (prevNgb->height - prevCell->height));
+				currEdge->heightDelta = vec3f(0.0f, 0.0f, (currNgb->height - currCell->height));
+				prevEdge->heightDelta = vec3f(0.0f, 0.0f, (prevNgb->height - prevCell->height));
 
 				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX(x, y - 1);
 				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX(x, y - 1);
 
-				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(currEdge->gradHeight.z));
-				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(currEdge->gradHeight.z));
+				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(currEdge->heightDelta.z));
+				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(currEdge->heightDelta.z));
 
 				// NOTE:
-				//  gradHeight is not actually a gradient vector-field!
+				//  heightDelta is not actually a gradient vector-field!
 				//  (vectors do not represent directions in world-space)
-				mHeightDeltaVisData[idx * NUM_DIRS + dir] = currEdge->gradHeight * ((mSquareSize / mDownScale) >> 1);
+				mHeightDeltaVisData[idx * NUM_DIRS + dir] = currEdge->heightDelta * ((mSquareSize / mDownScale) >> 1);
 			}
 
 			if (y < mHeight - 1) {
@@ -312,16 +312,16 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 				currNgb = &currCells[GRID_INDEX(x, y + 1)];
 				prevNgb = &prevCells[GRID_INDEX(x, y + 1)];
 
-				currEdge->gradHeight = vec3f(0.0f, 0.0f, (currNgb->height - currCell->height));
-				prevEdge->gradHeight = vec3f(0.0f, 0.0f, (prevNgb->height - prevCell->height));
+				currEdge->heightDelta = vec3f(0.0f, 0.0f, (currNgb->height - currCell->height));
+				prevEdge->heightDelta = vec3f(0.0f, 0.0f, (prevNgb->height - prevCell->height));
 
 				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX(x, y + 1);
 				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX(x, y + 1);
 
-				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(currEdge->gradHeight.z));
-				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(currEdge->gradHeight.z));
+				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(currEdge->heightDelta.z));
+				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(currEdge->heightDelta.z));
 
-				mHeightDeltaVisData[idx * NUM_DIRS + dir] = currEdge->gradHeight * ((mSquareSize / mDownScale) >> 1);
+				mHeightDeltaVisData[idx * NUM_DIRS + dir] = currEdge->heightDelta * ((mSquareSize / mDownScale) >> 1);
 			}
 
 			if (x > 0) {
@@ -332,16 +332,16 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 				currNgb = &currCells[GRID_INDEX(x - 1, y)];
 				prevNgb = &prevCells[GRID_INDEX(x - 1, y)];
 
-				currEdge->gradHeight = vec3f((currNgb->height - currCell->height), 0.0f, 0.0f);
-				prevEdge->gradHeight = vec3f((prevNgb->height - prevCell->height), 0.0f, 0.0f);
+				currEdge->heightDelta = vec3f((currNgb->height - currCell->height), 0.0f, 0.0f);
+				prevEdge->heightDelta = vec3f((prevNgb->height - prevCell->height), 0.0f, 0.0f);
 
 				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX(x - 1, y);
 				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX(x - 1, y);
 
-				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(currEdge->gradHeight.x));
-				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(currEdge->gradHeight.x));
+				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(currEdge->heightDelta.x));
+				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(currEdge->heightDelta.x));
 
-				mHeightDeltaVisData[idx * NUM_DIRS + dir] = currEdge->gradHeight * ((mSquareSize / mDownScale) >> 1);
+				mHeightDeltaVisData[idx * NUM_DIRS + dir] = currEdge->heightDelta * ((mSquareSize / mDownScale) >> 1);
 			}
 
 			if (x < mWidth - 1) {
@@ -352,16 +352,16 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 				currNgb = &currCells[GRID_INDEX(x + 1, y)];
 				prevNgb = &prevCells[GRID_INDEX(x + 1, y)];
 
-				currEdge->gradHeight = vec3f((currNgb->height - currCell->height), 0.0f, 0.0f);
-				prevEdge->gradHeight = vec3f((prevNgb->height - prevCell->height), 0.0f, 0.0f);
+				currEdge->heightDelta = vec3f((currNgb->height - currCell->height), 0.0f, 0.0f);
+				prevEdge->heightDelta = vec3f((prevNgb->height - prevCell->height), 0.0f, 0.0f);
 
 				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX(x + 1, y);
 				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX(x + 1, y);
 
-				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(currEdge->gradHeight.x));
-				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(currEdge->gradHeight.x));
+				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(currEdge->heightDelta.x));
+				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(currEdge->heightDelta.x));
 
-				mHeightDeltaVisData[idx * NUM_DIRS + dir] = currEdge->gradHeight * ((mSquareSize / mDownScale) >> 1);
+				mHeightDeltaVisData[idx * NUM_DIRS + dir] = currEdge->heightDelta * ((mSquareSize / mDownScale) >> 1);
 			}
 		}
 	}
@@ -497,7 +497,7 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 		//    with density <= MIN_DENSITY whenever topologicalSpeed
 		//    is less than or equal to zero
 		//
-		const float dirTerrainSlope    = currEdge->gradHeight.dot2D(mDirVectors[dir]);
+		const float dirTerrainSlope    = currEdge->heightDelta.dot2D(mDirVectors[dir]);
 		      float dirTerrainSlopeMod = 0.0f;
 
 		// if the slope is positive along <dir>, we want a positive slopeSpeedScale
@@ -642,10 +642,10 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsign
 		velVisData[cellIdx * NUM_DIRS + DIR_S] = currEdges[ currCell->edges[DIR_S] ].velocity * (mSquareSize >> 1);
 		velVisData[cellIdx * NUM_DIRS + DIR_E] = currEdges[ currCell->edges[DIR_E] ].velocity * (mSquareSize >> 1);
 		velVisData[cellIdx * NUM_DIRS + DIR_W] = currEdges[ currCell->edges[DIR_W] ].velocity * (mSquareSize >> 1);
-		potDeltaVisData[cellIdx * NUM_DIRS + DIR_N] = currEdges[ currCell->edges[DIR_N] ].gradPotential * (mSquareSize >> 1);
-		potDeltaVisData[cellIdx * NUM_DIRS + DIR_S] = currEdges[ currCell->edges[DIR_S] ].gradPotential * (mSquareSize >> 1);
-		potDeltaVisData[cellIdx * NUM_DIRS + DIR_E] = currEdges[ currCell->edges[DIR_E] ].gradPotential * (mSquareSize >> 1);
-		potDeltaVisData[cellIdx * NUM_DIRS + DIR_W] = currEdges[ currCell->edges[DIR_W] ].gradPotential * (mSquareSize >> 1);
+		potDeltaVisData[cellIdx * NUM_DIRS + DIR_N] = currEdges[ currCell->edges[DIR_N] ].potentialDelta * (mSquareSize >> 1);
+		potDeltaVisData[cellIdx * NUM_DIRS + DIR_S] = currEdges[ currCell->edges[DIR_S] ].potentialDelta * (mSquareSize >> 1);
+		potDeltaVisData[cellIdx * NUM_DIRS + DIR_E] = currEdges[ currCell->edges[DIR_E] ].potentialDelta * (mSquareSize >> 1);
+		potDeltaVisData[cellIdx * NUM_DIRS + DIR_W] = currEdges[ currCell->edges[DIR_W] ].potentialDelta * (mSquareSize >> 1);
 
 		mCandidates.pop();
 	}
@@ -750,10 +750,10 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 				prevEdgeX = &prevEdges[currNgb->edges[minPotCellDirX]];
 				prevEdgeY = &prevEdges[currNgb->edges[minPotCellDirY]];
 
-				currEdgeX->gradPotential = gradient;
-				currEdgeY->gradPotential = gradient;
-				prevEdgeX->gradPotential = NVECf;
-				prevEdgeY->gradPotential = NVECf;
+				currEdgeX->potentialDelta = gradient;
+				currEdgeY->potentialDelta = gradient;
+				prevEdgeX->potentialDelta = NVECf;
+				prevEdgeY->potentialDelta = NVECf;
 			} else {
 				numIllegalDirectionCases += 1;
 			}
@@ -781,8 +781,8 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 					currEdgeY = &currEdges[currNgb->edges[minPotCellDirY]];
 					prevEdgeY = &prevEdges[currNgb->edges[minPotCellDirY]];
 
-					currEdgeY->gradPotential = gradient;
-					prevEdgeY->gradPotential = NVECf;
+					currEdgeY->potentialDelta = gradient;
+					prevEdgeY->potentialDelta = NVECf;
 				} else {
 					numIllegalDirectionCases += 1;
 				}
@@ -811,8 +811,8 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 					currEdgeX = &currEdges[currNgb->edges[minPotCellDirX]];
 					prevEdgeX = &prevEdges[currNgb->edges[minPotCellDirX]];
 
-					currEdgeX->gradPotential = gradient;
-					prevEdgeX->gradPotential = NVECf;
+					currEdgeX->potentialDelta = gradient;
+					prevEdgeX->potentialDelta = NVECf;
 				} else {
 					numIllegalDirectionCases += 1;
 				}
@@ -1039,11 +1039,11 @@ void Grid::Cell::ResetGroupVars() {
 
 vec3f Grid::Cell::GetNormalisedPotentialGradient(const std::vector<Cell::Edge>& gridEdges, unsigned int dir) const {
 	const Edge* edge = &gridEdges[edges[dir]];
-	const vec3f& edgeGradPot = edge->gradPotential;
-	const float edgeGradPotLen = edgeGradPot.len2D();
+	const vec3f& edgePotDelta = edge->potentialDelta;
+	const float edgePotDeltaLen = edgePotDelta.len2D();
 
-	if (edgeGradPotLen > 0.0f) {
-		return (edgeGradPot / edgeGradPotLen);
+	if (edgePotDeltaLen > 0.0f) {
+		return (edgePotDelta / edgePotDeltaLen);
 	}
 
 	return NVECf;

@@ -45,8 +45,8 @@ public:
 	struct Cell {
 		struct Edge {
 			vec3f velocity;
-			vec3f gradPotential;
-			vec3f gradHeight;
+			vec3f heightDelta;
+			vec3f potentialDelta;
 		};
 
 		Cell(): x(0), y(0), known(false), candidate(false), numNeighbors(0) {
