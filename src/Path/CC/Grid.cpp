@@ -513,7 +513,7 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 		const float densitySpeedScale = (currCellNgb->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
 		const float slopeSpeedScale   = (dirTerrainSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
 		const float topologicalSpeed  = mMaxGroupSpeed + CLAMP(slopeSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
-		const float flowSpeed         = currCellNgb->avgVelocity.dot2D(mDirVectors[dir]);
+		const float flowSpeed         = std::max(0.0f, currCellNgb->avgVelocity.dot2D(mDirVectors[dir]));
 		const float interpolatedSpeed = topologicalSpeed + densitySpeedScale * (topologicalSpeed - flowSpeed);
 
 		float speed = interpolatedSpeed;
