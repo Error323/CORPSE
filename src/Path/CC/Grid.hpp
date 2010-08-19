@@ -207,7 +207,7 @@ private:
 	vec3f GridIdxToWorldPos(const Cell*) const;
 
 	void UpdateCandidates(unsigned int, const Cell*);
-	void ComputeSpeedAndUnitCost(unsigned int, Cell*);
+	void ComputeSpeedAndCost(unsigned int, Cell*);
 	float Potential2D(const float, const float, const float, const float) const;
 	float Potential1D(const float, const float) const;
 };
