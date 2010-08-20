@@ -44,17 +44,10 @@ public:
 		return n;
 	}
 
-	bool IsGlobalDataType(unsigned int) const { return false; }
+	bool GetScalarDataTypeInfo(DataTypeInfo*, unsigned int) const { return false; }
+	bool GetVectorDataTypeInfo(DataTypeInfo*, unsigned int) const { return false; }
 	unsigned int GetNumScalarDataTypes() const { return 0; }
-	unsigned int GetScalarDataArraySizeX(unsigned int) const { return 0; }
-	unsigned int GetScalarDataArraySizeZ(unsigned int) const { return 0; }
-	unsigned int GetScalarDataArrayStride(unsigned int) const { return 0; }
-	const float* GetScalarDataArray(unsigned int, unsigned int) const { return NULL; }
 	unsigned int GetNumVectorDataTypes() const { return 0; }
-	unsigned int GetVectorDataArraySizeX(unsigned int) const { return 0; }
-	unsigned int GetVectorDataArraySizeZ(unsigned int) const { return 0; }
-	unsigned int GetVectorDataArrayStride(unsigned int) const { return 0; }
-	const vec3f* GetVectorDataArray(unsigned int, unsigned int) const { return NULL; }
 
 private:
 	void AddObjectToGroup(unsigned int, unsigned int);

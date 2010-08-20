@@ -6,8 +6,9 @@
 
 #include "./UIWidget.hpp"
 #include "../Math/vec3fwd.hpp"
+#include "../Path/IPathModule.hpp"
 
-class IPathModule;
+struct DataTypeInfo;
 class VertexArray;
 
 namespace ui {
@@ -32,12 +33,10 @@ namespace ui {
 
 		struct Overlay {
 			public:
-				Overlay(unsigned int x, unsigned int y, unsigned int s, unsigned int dt):
-					enabled(true), sizex(x), sizey(y), stride(s), dataType(dt) {
-				}
-
+				Overlay(const IPathModule::DataTypeInfo*);
 				virtual ~Overlay() {}
 
+				virtual bool IsGlobal() const { return global; }
 				virtual void SetEnabled(bool b) { enabled = b; }
 				virtual bool IsEnabled() const { return enabled; }
 				virtual unsigned int GetSizeX() const { return sizex; }
@@ -46,6 +45,7 @@ namespace ui {
 				virtual unsigned int GetDataType() const { return dataType; }
 
 			protected:
+				bool global;
 				bool enabled;
 
 				unsigned int sizex;
@@ -57,7 +57,7 @@ namespace ui {
 
 		struct TextureOverlay: public Overlay {
 			public:
-				TextureOverlay(unsigned int, unsigned int, unsigned int, unsigned int, const float*);
+				TextureOverlay(const IPathModule::DataTypeInfo*);
 				~TextureOverlay();
 
 				void Update(const float*);
@@ -69,7 +69,7 @@ namespace ui {
 
 		struct VectorOverlay: public Overlay {
 			public:
-				VectorOverlay(unsigned int, unsigned int, unsigned int, unsigned int, const vec3f*);
+				VectorOverlay(const IPathModule::DataTypeInfo*);
 				~VectorOverlay();
 
 				void Update(const vec3f*);

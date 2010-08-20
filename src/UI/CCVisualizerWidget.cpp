@@ -8,7 +8,6 @@
 #include "../Map/Ground.hpp"
 #include "../Map/ReadMap.hpp"
 #include "../Math/vec3.hpp"
-#include "../Path/IPathModule.hpp"
 #include "../Renderer/CameraController.hpp"
 #include "../Renderer/Camera.hpp"
 #include "../Renderer/RenderThread.hpp"
@@ -43,40 +42,39 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 		return;
 	}
 
+	IPathModule::DataTypeInfo info = {dataType, 0, 0, 0, {NULL}, "", false};
+
 	if (dataType < mModule->GetNumScalarDataTypes()) {
 		// scalar field; create a texture overlay
 		TextureOverlay* textureOverlay = textureOverlays[dataType];
-		CBaseGroundDrawer* g = readMap->GetGroundDrawer();
+		CBaseGroundDrawer* groundDrawer = readMap->GetGroundDrawer();
 
 		if (textureOverlay == NULL) {
-			const unsigned int xsize = mModule->GetScalarDataArraySizeX(dataType);
-			const unsigned int zsize = mModule->GetScalarDataArraySizeZ(dataType);
-			const unsigned int stride = mModule->GetScalarDataArrayStride(dataType);
-			const float* data = mModule->GetScalarDataArray(dataType, texVisGroupID);
+			mModule->GetScalarDataTypeInfo(&info, texVisGroupID);
 
-			if (!mModule->IsGlobalDataType(dataType)) {
+			if (!info.global) {
 				SetNextVisGroupID(true);
 			}
 
-			textureOverlay = new TextureOverlay(xsize, zsize, stride, dataType, data);
+			textureOverlay = new TextureOverlay(&info);
 			textureOverlays[dataType] = textureOverlay;
 			currentTextureOverlay = textureOverlay;
 
-			g->SetOverlayTexture(textureOverlay->GetID());
+			groundDrawer->SetOverlayTexture(textureOverlay->GetID());
 		} else {
 			if (!textureOverlay->IsEnabled()) {
 				textureOverlay->SetEnabled(true);
-				g->SetOverlayTexture(textureOverlay->GetID());
+				groundDrawer->SetOverlayTexture(textureOverlay->GetID());
 
-				if (!mModule->IsGlobalDataType(dataType)) {
+				if (!textureOverlay->IsGlobal()) {
 					SetNextVisGroupID(true);
 				}
 
 				currentTextureOverlay = textureOverlay;
 			} else {
-				if (mModule->IsGlobalDataType(dataType) || !SetNextVisGroupID(true)) {
+				if (textureOverlay->IsGlobal() || !SetNextVisGroupID(true)) {
 					textureOverlay->SetEnabled(false);
-					g->SetOverlayTexture(0);
+					groundDrawer->SetOverlayTexture(0);
 
 					currentTextureOverlay = NULL;
 				}
@@ -87,29 +85,26 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 		VectorOverlay* vectorOverlay = vectorOverlays[dataType];
 
 		if (vectorOverlay == NULL) {
-			const unsigned int xsize = mModule->GetVectorDataArraySizeX(dataType);
-			const unsigned int zsize = mModule->GetVectorDataArraySizeZ(dataType);
-			const unsigned int stride = mModule->GetVectorDataArrayStride(dataType);
-			const vec3f* data = mModule->GetVectorDataArray(dataType, vecVisGroupID);
+			mModule->GetVectorDataTypeInfo(&info, vecVisGroupID);
 
-			if (!mModule->IsGlobalDataType(dataType)) {
+			if (!info.global) {
 				SetNextVisGroupID(false);
 			}
 
-			vectorOverlay = new VectorOverlay(xsize, zsize, stride, dataType, data);
+			vectorOverlay = new VectorOverlay(&info);
 			vectorOverlays[dataType] = vectorOverlay;
 			currentVectorOverlay = vectorOverlay;
 		} else {
 			if (!vectorOverlay->IsEnabled()) {
 				vectorOverlay->SetEnabled(true);
 
-				if (!mModule->IsGlobalDataType(dataType)) {
+				if (!vectorOverlay->IsGlobal()) {
 					SetNextVisGroupID(false);
 				}
 
 				currentVectorOverlay = vectorOverlay;
 			} else {
-				if (mModule->IsGlobalDataType(dataType) || !SetNextVisGroupID(false)) {
+				if (vectorOverlay->IsGlobal() || !SetNextVisGroupID(false)) {
 					vectorOverlay->SetEnabled(false);
 
 					currentVectorOverlay = NULL;
@@ -156,6 +151,7 @@ bool ui::CCVisualizerWidget::SetNextVisGroupID(bool texture) {
 
 void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 	static unsigned int simFrame = sThread->GetFrame();
+	static IPathModule::DataTypeInfo info = {0, 0, 0, 0, {NULL}, "", false};
 
 	if (!enabled) {
 		return;
@@ -165,14 +161,19 @@ void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 		simFrame = sThread->GetFrame();
 
 		if (currentTextureOverlay != NULL && currentTextureOverlay->IsEnabled()) {
-			// update the texture data
 			// if the group corresponding to <visGroupID> no longer exists,
 			// this causes the texture to be filled with default values (0)
-			currentTextureOverlay->Update(mModule->GetScalarDataArray(currentTextureOverlay->GetDataType(), texVisGroupID));
+			info.type = currentTextureOverlay->GetDataType();
+
+			mModule->GetScalarDataTypeInfo(&info, texVisGroupID);
+			currentTextureOverlay->Update(info.fdata);
 		}
 
-		if (currentVectorOverlay != NULL) {
-			currentVectorOverlay->Update(mModule->GetVectorDataArray(currentVectorOverlay->GetDataType(), vecVisGroupID));
+		if (currentVectorOverlay != NULL && currentVectorOverlay->IsEnabled()) {
+			info.type = currentVectorOverlay->GetDataType();
+
+			mModule->GetVectorDataTypeInfo(&info, vecVisGroupID);
+			currentVectorOverlay->Update(info.vdata);
 		}
 	}
 
@@ -197,19 +198,22 @@ void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 
 
 
-ui::CCVisualizerWidget::TextureOverlay::TextureOverlay(
-	unsigned int x,
-	unsigned int y,
-	unsigned int s,
-	unsigned int dt,
-	const float* ndata
-):
-	Overlay(x, y, s, dt),
+ui::CCVisualizerWidget::Overlay::Overlay(const IPathModule::DataTypeInfo* info):
+	global(info->global),
+	enabled(true),
+	sizex(info->sizex),
+	sizey(info->sizey),
+	stride(info->stride),
+	dataType(info->type) {
+}
+
+ui::CCVisualizerWidget::TextureOverlay::TextureOverlay(const IPathModule::DataTypeInfo* info):
+	Overlay(info),
 	id(0),
-	data(new unsigned char[sizex * sizey * 4]) // bpp == 4
+	data(new unsigned char[info->sizex * info->sizey * 4]) // bpp == 4
 {
 	memset(data, 0, sizex * sizey * 4);
-	Update(ndata);
+	Update(info->fdata);
 }
 
 ui::CCVisualizerWidget::TextureOverlay::~TextureOverlay() {
@@ -307,18 +311,12 @@ void ui::CCVisualizerWidget::TextureOverlay::Update(const float* ndata) {
 
 
 
-ui::CCVisualizerWidget::VectorOverlay::VectorOverlay(
-	unsigned int x,
-	unsigned int y,
-	unsigned int s,
-	unsigned int dt,
-	const vec3f* ndata
-):
-	Overlay(x, y, s, dt),
+ui::CCVisualizerWidget::VectorOverlay::VectorOverlay(const IPathModule::DataTypeInfo* info):
+	Overlay(info),
 	data(new VertexArray())
 {
 	data->EnlargeArrays((sizex * sizey * stride) * 2, 0, VA_SIZE_C);
-	Update(ndata);
+	Update(info->vdata);
 }
 
 ui::CCVisualizerWidget::VectorOverlay::~VectorOverlay() {

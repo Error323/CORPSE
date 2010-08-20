@@ -45,21 +45,10 @@ public:
 		return n;
 	}
 
-	bool IsGlobalDataType(unsigned int dataType) const {
-		return
-			(dataType == Grid::DATATYPE_DENSITY || dataType == Grid::DATATYPE_HEIGHT ||
-			 dataType == Grid::DATATYPE_HEIGHT_DELTA  || dataType == Grid::DATATYPE_VELOCITY_AVG);
-	}
+	bool GetScalarDataTypeInfo(DataTypeInfo*, unsigned int) const;
+	bool GetVectorDataTypeInfo(DataTypeInfo*, unsigned int) const;
 	unsigned int GetNumScalarDataTypes() const { return Grid::NUM_SCALAR_DATATYPES; }
-	unsigned int GetScalarDataArraySizeX(unsigned int) const;
-	unsigned int GetScalarDataArraySizeZ(unsigned int) const;
-	unsigned int GetScalarDataArrayStride(unsigned int) const;
-	const float* GetScalarDataArray(unsigned int, unsigned int) const;
 	unsigned int GetNumVectorDataTypes() const { return Grid::NUM_VECTOR_DATATYPES; }
-	unsigned int GetVectorDataArraySizeX(unsigned int) const;
-	unsigned int GetVectorDataArraySizeZ(unsigned int) const;
-	unsigned int GetVectorDataArrayStride(unsigned int) const;
-	const vec3f* GetVectorDataArray(unsigned int, unsigned int) const;
 
 private:
 	void UpdateGrid();
