@@ -8,7 +8,6 @@
 #include "../Math/vec3fwd.hpp"
 #include "../Path/IPathModule.hpp"
 
-struct DataTypeInfo;
 class VertexArray;
 
 namespace ui {
