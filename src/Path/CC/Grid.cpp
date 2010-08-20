@@ -496,6 +496,11 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 		//    can trigger asserts; this will also happen for cells
 		//    with density <= MIN_DENSITY whenever topologicalSpeed
 		//    is less than or equal to zero
+		// FIXME:
+		//    at coarse grid resolutions, the index of the neighbor
+		//    cell is often just the same as that of the current (a
+		//    unit takes mSquareSize / mMaxGroupSpeed sim-frames to
+		//    traverse one horizontally or vertically)
 		//
 		const float dirTerrainSlope    = currEdge->heightDelta.dot2D(mDirVectors[dir]);
 		      float dirTerrainSlopeMod = 0.0f;
@@ -926,6 +931,10 @@ vec3f Grid::GetInterpolatedVelocity(const std::vector<Cell::Edge>& edges, const 
 		// corners and represent vectors instead of
 		// scalars (note that the unit's direction
 		// vector is not used here)
+		//
+		// FIXME: the interpolated vector can be
+		// near-<0, 0, 0>, which causes units to
+		// get stuck on the grid
 		//
 		// first get the relative distance to the
 		// DIR_W (a) and DIR_N (b) edges based on
