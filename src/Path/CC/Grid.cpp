@@ -928,13 +928,14 @@ vec3f Grid::GetInterpolatedVelocity(const std::vector<Cell::Edge>& edges, const 
 	#if (VELOCITY_FIELD_BILINEAR_INTERPOLATION == 1)
 		// "standard" bilinear interpolation, except
 		// that sample values are not stored at grid
-		// corners and represent vectors instead of
-		// scalars (note that the unit's direction
-		// vector is not used here)
+		// corners and represent vectors rather than
+		// scalars (note: the unit's direction vector
+		// is not used here)
 		//
-		// FIXME: the interpolated vector can be
-		// near-<0, 0, 0>, which causes units to
-		// get stuck on the grid
+		// FIXME: the interpolated vector can be near
+		// <0, 0, 0>, which causes units to get stuck
+		// on the grid (happens frequently at coarser
+		// resolutions, related to density projection)
 		//
 		// first get the relative distance to the
 		// DIR_W (a) and DIR_N (b) edges based on
