@@ -42,6 +42,7 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 		return;
 	}
 
+	// all parameters except <type> are filled by the Get*DataTypeInfo() call
 	IPathModule::DataTypeInfo info = {dataType, 0, 0, 0, {NULL}, "", false};
 
 	if (dataType < mModule->GetNumScalarDataTypes()) {
