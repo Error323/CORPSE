@@ -415,8 +415,8 @@ void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
 	Cell *Df = &currCells[idxD], *Db = &prevCells[idxD]; mTouchedCells.insert(idxD);
 
 	// add velocity (NOTE: why only to C?)
-	Cf->avgVelocity += vel;
-	Cb->avgVelocity += vel;
+	Af->avgVelocity += vel; Bf->avgVelocity += vel; Cf->avgVelocity += vel; Df->avgVelocity += vel;
+	Ab->avgVelocity += vel; Bb->avgVelocity += vel; Cb->avgVelocity += vel; Db->avgVelocity += vel;
 
 	// compute delta-X and delta-Y
 	const float dX = posf.x - Af->x + 0.5f;
@@ -485,9 +485,6 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 		const Cell::Edge* currEdge = &currEdges[ currCell->edges[dir] ];
 
 		// compute the speed- and unit-cost fields
-		// TODO:
-		//    evaluate speed and discomfort at cell into which
-		//    an agent would move if it chose direction <dir>
 		// NOTE: engine slope-representation should be the same?
 		// NOTE:
 		//    if the flow-speed is zero in a region, then the cost
@@ -500,7 +497,8 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 		//    at coarse grid resolutions, the index of the neighbor
 		//    cell is often just the same as that of the current (a
 		//    unit takes mSquareSize / mMaxGroupSpeed sim-frames to
-		//    traverse one horizontally or vertically)
+		//    traverse one horizontally or vertically), so that the
+		//    flow-speed becomes zero due to self-density influence
 		//
 		const float dirTerrainSlope    = currEdge->heightDelta.dot2D(mDirVectors[dir]);
 		      float dirTerrainSlopeMod = 0.0f;
@@ -528,7 +526,7 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 		if (currCellNgb->density <= MIN_DENSITY) { speed = topologicalSpeed; }
 
 		if (std::fabs(speed) > 0.1f) {
-			cost = ((speedWeight * speed) + (discomfortWeight * currCell->discomfort)) / speed;
+			cost = ((speedWeight * speed) + (discomfortWeight * currCellNgb->discomfort)) / speed;
 		} else {
 			// should this case be allowed to happen?
 			// (infinite costs very heavily influence
@@ -537,7 +535,7 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 			// cost = std::numeric_limits<float>::infinity();
 			// cost = std::numeric_limits<float>::max();
 			speed = 0.1f;
-			cost  = ((speedWeight * speed) + (discomfortWeight * currCell->discomfort)) / speed;
+			cost  = ((speedWeight * speed) + (discomfortWeight * currCellNgb->discomfort)) / speed;
 		}
 
 		currCell->speed[dir] = speed;
