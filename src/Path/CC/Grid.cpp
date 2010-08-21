@@ -447,7 +447,7 @@ void Grid::ComputeAvgVelocity() {
 		// normalise the densities, so comparisons with
 		// MIN_DENSITY and MAX_DENSITY are well-defined
 		// when constructing the speed-field
-		cf->density     /= mMaxDensity;
+		cf->density /= mMaxDensity;
 
 		if (cf->density >= MIN_DENSITY) {
 			cf->avgVelocity /= cf->density;
