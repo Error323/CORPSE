@@ -494,9 +494,9 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 
 
 		#if (SPEED_FIELD_EVALUATE_OFFSET_DENSITY == 1)
-			float avgDensity    = 0.0f;
-			float avgDiscomfort = 0.0f;
-			vec3f avgVelocity   = NVECf;
+			float cellAvgDensity    = 0.0f;
+			float cellAvgDiscomfort = 0.0f;
+			vec3f cellAvgVelocity   = NVECf;
 
 			{
 				static const int dx[NUM_DIRS] = { 0, 0, 1, -1}; // NSEW
@@ -521,9 +521,9 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 					const unsigned int x = tmpCell->x + dx[dir];
 					const unsigned int z = tmpCell->y + dz[dir];
 
-					avgDensity    += tmpCell->density;
-					avgDiscomfort += tmpCell->discomfort;
-					avgVelocity   += tmpCell->avgVelocity;
+					cellAvgDensity    += tmpCell->density;
+					cellAvgDiscomfort += tmpCell->discomfort;
+					cellAvgVelocity   += tmpCell->avgVelocity;
 
 					if (x < mWidth && z < mHeight) {
 						tmpCell = &currCells[GRID_INDEX(x, z)];
@@ -532,14 +532,14 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 					}
 				}
 
-				avgDensity    /= numCells;
-				avgDiscomfort /= numCells;
-				avgVelocity   /= numCells;
+				cellAvgDensity    /= numCells;
+				cellAvgDiscomfort /= numCells;
+				cellAvgVelocity   /= numCells;
 			}
 		#else
-			float avgDensity    = currCellNgb->density;
-			float avgDiscomfort = currCellNgb->discomfort;
-			vec3f avgVelocity   = currCellNgb->avgVelocity;
+			float cellAvgDensity    = currCellNgb->density;
+			float cellAvgDiscomfort = currCellNgb->discomfort;
+			vec3f cellAvgVelocity   = currCellNgb->avgVelocity;
 		#endif
 
 
@@ -551,8 +551,8 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 		//    for cells with normalised density >= MAX_DENSITY will
 		//    be infinite everywhere and the potential-field update
 		//    can trigger asserts; this will also happen for cells
-		//    with density <= MIN_DENSITY whenever topologicalSpeed
-		//    is less than or equal to zero
+		//    with density <= MIN_DENSITY whenever topoSpeed is less
+		//    than or equal to zero
 		// FIXME:
 		//    at coarse grid resolutions, the index of the neighbor
 		//    cell is often just the same as that of the current (a
@@ -573,20 +573,21 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 		if (POSITIVE_SLOPE(dir, dirTerrainSlope)) { dirTerrainSlopeMod =  std::fabs(dirTerrainSlope); }
 		if (NEGATIVE_SLOPE(dir, dirTerrainSlope)) { dirTerrainSlopeMod = -std::fabs(dirTerrainSlope); }
 
-		const float densitySpeedScale = (avgDensity - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
+		const float densitySpeedScale = (cellAvgDensity - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
 		const float slopeSpeedScale   = (dirTerrainSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
-		const float topologicalSpeed  = mMaxGroupSpeed + CLAMP(slopeSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
-		const float flowSpeed         = std::max(0.0f, avgVelocity.dot2D(mDirVectors[dir]));
-		const float interpolatedSpeed = topologicalSpeed + densitySpeedScale * (topologicalSpeed - flowSpeed);
 
-		float speed = interpolatedSpeed;
-		float cost = 0.0f;
+		const float cellTopoSpeed     = mMaxGroupSpeed + CLAMP(slopeSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
+		const float cellFlowSpeed     = std::max(0.0f, cellAvgVelocity.dot2D(mDirVectors[dir]));
+		const float cellTopoFlowSpeed = cellTopoSpeed + densitySpeedScale * (cellTopoSpeed - cellFlowSpeed);
 
-		if (avgDensity >= MAX_DENSITY) { speed =        flowSpeed; }
-		if (avgDensity <= MIN_DENSITY) { speed = topologicalSpeed; }
+		float cellSpeed = cellTopoFlowSpeed;
+		float cellCost = 0.0f;
 
-		if (std::fabs(speed) > 0.1f) {
-			cost = ((speedWeight * speed) + (discomfortWeight * avgDiscomfort)) / speed;
+		if (cellAvgDensity >= MAX_DENSITY) { cellSpeed = cellFlowSpeed; }
+		if (cellAvgDensity <= MIN_DENSITY) { cellSpeed = cellTopoSpeed; }
+
+		if (std::fabs(cellSpeed) > 0.01f) {
+			cellCost = ((speedWeight * cellSpeed) + (discomfortWeight * cellAvgDiscomfort)) / cellSpeed;
 		} else {
 			// should this case be allowed to happen?
 			// (infinite costs very heavily influence
@@ -594,15 +595,15 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 			//
 			// cost = std::numeric_limits<float>::infinity();
 			// cost = std::numeric_limits<float>::max();
-			speed = 0.1f;
-			cost  = ((speedWeight * speed) + (discomfortWeight * avgDiscomfort)) / speed;
+			cellSpeed = 0.01f;
+			cellCost  = ((speedWeight * cellSpeed) + (discomfortWeight * cellAvgDiscomfort)) / cellSpeed;
 		}
 
-		currCell->speed[dir] = speed;
-		currCell->cost[dir] = cost;
+		currCell->speed[dir] = cellSpeed;
+		currCell->cost[dir] = cellCost;
 
-		mSpeedVisData[groupID][cellIdx * NUM_DIRS + dir] = speed;
-		mCostVisData[groupID][cellIdx * NUM_DIRS + dir] = cost;
+		mSpeedVisData[groupID][cellIdx * NUM_DIRS + dir] = cellSpeed;
+		mCostVisData[groupID][cellIdx * NUM_DIRS + dir] = cellCost;
 	}
 
 	mDiscomfortVisData[groupID][cellIdx] = currCell->discomfort;
