@@ -357,12 +357,12 @@ bool CCPathModule::GetScalarDataTypeInfo(DataTypeInfo* i, unsigned int groupID) 
 	i->sizey = mGrid.GetGridHeight();
 
 	switch (i->type) {
-		case Grid::DATATYPE_DENSITY:    { i->fdata = mGrid.GetDensityVisDataArray();           i->stride =              1; i->global = true;  i->name = "DENSITY";    } break;
-		case Grid::DATATYPE_HEIGHT:     { i->fdata = mGrid.GetHeightVisDataArray();            i->stride =              1; i->global = true;  i->name = "HEIGHT";     } break;
+		case Grid::DATATYPE_DENSITY:    { i->fdata = mGrid.GetDensityVisDataArray();           i->stride =              1; i->global = true;  i->name =    "DENSITY"; } break;
+		case Grid::DATATYPE_HEIGHT:     { i->fdata = mGrid.GetHeightVisDataArray();            i->stride =              1; i->global = true;  i->name =     "HEIGHT"; } break;
 		case Grid::DATATYPE_DISCOMFORT: { i->fdata = mGrid.GetDiscomfortVisDataArray(groupID); i->stride =              1; i->global = false; i->name = "DISCOMFORT"; } break;
-		case Grid::DATATYPE_SPEED:      { i->fdata = mGrid.GetSpeedVisDataArray(groupID);      i->stride = Grid::NUM_DIRS; i->global = false; i->name = "SPEED";      } break;
-		case Grid::DATATYPE_COST:       { i->fdata = mGrid.GetCostVisDataArray(groupID);       i->stride = Grid::NUM_DIRS; i->global = false; i->name = "COST";       } break;
-		case Grid::DATATYPE_POTENTIAL:  { i->fdata = mGrid.GetPotentialVisDataArray(groupID);  i->stride =              1; i->global = false; i->name = "POTENTIAL";  } break;
+		case Grid::DATATYPE_SPEED:      { i->fdata = mGrid.GetSpeedVisDataArray(groupID);      i->stride = Grid::NUM_DIRS; i->global = false; i->name =      "SPEED"; } break;
+		case Grid::DATATYPE_COST:       { i->fdata = mGrid.GetCostVisDataArray(groupID);       i->stride = Grid::NUM_DIRS; i->global = false; i->name =       "COST"; } break;
+		case Grid::DATATYPE_POTENTIAL:  { i->fdata = mGrid.GetPotentialVisDataArray(groupID);  i->stride =              1; i->global = false; i->name =  "POTENTIAL"; } break;
 		default: { ret = false; } break;
 	}
 
@@ -376,9 +376,9 @@ bool CCPathModule::GetVectorDataTypeInfo(DataTypeInfo* i, unsigned int groupID) 
 	i->sizey = mGrid.GetGridHeight();
 
 	switch (i->type) {
-		case Grid::DATATYPE_HEIGHT_DELTA:    { i->vdata = mGrid.GetHeightDeltaVisDataArray();           i->stride = Grid::NUM_DIRS; i->global = true;  i->name = "HEIGHT_DELTA";    } break;
-		case Grid::DATATYPE_VELOCITY_AVG:    { i->vdata = mGrid.GetVelocityAvgVisDataArray();           i->stride =              1; i->global = true;  i->name = "VELOCITY_AVG";    } break;
-		case Grid::DATATYPE_VELOCITY:        { i->vdata = mGrid.GetVelocityVisDataArray(groupID);       i->stride = Grid::NUM_DIRS; i->global = false; i->name = "VELOCITY";        } break;
+		case Grid::DATATYPE_HEIGHT_DELTA:    { i->vdata = mGrid.GetHeightDeltaVisDataArray();           i->stride = Grid::NUM_DIRS; i->global = true;  i->name =    "HEIGHT_DELTA"; } break;
+		case Grid::DATATYPE_VELOCITY_AVG:    { i->vdata = mGrid.GetVelocityAvgVisDataArray();           i->stride =              1; i->global = true;  i->name =    "VELOCITY_AVG"; } break;
+		case Grid::DATATYPE_VELOCITY:        { i->vdata = mGrid.GetVelocityVisDataArray(groupID);       i->stride = Grid::NUM_DIRS; i->global = false; i->name =        "VELOCITY"; } break;
 		case Grid::DATATYPE_POTENTIAL_DELTA: { i->vdata = mGrid.GetPotentialDeltaVisDataArray(groupID); i->stride = Grid::NUM_DIRS; i->global = false; i->name = "POTENTIAL_DELTA"; } break;
 		default: { ret = false; } break;
 	}
