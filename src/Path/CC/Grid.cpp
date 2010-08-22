@@ -443,7 +443,8 @@ void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
 	//
 	//    however, in BOTH cases, cell densities are *not* guaranteed to
 	//    lie in [0.0, 1.0] (even when dx and dy themselves do), so they
-	//    still need normalisation (if rho_* is normalised)
+	//    still need normalisation (if rho_* is normalised) with just one
+	//    exception: d{x,y} in [0.0, 1.0] and lambda in [0.0, 1.0]
 	//
 	// negative exponents complicate matters anyway:
 	//    positive non-fractional dx and dy, positive non-fractional lambda  ==>   2^ 5.0 = 32.0
