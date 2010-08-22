@@ -446,7 +446,8 @@ void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
 	//    still need normalisation (if rho_* is normalised) with just one
 	//    exception: d{x,y} in [0.0, 1.0] and lambda in [0.0, 1.0]
 	//
-	// negative exponents complicate matters anyway:
+	// since we want to achieve radial density falloff, larger values for
+	// dx or dy must result in smaller densities *regardless* of lambda:
 	//    positive non-fractional dx and dy,  positive non-fractional lambda  ==>   2.00^ 5.0 = 32.00000,  4.00^ 5.0 = 1024.000 (WRONG: no falloff)
 	//    positive non-fractional dx and dy,  positive     fractional lambda  ==>   2.00^ 0.5 =  1.41421,  4.00^ 0.5 =    2.000 (WRONG: no falloff)
 	//    positive non-fractional dx and dy,  negative non-fractional lambda  ==>   2.00^-5.0 =  0.03125,  4.00^-5.0 =    0.001
@@ -456,8 +457,11 @@ void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
 	//    positive     fractional dx and dy,  positive     fractional lambda  ==>   0.50^ 0.5 =  0.70710,  0.75^ 0.5 =    0.866 (WRONG: no falloff)
 	//    positive     fractional dx and dy,  negative non-fractional lambda  ==>   0.50^-5.0 = 32.00000,  0.75^-5.0 =    4.213
 	//    positive     fractional dx and dy,  negative     fractional lambda  ==>   0.50^-0.5 =  1.41421,  0.75^-0.5 =    1.154
-
-	static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
+	//
+	// take the *non-normalized* MIN_DENSITY value, so that lambda is
+	// always a negative number (fractional if inv(MIN_DENSITY) > 0.5,
+	// non-fractional otherwise)
+	static const float EXP_DENSITY = -(logf(1.0f / MIN_DENSITY) / logf(2.0f));
 
 	// splat the density
 	Af->density += powf(std::min<float>(1.0f - dx, 1.0f - dy), EXP_DENSITY); Ab->density = Af->density;
