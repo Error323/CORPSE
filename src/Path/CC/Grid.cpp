@@ -423,6 +423,17 @@ void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
 	const float dX = posf.x - Af->x + 0.5f;
 	const float dY = posf.z - Af->y + 0.5f;
 
+	// derivation:
+	//     rho_min                 >=      rho_bar
+	//     rho_bar                  =     (1 / (2 ** lambda))
+	//     rho_min                 >=     (1 / (2 ** lambda))
+	//     rho_min * (2 ** lambda) >=      1
+	//               (2 ** lambda) >=      1 / rho_min
+	//            log(2 ** lambda) >=  log(1 / rho_min)
+	//           (lambda * log(2)) >= (log(1) - log(rho_min))
+	//                      lambda >= (-log(rho_min) / log(2))
+	static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
+
 	// splat the density
 	Af->density += powf(std::min<float>(1.0f - dX, 1.0f - dY), EXP_DENSITY); Ab->density = Af->density;
 	Bf->density += powf(std::min<float>(       dX, 1.0f - dY), EXP_DENSITY); Bb->density = Bf->density;

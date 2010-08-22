@@ -139,7 +139,6 @@ public:
 	unsigned int GetSquareSize() const { return mSquareSize; }
 
 private:
-	static const float EXP_DENSITY = 2.0f;    // density exponent (lambda)
 	static const float MIN_DENSITY = 0.25f;   // if rho <= rhoMin, f == fTopo
 	static const float MAX_DENSITY = 0.75f;   // if rho >= rhoMax, f == fFlow
 
