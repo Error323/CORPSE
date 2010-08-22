@@ -415,15 +415,15 @@ void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
 	Cell *Cf = &currCells[idxC], *Cb = &prevCells[idxC]; mTouchedCells.insert(idxC);
 	Cell *Df = &currCells[idxD], *Db = &prevCells[idxD]; mTouchedCells.insert(idxD);
 
-	// add velocity (NOTE: why only to C?)
+	// add velocity (NOTE: should only C receive this?)
 	Af->avgVelocity += vel; Bf->avgVelocity += vel; Cf->avgVelocity += vel; Df->avgVelocity += vel;
 	Ab->avgVelocity += vel; Bb->avgVelocity += vel; Cb->avgVelocity += vel; Db->avgVelocity += vel;
 
-	// compute delta-X and delta-Y
-	const float dX = posf.x - Af->x + 0.5f;
-	const float dY = posf.z - Af->y + 0.5f;
+	// compute delta-x and delta-y (NOTE: not normalised)
+	const float dx = posf.x - Af->x + 0.5f;
+	const float dy = posf.z - Af->y + 0.5f;
 
-	// derivation:
+	// lambda derivation:
 	//     rho_min                 >=      rho_bar
 	//     rho_bar                  =     (1 / (2 ** lambda))
 	//     rho_min                 >=     (1 / (2 ** lambda))
@@ -432,13 +432,35 @@ void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
 	//            log(2 ** lambda) >=  log(1 / rho_min)
 	//           (lambda * log(2)) >= (log(1) - log(rho_min))
 	//                      lambda >= (-log(rho_min) / log(2))
+	//
+	// this is a positive number if and only if 0.0 < MIN_DENSITY <= 1.0,
+	// so we "expect" rho_min and rho_max to lie in the range [0.0, 1.0]
+	//
+	//    if they do, then dx and dy will only be raised to exponents in
+	//    [+inf, +0.0], whereas if they do not, then dx and dy will be
+	//    raised to exponents in [+inf, -inf] and it is much harder to
+	//    define "reasonable" thresholds for "low" and "high" density
+	//
+	//    however, in BOTH cases, cell densities are *not* guaranteed to
+	//    lie in [0.0, 1.0] (even when dx and dy themselves do), so they
+	//    still need normalisation (if rho_* is normalised)
+	//
+	// negative exponents complicate matters anyway:
+	//    positive non-fractional dx and dy, positive non-fractional lambda  ==>   2^ 5.0 = 32.0
+	//    positive non-fractional dx and dy, positive     fractional lambda  ==>   2^ 0.5 = 1.41
+	//    positive non-fractional dx and dy, negative non-fractional lambda  ==>  -2^-5.0 = -0.03125
+	//    positive non-fractional dx and dy, negative     fractional lambda  ==>  -2^-0.5 = -0.71
+	//    ...
+	//    the same four possibilites, but now
+	//    for positive *fractional* dx and dy
+
 	static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
 
 	// splat the density
-	Af->density += powf(std::min<float>(1.0f - dX, 1.0f - dY), EXP_DENSITY); Ab->density = Af->density;
-	Bf->density += powf(std::min<float>(       dX, 1.0f - dY), EXP_DENSITY); Bb->density = Bf->density;
-	Cf->density += powf(std::min<float>(       dX,        dY), EXP_DENSITY); Cb->density = Cf->density;
-	Df->density += powf(std::min<float>(1.0f - dX,        dY), EXP_DENSITY); Db->density = Df->density;
+	Af->density += powf(std::min<float>(1.0f - dx, 1.0f - dy), EXP_DENSITY); Ab->density = Af->density;
+	Bf->density += powf(std::min<float>(       dx, 1.0f - dy), EXP_DENSITY); Bb->density = Bf->density;
+	Cf->density += powf(std::min<float>(       dx,        dy), EXP_DENSITY); Cb->density = Cf->density;
+	Df->density += powf(std::min<float>(1.0f - dx,        dy), EXP_DENSITY); Db->density = Df->density;
 
 	mMaxDensity = std::max(mMaxDensity, Af->density);
 	mMaxDensity = std::max(mMaxDensity, Bf->density);
