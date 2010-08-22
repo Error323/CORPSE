@@ -9,8 +9,8 @@
 #include "../../Sim/SimObjectState.hpp"
 #include "../../System/Debugger.hpp"
 
-#define GRID_INDEX(x, y) (((y) * (mWidth)) + (x))
-#define ELEVATION(x, y) (mCOH->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * mWidth) + (mDownScale * (x))])
+#define GRID_INDEX(x, y) (((y) * (numCellsX)) + (x))
+#define ELEVATION(x, y) (mCOH->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * numCellsX) + (mDownScale * (x))])
 #define POSITIVE_SLOPE(dir, slope)                            \
 	(((dir == DIR_N || dir == DIR_W) && (slope <  0.0f))  ||  \
 	 ((dir == DIR_S || dir == DIR_E) && (slope >= 0.0f)))
@@ -26,20 +26,20 @@
 
 void Grid::AddGroup(unsigned int groupID) {
 	mDiscomfortVisData[groupID] = std::vector<float>();
-	mDiscomfortVisData[groupID].resize(mWidth * mHeight, 0.0f);
+	mDiscomfortVisData[groupID].resize(numCellsX * numCellsZ, 0.0f);
 	mSpeedVisData[groupID] = std::vector<float>();
-	mSpeedVisData[groupID].resize(mWidth * mHeight * NUM_DIRS, 0.0f);
+	mSpeedVisData[groupID].resize(numCellsX * numCellsZ * NUM_DIRS, 0.0f);
 	mCostVisData[groupID] = std::vector<float>();
-	mCostVisData[groupID].resize(mWidth * mHeight * NUM_DIRS, 0.0f);
+	mCostVisData[groupID].resize(numCellsX * numCellsZ * NUM_DIRS, 0.0f);
 
 	mPotentialVisData[groupID] = std::vector<float>();
-	mPotentialVisData[groupID].resize(mWidth * mHeight, 0.0f);
+	mPotentialVisData[groupID].resize(numCellsX * numCellsZ, 0.0f);
 
 	mVelocityVisData[groupID] = std::vector<vec3f>();
-	mVelocityVisData[groupID].resize(mWidth * mHeight * NUM_DIRS, NVECf);
+	mVelocityVisData[groupID].resize(numCellsX * numCellsZ * NUM_DIRS, NVECf);
 
 	mPotentialDeltaVisData[groupID] = std::vector<vec3f>();
-	mPotentialDeltaVisData[groupID].resize(mWidth * mHeight * NUM_DIRS, NVECf);
+	mPotentialDeltaVisData[groupID].resize(numCellsX * numCellsZ * NUM_DIRS, NVECf);
 }
 
 void Grid::DelGroup(unsigned int groupID) {
@@ -150,8 +150,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	// NOTE: if mDownScale > 1, the height-map must be downsampled
 	mCOH        = coh;
 	mDownScale  = downScaleFactor;
-	mWidth      = mCOH->GetHeightMapSizeX() / mDownScale;
-	mHeight     = mCOH->GetHeightMapSizeZ() / mDownScale;
+	numCellsX   = mCOH->GetHeightMapSizeX() / mDownScale;
+	numCellsZ   = mCOH->GetHeightMapSizeZ() / mDownScale;
 	mSquareSize = mCOH->GetSquareSize()     * mDownScale;
 
 	// NOTE:
@@ -164,10 +164,10 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	mMinTerrainSlope =  std::numeric_limits<float>::max();
 	mMaxTerrainSlope = -std::numeric_limits<float>::max();
 
-	printf("[Grid::Init] resolution: %dx%d %d\n", mWidth, mHeight, mSquareSize);
+	printf("[Grid::Init] resolution: %dx%d %d\n", numCellsX, numCellsZ, mSquareSize);
 
-	const unsigned int numCells = mWidth * mHeight;
-	const unsigned int numEdges = (mWidth + 1) * mHeight + (mHeight + 1) * mWidth;
+	const unsigned int numCells = numCellsX * numCellsZ;
+	const unsigned int numEdges = (numCellsX + 1) * numCellsZ + (numCellsZ + 1) * numCellsX;
 
 	// visualisation data for global scalar fields
 	mDensityVisData.resize(numCells);
@@ -189,8 +189,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
 	std::vector<Cell::Edge>& prevEdges = mBuffers[mPrevBufferIdx].edges;
 
-	for (unsigned int y = 0; y < mHeight; y++) {
-		for (unsigned int x = 0; x < mWidth; x++) {
+	for (unsigned int y = 0; y < numCellsZ; y++) {
+		for (unsigned int x = 0; x < numCellsX; x++) {
 			currCells.push_back(Cell(x, y));
 			prevCells.push_back(Cell(x, y));
 			currEdges.push_back(Grid::Cell::Edge());
@@ -231,7 +231,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 			}
 
 			// bind a new face to the southern face of the border cell
-			if (y == mHeight - 1) {
+			if (y == numCellsZ - 1) {
 				currEdges.push_back(Grid::Cell::Edge());
 				prevEdges.push_back(Grid::Cell::Edge());
 				currCell->edges[DIR_S] = currEdges.size() - 1;
@@ -239,7 +239,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 			}
 
 			// bind a new face to the eastern face of the border cell
-			if (x == mWidth - 1) {
+			if (x == numCellsX - 1) {
 				currEdges.push_back(Grid::Cell::Edge());
 				prevEdges.push_back(Grid::Cell::Edge());
 				currCell->edges[DIR_E] = currEdges.size() - 1;
@@ -252,8 +252,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	PFFG_ASSERT(prevEdges.size() == numEdges);
 
 	// perform a full reset of the cells and compute their heights
-	for (unsigned int y = 0; y < mHeight; y++) {
-		for (unsigned int x = 0; x < mWidth; x++) {
+	for (unsigned int y = 0; y < numCellsZ; y++) {
+		for (unsigned int x = 0; x < numCellsX; x++) {
 			Cell* currCell = &currCells[GRID_INDEX(x, y)];
 			Cell* prevCell = &prevCells[GRID_INDEX(x, y)];
 
@@ -269,8 +269,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	}
 
 	// compute gradient-heights and neighbors
-	for (unsigned int y = 0; y < mHeight; y++) {
-		for (unsigned int x = 0; x < mWidth; x++) {
+	for (unsigned int y = 0; y < numCellsZ; y++) {
+		for (unsigned int x = 0; x < numCellsX; x++) {
 			unsigned int idx = GRID_INDEX(x, y);
 			unsigned int dir = 0;
 
@@ -305,7 +305,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 				mHeightDeltaVisData[idx * NUM_DIRS + dir] = currEdge->heightDelta * ((mSquareSize / mDownScale) >> 1);
 			}
 
-			if (y < mHeight - 1) {
+			if (y < numCellsZ - 1) {
 				dir = DIR_S;
 
 				currEdge = &currEdges[currCell->edges[dir]];
@@ -345,7 +345,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 				mHeightDeltaVisData[idx * NUM_DIRS + dir] = currEdge->heightDelta * ((mSquareSize / mDownScale) >> 1);
 			}
 
-			if (x < mWidth - 1) {
+			if (x < numCellsX - 1) {
 				dir = DIR_E;
 
 				currEdge = &currEdges[currCell->edges[dir]];
@@ -393,35 +393,42 @@ void Grid::Reset() {
 
 
 void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
-	const vec3f posf = vec3f(pos.x / mSquareSize, 0.0f, pos.z / mSquareSize);
-	const vec3i posi = WorldPosToGridIdx(pos);
+	const Cell* cell = GetCell(WorldPosToCellID(pos));
+	const vec3f& cellMidPos = GetCellPos(cell);
 
-	const unsigned int i = CLAMP((posf.x > (posi.x + 0.5f))? posi.x + 1: posi.x,  1, int(mWidth - 1));
-	const unsigned int j = CLAMP((posf.z > (posi.z + 0.5f))? posi.z + 1: posi.z,  1, int(mHeight - 1));
+	float dx = pos.x - cellMidPos.x;
+	float dy = pos.z - cellMidPos.z;
+	int cx = cell->x, ncx = cell->x;
+	int cy = cell->y, ncy = cell->y;
 
-	PFFG_ASSERT(i > 0 && j > 0 && i < mWidth && j < mHeight);
- 
+	if (dx <= 0.0f) { ncx = CLAMP(ncx - 1, 0, int(numCellsX - 1)); }
+	if (dy <= 0.0f) { ncy = CLAMP(ncy - 1, 0, int(numCellsZ - 1)); }
+
+	const Cell* cellNgb = GetCell(GRID_INDEX(ncx, ncy));
+	const vec3f& cellNgbPos = GetCellPos(cellNgb);
+
+	// normalise and clamp (to prevent excessive mMaxDensity)
+	dx = CLAMP((pos.x - cellNgbPos.x) / mSquareSize, 0.1f, 0.9f);
+	dy = CLAMP((pos.z - cellNgbPos.z) / mSquareSize, 0.1f, 0.9f);
+
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
 	const unsigned int
-		idxA = GRID_INDEX(i - 1, j - 1),
-		idxB = GRID_INDEX(i    , j - 1),
-		idxC = GRID_INDEX(i    , j    ),
-		idxD = GRID_INDEX(i - 1, j    );
+		cellIdxA = GRID_INDEX(ncx, ncy),
+		cellIdxB = GRID_INDEX( cx, ncy),
+		cellIdxC = GRID_INDEX( cx,  cy),
+		cellIdxD = GRID_INDEX(ncx,  cy);
 
-	Cell *Af = &currCells[idxA], *Ab = &prevCells[idxA]; mTouchedCells.insert(idxA);
-	Cell *Bf = &currCells[idxB], *Bb = &prevCells[idxB]; mTouchedCells.insert(idxB);
-	Cell *Cf = &currCells[idxC], *Cb = &prevCells[idxC]; mTouchedCells.insert(idxC);
-	Cell *Df = &currCells[idxD], *Db = &prevCells[idxD]; mTouchedCells.insert(idxD);
+	Cell *Af = &currCells[cellIdxA], *Ab = &prevCells[cellIdxA]; mTouchedCells.insert(cellIdxA);
+	Cell *Bf = &currCells[cellIdxB], *Bb = &prevCells[cellIdxB]; mTouchedCells.insert(cellIdxB);
+	Cell *Cf = &currCells[cellIdxC], *Cb = &prevCells[cellIdxC]; mTouchedCells.insert(cellIdxC);
+	Cell *Df = &currCells[cellIdxD], *Db = &prevCells[cellIdxD]; mTouchedCells.insert(cellIdxD);
 
 	// add velocity (NOTE: should only C receive this?)
 	Af->avgVelocity += vel; Bf->avgVelocity += vel; Cf->avgVelocity += vel; Df->avgVelocity += vel;
 	Ab->avgVelocity += vel; Bb->avgVelocity += vel; Cb->avgVelocity += vel; Db->avgVelocity += vel;
 
-	// compute delta-x and delta-y (NOTE: not normalised)
-	const float dx = posf.x - Af->x + 0.5f;
-	const float dy = posf.z - Af->y + 0.5f;
 
 	// lambda derivation:
 	//     rho_min                 >=      rho_bar
@@ -458,10 +465,11 @@ void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
 	//    positive     fractional dx and dy,  negative non-fractional lambda  ==>   0.50^-5.0 = 32.00000,  0.75^-5.0 =    4.213
 	//    positive     fractional dx and dy,  negative     fractional lambda  ==>   0.50^-0.5 =  1.41421,  0.75^-0.5 =    1.154
 	//
-	// take the *non-normalized* MIN_DENSITY value, so that lambda is
+	// take the *non-normalised* MIN_DENSITY value, so that lambda is
 	// always a negative number (fractional if inv(MIN_DENSITY) > 0.5,
 	// non-fractional otherwise)
-	static const float EXP_DENSITY = -(logf(1.0f / MIN_DENSITY) / logf(2.0f));
+	// static const float EXP_DENSITY = -(logf(1.0f / MIN_DENSITY) / logf(2.0f));
+	static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
 
 	// splat the density
 	Af->density += powf(std::min<float>(1.0f - dx, 1.0f - dy), EXP_DENSITY); Ab->density = Af->density;
@@ -565,7 +573,7 @@ void Grid::ComputeSpeedAndCost(unsigned int groupID, Cell* currCell) {
 					cellAvgDiscomfort += tmpCell->discomfort;
 					cellAvgVelocity   += tmpCell->avgVelocity;
 
-					if (x < mWidth && z < mHeight) {
+					if (x < numCellsX && z < numCellsZ) {
 						tmpCell = &currCells[GRID_INDEX(x, z)];
 					} else {
 						tmpCell = NULL;
@@ -790,10 +798,10 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 
 		ComputeSpeedAndCost(groupID, currNgb);
 
-		dirCells[DIR_N] = (currNgb->y >           0) ? &currCells[GRID_INDEX(currNgb->x    , currNgb->y - 1)] : NULL;
-		dirCells[DIR_S] = (currNgb->y < mHeight - 1) ? &currCells[GRID_INDEX(currNgb->x    , currNgb->y + 1)] : NULL;
-		dirCells[DIR_E] = (currNgb->x < mWidth -  1) ? &currCells[GRID_INDEX(currNgb->x + 1, currNgb->y    )] : NULL;
-		dirCells[DIR_W] = (currNgb->x >           0) ? &currCells[GRID_INDEX(currNgb->x - 1, currNgb->y    )] : NULL;
+		dirCells[DIR_N] = (currNgb->y >             0) ? &currCells[GRID_INDEX(currNgb->x    , currNgb->y - 1)] : NULL;
+		dirCells[DIR_S] = (currNgb->y < numCellsZ - 1) ? &currCells[GRID_INDEX(currNgb->x    , currNgb->y + 1)] : NULL;
+		dirCells[DIR_E] = (currNgb->x < numCellsX - 1) ? &currCells[GRID_INDEX(currNgb->x + 1, currNgb->y    )] : NULL;
+		dirCells[DIR_W] = (currNgb->x >             0) ? &currCells[GRID_INDEX(currNgb->x - 1, currNgb->y    )] : NULL;
 
 		for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
 			if (dirCells[dir] == NULL) {
@@ -1091,8 +1099,8 @@ vec3f Grid::GetInterpolatedVelocity(const std::vector<Cell::Edge>& edges, const 
 vec3i Grid::WorldPosToGridIdx(const vec3f& worldPos) const {
 	const int gx = (worldPos.x / mSquareSize);
 	const int gz = (worldPos.z / mSquareSize);
-	const int cx = CLAMP(gx, 0, int(mWidth - 1));
-	const int cz = CLAMP(gz, 0, int(mHeight - 1));
+	const int cx = CLAMP(gx, 0, int(numCellsX - 1));
+	const int cz = CLAMP(gz, 0, int(numCellsZ - 1));
 	return vec3i(cx, 0, cz);
 }
 
