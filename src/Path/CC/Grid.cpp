@@ -447,13 +447,15 @@ void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
 	//    exception: d{x,y} in [0.0, 1.0] and lambda in [0.0, 1.0]
 	//
 	// negative exponents complicate matters anyway:
-	//    positive non-fractional dx and dy, positive non-fractional lambda  ==>   2^ 5.0 = 32.0
-	//    positive non-fractional dx and dy, positive     fractional lambda  ==>   2^ 0.5 = 1.41
-	//    positive non-fractional dx and dy, negative non-fractional lambda  ==>  -2^-5.0 = -0.03125
-	//    positive non-fractional dx and dy, negative     fractional lambda  ==>  -2^-0.5 = -0.71
+	//    positive non-fractional dx and dy,  positive non-fractional lambda  ==>   2.00^ 5.0 = 32.00000,  4.00^ 5.0 = 1024.000 (WRONG: no falloff)
+	//    positive non-fractional dx and dy,  positive     fractional lambda  ==>   2.00^ 0.5 =  1.41421,  4.00^ 0.5 =    2.000 (WRONG: no falloff)
+	//    positive non-fractional dx and dy,  negative non-fractional lambda  ==>   2.00^-5.0 =  0.03125,  4.00^-5.0 =    0.001
+	//    positive non-fractional dx and dy,  negative     fractional lambda  ==>   2.00^-0.5 =  0.70710,  4.00^-0.5 =    0.500
 	//    ...
-	//    the same four possibilites, but now
-	//    for positive *fractional* dx and dy
+	//    positive     fractional dx and dy,  positive non-fractional lambda  ==>   0.50^ 5.0 =  0.03125,  0.75^ 5.0 =    0.237 (WRONG: no falloff)
+	//    positive     fractional dx and dy,  positive     fractional lambda  ==>   0.50^ 0.5 =  0.70710,  0.75^ 0.5 =    0.866 (WRONG: no falloff)
+	//    positive     fractional dx and dy,  negative non-fractional lambda  ==>   0.50^-5.0 = 32.00000,  0.75^-5.0 =    4.213
+	//    positive     fractional dx and dy,  negative     fractional lambda  ==>   0.50^-0.5 =  1.41421,  0.75^-0.5 =    1.154
 
 	static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
 
