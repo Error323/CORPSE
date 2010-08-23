@@ -871,7 +871,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 
 
 #if (MERGED_SPEED_COST_POTENTIAL_COMPUTATION == 1)
-	void Grid::ComputeCellSpeedAndCost(unsigned int groupID, Cell* currCell) {
+	void Grid::ComputeCellSpeedAndCostMERGED(unsigned int groupID, Cell* currCell) {
 		#if (SPEED_COST_EXPERIMENTAL_COMPUTATION == 0)
 			// re-used from (MERGED == 0 && SINGLE_PASS == 1)
 			ComputeCellSpeedAndCost(groupID, GRID_INDEX(currCell->x, currCell->y));
@@ -961,7 +961,7 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsign
 		prevCell->ResetGroupVars();
 
 		#if (MERGED_SPEED_COST_POTENTIAL_CALCULATION == 1)
-		ComputeCellSpeedAndCost(groupID, currCell);
+		ComputeCellSpeedAndCostMERGED(groupID, currCell);
 		#endif
 		UpdateCandidates(groupID, currCell);
 
@@ -1045,7 +1045,7 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 		}
 
 		#if (MERGED_SPEED_COST_POTENTIAL_CALCULATION == 1)
-		ComputeCellSpeedAndCost(groupID, currNgb);
+		ComputeCellSpeedAndCostMERGED(groupID, currNgb);
 		#else
 		groupID = groupID;
 		#endif

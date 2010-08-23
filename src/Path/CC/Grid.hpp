@@ -208,7 +208,7 @@ private:
 	void ComputeCellSpeed(unsigned int, unsigned int);
 	void ComputeCellCost(unsigned int, unsigned int);
 	void ComputeCellSpeedAndCost(unsigned int, unsigned int);
-	void ComputeCellSpeedAndCost(unsigned int, Cell*);
+	void ComputeCellSpeedAndCostMERGED(unsigned int, Cell*);
 	void ComputeCellSpeedAndCostEXP(unsigned int, Cell*);
 	void ComputeSpeedAndCost(unsigned int);
 
