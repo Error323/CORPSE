@@ -208,8 +208,8 @@ private:
 	void ComputeCellSpeed(unsigned int, unsigned int);
 	void ComputeCellCost(unsigned int, unsigned int);
 	void ComputeCellSpeedAndCost(unsigned int, unsigned int);
-	void ComputeCellSpeedAndCost(Cell*, unsigned int);
-	void ComputeCellSpeedAndCostEXP(Cell*, unsigned int);
+	void ComputeCellSpeedAndCost(unsigned int, Cell*);
+	void ComputeCellSpeedAndCostEXP(unsigned int, Cell*);
 	void ComputeSpeedAndCost(unsigned int);
 
 	void UpdateCandidates(unsigned int, const Cell*);
