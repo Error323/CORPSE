@@ -142,6 +142,9 @@ private:
 	static const float MIN_DENSITY = 0.25f;   // if rho <= rhoMin, f == fTopo
 	static const float MAX_DENSITY = 0.75f;   // if rho >= rhoMax, f == fFlow
 
+	static const float      SPEED_WEIGHT = 1.0f; // alpha
+	static const float DISCOMFORT_WEIGHT = 8.0f; // gamma
+
 	unsigned int numCellsX;
 	unsigned int numCellsZ;
 	unsigned int mSquareSize;

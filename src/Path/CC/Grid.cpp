@@ -587,9 +587,6 @@ void Grid::ComputeAvgVelocity() {
 	}
 
 	void Grid::ComputeCellCost(unsigned int groupID, unsigned int cellIdx) {
-		const static float speedWeight      = 1.0f; // alpha
-		const static float discomfortWeight = 4.0f; // gamma
-
 		std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
 		std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
 
@@ -628,7 +625,7 @@ void Grid::ComputeAvgVelocity() {
 				if (currCellNgbDir->density <= MIN_DENSITY) { cellSpeedDir = cellTopoSpeedDir; }
 
 				if (std::fabs(cellSpeedDir) > 0.01f) {
-					cellCostDir = ((speedWeight * cellSpeedDir) + (discomfortWeight * currCellNgbDir->discomfort)) / cellSpeedDir;
+					cellCostDir = ((SPEED_WEIGHT * cellSpeedDir) + (DISCOMFORT_WEIGHT * currCellNgbDir->discomfort)) / cellSpeedDir;
 				}
 			}
 
@@ -642,9 +639,7 @@ void Grid::ComputeAvgVelocity() {
 #endif
 
 void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
-	const static float speedWeight      = 1.0f; // alpha
-	const static float discomfortWeight = 4.0f; // gamma
-	const static float deltaHeightMax   = mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight();
+	const static float deltaHeightMax = mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight();
 
 	std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
@@ -702,7 +697,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 			if (currCellCostNgbDir->density <= MIN_DENSITY) { cellSpeedDirC = cellTopoSpeedDir; }
 
 			if (std::fabs(cellSpeedDirC) > 0.01f) {
-				cellCostDir = ((speedWeight * cellSpeedDirC) + (discomfortWeight * currCellCostNgbDir->discomfort)) / cellSpeedDirC;
+				cellCostDir = ((SPEED_WEIGHT * cellSpeedDirC) + (DISCOMFORT_WEIGHT * currCellCostNgbDir->discomfort)) / cellSpeedDirC;
 			}
 		}
 
@@ -720,9 +715,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 
 #if (SPEED_COST_EXPERIMENTAL_COMPUTATION == 1)
 	void Grid::ComputeCellSpeedAndCostEXP(unsigned int groupID, Cell* currCell) {
-		const static float speedWeight      = 1.0f; // alpha
-		const static float discomfortWeight = 4.0f; // gamma
-		const static float deltaHeightMax   = mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight();
+		const static float deltaHeightMax = mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight();
 
 		const unsigned int cellIdx = GRID_INDEX(currCell->x, currCell->y);
 		const vec3f& cellWorldPos = GridIdxToWorldPos(currCell);
@@ -845,7 +838,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 			if (cellAvgDensity <= MIN_DENSITY) { cellSpeed = cellTopoSpeed; }
 
 			if (std::fabs(cellSpeed) > 0.01f) {
-				cellCost = ((speedWeight * cellSpeed) + (discomfortWeight * cellAvgDiscomfort)) / cellSpeed;
+				cellCost = ((SPEED_WEIGHT * cellSpeed) + (DISCOMFORT_WEIGHT * cellAvgDiscomfort)) / cellSpeed;
 			} else {
 				// should this case be allowed to happen?
 				// (infinite costs very heavily influence
@@ -854,7 +847,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 				// cost = std::numeric_limits<float>::infinity();
 				// cost = std::numeric_limits<float>::max();
 				cellSpeed = 0.01f;
-				cellCost  = ((speedWeight * cellSpeed) + (discomfortWeight * cellAvgDiscomfort)) / cellSpeed;
+				cellCost  = ((SPEED_WEIGHT * cellSpeed) + (DISCOMFORT_WEIGHT * cellAvgDiscomfort)) / cellSpeed;
 			}
 
 			currCell->speed[dir] = cellSpeed;
