@@ -960,7 +960,7 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsign
 		currCell->potential = 0.0f;
 		prevCell->ResetGroupVars();
 
-		#if (MERGED_SPEED_COST_POTENTIAL_CALCULATION == 1)
+		#if (MERGED_SPEED_COST_POTENTIAL_COMPUTATION == 1)
 		ComputeCellSpeedAndCostMERGED(groupID, currCell);
 		#endif
 		UpdateCandidates(groupID, currCell);
@@ -1044,7 +1044,7 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 			continue;
 		}
 
-		#if (MERGED_SPEED_COST_POTENTIAL_CALCULATION == 1)
+		#if (MERGED_SPEED_COST_POTENTIAL_COMPUTATION == 1)
 		ComputeCellSpeedAndCostMERGED(groupID, currNgb);
 		#else
 		groupID = groupID;
