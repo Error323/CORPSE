@@ -205,8 +205,13 @@ private:
 	vec3i WorldPosToGridIdx(const vec3f&) const;
 	vec3f GridIdxToWorldPos(const Cell*) const;
 
+	void ComputeCellSpeed(unsigned int, unsigned int);
+	void ComputeCellCost(unsigned int, unsigned int);
+	void ComputeCellSpeedAndCost(unsigned int, unsigned int);
+	void ComputeSpeedAndCost(unsigned int);
+	void ComputeCellSpeedAndCost(unsigned int, Cell*);
+
 	void UpdateCandidates(unsigned int, const Cell*);
-	void ComputeSpeedAndCost(unsigned int, Cell*);
 	float Potential2D(const float, const float, const float, const float) const;
 	float Potential1D(const float, const float) const;
 };
