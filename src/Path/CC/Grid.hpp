@@ -208,8 +208,9 @@ private:
 	void ComputeCellSpeed(unsigned int, unsigned int);
 	void ComputeCellCost(unsigned int, unsigned int);
 	void ComputeCellSpeedAndCost(unsigned int, unsigned int);
+	void ComputeCellSpeedAndCost(Cell*, unsigned int);
+	void ComputeCellSpeedAndCostEXP(Cell*, unsigned int);
 	void ComputeSpeedAndCost(unsigned int);
-	void ComputeCellSpeedAndCost(unsigned int, Cell*);
 
 	void UpdateCandidates(unsigned int, const Cell*);
 	float Potential2D(const float, const float, const float, const float) const;
