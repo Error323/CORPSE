@@ -208,11 +208,11 @@ private:
 	vec3i WorldPosToGridIdx(const vec3f&) const;
 	vec3f GridIdxToWorldPos(const Cell*) const;
 
-	void ComputeCellSpeed(unsigned int, unsigned int);
-	void ComputeCellCost(unsigned int, unsigned int);
-	void ComputeCellSpeedAndCost(unsigned int, unsigned int);
-	void ComputeCellSpeedAndCostMERGED(unsigned int, Cell*);
-	void ComputeCellSpeedAndCostEXP(unsigned int, Cell*);
+	void ComputeCellSpeed(unsigned int, unsigned int, std::vector<Cell>&, std::vector<Cell::Edge>&);
+	void ComputeCellCost(unsigned int, unsigned int, std::vector<Cell>&, std::vector<Cell::Edge>&);
+	void ComputeCellSpeedAndCost(unsigned int, unsigned int, std::vector<Cell>&, std::vector<Cell::Edge>&);
+	void ComputeCellSpeedAndCostMERGED(unsigned int, Cell*, std::vector<Cell>&, std::vector<Cell::Edge>&);
+	void ComputeCellSpeedAndCostEXP(unsigned int, Cell*, std::vector<Cell>&, std::vector<Cell::Edge>&);
 	void ComputeSpeedAndCost(unsigned int);
 
 	void UpdateCandidates(unsigned int, const Cell*);

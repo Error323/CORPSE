@@ -225,6 +225,7 @@ void CCPathModule::UpdateGroups() {
 		// NOTE: it might be possible to compute the speed- and cost-
 		//       fields in the UpdateGroupPotentialField as cells are
 		//       picked from the UNKNOWN set, saving N iterations
+		// mGrid.UpdateGroupDiscomfort(groupID, ...);
 		mGrid.UpdateGroupPotentialField(groupID, groupGoalIDs, groupObjectIDs);
 
 

@@ -21,16 +21,7 @@
 
 #define CLAMP(v, vmin, vmax) std::max((vmin), std::min((vmax), (v)))
 
-// NOTE:
-//     why do MERGED_SPEED_COST_POTENTIAL_COMPUTATION == 1 and
-//     MERGED_SPEED_COST_POTENTIAL_COMPUTATION == 0 not produce
-//     identical results? (0 seems to be more correct)
-//
-//     when MERGED_SPEED_COST_POTENTIAL_COMPUTATION == 0, why does
-//     SPEED_COST_SINGLE_PASS_COMPUTATION == 1 not produce the same
-//     result as SPEED_COST_SINGLE_PASS_COMPUTATION == 0? (0 seems
-//     to be more correct)
-#define MERGED_SPEED_COST_POTENTIAL_COMPUTATION 0
+#define SPEED_COST_POTENTIAL_MERGED_COMPUTATION 1
 #define SPEED_COST_SINGLE_PASS_COMPUTATION      0
 
 #define SPEED_COST_EXPERIMENTAL_COMPUTATION     0
@@ -182,10 +173,10 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	mMaxTerrainSlope = -std::numeric_limits<float>::max();
 
 	printf("[Grid::Init] resolution: %dx%d %d\n", numCellsX, numCellsZ, mSquareSize);
-	printf("\tMERGED_SPEED_COST_POTENTIAL_COMPUTATION: %d\n", MERGED_SPEED_COST_POTENTIAL_COMPUTATION);
+	printf("\tSPEED_COST_POTENTIAL_MERGED_COMPUTATION: %d\n", SPEED_COST_POTENTIAL_MERGED_COMPUTATION);
 	printf("\tSPEED_COST_SINGLE_PASS_COMPUTATION:      %d\n", SPEED_COST_SINGLE_PASS_COMPUTATION);
 	printf("\n");
-	#if (MERGED_SPEED_COST_POTENTIAL_COMPUTATION == 1)
+	#if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 1)
 	printf("\tSPEED_COST_EXPERIMENTAL_COMPUTATION:     %d\n", SPEED_COST_EXPERIMENTAL_COMPUTATION);
 	printf("\tSPEED_FIELD_EXPERIMENTAL_DENSITY_OFFSET: %d\n", SPEED_FIELD_EXPERIMENTAL_DENSITY_OFFSET);
 	printf("\n");
@@ -539,15 +530,10 @@ void Grid::ComputeAvgVelocity() {
 
 
 
-#if (MERGED_SPEED_COST_POTENTIAL_COMPUTATION == 0)
-	void Grid::ComputeCellSpeed(unsigned int groupID, unsigned int cellIdx) {
-		const static float deltaHeightMax = mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight();
-
-		std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
-		std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
-
+#if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 0)
+	void Grid::ComputeCellSpeed(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 		Cell* currCell = &currCells[cellIdx];
-		currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / deltaHeightMax;
+		currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
 
 		const vec3f& cellPos = GetCellPos(currCell);
 
@@ -586,10 +572,7 @@ void Grid::ComputeAvgVelocity() {
 		mDiscomfortVisData[groupID][cellIdx] = currCell->discomfort;
 	}
 
-	void Grid::ComputeCellCost(unsigned int groupID, unsigned int cellIdx) {
-		std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
-		std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
-
+	void Grid::ComputeCellCost(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 		Cell* currCell = &currCells[cellIdx];
 
 		for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
@@ -606,8 +589,8 @@ void Grid::ComputeAvgVelocity() {
 			const float dirTerrainSlope    = currCellEdgeDir->heightDelta.dot2D(mDirVectors[dir]);
 			      float dirTerrainSlopeMod = 0.0f;
 
-			float cellSpeedDir = 0.0f; // f_{M --> N} for computing C, based on direct neighbor density
-			float cellCostDir  = 0.0f; // C_{M --> N}
+			float cellSpeedDir = 0.0f; // f_{M --> dir} for computing C, based on direct neighbor density
+			float cellCostDir  = 0.0f; // C_{M --> dir}
 
 			{
 				if (POSITIVE_SLOPE(dir, dirTerrainSlope)) { dirTerrainSlopeMod =  std::fabs(dirTerrainSlope); }
@@ -638,14 +621,9 @@ void Grid::ComputeAvgVelocity() {
 	// so we always compile it
 #endif
 
-void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
-	const static float deltaHeightMax = mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight();
-
-	std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
-	std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
-
+void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 	Cell* currCell = &currCells[cellIdx];
-	currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / deltaHeightMax;
+	currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
 
 	const vec3f& cellPos = GetCellPos(currCell);
 
@@ -662,6 +640,8 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 			case DIR_E: { currCellNgbDirC = (currCell->x < numCellsX - 1)? GetCell(GRID_INDEX(currCell->x + 1, currCell->y    )): currCell; } break;
 			case DIR_W: { currCellNgbDirC = (currCell->x >             0)? GetCell(GRID_INDEX(currCell->x - 1, currCell->y    )): currCell; } break;
 		}
+
+		const float discomfortCurrCellNgbDirC = (currCellNgbDirC->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
 
 		const float dirTerrainSlope    = currCellEdgeDir->heightDelta.dot2D(mDirVectors[dir]);
 		      float dirTerrainSlopeMod = 0.0f;
@@ -697,7 +677,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 			if (currCellNgbDirC->density <= MIN_DENSITY) { cellSpeedDirC = cellTopoSpeedDir;  }
 
 			if (cellSpeedDirC > 0.01f) {
-				cellCostDir = ((SPEED_WEIGHT * cellSpeedDirC) + (DISCOMFORT_WEIGHT * currCellNgbDirC->discomfort)) / cellSpeedDirC;
+				cellCostDir = ((SPEED_WEIGHT * cellSpeedDirC) + (DISCOMFORT_WEIGHT * discomfortCurrCellNgbDirC)) / cellSpeedDirC;
 			}
 		}
 
@@ -714,20 +694,16 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 
 
 #if (SPEED_COST_EXPERIMENTAL_COMPUTATION == 1)
-	void Grid::ComputeCellSpeedAndCostEXP(unsigned int groupID, Cell* currCell) {
-		const static float deltaHeightMax = mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight();
-
+	void Grid::ComputeCellSpeedAndCostEXP(unsigned int groupID, Cell* currCell, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
+		/*
 		const unsigned int cellIdx = GRID_INDEX(currCell->x, currCell->y);
 		const vec3f& cellWorldPos = GridIdxToWorldPos(currCell);
-
-		const std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
-		const std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
 
 		// TODO:
 		//    properly set discomfort for <cell> for this group (maybe via UI?)
 		//    for now, avoid higher areas (problem: discomfort is a much larger
 		//    term than speed, but needs to be around same order of magnitude)
-		currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / deltaHeightMax;
+		currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
 
 		for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
 			const Cell*       currCellNgb  = NULL;
@@ -744,7 +720,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 
 			PFFG_ASSERT(ngbCellIdx1D < currCells.size());
 			currCellNgb = &currCells[ngbCellIdx1D];
-
+			currCellNgb->discomfort = (currCellNgb->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
 
 			#if (SPEED_FIELD_EXPERIMENTAL_DENSITY_OFFSET == 1)
 				float cellAvgDensity    = 0.0f;
@@ -773,6 +749,8 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 					for (unsigned int i = 0; (i <= numCells && tmpCell != NULL); i++) {
 						const unsigned int x = tmpCell->x + dx[dir];
 						const unsigned int z = tmpCell->y + dz[dir];
+
+						tmpCell->discomfort = (tmpCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
 
 						cellAvgDensity    += tmpCell->density;
 						cellAvgDiscomfort += tmpCell->discomfort;
@@ -860,31 +838,33 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 		}
 
 		mDiscomfortVisData[groupID][cellIdx] = currCell->discomfort;
+		*/
 	}
 #endif
 
 
 
-#if (MERGED_SPEED_COST_POTENTIAL_COMPUTATION == 1)
-	void Grid::ComputeCellSpeedAndCostMERGED(unsigned int groupID, Cell* currCell) {
+#if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 1)
+	void Grid::ComputeCellSpeedAndCostMERGED(unsigned int groupID, Cell* currCell, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 		#if (SPEED_COST_EXPERIMENTAL_COMPUTATION == 0)
-			// re-used from (MERGED == 0 && SINGLE_PASS == 1)
-			ComputeCellSpeedAndCost(groupID, GRID_INDEX(currCell->x, currCell->y));
+			// recycled from (MERGED == 0 && SINGLE_PASS == 1)
+			ComputeCellSpeedAndCost(groupID, GRID_INDEX(currCell->x, currCell->y), currCells, currEdges);
 		#else
-			ComputeCellSpeedAndCostEXP(groupID, currCell);
+			ComputeCellSpeedAndCostEXP(groupID, currCell, currCells, currEdges);
 		#endif
 	}
 #else
 	void Grid::ComputeSpeedAndCost(unsigned int groupID) {
+		std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
+		std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
+
 		#if (SPEED_COST_SINGLE_PASS_COMPUTATION == 1)
 			for (unsigned int cellIdx = 0; cellIdx < (numCellsX * numCellsZ); cellIdx++) {
-				// ComputeCellSpeed(groupID, cellIdx);
-				// ComputeCellCost(groupID, cellIdx);
-				ComputeCellSpeedAndCost(groupID, cellIdx);
+				ComputeCellSpeedAndCost(groupID, cellIdx, currCells, currEdges);
 			}
 		#else
-			for (unsigned int cellIdx = 0; cellIdx < (numCellsX * numCellsZ); cellIdx++) { ComputeCellSpeed(groupID, cellIdx); }
-			for (unsigned int cellIdx = 0; cellIdx < (numCellsX * numCellsZ); cellIdx++) { ComputeCellCost(groupID, cellIdx); }
+			for (unsigned int cellIdx = 0; cellIdx < (numCellsX * numCellsZ); cellIdx++) { ComputeCellSpeed(groupID, cellIdx, currCells, currEdges); }
+			for (unsigned int cellIdx = 0; cellIdx < (numCellsX * numCellsZ); cellIdx++) { ComputeCellCost(groupID, cellIdx, currCells, currEdges); }
 		#endif
 	}
 #endif
@@ -924,7 +904,7 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsign
 		}
 	}
 
-	#if (MERGED_SPEED_COST_POTENTIAL_COMPUTATION == 0)
+	#if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 0)
 	ComputeSpeedAndCost(groupID);
 	#endif
 
@@ -957,8 +937,8 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsign
 		currCell->potential = 0.0f;
 		prevCell->ResetGroupVars();
 
-		#if (MERGED_SPEED_COST_POTENTIAL_COMPUTATION == 1)
-		ComputeCellSpeedAndCostMERGED(groupID, currCell);
+		#if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 1)
+		ComputeCellSpeedAndCostMERGED(groupID, currCell, currCells, currEdges);
 		#endif
 		UpdateCandidates(groupID, currCell);
 
@@ -1041,8 +1021,8 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 			continue;
 		}
 
-		#if (MERGED_SPEED_COST_POTENTIAL_COMPUTATION == 1)
-		ComputeCellSpeedAndCostMERGED(groupID, currNgb);
+		#if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 1)
+		ComputeCellSpeedAndCostMERGED(groupID, currNgb, currCells, currEdges);
 		#else
 		groupID = groupID;
 		#endif
