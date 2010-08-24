@@ -131,15 +131,15 @@ void CCPathModule::OnEvent(const IEvent* e) {
 
 			const vec3f separationVec = colliderPos - collideePos;
 			const float separationMin = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
-			const float separationDst = separationVec.sqLen3D() - separationMin;
 
 			// enforce minimum distance between objects
-			if (separationDst < 0.0f) {
-				const vec3f dir = separationVec.norm();
-				const float dst = sqrtf(-separationDst);
+			if ((separationVec.sqLen3D() - separationMin) < 0.0f) {
+				const float dst = (separationVec.len3D());
+				const vec3f dir = (separationVec / dst);
+				const vec3f dif = (dir * (((colliderRadius + collideeRadius) - dst) * 0.5f));
 
-				coh->SetSimObjectRawPosition(colliderID, colliderPos + (dir * (dst * 0.5f)));
-				coh->SetSimObjectRawPosition(collideeID, collideePos - (dir * (dst * 0.5f)));
+				coh->SetSimObjectRawPosition(colliderID, colliderPos + dif);
+				coh->SetSimObjectRawPosition(collideeID, collideePos - dif);
 			}
 		} break;
 
