@@ -387,20 +387,20 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 }
 
 void Grid::Reset() {
-	// undo last frame's dynamic-global data writes
 	numResets += 1;
 
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
+	// undo last frame's dynamic-global data writes
 	for (std::set<unsigned int>::const_iterator it = mTouchedCells.begin(); it != mTouchedCells.end(); ++it) {
 		const unsigned int idx = *it;
 
-		mDensityVisData[idx]     = 0.0f;
-		mAvgVelocityVisData[idx] = NVECf;
-
 		currCells[idx].ResetGlobalDynamicVars();
 		prevCells[idx].ResetGlobalDynamicVars();
+
+		mDensityVisData[idx]     = 0.0f;
+		mAvgVelocityVisData[idx] = NVECf;
 	}
 
 	mTouchedCells.clear();
@@ -538,35 +538,35 @@ void Grid::ComputeAvgVelocity() {
 		const vec3f& cellPos = GetCellPos(currCell);
 
 		for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
-			const vec3f densityOffsetDir = mDirVectors[dir] * mMaxGroupRadius;
+			const vec3f densityDirOffset = mDirVectors[dir] * mMaxGroupRadius;
 
-			const Cell::Edge* currCellEdgeDir = &currEdges[currCell->edges[dir]];
-			const Cell*       currCellNgbDir  = GetCell(WorldPosToCellID(cellPos + densityOffsetDir));
+			const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
+			const Cell*       currCellDirNgb  = GetCell(WorldPosToCellID(cellPos + densityDirOffset));
 
-			const float dirTerrainSlope    = currCellEdgeDir->heightDelta.dot2D(mDirVectors[dir]);
-			      float dirTerrainSlopeMod = 0.0f;
+			const float cellDirSlope    = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
+			      float cellDirSlopeMod = 0.0f;
 
 			// f_{M --> dir} for computing f, based on offset density
-			float cellSpeedDir = 0.0f;
+			float cellDirSpeed = 0.0f;
 
 			{
-				if (POSITIVE_SLOPE(dir, dirTerrainSlope)) { dirTerrainSlopeMod =  std::fabs(dirTerrainSlope); }
-				if (NEGATIVE_SLOPE(dir, dirTerrainSlope)) { dirTerrainSlopeMod = -std::fabs(dirTerrainSlope); }
+				if (POSITIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod =  std::fabs(cellDirSlope); }
+				if (NEGATIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod = -std::fabs(cellDirSlope); }
 
-				const float densitySpeedScaleDir = (currCellNgbDir->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
-				const float slopeSpeedScaleDir   = (dirTerrainSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
-				const float cellTopoSpeedDir     = mMaxGroupSpeed + CLAMP(slopeSpeedScaleDir, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
-				const float cellFlowSpeedDir     = std::max(0.0f, currCellNgbDir->avgVelocity.dot2D(mDirVectors[dir]));
-				const float cellTopoFlowSpeedDir = cellTopoSpeedDir + densitySpeedScaleDir * (cellTopoSpeedDir - cellFlowSpeedDir);
+				const float densityDirSpeedScale = (currCellDirNgb->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
+				const float slopeDirSpeedScale   = (cellDirSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
+				const float cellDirTopoSpeed     = mMaxGroupSpeed + CLAMP(slopeDirSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
+				const float cellDirFlowSpeed     = std::max(0.0f, currCellDirNgb->avgVelocity.dot2D(mDirVectors[dir]));
+				const float cellDirTopoFlowSpeed = cellDirTopoSpeed + densityDirSpeedScale * (cellDirTopoSpeed - cellDirFlowSpeed);
 
-				cellSpeedDir = cellTopoFlowSpeedDir;
+				cellDirSpeed = cellDirTopoFlowSpeed;
 
-				if (currCellNgbDir->density >= MAX_DENSITY) { cellSpeedDir = cellFlowSpeedDir; }
-				if (currCellNgbDir->density <= MIN_DENSITY) { cellSpeedDir = cellTopoSpeedDir; }
+				if (currCellDirNgb->density >= MAX_DENSITY) { cellDirSpeed = cellDirFlowSpeed; }
+				if (currCellDirNgb->density <= MIN_DENSITY) { cellDirSpeed = cellDirTopoSpeed; }
 			}
 
-			currCell->speed[dir] = cellSpeedDir;
-			mSpeedVisData[groupID][cellIdx * NUM_DIRS + dir] = cellSpeedDir;
+			currCell->speed[dir] = cellDirSpeed;
+			mSpeedVisData[groupID][cellIdx * NUM_DIRS + dir] = cellDirSpeed;
 		}
 
 		mDiscomfortVisData[groupID][cellIdx] = currCell->discomfort;
@@ -576,44 +576,44 @@ void Grid::ComputeAvgVelocity() {
 		Cell* currCell = &currCells[cellIdx];
 
 		for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
-			const Cell::Edge* currCellEdgeDir = &currEdges[currCell->edges[dir]];
-			const Cell*       currCellNgbDir  = NULL;
+			const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
+			const Cell*       currCellDirNgb  = NULL;
 
 			switch (dir) {
-				case DIR_N: { currCellNgbDir = (currCell->y >             0)? GetCell(GRID_INDEX(currCell->x,     currCell->y - 1)): currCell; } break;
-				case DIR_S: { currCellNgbDir = (currCell->y < numCellsZ - 1)? GetCell(GRID_INDEX(currCell->x,     currCell->y + 1)): currCell; } break;
-				case DIR_E: { currCellNgbDir = (currCell->x < numCellsX - 1)? GetCell(GRID_INDEX(currCell->x + 1, currCell->y    )): currCell; } break;
-				case DIR_W: { currCellNgbDir = (currCell->x >             0)? GetCell(GRID_INDEX(currCell->x - 1, currCell->y    )): currCell; } break;
+				case DIR_N: { currCellDirNgb = (currCell->y >             0)? GetCell(GRID_INDEX(currCell->x,     currCell->y - 1)): currCell; } break;
+				case DIR_S: { currCellDirNgb = (currCell->y < numCellsZ - 1)? GetCell(GRID_INDEX(currCell->x,     currCell->y + 1)): currCell; } break;
+				case DIR_E: { currCellDirNgb = (currCell->x < numCellsX - 1)? GetCell(GRID_INDEX(currCell->x + 1, currCell->y    )): currCell; } break;
+				case DIR_W: { currCellDirNgb = (currCell->x >             0)? GetCell(GRID_INDEX(currCell->x - 1, currCell->y    )): currCell; } break;
 			}
 
-			const float dirTerrainSlope    = currCellEdgeDir->heightDelta.dot2D(mDirVectors[dir]);
-			      float dirTerrainSlopeMod = 0.0f;
+			const float cellDirSlope    = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
+			      float cellDirSlopeMod = 0.0f;
 
-			float cellSpeedDir = 0.0f; // f_{M --> dir} for computing C, based on direct neighbor density
-			float cellCostDir  = 0.0f; // C_{M --> dir}
+			float cellDirSpeed = 0.0f; // f_{M --> dir} for computing C, based on direct neighbor density
+			float cellDirCost  = 0.0f; // C_{M --> dir}
 
 			{
-				if (POSITIVE_SLOPE(dir, dirTerrainSlope)) { dirTerrainSlopeMod =  std::fabs(dirTerrainSlope); }
-				if (NEGATIVE_SLOPE(dir, dirTerrainSlope)) { dirTerrainSlopeMod = -std::fabs(dirTerrainSlope); }
+				if (POSITIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod =  std::fabs(cellDirSlope); }
+				if (NEGATIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod = -std::fabs(cellDirSlope); }
 
-				const float densitySpeedScaleDir = (currCellNgbDir->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
-				const float slopeSpeedScaleDir   = (dirTerrainSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
-				const float cellTopoSpeedDir     = mMaxGroupSpeed + CLAMP(slopeSpeedScaleDir, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
-				const float cellFlowSpeedDir     = std::max(0.0f, currCellNgbDir->avgVelocity.dot2D(mDirVectors[dir]));
-				const float cellTopoFlowSpeedDir = cellTopoSpeedDir + densitySpeedScaleDir * (cellTopoSpeedDir - cellFlowSpeedDir);
+				const float densityDirSpeedScale = (currCellDirNgb->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
+				const float slopeDirSpeedScale   = (cellDirSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
+				const float cellDirTopoSpeed     = mMaxGroupSpeed + CLAMP(slopeDirSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
+				const float cellDirFlowSpeed     = std::max(0.0f, currCellDirNgb->avgVelocity.dot2D(mDirVectors[dir]));
+				const float cellDirTopoFlowSpeed = cellDirTopoSpeed + densityDirSpeedScale * (cellDirTopoSpeed - cellDirFlowSpeed);
 
-				cellSpeedDir = cellTopoFlowSpeedDir;
+				cellDirSpeed = cellDirTopoFlowSpeed;
 
-				if (currCellNgbDir->density >= MAX_DENSITY) { cellSpeedDir = cellFlowSpeedDir; }
-				if (currCellNgbDir->density <= MIN_DENSITY) { cellSpeedDir = cellTopoSpeedDir; }
+				if (currCellDirNgb->density >= MAX_DENSITY) { cellDirSpeed = cellDirFlowSpeed; }
+				if (currCellDirNgb->density <= MIN_DENSITY) { cellDirSpeed = cellDirTopoSpeed; }
 
-				if (cellSpeedDir > 0.01f) {
-					cellCostDir = ((SPEED_WEIGHT * cellSpeedDir) + (DISCOMFORT_WEIGHT * currCellNgbDir->discomfort)) / cellSpeedDir;
+				if (cellDirSpeed > 0.01f) {
+					cellDirCost = ((SPEED_WEIGHT * cellDirSpeed) + (DISCOMFORT_WEIGHT * currCellDirNgb->discomfort)) / cellDirSpeed;
 				}
 			}
 
-			currCell->cost[dir] = cellCostDir;
-			mCostVisData[groupID][cellIdx * NUM_DIRS + dir] = cellCostDir;
+			currCell->cost[dir] = cellDirCost;
+			mCostVisData[groupID][cellIdx * NUM_DIRS + dir] = cellDirCost;
 		}
 	}
 	// ComputeCellSpeedAndCost(uint, uint) falls within the
@@ -628,64 +628,63 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 	const vec3f& cellPos = GetCellPos(currCell);
 
 	for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
-		const vec3f densityOffsetDir = mDirVectors[dir] * mMaxGroupRadius;
+		const vec3f densityDirOffset = mDirVectors[dir] * mMaxGroupRadius;
 
-		const Cell::Edge* currCellEdgeDir = &currEdges[currCell->edges[dir]];
-		const Cell*       currCellNgbDirR = GetCell(WorldPosToCellID(cellPos + densityOffsetDir));
-		const Cell*       currCellNgbDirC = NULL;
+		const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
+		const Cell*       currCellDirNgbR = GetCell(WorldPosToCellID(cellPos + densityDirOffset));
+		const Cell*       currCellDirNgbC = NULL;
 
 		switch (dir) {
-			case DIR_N: { currCellNgbDirC = (currCell->y >             0)? GetCell(GRID_INDEX(currCell->x,     currCell->y - 1)): currCell; } break;
-			case DIR_S: { currCellNgbDirC = (currCell->y < numCellsZ - 1)? GetCell(GRID_INDEX(currCell->x,     currCell->y + 1)): currCell; } break;
-			case DIR_E: { currCellNgbDirC = (currCell->x < numCellsX - 1)? GetCell(GRID_INDEX(currCell->x + 1, currCell->y    )): currCell; } break;
-			case DIR_W: { currCellNgbDirC = (currCell->x >             0)? GetCell(GRID_INDEX(currCell->x - 1, currCell->y    )): currCell; } break;
+			case DIR_N: { currCellDirNgbC = (currCell->y >             0)? GetCell(GRID_INDEX(currCell->x,     currCell->y - 1)): currCell; } break;
+			case DIR_S: { currCellDirNgbC = (currCell->y < numCellsZ - 1)? GetCell(GRID_INDEX(currCell->x,     currCell->y + 1)): currCell; } break;
+			case DIR_E: { currCellDirNgbC = (currCell->x < numCellsX - 1)? GetCell(GRID_INDEX(currCell->x + 1, currCell->y    )): currCell; } break;
+			case DIR_W: { currCellDirNgbC = (currCell->x >             0)? GetCell(GRID_INDEX(currCell->x - 1, currCell->y    )): currCell; } break;
 		}
 
-		const float discomfortCurrCellNgbDirC = (currCellNgbDirC->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
+		const float cellDirDiscomfort = (currCellDirNgbC->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
+		const float cellDirSlope      = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
+		      float cellDirSlopeMod   = 0.0f;
 
-		const float dirTerrainSlope    = currCellEdgeDir->heightDelta.dot2D(mDirVectors[dir]);
-		      float dirTerrainSlopeMod = 0.0f;
-
-		float cellSpeedDirR = 0.0f; // f_{M --> dir} for computing f, based on offset density (Rho)
-		float cellSpeedDirC = 0.0f; // f_{M --> dir} for computing C, based on direct neighbor density
-		float cellCostDir   = 0.0f; // C_{M --> dir}
+		float cellDirSpeedR = 0.0f; // f_{M --> dir} for computing f, based on offset density (R=RHO)
+		float cellDirSpeedC = 0.0f; // f_{M --> dir} for computing C, based on direct neighbor density (C=COST)
+		float cellDirCost   = 0.0f; // C_{M --> dir}
 
 		{
-			if (POSITIVE_SLOPE(dir, dirTerrainSlope)) { dirTerrainSlopeMod =  std::fabs(dirTerrainSlope); }
-			if (NEGATIVE_SLOPE(dir, dirTerrainSlope)) { dirTerrainSlopeMod = -std::fabs(dirTerrainSlope); }
+			if (POSITIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod =  std::fabs(cellDirSlope); }
+			if (NEGATIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod = -std::fabs(cellDirSlope); }
 
-			const float densitySpeedScaleDirR = (currCellNgbDirR->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
-			const float densitySpeedScaleDirC = (currCellNgbDirC->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
+			const float densityDirSpeedScaleR = (currCellDirNgbR->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
+			const float densityDirSpeedScaleC = (currCellDirNgbC->density - MIN_DENSITY) / (MAX_DENSITY - MIN_DENSITY);
 
-			const float slopeSpeedScaleDir   = (dirTerrainSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
-			const float cellTopoSpeedDir     = mMaxGroupSpeed + CLAMP(slopeSpeedScaleDir, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
+			const float slopeDirSpeedScale   = (cellDirSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
+			const float cellDirTopoSpeed     = mMaxGroupSpeed + CLAMP(slopeDirSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
 
-			const float cellFlowSpeedDirR = std::max(0.0f, currCellNgbDirR->avgVelocity.dot2D(mDirVectors[dir]));
-			const float cellFlowSpeedDirC = std::max(0.0f, currCellNgbDirC->avgVelocity.dot2D(mDirVectors[dir]));
+			const float cellDirFlowSpeedR = std::max(0.0f, currCellDirNgbR->avgVelocity.dot2D(mDirVectors[dir]));
+			const float cellDirFlowSpeedC = std::max(0.0f, currCellDirNgbC->avgVelocity.dot2D(mDirVectors[dir]));
 
-			const float cellTopoFlowSpeedDirR = cellTopoSpeedDir + densitySpeedScaleDirR * (cellTopoSpeedDir - cellFlowSpeedDirR);
-			const float cellTopoFlowSpeedDirC = cellTopoSpeedDir + densitySpeedScaleDirC * (cellTopoSpeedDir - cellFlowSpeedDirC);
+			const float cellDirTopoFlowSpeedR = cellDirTopoSpeed + densityDirSpeedScaleR * (cellDirTopoSpeed - cellDirFlowSpeedR);
+			const float cellDirTopoFlowSpeedC = cellDirTopoSpeed + densityDirSpeedScaleC * (cellDirTopoSpeed - cellDirFlowSpeedC);
 
 			// default to linear interpolation of topological and flow speed
-			cellSpeedDirR = cellTopoFlowSpeedDirR;
-			cellSpeedDirC = cellTopoFlowSpeedDirC;
+			cellDirSpeedR = cellDirTopoFlowSpeedR;
+			cellDirSpeedC = cellDirTopoFlowSpeedC;
 
-			if (currCellNgbDirR->density >= MAX_DENSITY) { cellSpeedDirR = cellFlowSpeedDirR; }
-			if (currCellNgbDirR->density <= MIN_DENSITY) { cellSpeedDirR = cellTopoSpeedDir;  }
+			if (currCellDirNgbR->density >= MAX_DENSITY) { cellDirSpeedR = cellDirFlowSpeedR; }
+			if (currCellDirNgbR->density <= MIN_DENSITY) { cellDirSpeedR = cellDirTopoSpeed;  }
 
-			if (currCellNgbDirC->density >= MAX_DENSITY) { cellSpeedDirC = cellFlowSpeedDirC; }
-			if (currCellNgbDirC->density <= MIN_DENSITY) { cellSpeedDirC = cellTopoSpeedDir;  }
+			if (currCellDirNgbC->density >= MAX_DENSITY) { cellDirSpeedC = cellDirFlowSpeedC; }
+			if (currCellDirNgbC->density <= MIN_DENSITY) { cellDirSpeedC = cellDirTopoSpeed;  }
 
-			if (cellSpeedDirC > 0.01f) {
-				cellCostDir = ((SPEED_WEIGHT * cellSpeedDirC) + (DISCOMFORT_WEIGHT * discomfortCurrCellNgbDirC)) / cellSpeedDirC;
+			if (cellDirSpeedC > 0.01f) {
+				cellDirCost = ((SPEED_WEIGHT * cellDirSpeedC) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeedC;
 			}
 		}
 
-		currCell->speed[dir] = cellSpeedDirR;
-		currCell->cost[dir] = cellCostDir;
+		currCell->speed[dir] = cellDirSpeedR;
+		currCell->cost[dir] = cellDirCost;
 
-		mSpeedVisData[groupID][cellIdx * NUM_DIRS + dir] = cellSpeedDirR;
-		mCostVisData[groupID][cellIdx * NUM_DIRS + dir] = cellCostDir;
+		mSpeedVisData[groupID][cellIdx * NUM_DIRS + dir] = cellDirSpeedR;
+		mCostVisData[groupID][cellIdx * NUM_DIRS + dir] = cellDirCost;
 	}
 
 	mDiscomfortVisData[groupID][cellIdx] = currCell->discomfort;
