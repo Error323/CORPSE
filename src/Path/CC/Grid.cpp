@@ -586,8 +586,9 @@ void Grid::ComputeAvgVelocity() {
 				case DIR_W: { currCellDirNgb = (currCell->x >             0)? GetCell(GRID_INDEX(currCell->x - 1, currCell->y    )): currCell; } break;
 			}
 
-			const float cellDirSlope    = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
-			      float cellDirSlopeMod = 0.0f;
+			const float cellDirDiscomfort = (currCellDirNgb->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
+			const float cellDirSlope      = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
+			      float cellDirSlopeMod   = 0.0f;
 
 			float cellDirSpeed = 0.0f; // f_{M --> dir} for computing C, based on direct neighbor density
 			float cellDirCost  = 0.0f; // C_{M --> dir}
@@ -608,7 +609,7 @@ void Grid::ComputeAvgVelocity() {
 				if (currCellDirNgb->density <= MIN_DENSITY) { cellDirSpeed = cellDirTopoSpeed; }
 
 				if (cellDirSpeed > 0.01f) {
-					cellDirCost = ((SPEED_WEIGHT * cellDirSpeed) + (DISCOMFORT_WEIGHT * currCellDirNgb->discomfort)) / cellDirSpeed;
+					cellDirCost = ((SPEED_WEIGHT * cellDirSpeed) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeed;
 				}
 			}
 
