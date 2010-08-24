@@ -624,7 +624,7 @@ void Grid::ComputeAvgVelocity() {
 				if (currCellNgbDir->density >= MAX_DENSITY) { cellSpeedDir = cellFlowSpeedDir; }
 				if (currCellNgbDir->density <= MIN_DENSITY) { cellSpeedDir = cellTopoSpeedDir; }
 
-				if (std::fabs(cellSpeedDir) > 0.01f) {
+				if (cellSpeedDir > 0.01f) {
 					cellCostDir = ((SPEED_WEIGHT * cellSpeedDir) + (DISCOMFORT_WEIGHT * currCellNgbDir->discomfort)) / cellSpeedDir;
 				}
 			}
@@ -696,7 +696,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 			if (currCellCostNgbDir->density >= MAX_DENSITY) { cellSpeedDirC = cellFlowSpeedDirC; }
 			if (currCellCostNgbDir->density <= MIN_DENSITY) { cellSpeedDirC = cellTopoSpeedDir; }
 
-			if (std::fabs(cellSpeedDirC) > 0.01f) {
+			if (cellSpeedDirC > 0.01f) {
 				cellCostDir = ((SPEED_WEIGHT * cellSpeedDirC) + (DISCOMFORT_WEIGHT * currCellCostNgbDir->discomfort)) / cellSpeedDirC;
 			}
 		}
@@ -837,7 +837,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 			if (cellAvgDensity >= MAX_DENSITY) { cellSpeed = cellFlowSpeed; }
 			if (cellAvgDensity <= MIN_DENSITY) { cellSpeed = cellTopoSpeed; }
 
-			if (std::fabs(cellSpeed) > 0.01f) {
+			if (cellSpeed > 0.01f) {
 				cellCost = ((SPEED_WEIGHT * cellSpeed) + (DISCOMFORT_WEIGHT * cellAvgDiscomfort)) / cellSpeed;
 			} else {
 				// should this case be allowed to happen?
@@ -876,6 +876,8 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx) {
 	void Grid::ComputeSpeedAndCost(unsigned int groupID) {
 		#if (SPEED_COST_SINGLE_PASS_COMPUTATION == 1)
 			for (unsigned int cellIdx = 0; cellIdx < (numCellsX * numCellsZ); cellIdx++) {
+				// ComputeCellSpeed(groupID, cellIdx);
+				// ComputeCellCost(groupID, cellIdx);
 				ComputeCellSpeedAndCost(groupID, cellIdx);
 			}
 		#else
