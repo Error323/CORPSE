@@ -118,6 +118,29 @@ void CCPathModule::OnEvent(const IEvent* e) {
 		} break;
 
 		case EVENT_SIMOBJECT_COLLISION: {
+			const SimObjectCollisionEvent* ee = dynamic_cast<const SimObjectCollisionEvent*>(e);
+
+			const unsigned int colliderID = ee->GetColliderID();
+			const unsigned int collideeID = ee->GetCollideeID();
+
+			const vec3f& colliderPos = coh->GetSimObjectPosition(colliderID);
+			const vec3f& collideePos = coh->GetSimObjectPosition(collideeID);
+
+			const float colliderRadius = coh->GetSimObjectRadius(colliderID);
+			const float collideeRadius = coh->GetSimObjectRadius(collideeID);
+
+			const vec3f separationVec = colliderPos - collideePos;
+			const float separationMin = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
+			const float separationDst = separationVec.sqLen3D() - separationMin;
+
+			// enforce minimum distance between objects
+			if (separationDst < 0.0f) {
+				const vec3f dir = separationVec.norm();
+				const float dst = sqrtf(-separationDst);
+
+				coh->SetSimObjectRawPosition(colliderID, colliderPos + (dir * (dst * 0.5f)));
+				coh->SetSimObjectRawPosition(collideeID, collideePos - (dir * (dst * 0.5f)));
+			}
 		} break;
 
 		default: {
@@ -146,9 +169,6 @@ void CCPathModule::Update() {
 
 		UpdateGrid();
 		UpdateGroups();
-
-		// TODO: enforce minimum distance between objects
-		// NOTE: should this be handled via EVENT_SIMOBJECT_COLLISION?
 	}
 
 	#ifdef CCPATHMODULE_PROFILE
