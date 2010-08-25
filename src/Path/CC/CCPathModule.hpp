@@ -70,6 +70,7 @@ private:
 			MObject(): mGroupID(-1), mObjectDef(NULL), mArrived(false) {}
 			MObject(const SimObjectDef* def): mGroupID(-1), mObjectDef(def) {}
 
+			const SimObjectDef* GetDef() const { return mObjectDef; }
 			void SetGroupID(unsigned int gID) { mGroupID = gID; }
 			unsigned int GetGroupID() const { return mGroupID; }
 

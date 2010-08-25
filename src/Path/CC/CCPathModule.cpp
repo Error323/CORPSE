@@ -7,6 +7,10 @@
 #include "../../Sim/SimObjectState.hpp"
 #include "../../System/ScopedTimer.hpp"
 
+#define GRID_DOWNSCALE_FACTOR         8
+#define MINIMUM_DISTANCE_ENFORCEMENT  1
+#define PREDICTIVE_DISCOMFORT_FRAMES 10
+
 void CCPathModule::OnEvent(const IEvent* e) {
 	switch (e->GetType()) {
 		case EVENT_SIMOBJECT_CREATED: {
@@ -118,6 +122,7 @@ void CCPathModule::OnEvent(const IEvent* e) {
 		} break;
 
 		case EVENT_SIMOBJECT_COLLISION: {
+			#if (MINIMUM_DISTANCE_ENFORCEMENT == 1)
 			const SimObjectCollisionEvent* ee = dynamic_cast<const SimObjectCollisionEvent*>(e);
 
 			const unsigned int colliderID = ee->GetColliderID();
@@ -141,6 +146,7 @@ void CCPathModule::OnEvent(const IEvent* e) {
 				coh->SetSimObjectRawPosition(colliderID, colliderPos + dif);
 				coh->SetSimObjectRawPosition(collideeID, collideePos - dif);
 			}
+			#endif
 		} break;
 
 		default: {
@@ -152,8 +158,11 @@ void CCPathModule::OnEvent(const IEvent* e) {
 
 void CCPathModule::Init() {
 	printf("[CCPathModule::Init]\n");
+	printf("\tGRID_DOWNSCALE_FACTOR:        %d\n", GRID_DOWNSCALE_FACTOR);
+	printf("\tMINIMUM_DISTANCE_ENFORCEMENT: %d\n", MINIMUM_DISTANCE_ENFORCEMENT);
+	printf("\tPREDICTIVE_DISCOMFORT_FRAMES: %d\n", PREDICTIVE_DISCOMFORT_FRAMES);
 
-	mGrid.Init(8, coh);
+	mGrid.Init(GRID_DOWNSCALE_FACTOR, coh);
 }
 
 void CCPathModule::Update() {
@@ -202,7 +211,8 @@ void CCPathModule::UpdateGrid() {
 
 	// convert the crowd into a density field (rho)
 	for (std::map<unsigned int, MObject*>::iterator it = mObjects.begin(); it != mObjects.end(); ++it) {
-		const unsigned int objID = it->first;
+		const unsigned int objID = (it->first);
+		const SimObjectDef* objDef = (it->second)->GetDef();
 		const vec3f& objPos = coh->GetSimObjectPosition(objID);
 		const vec3f objVel =
 			coh->GetSimObjectDirection(objID) *
@@ -213,7 +223,23 @@ void CCPathModule::UpdateGrid() {
 		//   therefore the flow speed can stay zero in a region, so
 		//   that *only* the topological speed determines the speed
 		//   field there
-		mGrid.AddDensityAndVelocity(objPos, objVel);
+		mGrid.AddDensity(objPos, objVel);
+
+		#if (PREDICTIVE_DISCOMFORT_FRAMES > 0)
+		// NOTE:
+		//   combine this with AddDensity?
+		//
+		//   adding discomfort in front of every unit just results
+		//   in more self-obstructions, unless the discomfort-field
+		//   is per-group and discomfort for a unit in group <g> is
+		//   only registered on the fields of the groups != <g> (but
+		//   then units within the same group would lack foresight)
+		//
+		//   the amount of lookahead should depend on the object's
+		//   maximum speed and radius (wrt. the cell-size) instead
+		//   of a fixed value
+		mGrid.AddDiscomfort(objPos, objVel, PREDICTIVE_DISCOMFORT_FRAMES, (mGrid.GetSquareSize() / objDef->GetMaxForwardSpeed()));
+		#endif
 	}
 
 	// now that we know the cumulative density per cell,
@@ -245,7 +271,6 @@ void CCPathModule::UpdateGroups() {
 		// NOTE: it might be possible to compute the speed- and cost-
 		//       fields in the UpdateGroupPotentialField as cells are
 		//       picked from the UNKNOWN set, saving N iterations
-		// mGrid.UpdateGroupDiscomfort(groupID, ...);
 		mGrid.UpdateGroupPotentialField(groupID, groupGoalIDs, groupObjectIDs);
 
 
@@ -380,7 +405,7 @@ bool CCPathModule::GetScalarDataTypeInfo(DataTypeInfo* i, unsigned int groupID) 
 	switch (i->type) {
 		case Grid::DATATYPE_DENSITY:    { i->fdata = mGrid.GetDensityVisDataArray();           i->stride =              1; i->global = true;  i->name =    "DENSITY"; } break;
 		case Grid::DATATYPE_HEIGHT:     { i->fdata = mGrid.GetHeightVisDataArray();            i->stride =              1; i->global = true;  i->name =     "HEIGHT"; } break;
-		case Grid::DATATYPE_DISCOMFORT: { i->fdata = mGrid.GetDiscomfortVisDataArray(groupID); i->stride =              1; i->global = false; i->name = "DISCOMFORT"; } break;
+		case Grid::DATATYPE_DISCOMFORT: { i->fdata = mGrid.GetDiscomfortVisDataArray();        i->stride =              1; i->global = true;  i->name = "DISCOMFORT"; } break;
 		case Grid::DATATYPE_SPEED:      { i->fdata = mGrid.GetSpeedVisDataArray(groupID);      i->stride = Grid::NUM_DIRS; i->global = false; i->name =      "SPEED"; } break;
 		case Grid::DATATYPE_COST:       { i->fdata = mGrid.GetCostVisDataArray(groupID);       i->stride = Grid::NUM_DIRS; i->global = false; i->name =       "COST"; } break;
 		case Grid::DATATYPE_POTENTIAL:  { i->fdata = mGrid.GetPotentialVisDataArray(groupID);  i->stride =              1; i->global = false; i->name =  "POTENTIAL"; } break;

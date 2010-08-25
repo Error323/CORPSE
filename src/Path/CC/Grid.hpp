@@ -25,7 +25,7 @@ public:
 		// scalar fields
 		DATATYPE_DENSITY         = 0, // rho (global,    stored at cell-centers, 1 scalar  per cell)
 		DATATYPE_HEIGHT          = 1, // h   (global,    stored at cell-centers, 1 scalar  per cell)
-		DATATYPE_DISCOMFORT      = 2, // g   (per-group, stored at cell-centers, 1 scalar  per cell)
+		DATATYPE_DISCOMFORT      = 2, // g   (global,    stored at cell-centers, 1 scalar  per cell)
 		DATATYPE_SPEED           = 3, // f   (per-group, stored at cell-edges,   4 scalars per cell)
 		DATATYPE_COST            = 4, // C   (per-group, stored at cell-edges,   4 scalars per cell)
 		DATATYPE_POTENTIAL       = 5, // phi (per-group, stored at cell-centers, 1 scalar  per cell)
@@ -108,7 +108,8 @@ public:
 	void Init(unsigned int, ICallOutHandler*);
 	void Kill();
 	void Reset();
-	void AddDensityAndVelocity(const vec3f&, const vec3f&);
+	void AddDensity(const vec3f&, const vec3f&);
+	void AddDiscomfort(const vec3f&, const vec3f&, unsigned int, float);
 	void ComputeAvgVelocity();
 	void UpdateGroupPotentialField(unsigned int, const std::set<unsigned int>&, const std::set<unsigned int>&);
 	bool UpdateSimObjectLocation(unsigned int, unsigned int);
@@ -119,7 +120,7 @@ public:
 	// visualisation data accessors for scalar fields
 	const float* GetDensityVisDataArray() const;
 	const float* GetHeightVisDataArray() const;
-	const float* GetDiscomfortVisDataArray(unsigned int) const;
+	const float* GetDiscomfortVisDataArray() const;
 	const float* GetSpeedVisDataArray(unsigned int) const;
 	const float* GetCostVisDataArray(unsigned int) const;
 	const float* GetPotentialVisDataArray(unsigned int) const;
@@ -169,7 +170,7 @@ private:
 	// visualization data for scalar fields
 	std::vector<float> mDensityVisData;
 	std::vector<float> mHeightVisData;
-	std::map<unsigned int, std::vector<float> > mDiscomfortVisData;
+	std::vector<float> mDiscomfortVisData;
 	std::map<unsigned int, std::vector<float> > mSpeedVisData;
 	std::map<unsigned int, std::vector<float> > mCostVisData;
 	std::map<unsigned int, std::vector<float> > mPotentialVisData;

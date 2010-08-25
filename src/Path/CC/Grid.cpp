@@ -33,8 +33,6 @@
 
 
 void Grid::AddGroup(unsigned int groupID) {
-	mDiscomfortVisData[groupID] = std::vector<float>();
-	mDiscomfortVisData[groupID].resize(numCellsX * numCellsZ, 0.0f);
 	mSpeedVisData[groupID] = std::vector<float>();
 	mSpeedVisData[groupID].resize(numCellsX * numCellsZ * NUM_DIRS, 0.0f);
 	mCostVisData[groupID] = std::vector<float>();
@@ -51,7 +49,6 @@ void Grid::AddGroup(unsigned int groupID) {
 }
 
 void Grid::DelGroup(unsigned int groupID) {
-	mDiscomfortVisData[groupID].clear(); mDiscomfortVisData.erase(groupID);
 	mSpeedVisData[groupID].clear(); mSpeedVisData.erase(groupID);
 	mCostVisData[groupID].clear(); mCostVisData.erase(groupID);
 	mPotentialVisData[groupID].clear(); mPotentialVisData.erase(groupID);
@@ -67,13 +64,8 @@ const float* Grid::GetDensityVisDataArray() const {
 	return (mDensityVisData.empty())? NULL: &mDensityVisData[0];
 }
 
-const float* Grid::GetDiscomfortVisDataArray(unsigned int groupID) const {
-	std::map<unsigned int, std::vector<float> >::const_iterator it = mDiscomfortVisData.find(groupID);
-
-	if (it == mDiscomfortVisData.end()) { return NULL; }
-	if ((it->second).empty()) { return NULL; }
-
-	return &(it->second)[0];
+const float* Grid::GetDiscomfortVisDataArray() const {
+	return (mDiscomfortVisData.empty())? NULL: &mDiscomfortVisData[0];
 }
 
 const float* Grid::GetSpeedVisDataArray(unsigned int groupID) const {
@@ -188,11 +180,12 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	const unsigned int numEdges = (numCellsX + 1) * numCellsZ + (numCellsZ + 1) * numCellsX;
 
 	// visualisation data for global scalar fields
-	mDensityVisData.resize(numCells);
-	mHeightVisData.resize(numCells);
+	mDensityVisData.resize(numCells, 0.0f);
+	mHeightVisData.resize(numCells, 0.0f);
+	mDiscomfortVisData.resize(numCells, 0.0f);
 
 	// visualisation data for global vector fields
-	mAvgVelocityVisData.resize(numCells);
+	mAvgVelocityVisData.resize(numCells, NVECf);
 	mHeightDeltaVisData.resize(numCells * NUM_DIRS);
 
 
@@ -278,11 +271,24 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 			// set potential to +inf, etc.
 			currCell->ResetFull();
 			prevCell->ResetFull();
+
 			// set the height, assuming the heightmap is static
 			currCell->height = ELEVATION(x, y);
 			prevCell->height = ELEVATION(x, y);
 
+			// set the baseline discomfort values
+			// NOTE:
+			//    this assumes all groups experience discomfort in the same way,
+			//    because the field is global (converting it back to per-group
+			//    again would make the predictive discomfort step expensive)
+			//
+			//    for now, avoid higher areas (problem: discomfort is a much larger
+			//    term than speed, but needs to be around same order of magnitude)
+			currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
+			prevCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
+
 			mHeightVisData[GRID_INDEX(x, y)] = currCell->height;
+			mDiscomfortVisData[GRID_INDEX(x, y)] = currCell->discomfort;
 		}
 	}
 
@@ -388,6 +394,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 void Grid::Reset() {
 	numResets += 1;
+	mMaxDensity = -std::numeric_limits<float>::max();
 
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
@@ -396,21 +403,27 @@ void Grid::Reset() {
 	for (std::set<unsigned int>::const_iterator it = mTouchedCells.begin(); it != mTouchedCells.end(); ++it) {
 		const unsigned int idx = *it;
 
-		currCells[idx].ResetGlobalDynamicVars();
-		prevCells[idx].ResetGlobalDynamicVars();
+		Cell* currCell = &currCells[idx];
+		Cell* prevCell = &prevCells[idx];
+
+		currCell->ResetGlobalDynamicVars();
+		prevCell->ResetGlobalDynamicVars();
+
+		// restore the baseline discomfort values
+		currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
+		prevCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
 
 		mDensityVisData[idx]     = 0.0f;
+		mDiscomfortVisData[idx]  = currCell->discomfort;
 		mAvgVelocityVisData[idx] = NVECf;
 	}
 
 	mTouchedCells.clear();
-
-	mMaxDensity = -std::numeric_limits<float>::max();
 }
 
 
 
-void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
+void Grid::AddDensity(const vec3f& pos, const vec3f& vel) {
 	const Cell* cell = GetCell(WorldPosToCellID(pos));
 	const vec3f& cellMidPos = GetCellPos(cell);
 
@@ -486,8 +499,8 @@ void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
 	// take the *non-normalised* MIN_DENSITY value, so that lambda is
 	// always a negative number (fractional if inv(MIN_DENSITY) > 0.5,
 	// non-fractional otherwise)
-	// static const float EXP_DENSITY = -(logf(1.0f / MIN_DENSITY) / logf(2.0f));
-	static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
+	static const float EXP_DENSITY = -(logf(1.0f / MIN_DENSITY) / logf(2.0f));
+	// static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
 
 	// splat the density
 	Af->density += powf(std::min<float>(1.0f - dx, 1.0f - dy), EXP_DENSITY); Ab->density = Af->density;
@@ -499,6 +512,34 @@ void Grid::AddDensityAndVelocity(const vec3f& pos, const vec3f& vel) {
 	mMaxDensity = std::max(mMaxDensity, Bf->density);
 	mMaxDensity = std::max(mMaxDensity, Cf->density);
 	mMaxDensity = std::max(mMaxDensity, Df->density);
+}
+
+void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, unsigned int numFrames, float stepSize) {
+	if (vel.sqLen3D() <= 0.01f) {
+		return;
+	}
+
+	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
+	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
+
+	const unsigned int posCellIdx = WorldPosToCellID(pos);
+
+	for (unsigned int n = 0; n < numFrames; n++) {
+		const vec3f        cellPos = pos + (vel * n * stepSize);
+		const unsigned int cellIdx = WorldPosToCellID(cellPos);
+
+		// skip our own cell
+		if (cellIdx != posCellIdx) {
+			Cell* currCell = &currCells[cellIdx];
+			Cell* prevCell = &prevCells[cellIdx];
+
+			// note: use more plausible values?
+			currCell->discomfort = 1.0f;
+			prevCell->discomfort = 1.0f;
+
+			mTouchedCells.insert(cellIdx);
+		}
+	}
 }
 
 void Grid::ComputeAvgVelocity() {
@@ -521,6 +562,7 @@ void Grid::ComputeAvgVelocity() {
 		cb->avgVelocity  = cf->avgVelocity;
 
 		mDensityVisData[idx]     = cf->density;
+		mDiscomfortVisData[idx]  = cf->discomfort;
 		mAvgVelocityVisData[idx] = cf->avgVelocity;
 	}
 }
@@ -533,7 +575,6 @@ void Grid::ComputeAvgVelocity() {
 #if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 0)
 	void Grid::ComputeCellSpeed(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 		Cell* currCell = &currCells[cellIdx];
-		currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
 
 		const vec3f& cellPos = GetCellPos(currCell);
 
@@ -568,8 +609,6 @@ void Grid::ComputeAvgVelocity() {
 			currCell->speed[dir] = cellDirSpeed;
 			mSpeedVisData[groupID][cellIdx * NUM_DIRS + dir] = cellDirSpeed;
 		}
-
-		mDiscomfortVisData[groupID][cellIdx] = currCell->discomfort;
 	}
 
 	void Grid::ComputeCellCost(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
@@ -624,7 +663,6 @@ void Grid::ComputeAvgVelocity() {
 
 void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 	Cell* currCell = &currCells[cellIdx];
-	currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
 
 	const vec3f& cellPos = GetCellPos(currCell);
 
@@ -687,8 +725,6 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 		mSpeedVisData[groupID][cellIdx * NUM_DIRS + dir] = cellDirSpeedR;
 		mCostVisData[groupID][cellIdx * NUM_DIRS + dir] = cellDirCost;
 	}
-
-	mDiscomfortVisData[groupID][cellIdx] = currCell->discomfort;
 }
 
 
@@ -698,12 +734,6 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 		/*
 		const unsigned int cellIdx = GRID_INDEX(currCell->x, currCell->y);
 		const vec3f& cellWorldPos = GridIdxToWorldPos(currCell);
-
-		// TODO:
-		//    properly set discomfort for <cell> for this group (maybe via UI?)
-		//    for now, avoid higher areas (problem: discomfort is a much larger
-		//    term than speed, but needs to be around same order of magnitude)
-		currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
 
 		for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
 			const Cell*       currCellNgb  = NULL;
@@ -720,7 +750,6 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 
 			PFFG_ASSERT(ngbCellIdx1D < currCells.size());
 			currCellNgb = &currCells[ngbCellIdx1D];
-			currCellNgb->discomfort = (currCellNgb->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
 
 			#if (SPEED_FIELD_EXPERIMENTAL_DENSITY_OFFSET == 1)
 				float cellAvgDensity    = 0.0f;
@@ -733,7 +762,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 
 					// given the grid resolution, find the number of cells spanned by <r>
 					// and sum the density, discomfort, and average velocity over each of
-					// these for better lookahead prediction
+					// these for better prediction
 					//
 					// NOTE: this approach still will not prevent self-obstructions reliably, because
 					//    1) at low grid resolutions, ngbCellOffset will often lie in <currCell> itself
@@ -749,8 +778,6 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 					for (unsigned int i = 0; (i <= numCells && tmpCell != NULL); i++) {
 						const unsigned int x = tmpCell->x + dx[dir];
 						const unsigned int z = tmpCell->y + dz[dir];
-
-						tmpCell->discomfort = (tmpCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
 
 						cellAvgDensity    += tmpCell->density;
 						cellAvgDiscomfort += tmpCell->discomfort;
@@ -836,8 +863,6 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			mSpeedVisData[groupID][cellIdx * NUM_DIRS + dir] = cellSpeed;
 			mCostVisData[groupID][cellIdx * NUM_DIRS + dir] = cellCost;
 		}
-
-		mDiscomfortVisData[groupID][cellIdx] = currCell->discomfort;
 		*/
 	}
 #endif
@@ -1333,12 +1358,13 @@ vec3i Grid::WorldPosToGridIdx(const vec3f& worldPos) const {
 	return vec3i(cx, 0, cz);
 }
 
-// get the 1D grid-cell index corresponding to a world-space position
+// get the (clamped) 1D grid-cell index corresponding to a world-space position
 unsigned int Grid::WorldPosToCellID(const vec3f& worldPos) const {
-	const vec3i& gridPos = WorldPosToGridIdx(worldPos);
+	const vec3i&       gridPos = WorldPosToGridIdx(worldPos);
 	const unsigned int gridIdx = GRID_INDEX(gridPos.x, gridPos.z);
 
 	PFFG_ASSERT_MSG(gridIdx < mBuffers[0].cells.size(), "world(%2.2f, %2.2f) grid(%d, %d)", worldPos.x, worldPos.z, gridPos.x, gridPos.z);
+
 	return gridIdx;
 }
 
@@ -1367,11 +1393,11 @@ void Grid::Cell::ResetGlobalStaticVars() {
 void Grid::Cell::ResetGlobalDynamicVars() {
 	avgVelocity = NVECf;
 	density     = 0.0f;
+	discomfort  = 0.0f;
 }
 
 void Grid::Cell::ResetGroupVars() {
 	potential  = std::numeric_limits<float>::infinity();
-	discomfort = 0.0f;
 
 	known     = false;
 	candidate = false;
