@@ -456,7 +456,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 				}
 
 				mMaxDensity = std::max(mMaxDensity, fCell->density);
-				mTouchedCells.insert(GRID_INDEX(cell->x + x, cell->y + z));
+				mTouchedCells.insert(GRID_INDEX(cx, cz));
 			}
 		}
 
@@ -464,6 +464,8 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 
 		const Cell* cell = GetCell(WorldPosToCellID(pos));
 		const vec3f& cellMidPos = GetCellPos(cell);
+
+		radius = radius;
 
 		float dx = pos.x - cellMidPos.x;
 		float dy = pos.z - cellMidPos.z;
