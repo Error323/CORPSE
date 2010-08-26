@@ -9,6 +9,8 @@
 #include "../../Sim/SimObjectState.hpp"
 #include "../../System/Debugger.hpp"
 
+#define EPSILON 0.01f
+
 #define GRID_INDEX(x, y) (((y) * (numCellsX)) + (x))
 #define ELEVATION(x, y) (mCOH->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * numCellsX) + (mDownScale * (x))])
 
@@ -169,6 +171,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	mMaxTerrainSlope = -std::numeric_limits<float>::max();
 
 	printf("[Grid::Init] resolution: %dx%d %d\n", numCellsX, numCellsZ, mSquareSize);
+	printf("\tDENSITY_CONVERSION_TCP06:                %d\n", DENSITY_CONVERSION_TCP06);
+	printf("\n");
 	printf("\tSPEED_COST_POTENTIAL_MERGED_COMPUTATION: %d\n", SPEED_COST_POTENTIAL_MERGED_COMPUTATION);
 	printf("\tSPEED_COST_SINGLE_PASS_COMPUTATION:      %d\n", SPEED_COST_SINGLE_PASS_COMPUTATION);
 	printf("\n");
@@ -451,8 +455,8 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 				Cell* bCell = &prevCells[ GRID_INDEX(cx, cz) ];
 
 				if ((x * x) + (z * z) < numCells) {
-					fCell->density += rho; fCell->avgVelocity += vel;
-					bCell->density += rho; bCell->avgVelocity += vel;
+					fCell->density += rho; fCell->avgVelocity += (vel * rho);
+					bCell->density += rho; bCell->avgVelocity += (vel * rho);
 				}
 
 				mMaxDensity = std::max(mMaxDensity, fCell->density);
@@ -493,11 +497,6 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		Cell *Cf = &currCells[cellIdxC], *Cb = &prevCells[cellIdxC]; mTouchedCells.insert(cellIdxC);
 		Cell *Df = &currCells[cellIdxD], *Db = &prevCells[cellIdxD]; mTouchedCells.insert(cellIdxD);
 
-		// add velocity (NOTE: should only C receive this?)
-		Af->avgVelocity += vel; Bf->avgVelocity += vel; Cf->avgVelocity += vel; Df->avgVelocity += vel;
-		Ab->avgVelocity += vel; Bb->avgVelocity += vel; Cb->avgVelocity += vel; Db->avgVelocity += vel;
-
-
 		// lambda derivation:
 		//     rho_min                 >=      rho_bar
 		//     rho_bar                  =     (1 / (2 ** lambda))
@@ -536,14 +535,23 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		// take the *non-normalised* MIN_DENSITY value, so that lambda is
 		// always a negative number (fractional if inv(MIN_DENSITY) > 0.5,
 		// non-fractional otherwise)
-		// static const float EXP_DENSITY = -(logf(1.0f / MIN_DENSITY) / logf(2.0f));
-		static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
+		static const float EXP_DENSITY = -(logf(1.0f / MIN_DENSITY) / logf(2.0f));
+		// static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
 
 		// splat the density
-		Af->density += powf(std::min<float>(1.0f - dx, 1.0f - dy), EXP_DENSITY); Ab->density = Af->density;
-		Bf->density += powf(std::min<float>(       dx, 1.0f - dy), EXP_DENSITY); Bb->density = Bf->density;
-		Cf->density += powf(std::min<float>(       dx,        dy), EXP_DENSITY); Cb->density = Cf->density;
-		Df->density += powf(std::min<float>(1.0f - dx,        dy), EXP_DENSITY); Db->density = Df->density;
+		const float rhoA = powf(std::min<float>(1.0f - dx, 1.0f - dy), EXP_DENSITY);
+		const float rhoB = powf(std::min<float>(       dx, 1.0f - dy), EXP_DENSITY);
+		const float rhoC = powf(std::min<float>(       dx,        dy), EXP_DENSITY);
+		const float rhoD = powf(std::min<float>(1.0f - dx,        dy), EXP_DENSITY);
+
+		Af->density += rhoA; Ab->density = Af->density;
+		Bf->density += rhoB; Bb->density = Bf->density;
+		Cf->density += rhoC; Cb->density = Cf->density;
+		Df->density += rhoD; Db->density = Df->density;
+
+		// add velocity (NOTE: should only C receive this?)
+		Af->avgVelocity += (vel * rhoA); Bf->avgVelocity += (vel * rhoB); Cf->avgVelocity += (vel * rhoC); Df->avgVelocity += (vel * rhoD);
+		Ab->avgVelocity += (vel * rhoA); Bb->avgVelocity += (vel * rhoB); Cb->avgVelocity += (vel * rhoC); Db->avgVelocity += (vel * rhoD);
 
 		mMaxDensity = std::max(mMaxDensity, Af->density);
 		mMaxDensity = std::max(mMaxDensity, Bf->density);
@@ -553,7 +561,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 }
 
 void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, unsigned int numFrames, float stepSize) {
-	if (vel.sqLen3D() <= 0.01f) {
+	if (vel.sqLen3D() <= EPSILON) {
 		return;
 	}
 
@@ -590,14 +598,31 @@ void Grid::ComputeAvgVelocity() {
 		Cell* cf = &currCells[idx];
 		Cell* cb = &prevCells[idx];
 
+		// v(i) is multiplied by rho(i) when summing v-bar,
+		// so we need to divide by the non-normalised rho
+		// to get the final per-cell average velocity
+		if (cf->density > EPSILON) {
+			cf->avgVelocity /= cf->density;
+			cb->avgVelocity  = cf->avgVelocity;
+		}
+
 		// normalise the densities, so comparisons with
 		// MIN_DENSITY and MAX_DENSITY are well-defined
 		// when constructing the speed-field
+		// (however, should the actual field be derived
+		// from normalised density values as well?)
 		cf->density /= mMaxDensity;
 		cb->density  = cf->density;
 
-		cf->avgVelocity *= (1.0f - cf->density);
-		cb->avgVelocity  = cf->avgVelocity;
+		// NOTE: this is probably not what we want, since
+		// more crowded cells now automatically receive a
+		// lower average velocity even when every unit in
+		// them is heading in the same direction
+		// (it also does not make much sense, given that
+		// v-bar is a summation of v(i) * rho(i) terms)
+		//
+		// cf->avgVelocity *= (1.0f - cf->density);
+		// cb->avgVelocity  = cf->avgVelocity;
 
 		mDensityVisData[idx]     = cf->density;
 		mDiscomfortVisData[idx]  = cf->discomfort;
@@ -685,7 +710,7 @@ void Grid::ComputeAvgVelocity() {
 				if (currCellDirNgb->density >= MAX_DENSITY) { cellDirSpeed = cellDirFlowSpeed; }
 				if (currCellDirNgb->density <= MIN_DENSITY) { cellDirSpeed = cellDirTopoSpeed; }
 
-				if (cellDirSpeed > 0.01f) {
+				if (cellDirSpeed > EPSILON) {
 					cellDirCost = ((SPEED_WEIGHT * cellDirSpeed) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeed;
 				}
 			}
@@ -752,7 +777,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			if (currCellDirNgbC->density >= MAX_DENSITY) { cellDirSpeedC = cellDirFlowSpeedC; }
 			if (currCellDirNgbC->density <= MIN_DENSITY) { cellDirSpeedC = cellDirTopoSpeed;  }
 
-			if (cellDirSpeedC > 0.01f) {
+			if (cellDirSpeedC > EPSILON) {
 				cellDirCost = ((SPEED_WEIGHT * cellDirSpeedC) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeedC;
 			}
 		}
@@ -882,7 +907,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			if (cellAvgDensity >= MAX_DENSITY) { cellSpeed = cellFlowSpeed; }
 			if (cellAvgDensity <= MIN_DENSITY) { cellSpeed = cellTopoSpeed; }
 
-			if (cellSpeed > 0.01f) {
+			if (cellSpeed > EPSILON) {
 				cellCost = ((SPEED_WEIGHT * cellSpeed) + (DISCOMFORT_WEIGHT * cellAvgDiscomfort)) / cellSpeed;
 			} else {
 				// should this case be allowed to happen?
@@ -891,7 +916,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 				//
 				// cost = std::numeric_limits<float>::infinity();
 				// cost = std::numeric_limits<float>::max();
-				cellSpeed = 0.01f;
+				cellSpeed = EPSILON;
 				cellCost  = ((SPEED_WEIGHT * cellSpeed) + (DISCOMFORT_WEIGHT * cellAvgDiscomfort)) / cellSpeed;
 			}
 
@@ -1267,7 +1292,7 @@ bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCel
 	PFFG_ASSERT_MSG(!(std::isnan(objectCellVel.x) || std::isnan(objectCellVel.y) || std::isnan(objectCellVel.z)), "Inf velocity-field for cell %u", cellIdx);
 	PFFG_ASSERT_MSG(!(std::isinf(objectCellVel.x) || std::isinf(objectCellVel.y) || std::isinf(objectCellVel.z)), "NaN velocity-field for cell %u", cellIdx);
 
-	if (objectCellVel.sqLen3D() > 0.01f) {
+	if (objectCellVel.sqLen3D() > EPSILON) {
 		#if (VELOCITY_FIELD_DIRECT_INTERPOLATION == 1)
 			mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + objectCellVel, objectCellVel.norm(), objectCellVel.len3D());
 		#else
