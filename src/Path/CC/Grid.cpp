@@ -462,10 +462,10 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 
 	#else
 
+		radius = radius;
+
 		const Cell* cell = GetCell(WorldPosToCellID(pos));
 		const vec3f& cellMidPos = GetCellPos(cell);
-
-		radius = radius;
 
 		float dx = pos.x - cellMidPos.x;
 		float dy = pos.z - cellMidPos.z;
