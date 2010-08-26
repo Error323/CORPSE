@@ -19,7 +19,9 @@
 	(((dir == DIR_N || dir == DIR_W) && (slope >= 0.0f))  ||  \
 	 ((dir == DIR_S || dir == DIR_E) && (slope <  0.0f)))
 
-#define CLAMP(v, vmin, vmax) std::max((vmin), std::min((vmax), (v)))
+#define MMAX(a, b) (((a) >= (b))? (a): (b))
+#define MMIN(a, b) (((a) >= (b))? (b): (a))
+#define CLAMP(v, vmin, vmax) MMAX((vmin), MMIN((vmax), (v)))
 
 #define DENSITY_CONVERSION_TCP06                1
 
@@ -430,107 +432,121 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
 	#if (DENSITY_CONVERSION_TCP06 == 0)
-	/*
-	const int numCells = (radius / (mSquareSize >> 1)) + 1;
-	const Cell* fCurCell = GetCell(WorldPosToCellID(pos), mCurrBufferIdx);
-	const Cell* bCurCell = GetCell(WorldPosToCellID(pos), mPrevBufferIdx);
+		const int numCells = (radius / (mSquareSize >> 1)) + 1;
+		const Cell* cell = GetCell(WorldPosToCellID(pos), mCurrBufferIdx);
 
-	for (int x = -numCells; x <= numCells; x++) {
-		for (int z = -numCells; z <= numCells; z++) {
-			if (x == 0 || z == 0) { continue; }
+		for (int x = -numCells; x <= numCells; x++) {
+			for (int z = -numCells; z <= numCells; z++) {
+				const int cx = int(cell->x) + x;
+				const int cz = int(cell->y) + z;
 
-			Cell* fCell = &currCells[ GRID_INDEX(fCurCell->x + x, fCurCell->y + z) ];
-			Cell* bCell = &prevCells[ GRID_INDEX(fCurCell->x + x, fCurCell->y + z) ];
+				// clamped radial density falloff
+				const float rSq = x * x + z * z;
+				const float rho = MMAX(1.0f - (rSq / numCells), MIN_DENSITY);
+
+				if (cx < 0 || cx >= int(numCellsX)) { continue; }
+				if (cz < 0 || cz >= int(numCellsZ)) { continue; }
+
+				Cell* fCell = &currCells[ GRID_INDEX(cx, cz) ];
+				Cell* bCell = &prevCells[ GRID_INDEX(cx, cz) ];
+
+				if ((x * x) + (z * z) < numCells) {
+					fCell->density += rho; fCell->avgVelocity += vel;
+					bCell->density += rho; bCell->avgVelocity += vel;
+				}
+
+				mMaxDensity = std::max(mMaxDensity, fCell->density);
+				mTouchedCells.insert(GRID_INDEX(cell->x + x, cell->y + z));
+			}
 		}
-	}
-	*/
+
 	#else
 
-	const Cell* cell = GetCell(WorldPosToCellID(pos));
-	const vec3f& cellMidPos = GetCellPos(cell);
+		const Cell* cell = GetCell(WorldPosToCellID(pos));
+		const vec3f& cellMidPos = GetCellPos(cell);
 
-	float dx = pos.x - cellMidPos.x;
-	float dy = pos.z - cellMidPos.z;
-	int cx = cell->x, ncx = cell->x;
-	int cy = cell->y, ncy = cell->y;
+		float dx = pos.x - cellMidPos.x;
+		float dy = pos.z - cellMidPos.z;
+		int cx = cell->x, ncx = cell->x;
+		int cy = cell->y, ncy = cell->y;
 
-	if (dx <= 0.0f) { ncx = CLAMP(ncx - 1, 0, int(numCellsX - 1)); }
-	if (dy <= 0.0f) { ncy = CLAMP(ncy - 1, 0, int(numCellsZ - 1)); }
+		if (dx <= 0.0f) { ncx = CLAMP(ncx - 1, 0, int(numCellsX - 1)); }
+		if (dy <= 0.0f) { ncy = CLAMP(ncy - 1, 0, int(numCellsZ - 1)); }
 
-	const Cell* cellNgb = GetCell(GRID_INDEX(ncx, ncy));
-	const vec3f& cellNgbPos = GetCellPos(cellNgb);
+		const Cell* cellNgb = GetCell(GRID_INDEX(ncx, ncy));
+		const vec3f& cellNgbPos = GetCellPos(cellNgb);
 
-	// normalise and clamp (to prevent excessive mMaxDensity)
-	dx = CLAMP((pos.x - cellNgbPos.x) / mSquareSize, 0.1f, 0.9f);
-	dy = CLAMP((pos.z - cellNgbPos.z) / mSquareSize, 0.1f, 0.9f);
+		// normalise and clamp (to prevent excessive mMaxDensity)
+		dx = CLAMP((pos.x - cellNgbPos.x) / mSquareSize, 0.1f, 0.9f);
+		dy = CLAMP((pos.z - cellNgbPos.z) / mSquareSize, 0.1f, 0.9f);
 
-	const unsigned int
-		cellIdxA = GRID_INDEX(ncx, ncy),
-		cellIdxB = GRID_INDEX( cx, ncy),
-		cellIdxC = GRID_INDEX( cx,  cy),
-		cellIdxD = GRID_INDEX(ncx,  cy);
+		const unsigned int
+			cellIdxA = GRID_INDEX(ncx, ncy),
+			cellIdxB = GRID_INDEX( cx, ncy),
+			cellIdxC = GRID_INDEX( cx,  cy),
+			cellIdxD = GRID_INDEX(ncx,  cy);
 
-	Cell *Af = &currCells[cellIdxA], *Ab = &prevCells[cellIdxA]; mTouchedCells.insert(cellIdxA);
-	Cell *Bf = &currCells[cellIdxB], *Bb = &prevCells[cellIdxB]; mTouchedCells.insert(cellIdxB);
-	Cell *Cf = &currCells[cellIdxC], *Cb = &prevCells[cellIdxC]; mTouchedCells.insert(cellIdxC);
-	Cell *Df = &currCells[cellIdxD], *Db = &prevCells[cellIdxD]; mTouchedCells.insert(cellIdxD);
+		Cell *Af = &currCells[cellIdxA], *Ab = &prevCells[cellIdxA]; mTouchedCells.insert(cellIdxA);
+		Cell *Bf = &currCells[cellIdxB], *Bb = &prevCells[cellIdxB]; mTouchedCells.insert(cellIdxB);
+		Cell *Cf = &currCells[cellIdxC], *Cb = &prevCells[cellIdxC]; mTouchedCells.insert(cellIdxC);
+		Cell *Df = &currCells[cellIdxD], *Db = &prevCells[cellIdxD]; mTouchedCells.insert(cellIdxD);
 
-	// add velocity (NOTE: should only C receive this?)
-	Af->avgVelocity += vel; Bf->avgVelocity += vel; Cf->avgVelocity += vel; Df->avgVelocity += vel;
-	Ab->avgVelocity += vel; Bb->avgVelocity += vel; Cb->avgVelocity += vel; Db->avgVelocity += vel;
+		// add velocity (NOTE: should only C receive this?)
+		Af->avgVelocity += vel; Bf->avgVelocity += vel; Cf->avgVelocity += vel; Df->avgVelocity += vel;
+		Ab->avgVelocity += vel; Bb->avgVelocity += vel; Cb->avgVelocity += vel; Db->avgVelocity += vel;
 
 
-	// lambda derivation:
-	//     rho_min                 >=      rho_bar
-	//     rho_bar                  =     (1 / (2 ** lambda))
-	//     rho_min                 >=     (1 / (2 ** lambda))
-	//     rho_min * (2 ** lambda) >=      1
-	//               (2 ** lambda) >=      1 / rho_min
-	//            log(2 ** lambda) >=  log(1 / rho_min)
-	//           (lambda * log(2)) >= (log(1) - log(rho_min))
-	//                      lambda >= (-log(rho_min) / log(2))
-	//
-	// this is a positive number if and only if 0.0 < MIN_DENSITY <= 1.0,
-	// so we "expect" rho_min and rho_max to lie in the range [0.0, 1.0]
-	//
-	//    if they do, then dx and dy will only be raised to exponents in
-	//    [+inf, +0.0], whereas if they do not, then dx and dy will be
-	//    raised to exponents in [+inf, -inf] and it is much harder to
-	//    define "reasonable" thresholds for "low" and "high" density
-	//
-	//    however, in BOTH cases, cell densities are *not* guaranteed to
-	//    lie in [0.0, 1.0] (even when dx and dy themselves do), so they
-	//    still need normalisation (if rho_* is normalised) with just one
-	//    exception: d{x,y} in [0.0, 1.0] and lambda in [0.0, 1.0]
-	//
-	// since we want to achieve radial density falloff, larger values for
-	// dx or dy must result in smaller densities *regardless* of lambda:
-	//    positive non-fractional dx and dy,  positive non-fractional lambda  ==>   2.00^ 5.0 = 32.00000,  4.00^ 5.0 = 1024.000 (WRONG: no falloff)
-	//    positive non-fractional dx and dy,  positive     fractional lambda  ==>   2.00^ 0.5 =  1.41421,  4.00^ 0.5 =    2.000 (WRONG: no falloff)
-	//    positive non-fractional dx and dy,  negative non-fractional lambda  ==>   2.00^-5.0 =  0.03125,  4.00^-5.0 =    0.001
-	//    positive non-fractional dx and dy,  negative     fractional lambda  ==>   2.00^-0.5 =  0.70710,  4.00^-0.5 =    0.500
-	//    ...
-	//    positive     fractional dx and dy,  positive non-fractional lambda  ==>   0.50^ 5.0 =  0.03125,  0.75^ 5.0 =    0.237 (WRONG: no falloff)
-	//    positive     fractional dx and dy,  positive     fractional lambda  ==>   0.50^ 0.5 =  0.70710,  0.75^ 0.5 =    0.866 (WRONG: no falloff)
-	//    positive     fractional dx and dy,  negative non-fractional lambda  ==>   0.50^-5.0 = 32.00000,  0.75^-5.0 =    4.213
-	//    positive     fractional dx and dy,  negative     fractional lambda  ==>   0.50^-0.5 =  1.41421,  0.75^-0.5 =    1.154
-	//
-	// take the *non-normalised* MIN_DENSITY value, so that lambda is
-	// always a negative number (fractional if inv(MIN_DENSITY) > 0.5,
-	// non-fractional otherwise)
-	// static const float EXP_DENSITY = -(logf(1.0f / MIN_DENSITY) / logf(2.0f));
-	static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
+		// lambda derivation:
+		//     rho_min                 >=      rho_bar
+		//     rho_bar                  =     (1 / (2 ** lambda))
+		//     rho_min                 >=     (1 / (2 ** lambda))
+		//     rho_min * (2 ** lambda) >=      1
+		//               (2 ** lambda) >=      1 / rho_min
+		//            log(2 ** lambda) >=  log(1 / rho_min)
+		//           (lambda * log(2)) >= (log(1) - log(rho_min))
+		//                      lambda >= (-log(rho_min) / log(2))
+		//
+		// this is a positive number if and only if 0.0 < MIN_DENSITY <= 1.0,
+		// so we "expect" rho_min and rho_max to lie in the range [0.0, 1.0]
+		//
+		//    if they do, then dx and dy will only be raised to exponents in
+		//    [+inf, +0.0], whereas if they do not, then dx and dy will be
+		//    raised to exponents in [+inf, -inf] and it is much harder to
+		//    define "reasonable" thresholds for "low" and "high" density
+		//
+		//    however, in BOTH cases, cell densities are *not* guaranteed to
+		//    lie in [0.0, 1.0] (even when dx and dy themselves do), so they
+		//    still need normalisation (if rho_* is normalised) with just one
+		//    exception: d{x,y} in [0.0, 1.0] and lambda in [0.0, 1.0]
+		//
+		// since we want to achieve radial density falloff, larger values for
+		// dx or dy must result in smaller densities *regardless* of lambda:
+		//    positive non-fractional dx and dy,  positive non-fractional lambda  ==>   2.00^ 5.0 = 32.00000,  4.00^ 5.0 = 1024.000 (WRONG: no falloff)
+		//    positive non-fractional dx and dy,  positive     fractional lambda  ==>   2.00^ 0.5 =  1.41421,  4.00^ 0.5 =    2.000 (WRONG: no falloff)
+		//    positive non-fractional dx and dy,  negative non-fractional lambda  ==>   2.00^-5.0 =  0.03125,  4.00^-5.0 =    0.001
+		//    positive non-fractional dx and dy,  negative     fractional lambda  ==>   2.00^-0.5 =  0.70710,  4.00^-0.5 =    0.500
+		//    ...
+		//    positive     fractional dx and dy,  positive non-fractional lambda  ==>   0.50^ 5.0 =  0.03125,  0.75^ 5.0 =    0.237 (WRONG: no falloff)
+		//    positive     fractional dx and dy,  positive     fractional lambda  ==>   0.50^ 0.5 =  0.70710,  0.75^ 0.5 =    0.866 (WRONG: no falloff)
+		//    positive     fractional dx and dy,  negative non-fractional lambda  ==>   0.50^-5.0 = 32.00000,  0.75^-5.0 =    4.213
+		//    positive     fractional dx and dy,  negative     fractional lambda  ==>   0.50^-0.5 =  1.41421,  0.75^-0.5 =    1.154
+		//
+		// take the *non-normalised* MIN_DENSITY value, so that lambda is
+		// always a negative number (fractional if inv(MIN_DENSITY) > 0.5,
+		// non-fractional otherwise)
+		// static const float EXP_DENSITY = -(logf(1.0f / MIN_DENSITY) / logf(2.0f));
+		static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
 
-	// splat the density
-	Af->density += powf(std::min<float>(1.0f - dx, 1.0f - dy), EXP_DENSITY); Ab->density = Af->density;
-	Bf->density += powf(std::min<float>(       dx, 1.0f - dy), EXP_DENSITY); Bb->density = Bf->density;
-	Cf->density += powf(std::min<float>(       dx,        dy), EXP_DENSITY); Cb->density = Cf->density;
-	Df->density += powf(std::min<float>(1.0f - dx,        dy), EXP_DENSITY); Db->density = Df->density;
+		// splat the density
+		Af->density += powf(std::min<float>(1.0f - dx, 1.0f - dy), EXP_DENSITY); Ab->density = Af->density;
+		Bf->density += powf(std::min<float>(       dx, 1.0f - dy), EXP_DENSITY); Bb->density = Bf->density;
+		Cf->density += powf(std::min<float>(       dx,        dy), EXP_DENSITY); Cb->density = Cf->density;
+		Df->density += powf(std::min<float>(1.0f - dx,        dy), EXP_DENSITY); Db->density = Df->density;
 
-	mMaxDensity = std::max(mMaxDensity, Af->density);
-	mMaxDensity = std::max(mMaxDensity, Bf->density);
-	mMaxDensity = std::max(mMaxDensity, Cf->density);
-	mMaxDensity = std::max(mMaxDensity, Df->density);
+		mMaxDensity = std::max(mMaxDensity, Af->density);
+		mMaxDensity = std::max(mMaxDensity, Bf->density);
+		mMaxDensity = std::max(mMaxDensity, Cf->density);
+		mMaxDensity = std::max(mMaxDensity, Df->density);
 	#endif
 }
 
