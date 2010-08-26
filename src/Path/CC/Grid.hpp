@@ -108,7 +108,7 @@ public:
 	void Init(unsigned int, ICallOutHandler*);
 	void Kill();
 	void Reset();
-	void AddDensity(const vec3f&, const vec3f&);
+	void AddDensity(const vec3f&, const vec3f&, float);
 	void AddDiscomfort(const vec3f&, const vec3f&, unsigned int, float);
 	void ComputeAvgVelocity();
 	void UpdateGroupPotentialField(unsigned int, const std::set<unsigned int>&, const std::set<unsigned int>&);
@@ -132,7 +132,7 @@ public:
 	const vec3f* GetPotentialDeltaVisDataArray(unsigned int) const;
 
 	unsigned int WorldPosToCellID(const vec3f&) const;
-	const Cell* GetCell(unsigned int idx) const { return &mBuffers[0].cells[idx]; }
+	const Cell* GetCell(unsigned int idx, unsigned int buf = 0) const { return &mBuffers[buf].cells[idx]; }
 	vec3f GetCellPos(const Cell* c) const { return vec3f((c->x * mSquareSize) + (mSquareSize >> 1), 0.0f, (c->y * mSquareSize) + (mSquareSize >> 1)); }
 
 	unsigned int GetGridWidth() const { return numCellsX; }

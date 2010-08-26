@@ -21,6 +21,8 @@
 
 #define CLAMP(v, vmin, vmax) std::max((vmin), std::min((vmax), (v)))
 
+#define DENSITY_CONVERSION_TCP06                1
+
 #define SPEED_COST_POTENTIAL_MERGED_COMPUTATION 1
 #define SPEED_COST_SINGLE_PASS_COMPUTATION      0
 
@@ -423,7 +425,27 @@ void Grid::Reset() {
 
 
 
-void Grid::AddDensity(const vec3f& pos, const vec3f& vel) {
+void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
+	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
+	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
+
+	#if (DENSITY_CONVERSION_TCP06 == 0)
+	/*
+	const int numCells = (radius / (mSquareSize >> 1)) + 1;
+	const Cell* fCurCell = GetCell(WorldPosToCellID(pos), mCurrBufferIdx);
+	const Cell* bCurCell = GetCell(WorldPosToCellID(pos), mPrevBufferIdx);
+
+	for (int x = -numCells; x <= numCells; x++) {
+		for (int z = -numCells; z <= numCells; z++) {
+			if (x == 0 || z == 0) { continue; }
+
+			Cell* fCell = &currCells[ GRID_INDEX(fCurCell->x + x, fCurCell->y + z) ];
+			Cell* bCell = &prevCells[ GRID_INDEX(fCurCell->x + x, fCurCell->y + z) ];
+		}
+	}
+	*/
+	#else
+
 	const Cell* cell = GetCell(WorldPosToCellID(pos));
 	const vec3f& cellMidPos = GetCellPos(cell);
 
@@ -441,9 +463,6 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel) {
 	// normalise and clamp (to prevent excessive mMaxDensity)
 	dx = CLAMP((pos.x - cellNgbPos.x) / mSquareSize, 0.1f, 0.9f);
 	dy = CLAMP((pos.z - cellNgbPos.z) / mSquareSize, 0.1f, 0.9f);
-
-	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
-	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
 	const unsigned int
 		cellIdxA = GRID_INDEX(ncx, ncy),
@@ -499,8 +518,8 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel) {
 	// take the *non-normalised* MIN_DENSITY value, so that lambda is
 	// always a negative number (fractional if inv(MIN_DENSITY) > 0.5,
 	// non-fractional otherwise)
-	static const float EXP_DENSITY = -(logf(1.0f / MIN_DENSITY) / logf(2.0f));
-	// static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
+	// static const float EXP_DENSITY = -(logf(1.0f / MIN_DENSITY) / logf(2.0f));
+	static const float EXP_DENSITY = -(logf(MIN_DENSITY) / logf(2.0f));
 
 	// splat the density
 	Af->density += powf(std::min<float>(1.0f - dx, 1.0f - dy), EXP_DENSITY); Ab->density = Af->density;
@@ -512,6 +531,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel) {
 	mMaxDensity = std::max(mMaxDensity, Bf->density);
 	mMaxDensity = std::max(mMaxDensity, Cf->density);
 	mMaxDensity = std::max(mMaxDensity, Df->density);
+	#endif
 }
 
 void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, unsigned int numFrames, float stepSize) {
@@ -582,7 +602,7 @@ void Grid::ComputeAvgVelocity() {
 			const vec3f densityDirOffset = mDirVectors[dir] * mMaxGroupRadius;
 
 			const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
-			const Cell*       currCellDirNgb  = GetCell(WorldPosToCellID(cellPos + densityDirOffset));
+			const Cell*       currCellDirNgb  = GetCell(WorldPosToCellID(cellPos + densityDirOffset), mCurrBufferIdx);
 
 			const float cellDirSlope    = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
 			      float cellDirSlopeMod = 0.0f;
@@ -619,10 +639,10 @@ void Grid::ComputeAvgVelocity() {
 			const Cell*       currCellDirNgb  = NULL;
 
 			switch (dir) {
-				case DIR_N: { currCellDirNgb = (currCell->y >             0)? GetCell(GRID_INDEX(currCell->x,     currCell->y - 1)): currCell; } break;
-				case DIR_S: { currCellDirNgb = (currCell->y < numCellsZ - 1)? GetCell(GRID_INDEX(currCell->x,     currCell->y + 1)): currCell; } break;
-				case DIR_E: { currCellDirNgb = (currCell->x < numCellsX - 1)? GetCell(GRID_INDEX(currCell->x + 1, currCell->y    )): currCell; } break;
-				case DIR_W: { currCellDirNgb = (currCell->x >             0)? GetCell(GRID_INDEX(currCell->x - 1, currCell->y    )): currCell; } break;
+				case DIR_N: { currCellDirNgb = (currCell->y >             0)? GetCell(GRID_INDEX(currCell->x,     currCell->y - 1), mCurrBufferIdx): currCell; } break;
+				case DIR_S: { currCellDirNgb = (currCell->y < numCellsZ - 1)? GetCell(GRID_INDEX(currCell->x,     currCell->y + 1), mCurrBufferIdx): currCell; } break;
+				case DIR_E: { currCellDirNgb = (currCell->x < numCellsX - 1)? GetCell(GRID_INDEX(currCell->x + 1, currCell->y    ), mCurrBufferIdx): currCell; } break;
+				case DIR_W: { currCellDirNgb = (currCell->x >             0)? GetCell(GRID_INDEX(currCell->x - 1, currCell->y    ), mCurrBufferIdx): currCell; } break;
 			}
 
 			const float cellDirDiscomfort = (currCellDirNgb->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
@@ -670,14 +690,14 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 		const vec3f densityDirOffset = mDirVectors[dir] * mMaxGroupRadius;
 
 		const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
-		const Cell*       currCellDirNgbR = GetCell(WorldPosToCellID(cellPos + densityDirOffset));
+		const Cell*       currCellDirNgbR = GetCell(WorldPosToCellID(cellPos + densityDirOffset), mCurrBufferIdx);
 		const Cell*       currCellDirNgbC = NULL;
 
 		switch (dir) {
-			case DIR_N: { currCellDirNgbC = (currCell->y >             0)? GetCell(GRID_INDEX(currCell->x,     currCell->y - 1)): currCell; } break;
-			case DIR_S: { currCellDirNgbC = (currCell->y < numCellsZ - 1)? GetCell(GRID_INDEX(currCell->x,     currCell->y + 1)): currCell; } break;
-			case DIR_E: { currCellDirNgbC = (currCell->x < numCellsX - 1)? GetCell(GRID_INDEX(currCell->x + 1, currCell->y    )): currCell; } break;
-			case DIR_W: { currCellDirNgbC = (currCell->x >             0)? GetCell(GRID_INDEX(currCell->x - 1, currCell->y    )): currCell; } break;
+			case DIR_N: { currCellDirNgbC = (currCell->y >             0)? GetCell(GRID_INDEX(currCell->x,     currCell->y - 1), mCurrBufferIdx): currCell; } break;
+			case DIR_S: { currCellDirNgbC = (currCell->y < numCellsZ - 1)? GetCell(GRID_INDEX(currCell->x,     currCell->y + 1), mCurrBufferIdx): currCell; } break;
+			case DIR_E: { currCellDirNgbC = (currCell->x < numCellsX - 1)? GetCell(GRID_INDEX(currCell->x + 1, currCell->y    ), mCurrBufferIdx): currCell; } break;
+			case DIR_W: { currCellDirNgbC = (currCell->x >             0)? GetCell(GRID_INDEX(currCell->x - 1, currCell->y    ), mCurrBufferIdx): currCell; } break;
 		}
 
 		const float cellDirDiscomfort = (currCellDirNgbC->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());

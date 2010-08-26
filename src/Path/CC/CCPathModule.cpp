@@ -223,7 +223,7 @@ void CCPathModule::UpdateGrid() {
 		//   therefore the flow speed can stay zero in a region, so
 		//   that *only* the topological speed determines the speed
 		//   field there
-		mGrid.AddDensity(objPos, objVel);
+		mGrid.AddDensity(objPos, objVel, coh->GetSimObjectRadius(objID));
 
 		#if (PREDICTIVE_DISCOMFORT_FRAMES > 0)
 		// NOTE:
