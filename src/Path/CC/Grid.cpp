@@ -733,6 +733,9 @@ void Grid::ComputeAvgVelocity() {
 
 				if (cellDirSpeed > EPSILON) {
 					cellDirCost = ((SPEED_WEIGHT * cellDirSpeed) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeed;
+				} else {
+					cellDirSpeed = EPSILON;
+					cellDirCost = ((SPEED_WEIGHT * cellDirSpeed) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeed;
 				}
 			}
 
@@ -799,6 +802,9 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			if (currCellDirNgbC->density <= DENSITY_MIN) { cellDirSpeedC = cellDirTopoSpeed;  }
 
 			if (cellDirSpeedC > EPSILON) {
+				cellDirCost = ((SPEED_WEIGHT * cellDirSpeedC) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeedC;
+			} else {
+				cellDirSpeedC = EPSILON;
 				cellDirCost = ((SPEED_WEIGHT * cellDirSpeedC) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeedC;
 			}
 		}
