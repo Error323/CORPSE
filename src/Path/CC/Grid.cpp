@@ -468,6 +468,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 				Cell* cb = &prevCells[ GRID_INDEX(cx, cz) ];
 
 				if ((x * x) + (z * z) <= (numCells * numCells)) {
+					// if (vel.sqLen3D() <= EPSILON) { rho = DENSITY_MAX; }
 					// if (x == 0 && z == 0) { rho = DENSITY_MAX; }
 
 					cf->density += rho;
@@ -548,8 +549,8 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		//    positive     fractional dx and dy,  negative     fractional lambda  ==>   0.50^-0.5 =  1.41421,  0.75^-0.5 =    1.154
 		//
 		// take the *non-normalised* DENSITY_BAR value, so that lambda is
-		// always a negative number (fractional if inv(DENSITY_BAR) > 0.5,
-		// non-fractional otherwise)
+		// always a negative number (fractional if [1.0/DENSITY_BAR] < 2.0,
+		// fractional otherwise)
 		static const float DENSITY_EXP = -(logf(1.0f / DENSITY_BAR) / logf(2.0f));
 
 		// splat the density
