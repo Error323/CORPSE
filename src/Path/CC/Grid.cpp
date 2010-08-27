@@ -437,11 +437,11 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
 	#if (DENSITY_CONVERSION_TCP06 == 0)
-		const int numCells = (radius / (mSquareSize >> 1)) + 1;
+		const int cellsInRadius = (radius / (mSquareSize >> 1)) + 1;
 		const Cell* cell = GetCell(WorldPosToCellID(pos), mCurrBufferIdx);
 
-		for (int x = -numCells; x <= numCells; x++) {
-			for (int z = -numCells; z <= numCells; z++) {
+		for (int x = -cellsInRadius; x <= cellsInRadius; x++) {
+			for (int z = -cellsInRadius; z <= cellsInRadius; z++) {
 				const int cx = int(cell->x) + x;
 				const int cz = int(cell->y) + z;
 
@@ -458,7 +458,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 				// density based on unit's position within the center cell
 				// NOTE: when rho_bar is always <= rho_min, how can we get
 				// avoidance behavior around a single non-moving object?
-				const float scale = 1.0f - ((std::abs(x) + std::abs(z)) / float(numCells << 1));
+				const float scale = 1.0f - ((std::abs(x) + std::abs(z)) / float(cellsInRadius << 1));
 				const float rho = DENSITY_BAR + ((DENSITY_MIN - DENSITY_BAR - EPSILON) * scale);
 
 				if (cx < 0 || cx >= int(numCellsX)) { continue; }
@@ -467,7 +467,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 				Cell* cf = &currCells[ GRID_INDEX(cx, cz) ];
 				Cell* cb = &prevCells[ GRID_INDEX(cx, cz) ];
 
-				if ((x * x) + (z * z) <= (numCells * numCells)) {
+				if ((x * x) + (z * z) <= (cellsInRadius * cellsInRadius)) {
 					// if (vel.sqLen3D() <= EPSILON) { rho = DENSITY_MAX; }
 					// if (x == 0 && z == 0) { rho = DENSITY_MAX; }
 
@@ -571,7 +571,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 	#endif
 }
 
-void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, unsigned int numFrames, float stepSize) {
+void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsigned int numFrames, float stepSize) {
 	if (vel.sqLen3D() <= EPSILON) {
 		return;
 	}
@@ -579,6 +579,7 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, unsigned int numFra
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
+	const int cellsInRadius = (radius / (mSquareSize >> 1)) + 1;
 	const unsigned int posCellIdx = WorldPosToCellID(pos);
 
 	for (unsigned int n = 0; n < numFrames; n++) {
@@ -590,11 +591,35 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, unsigned int numFra
 			Cell* currCell = &currCells[cellIdx];
 			Cell* prevCell = &prevCells[cellIdx];
 
-			// note: use more plausible values?
-			currCell->discomfort += DENSITY_BAR;
-			prevCell->discomfort += DENSITY_BAR;
+			#if (DENSITY_CONVERSION_TCP06 == 1)
+				currCell->discomfort += DENSITY_BAR;
+				prevCell->discomfort += DENSITY_BAR;
 
-			mTouchedCells.insert(cellIdx);
+				mTouchedCells.insert(cellIdx);
+			#else
+				prevCell = prevCell;
+
+				for (int x = -cellsInRadius; x <= cellsInRadius; x++) {
+					for (int z = -cellsInRadius; z <= cellsInRadius; z++) {
+						const int cx = int(currCell->x) + x;
+						const int cz = int(currCell->y) + z;
+
+						if (cx < 0 || cx >= int(numCellsX)) { continue; }
+						if (cz < 0 || cz >= int(numCellsZ)) { continue; }
+
+						Cell* cf = &currCells[ GRID_INDEX(cx, cz) ];
+						Cell* cb = &prevCells[ GRID_INDEX(cx, cz) ];
+
+						if ((x * x) + (z * z) <= (cellsInRadius * cellsInRadius)) {
+							// note: use more plausible values?
+							cf->discomfort += DENSITY_BAR;
+							cb->discomfort += DENSITY_BAR;
+
+							mTouchedCells.insert(GRID_INDEX(cx, cz));
+						}
+					}
+				}
+			#endif
 		}
 	}
 }

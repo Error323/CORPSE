@@ -217,13 +217,14 @@ void CCPathModule::UpdateGrid() {
 		const vec3f objVel =
 			coh->GetSimObjectDirection(objID) *
 			coh->GetSimObjectSpeed(objID);
+		const float objRad = coh->GetSimObjectRadius(objID);
 
 		// NOTE:
 		//   if objVel is a zero-vector, then avgVel will not change
 		//   therefore the flow speed can stay zero in a region, so
 		//   that *only* the topological speed determines the speed
 		//   field there
-		mGrid.AddDensity(objPos, objVel, coh->GetSimObjectRadius(objID));
+		mGrid.AddDensity(objPos, objVel, objRad);
 
 		#if (PREDICTIVE_DISCOMFORT_FRAMES > 0)
 		// NOTE:
@@ -238,7 +239,7 @@ void CCPathModule::UpdateGrid() {
 		//   the amount of lookahead should depend on the object's
 		//   maximum speed and radius (wrt. the cell-size) instead
 		//   of a fixed value
-		mGrid.AddDiscomfort(objPos, objVel, PREDICTIVE_DISCOMFORT_FRAMES, (mGrid.GetSquareSize() / objDef->GetMaxForwardSpeed()));
+		mGrid.AddDiscomfort(objPos, objVel, objRad, PREDICTIVE_DISCOMFORT_FRAMES, (mGrid.GetSquareSize() / objDef->GetMaxForwardSpeed()));
 		#endif
 	}
 
