@@ -461,7 +461,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 				Cell* cf = &currCells[ GRID_INDEX(cx, cz) ];
 				Cell* cb = &prevCells[ GRID_INDEX(cx, cz) ];
 
-				if ((x * x) + (z * z) < (numCells * numCells)) {
+				if ((x * x) + (z * z) <= (numCells * numCells)) {
 					cf->density += rho;
 					cb->density += rho;
 					cf->avgVelocity += (vel * rho);
