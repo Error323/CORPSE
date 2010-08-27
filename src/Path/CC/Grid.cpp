@@ -445,9 +445,10 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 				const int cx = int(cell->x) + x;
 				const int cz = int(cell->y) + z;
 
-				// a unit's density contribution must be no less than
-				// the threshold value rho_bar within a bounding disc
-				// of radius r
+				// a unit's density contribution must be *at least* equal
+				// to the threshold value rho_bar within a bounding disc
+				// of radius r, but *at most* rho_min or the result will
+				// be self-obstruction
 				// note: now we require cells that are much larger than
 				// units in order for local density to exceed rho_max or
 				// even rho_min
