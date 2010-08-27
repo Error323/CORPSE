@@ -449,9 +449,13 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 				// to the threshold value rho_bar within (the cells of) a
 				// bounding disc of radius r, but *at most* rho_min or the
 				// result will be self-obstruction
-				// note: now we require cells that are much larger than
+				// NOTE: now we require cells that are much larger than
 				// units in order for local density to exceed rho_max or
 				// even rho_min
+				// NOTE: this produces the "sharp density discontinuities"
+				// because cells can go from rho=0 to rho>=rho_max in one
+				// frame due to unit movement ==> need some way to "shift" 
+				// density based on unit's position within the center cell
 				const float scale = 1.0f - ((std::abs(x) + std::abs(z)) / float(numCells << 1));
 				const float rho = DENSITY_BAR + ((DENSITY_MIN - DENSITY_BAR - EPSILON) * scale);
 
