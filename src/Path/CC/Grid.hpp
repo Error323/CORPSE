@@ -140,8 +140,9 @@ public:
 	unsigned int GetSquareSize() const { return mSquareSize; }
 
 private:
-	static const float MIN_DENSITY = 0.25f;   // if rho <= rhoMin, f == fTopo
-	static const float MAX_DENSITY = 0.75f;   // if rho >= rhoMax, f == fFlow
+	static const float DENSITY_BAR = 0.05f;   // per-unit density, must be <= DENSITY_MIN
+	static const float DENSITY_MIN = 0.25f;   // if rho <= rho_min, f == f_topo
+	static const float DENSITY_MAX = 0.75f;   // if rho >= rho_max, f == f_flow
 
 	static const float      SPEED_WEIGHT = 1.0f; // alpha
 	static const float DISCOMFORT_WEIGHT = 8.0f; // gamma
@@ -157,7 +158,6 @@ private:
 	float mMinGroupSpeed;                   // fMin
 	float mMaxGroupSpeed;                   // fMax
 	float mMaxGroupRadius;
-	float mMaxDensity;
 
 	// used by UpdateGroupPotentialField() to
 	// validate potential-field construction
