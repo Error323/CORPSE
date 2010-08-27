@@ -213,7 +213,6 @@ private:
 	void ComputeCellCost(unsigned int, unsigned int, std::vector<Cell>&, std::vector<Cell::Edge>&);
 	void ComputeCellSpeedAndCost(unsigned int, unsigned int, std::vector<Cell>&, std::vector<Cell::Edge>&);
 	void ComputeCellSpeedAndCostMERGED(unsigned int, Cell*, std::vector<Cell>&, std::vector<Cell::Edge>&);
-	void ComputeCellSpeedAndCostEXP(unsigned int, Cell*, std::vector<Cell>&, std::vector<Cell::Edge>&);
 	void ComputeSpeedAndCost(unsigned int);
 
 	void UpdateCandidates(unsigned int, const Cell*);

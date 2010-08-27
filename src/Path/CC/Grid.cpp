@@ -30,9 +30,6 @@
 #define SPEED_COST_POTENTIAL_MERGED_COMPUTATION 1
 #define SPEED_COST_SINGLE_PASS_COMPUTATION      0
 
-#define SPEED_COST_EXPERIMENTAL_COMPUTATION     0
-#define SPEED_FIELD_EXPERIMENTAL_DENSITY_OFFSET 0
-
 #define VELOCITY_FIELD_DIRECT_INTERPOLATION     0
 #define VELOCITY_FIELD_BILINEAR_INTERPOLATION   1
 
@@ -176,11 +173,6 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	printf("\tSPEED_COST_POTENTIAL_MERGED_COMPUTATION: %d\n", SPEED_COST_POTENTIAL_MERGED_COMPUTATION);
 	printf("\tSPEED_COST_SINGLE_PASS_COMPUTATION:      %d\n", SPEED_COST_SINGLE_PASS_COMPUTATION);
 	printf("\n");
-	#if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 1)
-	printf("\tSPEED_COST_EXPERIMENTAL_COMPUTATION:     %d\n", SPEED_COST_EXPERIMENTAL_COMPUTATION);
-	printf("\tSPEED_FIELD_EXPERIMENTAL_DENSITY_OFFSET: %d\n", SPEED_FIELD_EXPERIMENTAL_DENSITY_OFFSET);
-	printf("\n");
-	#endif
 	printf("\tVELOCITY_FIELD_DIRECT_INTERPOLATION:     %d\n", VELOCITY_FIELD_DIRECT_INTERPOLATION);
 	printf("\tVELOCITY_FIELD_BILINEAR_INTERPOLATION:   %d\n", VELOCITY_FIELD_BILINEAR_INTERPOLATION);
 
@@ -437,6 +429,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
 	#if (DENSITY_CONVERSION_TCP06 == 0)
+		// given the grid resolution, find the number of cells spanned by <r>
 		const int cellsInRadius = (radius / (mSquareSize >> 1)) + 1;
 		const Cell* cell = GetCell(WorldPosToCellID(pos), mCurrBufferIdx);
 
@@ -689,7 +682,12 @@ void Grid::ComputeAvgVelocity() {
 		const vec3f& cellPos = GetCellPos(currCell);
 
 		for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
-			const vec3f densityDirOffset = mDirVectors[dir] * mMaxGroupRadius;
+			// this assumes a unit's contribution to the density field
+			// is no greater than rho-bar outside a disc of radius <r>
+			// (such that f == f_topological when rho_min >= rho_bar)
+			// also note that if mMaxGroupRadius < (mSquareSize >> 1)
+			// this just maps to <currCell>
+			const vec3f densityDirOffset = mDirVectors[dir] * (mMaxGroupRadius + EPSILON);
 
 			const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
 			const Cell*       currCellDirNgb  = GetCell(WorldPosToCellID(cellPos + densityDirOffset), mCurrBufferIdx);
@@ -774,13 +772,30 @@ void Grid::ComputeAvgVelocity() {
 	// so we always compile it
 #endif
 
+// compute the speed- and unit-cost fields, per cell
+//
+// NOTE: engine slope-representation should be the same?
+// NOTE:
+//    if the flow-speed is zero in a region, then the cost
+//    for cells with normalised density >= DENSITY_MAX will
+//    be infinite everywhere and the potential-field update
+//    can trigger asserts; this will also happen for cells
+//    with density <= DENSITY_MIN whenever topoSpeed is less
+//    than or equal to zero
+// FIXME:
+//    at coarse grid resolutions, the density offset of the
+//    neighbor cell often just maps back to the current one,
+//    (units take mSquareSize / mMaxGroupSpeed sim-frames to
+//    traverse one cell horizontally or vertically) so that
+//    flow-speed becomes zero due to self-density influence
+//
 void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 	Cell* currCell = &currCells[cellIdx];
 
 	const vec3f& cellPos = GetCellPos(currCell);
 
 	for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
-		const vec3f densityDirOffset = mDirVectors[dir] * mMaxGroupRadius;
+		const vec3f densityDirOffset = mDirVectors[dir] * (mMaxGroupRadius + EPSILON);
 
 		const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
 		const Cell*       currCellDirNgbR = GetCell(WorldPosToCellID(cellPos + densityDirOffset), mCurrBufferIdx);
@@ -802,6 +817,13 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 		float cellDirCost   = 0.0f; // C_{M --> dir}
 
 		{
+			// if the slope is positive along <dir>, we want a positive slopeSpeedScale
+			// if the slope is negative along <dir>, we want a negative slopeSpeedScale
+			//
+			// since (s_max - s_min) is always positive and (f_min - f_max) is always
+			// negative, the numerator (s - s_min) must be greater than 0 to achieve a
+			// speed-decrease on positive slopes and smaller than 0 to achieve a speed-
+			// increase on negative slopes
 			if (POSITIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod =  std::fabs(cellDirSlope); }
 			if (NEGATIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod = -std::fabs(cellDirSlope); }
 
@@ -830,6 +852,12 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			if (cellDirSpeedC > EPSILON) {
 				cellDirCost = ((SPEED_WEIGHT * cellDirSpeedC) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeedC;
 			} else {
+				// should this case be allowed to happen?
+				// (infinite costs very heavily influence
+				// behavior of potential-field generation)
+				//
+				// cost = std::numeric_limits<float>::infinity();
+				// cost = std::numeric_limits<float>::max();
 				cellDirSpeedC = EPSILON;
 				cellDirCost = ((SPEED_WEIGHT * cellDirSpeedC) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeedC;
 			}
@@ -845,154 +873,10 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 
 
 
-#if (SPEED_COST_EXPERIMENTAL_COMPUTATION == 1)
-	void Grid::ComputeCellSpeedAndCostEXP(unsigned int groupID, Cell* currCell, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
-		/*
-		const unsigned int cellIdx = GRID_INDEX(currCell->x, currCell->y);
-		const vec3f& cellWorldPos = GridIdxToWorldPos(currCell);
-
-		for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
-			const Cell*       currCellNgb  = NULL;
-			const Cell::Edge* currCellEdge = &currEdges[currCell->edges[dir]];
-
-			// this assumes a unit's contribution to the density field
-			// is no greater than rho-bar outside a disc of radius <r>
-			// (such that f == f_topological when rho_min >= rho-bar)
-			// also note that if mMaxGroupRadius < (mSquareSize >> 1)
-			// this just maps to <currCell>
-			const vec3f        ngbCellOffset = mDirVectors[dir] * mMaxGroupRadius;
-			const vec3i&       ngbCellIdx3D  = WorldPosToGridIdx(cellWorldPos + ngbCellOffset);
-			const unsigned int ngbCellIdx1D  = GRID_INDEX(ngbCellIdx3D.x, ngbCellIdx3D.z);
-
-			PFFG_ASSERT(ngbCellIdx1D < currCells.size());
-			currCellNgb = &currCells[ngbCellIdx1D];
-
-			#if (SPEED_FIELD_EXPERIMENTAL_DENSITY_OFFSET == 1)
-				float cellAvgDensity    = 0.0f;
-				float cellAvgDiscomfort = 0.0f;
-				vec3f cellAvgVelocity   = NVECf;
-
-				{
-					static const int dx[NUM_DIRS] = { 0, 0, 1, -1}; // NSEW
-					static const int dz[NUM_DIRS] = {-1, 1, 0,  0}; // NSEW
-
-					// given the grid resolution, find the number of cells spanned by <r>
-					// and sum the density, discomfort, and average velocity over each of
-					// these for better prediction
-					//
-					// NOTE: this approach still will not prevent self-obstructions reliably, because
-					//    1) at low grid resolutions, ngbCellOffset will often lie in <currCell> itself
-					//    2) at high grid resolutions, immediate neighbors are affected by self-density
-					//    3) the group's speed is not taken into account; eg. how many cells would occupy
-					//       the interval [currCell, currCellNgb] if ngbCellOffset was calculated based
-					//       on mMaxGroupSpeed rather than on mMaxGroupRadius (this would be equivalent
-					//       to either mMaxGroupSpeed / mSquareSize or to mMaxGroupRadius / mSquareSize)
-					//
-					const unsigned int numCells = static_cast<unsigned int>(mMaxGroupRadius / mSquareSize) + 1;
-					const Cell*        tmpCell  = currCell;
-
-					for (unsigned int i = 0; (i <= numCells && tmpCell != NULL); i++) {
-						const unsigned int x = tmpCell->x + dx[dir];
-						const unsigned int z = tmpCell->y + dz[dir];
-
-						cellAvgDensity    += tmpCell->density;
-						cellAvgDiscomfort += tmpCell->discomfort;
-						cellAvgVelocity   += tmpCell->avgVelocity;
-
-						if (x < numCellsX && z < numCellsZ) {
-							tmpCell = &currCells[GRID_INDEX(x, z)];
-						} else {
-							tmpCell = NULL;
-						}
-					}
-
-					cellAvgDensity    /= numCells;
-					cellAvgDiscomfort /= numCells;
-					cellAvgVelocity   /= numCells;
-				}
-			#else
-				float cellAvgDensity    = currCellNgb->density;
-				float cellAvgDiscomfort = currCellNgb->discomfort;
-				vec3f cellAvgVelocity   = currCellNgb->avgVelocity;
-			#endif
-
-
-			// compute the speed- and unit-cost fields
-			//
-			// NOTE: engine slope-representation should be the same?
-			// NOTE:
-			//    if the flow-speed is zero in a region, then the cost
-			//    for cells with normalised density >= DENSITY_MAX will
-			//    be infinite everywhere and the potential-field update
-			//    can trigger asserts; this will also happen for cells
-			//    with density <= DENSITY_MIN whenever topoSpeed is less
-			//    than or equal to zero
-			// FIXME:
-			//    at coarse grid resolutions, the index of the neighbor
-			//    cell is often just the same as that of the current (a
-			//    unit takes mSquareSize / mMaxGroupSpeed sim-frames to
-			//    traverse one horizontally or vertically), so that the
-			//    flow-speed becomes zero due to self-density influence
-			//
-			const float dirTerrainSlope    = currCellEdge->heightDelta.dot2D(mDirVectors[dir]);
-			      float dirTerrainSlopeMod = 0.0f;
-
-			// if the slope is positive along <dir>, we want a positive slopeSpeedScale
-			// if the slope is negative along <dir>, we want a negative slopeSpeedScale
-			//
-			// since (s_max - s_min) is always positive and (f_min - f_max) is always
-			// negative, the numerator (s - s_min) must be greater than 0 to achieve a
-			// speed-decrease on positive slopes and smaller than 0 to achieve a speed-
-			// increase on negative slopes
-			if (POSITIVE_SLOPE(dir, dirTerrainSlope)) { dirTerrainSlopeMod =  std::fabs(dirTerrainSlope); }
-			if (NEGATIVE_SLOPE(dir, dirTerrainSlope)) { dirTerrainSlopeMod = -std::fabs(dirTerrainSlope); }
-
-			const float densitySpeedScale = (cellAvgDensity - DENSITY_MIN) / (DENSITY_MAX - DENSITY_MIN);
-			const float slopeSpeedScale   = (dirTerrainSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
-
-			const float cellTopoSpeed     = mMaxGroupSpeed + CLAMP(slopeSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
-			const float cellFlowSpeed     = std::max(0.0f, cellAvgVelocity.dot2D(mDirVectors[dir]));
-			const float cellTopoFlowSpeed = cellTopoSpeed + densitySpeedScale * (cellTopoSpeed - cellFlowSpeed);
-
-			float cellSpeed = cellTopoFlowSpeed;
-			float cellCost = 0.0f;
-
-			if (cellAvgDensity >= DENSITY_MAX) { cellSpeed = cellFlowSpeed; }
-			if (cellAvgDensity <= DENSITY_MIN) { cellSpeed = cellTopoSpeed; }
-
-			if (cellSpeed > EPSILON) {
-				cellCost = ((SPEED_WEIGHT * cellSpeed) + (DISCOMFORT_WEIGHT * cellAvgDiscomfort)) / cellSpeed;
-			} else {
-				// should this case be allowed to happen?
-				// (infinite costs very heavily influence
-				// behavior of potential-field generation)
-				//
-				// cost = std::numeric_limits<float>::infinity();
-				// cost = std::numeric_limits<float>::max();
-				cellSpeed = EPSILON;
-				cellCost  = ((SPEED_WEIGHT * cellSpeed) + (DISCOMFORT_WEIGHT * cellAvgDiscomfort)) / cellSpeed;
-			}
-
-			currCell->speed[dir] = cellSpeed;
-			currCell->cost[dir] = cellCost;
-
-			mSpeedVisData[groupID][cellIdx * NUM_DIRS + dir] = cellSpeed;
-			mCostVisData[groupID][cellIdx * NUM_DIRS + dir] = cellCost;
-		}
-		*/
-	}
-#endif
-
-
-
 #if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 1)
 	void Grid::ComputeCellSpeedAndCostMERGED(unsigned int groupID, Cell* currCell, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
-		#if (SPEED_COST_EXPERIMENTAL_COMPUTATION == 0)
-			// recycled from (MERGED == 0 && SINGLE_PASS == 1)
-			ComputeCellSpeedAndCost(groupID, GRID_INDEX(currCell->x, currCell->y), currCells, currEdges);
-		#else
-			ComputeCellSpeedAndCostEXP(groupID, currCell, currCells, currEdges);
-		#endif
+		// recycled from (MERGED == 0 && SINGLE_PASS == 1)
+		ComputeCellSpeedAndCost(groupID, GRID_INDEX(currCell->x, currCell->y), currCells, currEdges);
 	}
 #else
 	void Grid::ComputeSpeedAndCost(unsigned int groupID) {
