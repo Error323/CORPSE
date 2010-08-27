@@ -456,6 +456,8 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 				// because cells can go from rho=0 to rho>=rho_max in one
 				// frame due to unit movement ==> need some way to "shift" 
 				// density based on unit's position within the center cell
+				// NOTE: when rho_bar is always <= rho_min, how can we get
+				// avoidance behavior around a single non-moving object?
 				const float scale = 1.0f - ((std::abs(x) + std::abs(z)) / float(numCells << 1));
 				const float rho = DENSITY_BAR + ((DENSITY_MIN - DENSITY_BAR - EPSILON) * scale);
 
@@ -466,6 +468,8 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 				Cell* cb = &prevCells[ GRID_INDEX(cx, cz) ];
 
 				if ((x * x) + (z * z) <= (numCells * numCells)) {
+					if (x == 0 && z == 0) { rho = DENSITY_MAX; }
+
 					cf->density += rho;
 					cb->density += rho;
 					cf->avgVelocity += (vel * rho);
