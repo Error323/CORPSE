@@ -468,7 +468,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 				Cell* cb = &prevCells[ GRID_INDEX(cx, cz) ];
 
 				if ((x * x) + (z * z) <= (numCells * numCells)) {
-					if (x == 0 && z == 0) { rho = DENSITY_MAX; }
+					// if (x == 0 && z == 0) { rho = DENSITY_MAX; }
 
 					cf->density += rho;
 					cb->density += rho;
