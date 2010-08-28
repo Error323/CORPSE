@@ -740,7 +740,7 @@ void Grid::ComputeAvgVelocity() {
 				case DIR_W: { currCellDirNgb = (currCell->x >             0)? &currCells[GRID_INDEX(currCell->x - 1, currCell->y    )]: currCell; } break;
 			}
 
-			const float cellDirDiscomfort = (currCellDirNgb->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
+			const float cellDirDiscomfort = currCellDirNgb->discomfort;
 			const float cellDirSlope      = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
 			      float cellDirSlopeMod   = 0.0f;
 
@@ -815,7 +815,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			case DIR_W: { currCellDirNgbC = (currCell->x >             0)? &currCells[GRID_INDEX(currCell->x - 1, currCell->y    )]: currCell; } break;
 		}
 
-		const float cellDirDiscomfort = (currCellDirNgbC->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
+		const float cellDirDiscomfort = currCellDirNgbC->discomfort;
 		const float cellDirSlope      = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
 		      float cellDirSlopeMod   = 0.0f;
 
