@@ -424,43 +424,50 @@ void Grid::Reset() {
 
 
 
-void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
-	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
-	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
-	#if (DENSITY_CONVERSION_TCP06 == 0)
-		// given the grid resolution, find the number of cells spanned by <r>
-		const int cellsInRadius = (radius / (mSquareSize >> 1)) + 1;
-		const Cell* cell = GetCell(WorldPosToCellID(pos), mCurrBufferIdx);
 
-		for (int x = -cellsInRadius; x <= cellsInRadius; x++) {
-			for (int z = -cellsInRadius; z <= cellsInRadius; z++) {
-				const int cx = int(cell->x) + x;
-				const int cz = int(cell->y) + z;
 
-				// a unit's density contribution must be *at least* equal
-				// to the threshold value rho_bar within (the cells of) a
-				// bounding disc of radius r, but *at most* rho_min or the
-				// result will be self-obstruction
-				// NOTE: now we require cells that are much larger than
-				// units in order for local density to exceed rho_max or
-				// even rho_min
-				// NOTE: this produces the "sharp density discontinuities"
-				// because cells can go from rho=0 to rho>=rho_max in one
-				// frame due to unit movement ==> need some way to "shift" 
-				// density based on unit's position within the center cell
-				// NOTE: when rho_bar is always <= rho_min, how can we get
-				// avoidance behavior around a single non-moving object?
-				const float scale = 1.0f - ((std::abs(x) + std::abs(z)) / float(cellsInRadius << 1));
-				const float rho = DENSITY_BAR + ((DENSITY_MIN - DENSITY_BAR - EPSILON) * scale);
+void Grid::AddGlobalDynamicCellData(
+	std::vector<Cell>& currCells,
+	std::vector<Cell>& prevCells,
+	const Cell* cell,
+	int cellsInRadius,
+	const vec3f& vel,
+	unsigned int type
+) {
+	for (int x = -cellsInRadius; x <= cellsInRadius; x++) {
+		for (int z = -cellsInRadius; z <= cellsInRadius; z++) {
+			const int cx = int(cell->x) + x;
+			const int cz = int(cell->y) + z;
 
-				if (cx < 0 || cx >= int(numCellsX)) { continue; }
-				if (cz < 0 || cz >= int(numCellsZ)) { continue; }
+			if (cx < 0 || cx >= int(numCellsX)) { continue; }
+			if (cz < 0 || cz >= int(numCellsZ)) { continue; }
 
-				Cell* cf = &currCells[ GRID_INDEX(cx, cz) ];
-				Cell* cb = &prevCells[ GRID_INDEX(cx, cz) ];
+			if ((x * x) + (z * z) > (cellsInRadius * cellsInRadius)) {
+				continue;
+			}
 
-				if ((x * x) + (z * z) <= (cellsInRadius * cellsInRadius)) {
+			Cell* cf = &currCells[ GRID_INDEX(cx, cz) ];
+			Cell* cb = &prevCells[ GRID_INDEX(cx, cz) ];
+
+			switch (type) {
+				case DATATYPE_DENSITY: {
+					// a unit's density contribution must be *at least* equal
+					// to the threshold value rho_bar within (the cells of) a
+					// bounding disc of radius r, but *at most* rho_min or the
+					// result will be self-obstruction
+					// NOTE: now we require cells that are much larger than
+					// units in order for local density to exceed rho_max or
+					// even rho_min
+					// NOTE: this produces the "sharp density discontinuities"
+					// because cells can go from rho=0 to rho>=rho_max in one
+					// frame due to unit movement ==> need some way to "shift" 
+					// density based on unit's position within the center cell
+					// NOTE: when rho_bar is always <= rho_min, how can we get
+					// avoidance behavior around a single non-moving object?
+					const float scale = 1.0f - ((std::abs(x) + std::abs(z)) / float(cellsInRadius << 1));
+					const float rho = DENSITY_BAR + ((DENSITY_MIN - DENSITY_BAR - EPSILON) * scale);
+
 					// if (vel.sqLen3D() <= EPSILON) { rho = DENSITY_MAX; }
 					// if (x == 0 && z == 0) { rho = DENSITY_MAX; }
 
@@ -468,17 +475,38 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 					cb->density += rho;
 					cf->avgVelocity += (vel * rho);
 					cb->avgVelocity += (vel * rho);
-				}
-
-				mTouchedCells.insert(GRID_INDEX(cx, cz));
+				} break;
+				case DATATYPE_DISCOMFORT: {
+					cf->discomfort += DENSITY_BAR;
+					cb->discomfort += DENSITY_BAR;
+				} break;
+				default: {
+				} break;
 			}
+
+			mTouchedCells.insert(GRID_INDEX(cx, cz));
 		}
+	}
+}
+
+
+
+void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
+	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
+	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
+
+	#if (DENSITY_CONVERSION_TCP06 == 0)
+		// given the grid resolution, find the number of cells spanned by <r>
+		const int cellsInRadius = (radius / (mSquareSize >> 1)) + 1;
+		const Cell* cell = &currCells[WorldPosToCellID(pos)];
+
+		AddGlobalDynamicCellData(currCells, prevCells, cell, cellsInRadius, vel, DATATYPE_DENSITY);
 
 	#else
 		/*
 		radius = radius;
 
-		const Cell* cell = GetCell(WorldPosToCellID(pos));
+		const Cell* cell = &currCells[WorldPosToCellID(pos)];
 		const vec3f& cellMidPos = GetCellPos(cell);
 
 		float dx = pos.x - cellMidPos.x;
@@ -489,7 +517,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		if (dx <= 0.0f) { ncx = CLAMP(ncx - 1, 0, int(numCellsX - 1)); }
 		if (dy <= 0.0f) { ncy = CLAMP(ncy - 1, 0, int(numCellsZ - 1)); }
 
-		const Cell* cellNgb = GetCell(GRID_INDEX(ncx, ncy));
+		const Cell* cellNgb = &currCells[GRID_INDEX(ncx, ncy)];
 		const vec3f& cellNgbPos = GetCellPos(cellNgb);
 
 		// normalise and clamp (to prevent excessive mMaxDensity)
@@ -581,37 +609,16 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsig
 
 		// skip our own cell
 		if (cellIdx != posCellIdx) {
-			Cell* currCell = &currCells[cellIdx];
-			Cell* prevCell = &prevCells[cellIdx];
-
 			#if (DENSITY_CONVERSION_TCP06 == 1)
+				Cell* currCell = &currCells[cellIdx];
+				Cell* prevCell = &prevCells[cellIdx];
+
 				currCell->discomfort += DENSITY_BAR;
 				prevCell->discomfort += DENSITY_BAR;
 
 				mTouchedCells.insert(cellIdx);
 			#else
-				prevCell = prevCell;
-
-				for (int x = -cellsInRadius; x <= cellsInRadius; x++) {
-					for (int z = -cellsInRadius; z <= cellsInRadius; z++) {
-						const int cx = int(currCell->x) + x;
-						const int cz = int(currCell->y) + z;
-
-						if (cx < 0 || cx >= int(numCellsX)) { continue; }
-						if (cz < 0 || cz >= int(numCellsZ)) { continue; }
-
-						Cell* cf = &currCells[ GRID_INDEX(cx, cz) ];
-						Cell* cb = &prevCells[ GRID_INDEX(cx, cz) ];
-
-						if ((x * x) + (z * z) <= (cellsInRadius * cellsInRadius)) {
-							// note: use more plausible values?
-							cf->discomfort += DENSITY_BAR;
-							cb->discomfort += DENSITY_BAR;
-
-							mTouchedCells.insert(GRID_INDEX(cx, cz));
-						}
-					}
-				}
+				AddGlobalDynamicCellData(currCells, prevCells, &currCells[cellIdx], cellsInRadius, NVECf, DATATYPE_DISCOMFORT);
 			#endif
 		}
 	}
@@ -690,7 +697,7 @@ void Grid::ComputeAvgVelocity() {
 			const vec3f densityDirOffset = mDirVectors[dir] * (mMaxGroupRadius + EPSILON);
 
 			const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
-			const Cell*       currCellDirNgb  = GetCell(WorldPosToCellID(cellPos + densityDirOffset), mCurrBufferIdx);
+			const Cell*       currCellDirNgb  = &currCells[WorldPosToCellID(cellPos + densityDirOffset)];
 
 			const float cellDirSlope    = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
 			      float cellDirSlopeMod = 0.0f;
@@ -727,10 +734,10 @@ void Grid::ComputeAvgVelocity() {
 			const Cell*       currCellDirNgb  = NULL;
 
 			switch (dir) {
-				case DIR_N: { currCellDirNgb = (currCell->y >             0)? GetCell(GRID_INDEX(currCell->x,     currCell->y - 1), mCurrBufferIdx): currCell; } break;
-				case DIR_S: { currCellDirNgb = (currCell->y < numCellsZ - 1)? GetCell(GRID_INDEX(currCell->x,     currCell->y + 1), mCurrBufferIdx): currCell; } break;
-				case DIR_E: { currCellDirNgb = (currCell->x < numCellsX - 1)? GetCell(GRID_INDEX(currCell->x + 1, currCell->y    ), mCurrBufferIdx): currCell; } break;
-				case DIR_W: { currCellDirNgb = (currCell->x >             0)? GetCell(GRID_INDEX(currCell->x - 1, currCell->y    ), mCurrBufferIdx): currCell; } break;
+				case DIR_N: { currCellDirNgb = (currCell->y >             0)? &currCells[GRID_INDEX(currCell->x,     currCell->y - 1)]: currCell; } break;
+				case DIR_S: { currCellDirNgb = (currCell->y < numCellsZ - 1)? &currCells[GRID_INDEX(currCell->x,     currCell->y + 1)]: currCell; } break;
+				case DIR_E: { currCellDirNgb = (currCell->x < numCellsX - 1)? &currCells[GRID_INDEX(currCell->x + 1, currCell->y    )]: currCell; } break;
+				case DIR_W: { currCellDirNgb = (currCell->x >             0)? &currCells[GRID_INDEX(currCell->x - 1, currCell->y    )]: currCell; } break;
 			}
 
 			const float cellDirDiscomfort = (currCellDirNgb->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
@@ -798,14 +805,14 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 		const vec3f densityDirOffset = mDirVectors[dir] * (mMaxGroupRadius + EPSILON);
 
 		const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
-		const Cell*       currCellDirNgbR = GetCell(WorldPosToCellID(cellPos + densityDirOffset), mCurrBufferIdx);
+		const Cell*       currCellDirNgbR = &currCells[WorldPosToCellID(cellPos + densityDirOffset)];
 		const Cell*       currCellDirNgbC = NULL;
 
 		switch (dir) {
-			case DIR_N: { currCellDirNgbC = (currCell->y >             0)? GetCell(GRID_INDEX(currCell->x,     currCell->y - 1), mCurrBufferIdx): currCell; } break;
-			case DIR_S: { currCellDirNgbC = (currCell->y < numCellsZ - 1)? GetCell(GRID_INDEX(currCell->x,     currCell->y + 1), mCurrBufferIdx): currCell; } break;
-			case DIR_E: { currCellDirNgbC = (currCell->x < numCellsX - 1)? GetCell(GRID_INDEX(currCell->x + 1, currCell->y    ), mCurrBufferIdx): currCell; } break;
-			case DIR_W: { currCellDirNgbC = (currCell->x >             0)? GetCell(GRID_INDEX(currCell->x - 1, currCell->y    ), mCurrBufferIdx): currCell; } break;
+			case DIR_N: { currCellDirNgbC = (currCell->y >             0)? &currCells[GRID_INDEX(currCell->x,     currCell->y - 1)]: currCell; } break;
+			case DIR_S: { currCellDirNgbC = (currCell->y < numCellsZ - 1)? &currCells[GRID_INDEX(currCell->x,     currCell->y + 1)]: currCell; } break;
+			case DIR_E: { currCellDirNgbC = (currCell->x < numCellsX - 1)? &currCells[GRID_INDEX(currCell->x + 1, currCell->y    )]: currCell; } break;
+			case DIR_W: { currCellDirNgbC = (currCell->x >             0)? &currCells[GRID_INDEX(currCell->x - 1, currCell->y    )]: currCell; } break;
 		}
 
 		const float cellDirDiscomfort = (currCellDirNgbC->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
