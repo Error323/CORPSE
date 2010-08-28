@@ -503,7 +503,6 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		AddGlobalDynamicCellData(currCells, prevCells, cell, cellsInRadius, vel, DATATYPE_DENSITY);
 
 	#else
-		/*
 		radius = radius;
 
 		const Cell* cell = &currCells[WorldPosToCellID(pos)];
@@ -520,7 +519,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		const Cell* cellNgb = &currCells[GRID_INDEX(ncx, ncy)];
 		const vec3f& cellNgbPos = GetCellPos(cellNgb);
 
-		// normalise and clamp (to prevent excessive mMaxDensity)
+		// normalise and clamp (to prevent DIV0's and zero-contributions)
 		dx = CLAMP((pos.x - cellNgbPos.x) / mSquareSize, 0.1f, 0.9f);
 		dy = CLAMP((pos.z - cellNgbPos.z) / mSquareSize, 0.1f, 0.9f);
 
@@ -530,6 +529,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 			cellIdxC = GRID_INDEX( cx,  cy),
 			cellIdxD = GRID_INDEX(ncx,  cy);
 
+		// NOTE: should each of {A,B,C,D} be unique? (if so, d{x,y} would NOT always fall in [0.0, 1.0])
 		Cell *Af = &currCells[cellIdxA], *Ab = &prevCells[cellIdxA]; mTouchedCells.insert(cellIdxA);
 		Cell *Bf = &currCells[cellIdxB], *Bb = &prevCells[cellIdxB]; mTouchedCells.insert(cellIdxB);
 		Cell *Cf = &currCells[cellIdxC], *Cb = &prevCells[cellIdxC]; mTouchedCells.insert(cellIdxC);
@@ -571,14 +571,23 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		//
 		// take the *non-normalised* DENSITY_BAR value, so that lambda is
 		// always a negative number (fractional if [1.0/DENSITY_BAR] < 2.0,
-		// fractional otherwise)
+		// fractional otherwise) and matches the fractional d{x,y} values
+		//
+		// this nevertheless produces a far-too-wide range of densities:
+		//     d{x,y}=0.10 ** exp=-4.0 == 10000.0
+		//     d{x,y}=0.25 ** exp=-4.0 ==   256.0
+		//     d{x,y}=0.50 ** exp=-4.0 ==    16.0
+		//     d{x,y}=0.75 ** exp=-4.0 ~=     3.1
+		//     d{x,y}=0.90 ** exp=-4.0 ~=     1.5
 		static const float DENSITY_EXP = -(logf(1.0f / DENSITY_BAR) / logf(2.0f));
+		static const float DENSITY_LOWER = powf(0.9f, DENSITY_EXP);
+		static const float DENSITY_UPPER = powf(0.1f, DENSITY_EXP);
 
 		// splat the density
-		const float rhoA = powf(std::min<float>(1.0f - dx, 1.0f - dy), DENSITY_EXP);
-		const float rhoB = powf(std::min<float>(       dx, 1.0f - dy), DENSITY_EXP);
-		const float rhoC = powf(std::min<float>(       dx,        dy), DENSITY_EXP);
-		const float rhoD = powf(std::min<float>(1.0f - dx,        dy), DENSITY_EXP);
+		const float rhoA = (powf(std::min<float>(1.0f - dx, 1.0f - dy), DENSITY_EXP) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
+		const float rhoB = (powf(std::min<float>(       dx, 1.0f - dy), DENSITY_EXP) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
+		const float rhoC = (powf(std::min<float>(       dx,        dy), DENSITY_EXP) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
+		const float rhoD = (powf(std::min<float>(1.0f - dx,        dy), DENSITY_EXP) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
 
 		Af->density += rhoA; Ab->density = Af->density;
 		Bf->density += rhoB; Bb->density = Bf->density;
@@ -586,9 +595,10 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		Df->density += rhoD; Db->density = Df->density;
 
 		// add velocity (NOTE: should only C receive this?)
-		Af->avgVelocity += (vel * rhoA); Bf->avgVelocity += (vel * rhoB); Cf->avgVelocity += (vel * rhoC); Df->avgVelocity += (vel * rhoD);
-		Ab->avgVelocity += (vel * rhoA); Bb->avgVelocity += (vel * rhoB); Cb->avgVelocity += (vel * rhoC); Db->avgVelocity += (vel * rhoD);
-		*/
+		Af->avgVelocity += (vel * rhoA); Ab->avgVelocity += (vel * rhoA);
+		Bf->avgVelocity += (vel * rhoB); Bb->avgVelocity += (vel * rhoB);
+		Cf->avgVelocity += (vel * rhoC); Cb->avgVelocity += (vel * rhoC);
+		Df->avgVelocity += (vel * rhoD); Db->avgVelocity += (vel * rhoD);
 	#endif
 }
 
@@ -610,6 +620,7 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsig
 		// skip our own cell
 		if (cellIdx != posCellIdx) {
 			#if (DENSITY_CONVERSION_TCP06 == 1)
+				// TODO: deposit proportional discomfort on ABCD cells
 				Cell* currCell = &currCells[cellIdx];
 				Cell* prevCell = &prevCells[cellIdx];
 
@@ -1222,8 +1233,6 @@ float Grid::Potential2D(const float p1, const float c1, const float p2, const fl
 
 
 bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCellID) {
-	const SimObjectDef* objectDef = mCOH->GetSimObjectDef(objectID);
-
 	const vec3f& objectPos = mCOH->GetSimObjectPosition(objectID);
 	const vec3f& objectDir = mCOH->GetSimObjectDirection(objectID);
 
@@ -1240,6 +1249,8 @@ bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCel
 		#if (VELOCITY_FIELD_DIRECT_INTERPOLATION == 1)
 			mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + objectCellVel, objectCellVel.norm(), objectCellVel.len3D());
 		#else
+			const SimObjectDef* objectDef = mCOH->GetSimObjectDef(objectID);
+
 			const float objectSpeed = mCOH->GetSimObjectSpeed(objectID);
 			const float maxAccRate = objectDef->GetMaxAccelerationRate();
 			const float maxDecRate = objectDef->GetMaxDeccelerationRate();

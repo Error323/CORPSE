@@ -143,9 +143,9 @@ public:
 	unsigned int GetSquareSize() const { return mSquareSize; }
 
 private:
-	static const float DENSITY_BAR = 0.05f;   // per-unit density, must be <= DENSITY_MIN
-	static const float DENSITY_MIN = 0.25f;   // if rho <= rho_min, f == f_topo
-	static const float DENSITY_MAX = 0.75f;   // if rho >= rho_max, f == f_flow
+	static const float DENSITY_BAR = 0.050f;   // per-unit density, must be <= DENSITY_MIN
+	static const float DENSITY_MIN = 0.250f;   // if rho <= rho_min, f == f_topo
+	static const float DENSITY_MAX = 0.750f;   // if rho >= rho_max, f == f_flow
 
 	static const float      SPEED_WEIGHT = 1.0f; // alpha
 	static const float DISCOMFORT_WEIGHT = 8.0f; // gamma
