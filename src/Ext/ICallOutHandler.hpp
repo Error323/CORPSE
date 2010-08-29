@@ -10,6 +10,8 @@ struct WantedPhysicalState;
 // exposes simulation state to libraries
 class ICallOutHandler {
 public:
+	virtual float GetFloatConfigParam(const char** tableNames, const char* key, float val) const = 0;
+
 	virtual int GetHeightMapSizeX() const = 0;
 	virtual int GetHeightMapSizeZ() const = 0;
 	virtual float GetMinMapHeight() const = 0;

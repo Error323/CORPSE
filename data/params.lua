@@ -158,4 +158,19 @@ params = {
 		name = "core_flak_vehicle.s3o", "corsent"
 		name = "UltraAssault.s3o",
 	--]]
+
+	["pathmodule"] = {
+		["cc"] = {
+			alpha   =  1.0, -- speed weight
+			beta    =  0.0, -- time weight
+			gamma   = 20.0, -- discomfort weight
+
+			rho_bar = 0.05, -- density per object, must be <= rho_min
+			rho_min = 0.25, -- if rho <= rho_min, f == f_topo
+			rho_max = 0.75, -- if rho >= rho_max, f == f_flow
+		},
+
+		["dummy"] = {
+		},
+	},
 }

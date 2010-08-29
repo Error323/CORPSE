@@ -9,6 +9,8 @@
 #include "../Sim/SimObjectDefHandler.hpp"
 #include "../Sim/SimObjectGrid.hpp"
 #include "../System/Debugger.hpp"
+#include "../System/EngineAux.hpp"
+#include "../System/LuaParser.hpp"
 
 CallOutHandler* CallOutHandler::GetInstance() {
 	static CallOutHandler* coh = NULL;
@@ -30,6 +32,24 @@ void CallOutHandler::FreeInstance(CallOutHandler* coh) {
 }
 
 
+
+float CallOutHandler::GetFloatConfigParam(const char** tableNames, const char* key, float val) const {
+	const LuaTable* table = LUA->GetRoot();
+
+	if (tableNames == NULL) {
+		return val;
+	}
+
+	for (unsigned int n = 0; (tableNames[n] != NULL && table != NULL); n++) {
+		table = table->GetTblVal(tableNames[n]);
+	}
+
+	if (table != NULL) {
+		return (table->GetFltVal(key, val));
+	}
+
+	return val;
+}
 
 int CallOutHandler::GetHeightMapSizeX() const { return readMap->mapx; }
 int CallOutHandler::GetHeightMapSizeZ() const { return readMap->mapy; }

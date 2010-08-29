@@ -11,6 +11,8 @@ public:
 	static CallOutHandler* GetInstance();
 	static void FreeInstance(CallOutHandler*);
 
+	float GetFloatConfigParam(const char**, const char*, float) const;
+
 	int GetHeightMapSizeX() const;
 	int GetHeightMapSizeZ() const;
 	float GetMinMapHeight() const;

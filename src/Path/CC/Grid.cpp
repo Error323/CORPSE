@@ -150,12 +150,23 @@ void Grid::Kill() {
 void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	PFFG_ASSERT(downScaleFactor >= 1);
 
+	static const char* tableNames[] = {
+		"pathmodule", "cc", NULL,
+	};
+
 	// NOTE: if mDownScale > 1, the height-map must be downsampled
 	mCOH        = coh;
 	mDownScale  = downScaleFactor;
 	numCellsX   = mCOH->GetHeightMapSizeX() / mDownScale;
 	numCellsZ   = mCOH->GetHeightMapSizeZ() / mDownScale;
 	mSquareSize = mCOH->GetSquareSize()     * mDownScale;
+
+	mAlphaWeight = mCOH->GetFloatConfigParam(tableNames, "alpha",   -1.0f);
+	mBetaWeight  = mCOH->GetFloatConfigParam(tableNames, "beta",    -1.0f);
+	mGammaWeight = mCOH->GetFloatConfigParam(tableNames, "gamma",   -1.0f);
+	mRhoBar      = mCOH->GetFloatConfigParam(tableNames, "rho_bar", -1.0f);
+	mRhoMin      = mCOH->GetFloatConfigParam(tableNames, "rho_min", -1.0f);
+	mRhoMax      = mCOH->GetFloatConfigParam(tableNames, "rho_max", -1.0f);
 
 	// NOTE:
 	//   if the terrain is completely flat, these will be zero (causing DIV0's)
@@ -395,8 +406,6 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 }
 
 void Grid::Reset() {
-	numResets += 1;
-
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
@@ -466,10 +475,10 @@ void Grid::AddGlobalDynamicCellData(
 					// NOTE: when rho_bar is always <= rho_min, how can we get
 					// avoidance behavior around a single non-moving object?
 					const float scale = 1.0f - ((std::abs(x) + std::abs(z)) / float(cellsInRadius << 1));
-					const float rho = DENSITY_BAR + ((DENSITY_MIN - DENSITY_BAR - EPSILON) * scale);
+					const float rho = mRhoBar + ((mRhoMin - mRhoBar - EPSILON) * scale);
 
-					// if (vel.sqLen3D() <= EPSILON) { rho = DENSITY_MAX; }
-					// if (x == 0 && z == 0) { rho = DENSITY_MAX; }
+					// if (vel.sqLen3D() <= EPSILON) { rho = mRhoMax; }
+					// if (x == 0 && z == 0) { rho = mRhoMax; }
 
 					cf->density += rho;
 					cb->density += rho;
@@ -477,8 +486,8 @@ void Grid::AddGlobalDynamicCellData(
 					cb->avgVelocity += (vel * rho);
 				} break;
 				case DATATYPE_DISCOMFORT: {
-					cf->discomfort += DENSITY_BAR;
-					cb->discomfort += DENSITY_BAR;
+					cf->discomfort += mRhoBar;
+					cb->discomfort += mRhoBar;
 				} break;
 				default: {
 				} break;
@@ -569,9 +578,9 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		//    positive     fractional dx and dy,  negative non-fractional lambda  ==>   0.50^-5.0 = 32.00000,  0.75^-5.0 =    4.213
 		//    positive     fractional dx and dy,  negative     fractional lambda  ==>   0.50^-0.5 =  1.41421,  0.75^-0.5 =    1.154
 		//
-		// take the *non-normalised* DENSITY_BAR value, so that lambda is
-		// always a negative number (fractional if [1.0/DENSITY_BAR] < 2.0,
-		// fractional otherwise) and matches the fractional d{x,y} values
+		// take the *non-normalised* mRhoBar value, so that lambda is
+		// always negative (fractional if [1.0 / mRhoBar] < 2.0, else
+		// fractional) and matches the fractional d{x,y} values
 		//
 		// this nevertheless produces a far-too-wide range of densities:
 		//     d{x,y}=0.10 ** exp=-4.0 == 10000.0
@@ -579,15 +588,15 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		//     d{x,y}=0.50 ** exp=-4.0 ==    16.0
 		//     d{x,y}=0.75 ** exp=-4.0 ~=     3.1
 		//     d{x,y}=0.90 ** exp=-4.0 ~=     1.5
-		static const float DENSITY_EXP = -(logf(1.0f / DENSITY_BAR) / logf(2.0f));
-		static const float DENSITY_LOWER = powf(0.9f, DENSITY_EXP);
-		static const float DENSITY_UPPER = powf(0.1f, DENSITY_EXP);
+		static const float DENSITY_EXPON = -(logf(1.0f / mRhoBar) / logf(2.0f));
+		static const float DENSITY_LOWER = powf(0.9f, DENSITY_EXPON);
+		static const float DENSITY_UPPER = powf(0.1f, DENSITY_EXPON);
 
 		// splat the density
-		const float rhoA = (powf(std::min<float>(1.0f - dx, 1.0f - dy), DENSITY_EXP) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
-		const float rhoB = (powf(std::min<float>(       dx, 1.0f - dy), DENSITY_EXP) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
-		const float rhoC = (powf(std::min<float>(       dx,        dy), DENSITY_EXP) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
-		const float rhoD = (powf(std::min<float>(1.0f - dx,        dy), DENSITY_EXP) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
+		const float rhoA = (powf(std::min<float>(1.0f - dx, 1.0f - dy), DENSITY_EXPON) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
+		const float rhoB = (powf(std::min<float>(       dx, 1.0f - dy), DENSITY_EXPON) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
+		const float rhoC = (powf(std::min<float>(       dx,        dy), DENSITY_EXPON) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
+		const float rhoD = (powf(std::min<float>(1.0f - dx,        dy), DENSITY_EXPON) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
 
 		Af->density += rhoA; Ab->density = Af->density;
 		Bf->density += rhoB; Bb->density = Bf->density;
@@ -624,8 +633,8 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsig
 				Cell* currCell = &currCells[cellIdx];
 				Cell* prevCell = &prevCells[cellIdx];
 
-				currCell->discomfort += DENSITY_BAR;
-				prevCell->discomfort += DENSITY_BAR;
+				currCell->discomfort += mRhoBar;
+				prevCell->discomfort += mRhoBar;
 
 				mTouchedCells.insert(cellIdx);
 			#else
@@ -654,13 +663,13 @@ void Grid::ComputeAvgVelocity() {
 		}
 
 		// note: unnecessary?
-		cf->density = CLAMP(cf->density, 0.0f, DENSITY_MAX + EPSILON);
-		cb->density = CLAMP(cb->density, 0.0f, DENSITY_MAX + EPSILON);
+		cf->density = CLAMP(cf->density, 0.0f, mRhoMax + EPSILON);
+		cb->density = CLAMP(cb->density, 0.0f, mRhoMax + EPSILON);
 
-		// normalise the densities, so comparisons with
-		// DENSITY_MIN and DENSITY_MAX are well-defined
-		// when constructing the speed-field ==> already
-		// guaranteed regardless of the rho_* scale
+		// normalise the cell densities, so that comparisons with
+		// mRhoMin and mRhoMax are well-defined when constructing
+		// the speed-field ==> already ensured regardless of the
+		// rho_* scale
 		//
 		// NOTE:
 		//     we do not even want normalisation
@@ -720,7 +729,7 @@ void Grid::ComputeAvgVelocity() {
 				if (POSITIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod =  std::fabs(cellDirSlope); }
 				if (NEGATIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod = -std::fabs(cellDirSlope); }
 
-				const float densityDirSpeedScale = (currCellDirNgb->density - DENSITY_MIN) / (DENSITY_MAX - DENSITY_MIN);
+				const float densityDirSpeedScale = (currCellDirNgb->density - mRhoMin) / (mRhoMax - mRhoMin);
 				const float slopeDirSpeedScale   = (cellDirSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
 				const float cellDirTopoSpeed     = mMaxGroupSpeed + CLAMP(slopeDirSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
 				const float cellDirFlowSpeed     = std::max(0.0f, currCellDirNgb->avgVelocity.dot2D(mDirVectors[dir]));
@@ -728,8 +737,8 @@ void Grid::ComputeAvgVelocity() {
 
 				cellDirSpeed = cellDirTopoFlowSpeed;
 
-				if (currCellDirNgb->density >= DENSITY_MAX) { cellDirSpeed = cellDirFlowSpeed; }
-				if (currCellDirNgb->density <= DENSITY_MIN) { cellDirSpeed = cellDirTopoSpeed; }
+				if (currCellDirNgb->density >= mRhoMax) { cellDirSpeed = cellDirFlowSpeed; }
+				if (currCellDirNgb->density <= mRhoMin) { cellDirSpeed = cellDirTopoSpeed; }
 			}
 
 			currCell->speed[dir] = cellDirSpeed;
@@ -762,7 +771,7 @@ void Grid::ComputeAvgVelocity() {
 				if (POSITIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod =  std::fabs(cellDirSlope); }
 				if (NEGATIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod = -std::fabs(cellDirSlope); }
 
-				const float densityDirSpeedScale = (currCellDirNgb->density - DENSITY_MIN) / (DENSITY_MAX - DENSITY_MIN);
+				const float densityDirSpeedScale = (currCellDirNgb->density - mRhoMin) / (mRhoMax - mRhoMin);
 				const float slopeDirSpeedScale   = (cellDirSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
 				const float cellDirTopoSpeed     = mMaxGroupSpeed + CLAMP(slopeDirSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
 				const float cellDirFlowSpeed     = std::max(0.0f, currCellDirNgb->avgVelocity.dot2D(mDirVectors[dir]));
@@ -770,14 +779,14 @@ void Grid::ComputeAvgVelocity() {
 
 				cellDirSpeed = cellDirTopoFlowSpeed;
 
-				if (currCellDirNgb->density >= DENSITY_MAX) { cellDirSpeed = cellDirFlowSpeed; }
-				if (currCellDirNgb->density <= DENSITY_MIN) { cellDirSpeed = cellDirTopoSpeed; }
+				if (currCellDirNgb->density >= mRhoMax) { cellDirSpeed = cellDirFlowSpeed; }
+				if (currCellDirNgb->density <= mRhoMin) { cellDirSpeed = cellDirTopoSpeed; }
 
 				if (cellDirSpeed > EPSILON) {
-					cellDirCost = ((SPEED_WEIGHT * cellDirSpeed) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeed;
+					cellDirCost = ((mAlphaWeight * cellDirSpeed) + mBetaWeight + (mGammaWeight * cellDirDiscomfort)) / cellDirSpeed;
 				} else {
 					cellDirSpeed = EPSILON;
-					cellDirCost = ((SPEED_WEIGHT * cellDirSpeed) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeed;
+					cellDirCost = ((mAlphaWeight * cellDirSpeed) + mBetaWeight + (mGammaWeight * cellDirDiscomfort)) / cellDirSpeed;
 				}
 			}
 
@@ -794,12 +803,11 @@ void Grid::ComputeAvgVelocity() {
 //
 // NOTE: engine slope-representation should be the same?
 // NOTE:
-//    if the flow-speed is zero in a region, then the cost
-//    for cells with normalised density >= DENSITY_MAX will
-//    be infinite everywhere and the potential-field update
-//    can trigger asserts; this will also happen for cells
-//    with density <= DENSITY_MIN whenever topoSpeed is less
-//    than or equal to zero
+//    if the flow-speed is zero in a region, then the cost for
+//    cells with normalised density >= mRhoMax will be infinite
+//    everywhere and the potential-field group update triggers
+//    asserts; this happens for cells with density <= mRhoMin
+//    whenever topoSpeed is less than or equal to zero as well
 // FIXME:
 //    at coarse grid resolutions, the density offset of the
 //    neighbor cell often just maps back to the current one,
@@ -845,8 +853,8 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			if (POSITIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod =  std::fabs(cellDirSlope); }
 			if (NEGATIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod = -std::fabs(cellDirSlope); }
 
-			const float densityDirSpeedScaleR = (currCellDirNgbR->density - DENSITY_MIN) / (DENSITY_MAX - DENSITY_MIN);
-			const float densityDirSpeedScaleC = (currCellDirNgbC->density - DENSITY_MIN) / (DENSITY_MAX - DENSITY_MIN);
+			const float densityDirSpeedScaleR = (currCellDirNgbR->density - mRhoMin) / (mRhoMax - mRhoMin);
+			const float densityDirSpeedScaleC = (currCellDirNgbC->density - mRhoMin) / (mRhoMax - mRhoMin);
 
 			const float slopeDirSpeedScale   = (cellDirSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
 			const float cellDirTopoSpeed     = mMaxGroupSpeed + CLAMP(slopeDirSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
@@ -861,14 +869,14 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			cellDirSpeedR = cellDirTopoFlowSpeedR;
 			cellDirSpeedC = cellDirTopoFlowSpeedC;
 
-			if (currCellDirNgbR->density >= DENSITY_MAX) { cellDirSpeedR = cellDirFlowSpeedR; }
-			if (currCellDirNgbR->density <= DENSITY_MIN) { cellDirSpeedR = cellDirTopoSpeed;  }
+			if (currCellDirNgbR->density >= mRhoMax) { cellDirSpeedR = cellDirFlowSpeedR; }
+			if (currCellDirNgbR->density <= mRhoMin) { cellDirSpeedR = cellDirTopoSpeed;  }
 
-			if (currCellDirNgbC->density >= DENSITY_MAX) { cellDirSpeedC = cellDirFlowSpeedC; }
-			if (currCellDirNgbC->density <= DENSITY_MIN) { cellDirSpeedC = cellDirTopoSpeed;  }
+			if (currCellDirNgbC->density >= mRhoMax) { cellDirSpeedC = cellDirFlowSpeedC; }
+			if (currCellDirNgbC->density <= mRhoMin) { cellDirSpeedC = cellDirTopoSpeed;  }
 
 			if (cellDirSpeedC > EPSILON) {
-				cellDirCost = ((SPEED_WEIGHT * cellDirSpeedC) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeedC;
+				cellDirCost = ((mAlphaWeight * cellDirSpeedC) + mBetaWeight + (mGammaWeight * cellDirDiscomfort)) / cellDirSpeedC;
 			} else {
 				// should this case be allowed to happen?
 				// (infinite costs very heavily influence
@@ -877,7 +885,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 				// cost = std::numeric_limits<float>::infinity();
 				// cost = std::numeric_limits<float>::max();
 				cellDirSpeedC = EPSILON;
-				cellDirCost = ((SPEED_WEIGHT * cellDirSpeedC) + (DISCOMFORT_WEIGHT * cellDirDiscomfort)) / cellDirSpeedC;
+				cellDirCost = ((mAlphaWeight * cellDirSpeedC) + mBetaWeight + (mGammaWeight * cellDirDiscomfort)) / cellDirSpeedC;
 			}
 		}
 

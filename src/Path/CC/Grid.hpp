@@ -95,7 +95,7 @@ public:
 		unsigned int numNeighbors;
 	};
 
-	Grid(): numCellsX(0), numCellsZ(0), mSquareSize(0), mDownScale(0), numResets(0) {
+	Grid(): numCellsX(0), numCellsZ(0), mSquareSize(0), mDownScale(0) {
 		mDirVectors[DIR_N] = -ZVECf;
 		mDirVectors[DIR_S] =  ZVECf;
 		mDirVectors[DIR_E] =  XVECf;
@@ -143,18 +143,17 @@ public:
 	unsigned int GetSquareSize() const { return mSquareSize; }
 
 private:
-	static const float DENSITY_BAR = 0.050f;   // per-unit density, must be <= DENSITY_MIN
-	static const float DENSITY_MIN = 0.250f;   // if rho <= rho_min, f == f_topo
-	static const float DENSITY_MAX = 0.750f;   // if rho >= rho_max, f == f_flow
-
-	static const float      SPEED_WEIGHT =  1.0f; // alpha
-	static const float DISCOMFORT_WEIGHT = 20.0f; // gamma
+	float mRhoMin;
+	float mRhoMax;
+	float mRhoBar;
+	float mAlphaWeight;
+	float mBetaWeight;
+	float mGammaWeight;
 
 	unsigned int numCellsX;
 	unsigned int numCellsZ;
 	unsigned int mSquareSize;
 	unsigned int mDownScale;
-	unsigned int numResets;
 
 	float mMinGroupSlope, mMinTerrainSlope; // ?, sMin (not normalised)
 	float mMaxGroupSlope, mMaxTerrainSlope; // ?, sMax (not normalised)
