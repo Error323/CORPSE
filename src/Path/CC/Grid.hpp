@@ -161,6 +161,8 @@ private:
 	float mMaxGroupSpeed;                   // fMax
 	float mMaxGroupRadius;
 
+	bool mFlatTerrain;
+
 	// used by UpdateGroupPotentialField() to
 	// validate potential-field construction
 	unsigned int numInfinitePotentialCases;
