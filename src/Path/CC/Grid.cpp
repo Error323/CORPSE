@@ -215,10 +215,10 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 		for (unsigned int x = 0; x < numCellsX; x++) {
 			currCells.push_back(Cell(x, y));
 			prevCells.push_back(Cell(x, y));
-			currEdges.push_back(Grid::Cell::Edge()); // Nf
 			currEdges.push_back(Grid::Cell::Edge()); // Wf
-			prevEdges.push_back(Grid::Cell::Edge()); // Nb
+			currEdges.push_back(Grid::Cell::Edge()); // Nf
 			prevEdges.push_back(Grid::Cell::Edge()); // Wb
+			prevEdges.push_back(Grid::Cell::Edge()); // Nb
 
 			Cell* currCell = &currCells.back();
 			Cell* prevCell = &prevCells.back();
@@ -476,6 +476,10 @@ void Grid::AddGlobalDynamicCellData(
 					// density based on unit's position within the center cell
 					// NOTE: when rho_bar is always <= rho_min, how can we get
 					// avoidance behavior around a single non-moving object?
+					//
+					// two contradictory requirements, regardless of cell-size:
+					//     1) units must contribute a minimum amount of density so other units avoid them
+					//     2) units must contribute a maximum amount of density so they do not self-impede
 					const float scale = 1.0f - ((std::abs(x) + std::abs(z)) / float(cellsInRadius << 1));
 					const float rho = mRhoBar + ((mRhoMin - mRhoBar - EPSILON) * scale);
 
