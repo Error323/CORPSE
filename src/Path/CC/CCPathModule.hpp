@@ -105,8 +105,8 @@ private:
 	std::map<unsigned int, MGroup*> mGroups;
 	std::map<unsigned int, MObject*> mObjects;
 
-	DataTypeInfo cachedScalarInfo;
-	DataTypeInfo cachedVectorInfo;
+	DataTypeInfo cachedScalarData;
+	DataTypeInfo cachedVectorData;
 };
 
 IPathModule* CALL_CONV GetPathModuleInstance(ICallOutHandler* icoh) { return (new CCPathModule(icoh)); }

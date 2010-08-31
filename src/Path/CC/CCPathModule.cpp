@@ -164,8 +164,8 @@ void CCPathModule::Init() {
 
 	mGrid.Init(GRID_DOWNSCALE_FACTOR, coh);
 
-	static DataTypeInfo scalarInfo = DATATYPEINFO_CACHED; cachedScalarInfo = scalarInfo;
-	static DataTypeInfo vectorInfo = DATATYPEINFO_CACHED; cachedVectorInfo = vectorInfo;
+	static const DataTypeInfo scalarData = DATATYPEINFO_CACHED; cachedScalarData = scalarData;
+	static const DataTypeInfo vectorData = DATATYPEINFO_CACHED; cachedVectorData = vectorData;
 }
 
 void CCPathModule::Update() {
@@ -419,10 +419,10 @@ bool CCPathModule::GetScalarDataTypeInfo(DataTypeInfo* i) const {
 
 		// HACK: we don't want to change the interface
 		CCPathModule* m = const_cast<CCPathModule*>(this);
-		m->cachedScalarInfo = *i;
-		m->cachedScalarInfo.cached = true;
+		m->cachedScalarData = *i;
+		m->cachedScalarData.cached = true;
 	} else {
-		*i = cachedScalarInfo;
+		*i = cachedScalarData;
 	}
 
 	return ret;
@@ -444,10 +444,10 @@ bool CCPathModule::GetVectorDataTypeInfo(DataTypeInfo* i) const {
 		}
 
 		CCPathModule* m = const_cast<CCPathModule*>(this);
-		m->cachedVectorInfo = *i;
-		m->cachedVectorInfo.cached = true;
+		m->cachedVectorData = *i;
+		m->cachedVectorData.cached = true;
 	} else {
-		*i = cachedVectorInfo;
+		*i = cachedVectorData;
 	}
 
 	return ret;
