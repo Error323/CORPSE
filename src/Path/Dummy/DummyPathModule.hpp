@@ -44,8 +44,8 @@ public:
 		return n;
 	}
 
-	bool GetScalarDataTypeInfo(DataTypeInfo*, unsigned int) const { return false; }
-	bool GetVectorDataTypeInfo(DataTypeInfo*, unsigned int) const { return false; }
+	bool GetScalarDataTypeInfo(DataTypeInfo*) const { return false; }
+	bool GetVectorDataTypeInfo(DataTypeInfo*) const { return false; }
 	unsigned int GetNumScalarDataTypes() const { return 0; }
 	unsigned int GetNumVectorDataTypes() const { return 0; }
 

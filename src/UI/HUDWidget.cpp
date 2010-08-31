@@ -23,13 +23,18 @@ void ui::HUDWidget::Update(const vec3i&, const vec3i& size) {
 	static unsigned int sFrame = sThread->GetFrame(), sFPS = 0;
 	static unsigned int rFrame = rThread->GetFrame(), rFPS = 0;
 
-	static char sFrameStrBuf[64]    = {'\0'};
-	static char rFrameStrBuf[64]    = {'\0'};
-	static char camPosStrBuf[128]   = {'\0'};
-	static char camDirStrBuf[128]   = {'\0'};
-	static char camModeStrBuf[128]  = {'\0'};
-	static char mouseLookStrBuf[64] = {'\0'};
-	static char numGroupsStrBuf[64] = {'\0'};
+	static char sFrameStrBuf[64]          = {'\0'};
+	static char rFrameStrBuf[64]          = {'\0'};
+	static char camPosStrBuf[128]         = {'\0'};
+	static char camDirStrBuf[128]         = {'\0'};
+	static char camModeStrBuf[128]        = {'\0'};
+	static char mouseLookStrBuf[64]       = {'\0'};
+	static char numGroupsStrBuf[64]       = {'\0'};
+	static char scalarOverlayStrBuf[128]  = {'\0'};
+	static char vectorOverlayStrBuf[128]  = {'\0'};
+
+	static IPathModule::DataTypeInfo scalarOverlayInfo = DATATYPEINFO_CACHED;
+	static IPathModule::DataTypeInfo vectorOverlayInfo = DATATYPEINFO_CACHED;
 
 	if ((SDL_GetTicks() - tick) >= 1000) {
 		tick   = SDL_GetTicks();
@@ -39,12 +44,18 @@ void ui::HUDWidget::Update(const vec3i&, const vec3i& size) {
 		rFrame = rThread->GetFrame();
 	}
 
+	// TODO: print "nil" if visualisations (or individual overlays) are disabled
+	m->GetScalarDataTypeInfo(&scalarOverlayInfo);
+	m->GetVectorDataTypeInfo(&vectorOverlayInfo);
+
 	snprintf(sFrameStrBuf, 64, "s-frame: %u (rate: %u f/s)", sThread->GetFrame(), sFPS);
 	snprintf(rFrameStrBuf, 64, "r-frame: %u (rate: %u f/s)", rThread->GetFrame(), rFPS);
 	snprintf(camPosStrBuf, 128, "cam-pos: <%.2f, %.2f, %.2f>", c->pos.x, c->pos.y, c->pos.z);
 	snprintf(camDirStrBuf, 128, "cam-dir: <%.2f, %.2f, %.2f>", c->zdir.x, c->zdir.y, c->zdir.z);
 	snprintf(mouseLookStrBuf, 64, "mouse-look: %s", (AUX->GetMouseLook()? "enabled": "disabled"));
 	snprintf(numGroupsStrBuf, 64, "units: %u, groups: %u", simObjectHandler->GetNumSimObjects(), m->GetNumGroupIDs());
+	snprintf(scalarOverlayStrBuf, 128, "scalar overlay: %s (group: %u)", scalarOverlayInfo.name, scalarOverlayInfo.group);
+	snprintf(vectorOverlayStrBuf, 128, "vector overlay: %s (group: %u)", vectorOverlayInfo.name, vectorOverlayInfo.group);
 
 	switch (c->moveMode) {
 		case Camera::CAM_MOVE_MODE_FPS: {
@@ -83,6 +94,9 @@ void ui::HUDWidget::Update(const vec3i&, const vec3i& size) {
 			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(mouseLookStrBuf);
 			glTranslatef(0.0f, -yoff * 0.5f, 0.0f);
 			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(numGroupsStrBuf);
+			glTranslatef(0.0f, -yoff * 0.5f, 0.0f);
+			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(scalarOverlayStrBuf);
+			glTranslatef(0.0f, -yoff * 0.5f, 0.0f); gUI->GetFont()->Render(vectorOverlayStrBuf);
 			gUI->GetFont()->FaceSize(yoff);
 		glPopMatrix();
 		glPopAttrib();

@@ -45,8 +45,8 @@ public:
 		return n;
 	}
 
-	bool GetScalarDataTypeInfo(DataTypeInfo*, unsigned int) const;
-	bool GetVectorDataTypeInfo(DataTypeInfo*, unsigned int) const;
+	bool GetScalarDataTypeInfo(DataTypeInfo*) const;
+	bool GetVectorDataTypeInfo(DataTypeInfo*) const;
 	unsigned int GetNumScalarDataTypes() const { return Grid::NUM_SCALAR_DATATYPES; }
 	unsigned int GetNumVectorDataTypes() const { return Grid::NUM_VECTOR_DATATYPES; }
 
@@ -104,6 +104,9 @@ private:
 
 	std::map<unsigned int, MGroup*> mGroups;
 	std::map<unsigned int, MObject*> mObjects;
+
+	DataTypeInfo cachedScalarInfo;
+	DataTypeInfo cachedVectorInfo;
 };
 
 IPathModule* CALL_CONV GetPathModuleInstance(ICallOutHandler* icoh) { return (new CCPathModule(icoh)); }

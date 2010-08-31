@@ -42,16 +42,19 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 		return;
 	}
 
-	// all parameters except <type> are filled by the Get*DataTypeInfo() call
-	IPathModule::DataTypeInfo info = {dataType, 0, 0, 0, {NULL}, "", false};
+	// all parameters except <type> and <group> are filled by the Get*DataTypeInfo() call
+	IPathModule::DataTypeInfo info = DATATYPEINFO_RWRITE;
 
 	if (dataType < mModule->GetNumScalarDataTypes()) {
 		// scalar field; create a texture overlay
 		TextureOverlay* textureOverlay = textureOverlays[dataType];
 		CBaseGroundDrawer* groundDrawer = readMap->GetGroundDrawer();
 
+		info.type = dataType;
+		info.group = texVisGroupID;
+
 		if (textureOverlay == NULL) {
-			mModule->GetScalarDataTypeInfo(&info, texVisGroupID);
+			mModule->GetScalarDataTypeInfo(&info);
 
 			if (!info.global) {
 				SetNextVisGroupID(true);
@@ -85,8 +88,11 @@ void ui::CCVisualizerWidget::KeyPressed(int key) {
 		// vector field, create a vertex overlay
 		VectorOverlay* vectorOverlay = vectorOverlays[dataType];
 
+		info.type = dataType;
+		info.group = vecVisGroupID;
+
 		if (vectorOverlay == NULL) {
-			mModule->GetVectorDataTypeInfo(&info, vecVisGroupID);
+			mModule->GetVectorDataTypeInfo(&info);
 
 			if (!info.global) {
 				SetNextVisGroupID(false);
@@ -152,7 +158,7 @@ bool ui::CCVisualizerWidget::SetNextVisGroupID(bool texture) {
 
 void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 	static unsigned int simFrame = sThread->GetFrame();
-	static IPathModule::DataTypeInfo info = {0, 0, 0, 0, {NULL}, "", false};
+	static IPathModule::DataTypeInfo info = DATATYPEINFO_RWRITE;
 
 	if (!enabled) {
 		return;
@@ -165,15 +171,17 @@ void ui::CCVisualizerWidget::Update(const vec3i&, const vec3i&) {
 			// if the group corresponding to <visGroupID> no longer exists,
 			// this causes the texture to be filled with default values (0)
 			info.type = currentTextureOverlay->GetDataType();
+			info.group = texVisGroupID;
 
-			mModule->GetScalarDataTypeInfo(&info, texVisGroupID);
+			mModule->GetScalarDataTypeInfo(&info);
 			currentTextureOverlay->Update(info.fdata);
 		}
 
 		if (currentVectorOverlay != NULL && currentVectorOverlay->IsEnabled()) {
 			info.type = currentVectorOverlay->GetDataType();
+			info.group = vecVisGroupID;
 
-			mModule->GetVectorDataTypeInfo(&info, vecVisGroupID);
+			mModule->GetVectorDataTypeInfo(&info);
 			currentVectorOverlay->Update(info.vdata);
 		}
 	}

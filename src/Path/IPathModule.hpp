@@ -6,6 +6,9 @@
 #include "../Math/mat44fwd.hpp"
 #include "../Math/vec3fwd.hpp"
 
+#define DATATYPEINFO_CACHED {0, 0, 0, 0, 0, {NULL}, "", false, true};
+#define DATATYPEINFO_RWRITE {0, 0, 0, 0, 0, {NULL}, "", false, false};
+
 class IEvent;
 class ICallOutHandler;
 class IPathModule: public IEngineModule {
@@ -26,6 +29,7 @@ public:
 
 	struct DataTypeInfo {
 		unsigned int type;
+		unsigned int group;
 		unsigned int sizex;
 		unsigned int sizey;
 		unsigned int stride;
@@ -35,10 +39,11 @@ public:
 		};
 		const char* name;
 		bool global;
+		bool cached;
 	};
 
-	virtual bool GetScalarDataTypeInfo(DataTypeInfo*, unsigned int groupID) const = 0;
-	virtual bool GetVectorDataTypeInfo(DataTypeInfo*, unsigned int groupID) const = 0;
+	virtual bool GetScalarDataTypeInfo(DataTypeInfo*) const = 0;
+	virtual bool GetVectorDataTypeInfo(DataTypeInfo*) const = 0;
 	virtual unsigned int GetNumScalarDataTypes() const = 0;
 	virtual unsigned int GetNumVectorDataTypes() const = 0;
 
