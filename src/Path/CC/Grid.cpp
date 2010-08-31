@@ -1250,8 +1250,8 @@ bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCel
 	const Cell* objectCell = &currCells[objectCellID];
 	const vec3f& objectCellVel = GetInterpolatedVelocity(currEdges, objectCell, objectPos, objectDir);
 
-	PFFG_ASSERT_MSG(!(std::isnan(objectCellVel.x) || std::isnan(objectCellVel.y) || std::isnan(objectCellVel.z)), "Inf velocity-field for cell %u", cellIdx);
-	PFFG_ASSERT_MSG(!(std::isinf(objectCellVel.x) || std::isinf(objectCellVel.y) || std::isinf(objectCellVel.z)), "NaN velocity-field for cell %u", cellIdx);
+	PFFG_ASSERT_MSG(!(std::isnan(objectCellVel.x) || std::isnan(objectCellVel.y) || std::isnan(objectCellVel.z)), "Inf velocity-field for cell <%u,%u>", objectCell->x, objectCell->y);
+	PFFG_ASSERT_MSG(!(std::isinf(objectCellVel.x) || std::isinf(objectCellVel.y) || std::isinf(objectCellVel.z)), "NaN velocity-field for cell <%u,%u>", objectCell->x, objectCell->y);
 
 	if (objectCellVel.sqLen3D() > EPSILON) {
 		#if (VELOCITY_FIELD_DIRECT_INTERPOLATION == 1)
