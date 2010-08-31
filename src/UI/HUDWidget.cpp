@@ -33,8 +33,8 @@ void ui::HUDWidget::Update(const vec3i&, const vec3i& size) {
 	static char scalarOverlayStrBuf[128]  = {'\0'};
 	static char vectorOverlayStrBuf[128]  = {'\0'};
 
-	static IPathModule::DataTypeInfo scalarOverlayInfo = DATATYPEINFO_CACHED;
-	static IPathModule::DataTypeInfo vectorOverlayInfo = DATATYPEINFO_CACHED;
+	static IPathModule::DataTypeInfo scalarOverlayData = DATATYPEINFO_CACHED;
+	static IPathModule::DataTypeInfo vectorOverlayData = DATATYPEINFO_CACHED;
 
 	if ((SDL_GetTicks() - tick) >= 1000) {
 		tick   = SDL_GetTicks();
@@ -45,8 +45,8 @@ void ui::HUDWidget::Update(const vec3i&, const vec3i& size) {
 	}
 
 	// TODO: print "nil" if visualisations (or individual overlays) are disabled
-	m->GetScalarDataTypeInfo(&scalarOverlayInfo);
-	m->GetVectorDataTypeInfo(&vectorOverlayInfo);
+	m->GetScalarDataTypeInfo(&scalarOverlayData);
+	m->GetVectorDataTypeInfo(&vectorOverlayData);
 
 	snprintf(sFrameStrBuf, 64, "s-frame: %u (rate: %u f/s)", sThread->GetFrame(), sFPS);
 	snprintf(rFrameStrBuf, 64, "r-frame: %u (rate: %u f/s)", rThread->GetFrame(), rFPS);
@@ -54,8 +54,21 @@ void ui::HUDWidget::Update(const vec3i&, const vec3i& size) {
 	snprintf(camDirStrBuf, 128, "cam-dir: <%.2f, %.2f, %.2f>", c->zdir.x, c->zdir.y, c->zdir.z);
 	snprintf(mouseLookStrBuf, 64, "mouse-look: %s", (AUX->GetMouseLook()? "enabled": "disabled"));
 	snprintf(numGroupsStrBuf, 64, "units: %u, groups: %u", simObjectHandler->GetNumSimObjects(), m->GetNumGroupIDs());
-	snprintf(scalarOverlayStrBuf, 128, "scalar overlay: %s (group: %u)", scalarOverlayInfo.name, scalarOverlayInfo.group);
-	snprintf(vectorOverlayStrBuf, 128, "vector overlay: %s (group: %u)", vectorOverlayInfo.name, vectorOverlayInfo.group);
+
+	if (*scalarOverlayData.name != '\0') {
+		if (scalarOverlayData.global) {
+			snprintf(scalarOverlayStrBuf, 128, "scalar overlay: %s (group: N/A)", scalarOverlayData.name);
+		} else {
+			snprintf(scalarOverlayStrBuf, 128, "scalar overlay: %s (group: %u)", scalarOverlayData.name, scalarOverlayData.group);
+		}
+	}
+	if (*vectorOverlayData.name != '\0') {
+		if (vectorOverlayData.global) {
+			snprintf(vectorOverlayStrBuf, 128, "vector overlay: %s (group: N/A)", vectorOverlayData.name);
+		} else {
+			snprintf(vectorOverlayStrBuf, 128, "vector overlay: %s (group: %u)", vectorOverlayData.name, vectorOverlayData.group);
+		}
+	}
 
 	switch (c->moveMode) {
 		case Camera::CAM_MOVE_MODE_FPS: {
