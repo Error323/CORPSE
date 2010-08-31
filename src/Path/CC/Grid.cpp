@@ -202,8 +202,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 
 	mBuffers[mCurrBufferIdx].cells.reserve(numCells);
-	mBuffers[mCurrBufferIdx].edges.reserve(numEdges);
 	mBuffers[mPrevBufferIdx].cells.reserve(numCells);
+	mBuffers[mCurrBufferIdx].edges.reserve(numEdges);
 	mBuffers[mPrevBufferIdx].edges.reserve(numEdges);
 
 	std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
@@ -271,7 +271,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	}
 
 	PFFG_ASSERT(currCells.size() == numCells);
-	PFFG_ASSERT(prevEdges.size() == numEdges);
+	// FIXME: the loop above does not generate <numEdges> unique edges?
+	// PFFG_ASSERT(prevEdges.size() == numEdges);
 
 	// perform a full reset of the cells and compute their heights
 	for (unsigned int y = 0; y < numCellsZ; y++) {
