@@ -119,16 +119,6 @@ params = {
 	["objects"] = {
 		numObjectGridCells = {64, 1, 64},
 
-		[1] = {
-			def = "core_goliath",
-			pos = {200.0, 0.0, 200.0},
-			dir = {  0.0, 0.0,   1.0},
-		},
-		[2] = {
-			def = "core_goliath",
-			pos = {3800.0, 0.0, 3800.0},
-			dir = {   0.0, 0.0,   -1.0},
-		},
 	},
 
 	["models"] = {
@@ -167,7 +157,7 @@ params = {
 			beta    =  0.0, -- time weight
 			gamma   = 20.0, -- discomfort weight
 
-			rho_bar = 0.05, -- density per object, must be <= rho_min
+			rho_bar = 0.20, -- density per object, must be <= rho_min
 			rho_min = 0.25, -- if rho <= rho_min, f == f_topo
 			rho_max = 0.75, -- if rho >= rho_max, f == f_flow
 		},
@@ -176,3 +166,22 @@ params = {
 		},
 	},
 }
+
+-- Initiate with N tanks, M vs M
+N = 16
+M = N/2
+for i=1,N do
+	if i < M+1 then
+		params["objects"][i] = {
+			def = "core_goliath",
+			pos = {200.0, 0.0, i*200.0},
+			dir = {  1.0, 0.0,     0.0},
+		}
+	else
+		params["objects"][i] = {
+			def = "core_goliath",
+			pos = {3800.0, 0.0, (i-M)*200.0},
+			dir = { -1.0,  0.0,     0.0},
+		}
+	end
+end
