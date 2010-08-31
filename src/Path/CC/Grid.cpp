@@ -215,10 +215,10 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 		for (unsigned int x = 0; x < numCellsX; x++) {
 			currCells.push_back(Cell(x, y));
 			prevCells.push_back(Cell(x, y));
-			currEdges.push_back(Grid::Cell::Edge()); // Nf
 			currEdges.push_back(Grid::Cell::Edge()); // Wf
-			prevEdges.push_back(Grid::Cell::Edge()); // Nb
+			currEdges.push_back(Grid::Cell::Edge()); // Nf
 			prevEdges.push_back(Grid::Cell::Edge()); // Wb
+			prevEdges.push_back(Grid::Cell::Edge()); // Nb
 
 			Cell* currCell = &currCells.back();
 			Cell* prevCell = &prevCells.back();
