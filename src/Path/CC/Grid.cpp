@@ -177,6 +177,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	//   than in [0, 1]) to determine the extrema
 	mMinTerrainSlope =  std::numeric_limits<float>::max();
 	mMaxTerrainSlope = -std::numeric_limits<float>::max();
+	mFlatTerrain = false;
 
 	printf("[Grid::Init] resolution: %dx%d %d\n", numCellsX, numCellsZ, mSquareSize);
 	printf("\tDENSITY_CONVERSION_TCP06:                %d\n", DENSITY_CONVERSION_TCP06);
@@ -405,6 +406,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 			}
 		}
 	}
+
+	mFlatTerrain = ((mMaxTerrainSlope - mMinTerrainSlope) < EPSILON);
 }
 
 void Grid::Reset() {
@@ -736,7 +739,7 @@ void Grid::ComputeAvgVelocity() {
 				if (NEGATIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod = -std::fabs(cellDirSlope); }
 
 				const float densityDirSpeedScale = (currCellDirNgb->density - mRhoMin) / (mRhoMax - mRhoMin);
-				const float slopeDirSpeedScale   = (cellDirSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
+				const float slopeDirSpeedScale   = mFlatTerrain? 0.0f: ((cellDirSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope));
 				const float cellDirTopoSpeed     = mMaxGroupSpeed + CLAMP(slopeDirSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
 				const float cellDirFlowSpeed     = std::max(0.0f, currCellDirNgb->avgVelocity.dot2D(mDirVectors[dir]));
 				const float cellDirTopoFlowSpeed = cellDirTopoSpeed + densityDirSpeedScale * (cellDirTopoSpeed - cellDirFlowSpeed);
@@ -778,7 +781,7 @@ void Grid::ComputeAvgVelocity() {
 				if (NEGATIVE_SLOPE(dir, cellDirSlope)) { cellDirSlopeMod = -std::fabs(cellDirSlope); }
 
 				const float densityDirSpeedScale = (currCellDirNgb->density - mRhoMin) / (mRhoMax - mRhoMin);
-				const float slopeDirSpeedScale   = (cellDirSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
+				const float slopeDirSpeedScale   = mFlatTerrain? 0.0f: ((cellDirSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope));
 				const float cellDirTopoSpeed     = mMaxGroupSpeed + CLAMP(slopeDirSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
 				const float cellDirFlowSpeed     = std::max(0.0f, currCellDirNgb->avgVelocity.dot2D(mDirVectors[dir]));
 				const float cellDirTopoFlowSpeed = cellDirTopoSpeed + densityDirSpeedScale * (cellDirTopoSpeed - cellDirFlowSpeed);
@@ -862,7 +865,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			const float densityDirSpeedScaleR = (currCellDirNgbR->density - mRhoMin) / (mRhoMax - mRhoMin);
 			const float densityDirSpeedScaleC = (currCellDirNgbC->density - mRhoMin) / (mRhoMax - mRhoMin);
 
-			const float slopeDirSpeedScale   = (cellDirSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope);
+			const float slopeDirSpeedScale   = mFlatTerrain? 0.0f: ((cellDirSlopeMod - mMinTerrainSlope) / (mMaxTerrainSlope - mMinTerrainSlope));
 			const float cellDirTopoSpeed     = mMaxGroupSpeed + CLAMP(slopeDirSpeedScale, -1.0f, 1.0f) * (mMinGroupSpeed - mMaxGroupSpeed);
 
 			const float cellDirFlowSpeedR = std::max(0.0f, currCellDirNgbR->avgVelocity.dot2D(mDirVectors[dir]));
