@@ -4,6 +4,7 @@
 #include "../../Math/BitOps.hpp"
 #include "../../System/EngineAux.hpp"
 #include "../../System/Logger.hpp"
+#include "../../System/LuaParser.hpp"
 #include "./SMFReadMap.hpp"
 #include "./SMFFormat.hpp"
 #include "../MapInfo.hpp"
@@ -62,8 +63,12 @@ CSMFReadMap::CSMFReadMap(std::string mapname): smfMapFile(mapname) {
 	const float base = minH;
 	const float mod = (maxH - minH) / 65536.0f;
 
+	const LuaTable* rootTable = LUA->GetRoot();
+	const LuaTable* mapTable = rootTable->GetTblVal("map");
+	const bool flatten = (mapTable != NULL && mapTable->GetFltVal("flatten", 0.0f) != 0.0f);
+
 	LOG << "[CSMFReadMap::CSMFReadMap] [3]\n";
-	smfMapFile.ReadHeightmap(heightmap, base, mod);
+	smfMapFile.ReadHeightmap(heightmap, base, mod, flatten);
 
 	CReadMap::Initialize();
 
@@ -314,6 +319,7 @@ const char* CSMFReadMap::GetFeatureType(int typeID) {
 
 
 
+/*
 unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bmInfo) {
 	// get size
 	*bmInfo = smfMapFile.GetInfoMapSize(name);
@@ -324,10 +330,13 @@ unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* b
 	smfMapFile.ReadInfoMap(name, data);
 	return data;
 }
+*/
 
-void CSMFReadMap::FreeInfoMap(const std::string& /*name*/, unsigned char* data) {
+/*
+void CSMFReadMap::FreeInfoMap(const std::string& name, unsigned char* data) {
 	delete[] data;
 }
+*/
 
 
 

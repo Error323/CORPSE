@@ -85,8 +85,8 @@ public:
 	// Some map types:
 	//   "metal"  -  metalmap
 	//   "grass"  -  grassmap
-	virtual unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm) = 0;
-	virtual void FreeInfoMap(const std::string& name, unsigned char* data) = 0;
+	// virtual unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm) = 0;
+	// virtual void FreeInfoMap(const std::string& name, unsigned char* data) = 0;
 
 	// determine visibility for a rectangular grid
 	struct IQuadDrawer {

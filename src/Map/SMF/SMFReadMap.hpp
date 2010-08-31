@@ -36,8 +36,8 @@ class CSMFReadMap: public CReadMap {
 		void GetFeatureInfo(MapFeatureInfo* f);
 		const char* GetFeatureType(int typeID);
 
-		unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm);
-		void FreeInfoMap(const std::string& name, unsigned char* data);
+		// unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm);
+		// void FreeInfoMap(const std::string& name, unsigned char* data);
 
 		// todo: do not use, just here for backward compatibility with SMFGroundTextures.cpp
 		CSMFMapFile& GetFile() { return smfMapFile; }

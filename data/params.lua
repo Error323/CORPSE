@@ -76,6 +76,8 @@ params = {
 		-- smf = "TabulaV2.smf",
 		-- smt = "TabulaV2.smt",
 
+		flatten = 0,
+
 		groundAmbientColor  = {0.2 * 100.0, 0.2 * 100.0, 0.2 * 100.0, 1.0 * 100.0},
 		groundDiffuseColor  = {1.0 * 100.0, 1.0 * 100.0, 1.0 * 100.0, 1.0 * 100.0},
 		groundSpecularColor = {0.8 * 100.0, 0.8 * 100.0, 0.8 * 100.0, 1.0 * 100.0},

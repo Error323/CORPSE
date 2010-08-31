@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <string>
+#include <limits>
 
 #include "../Math/vec3.hpp"
 #include "../System/EngineAux.hpp"
@@ -32,7 +33,9 @@ CReadMap* CReadMap::GetInstance(const std::string& mapname) {
 
 		LOG << "[CReadMap::LoadMap] [2]\n";
 
+		/*
 		MapBitmapInfo mbi;
+
 		unsigned char* metalmap = rm->GetInfoMap("metal", &mbi);
 
 		LOG << "[CReadMap::LoadMap] [3]\n";
@@ -43,10 +46,11 @@ CReadMap* CReadMap::GetInstance(const std::string& mapname) {
 
 			rm->FreeInfoMap("metal", metalmap);
 		}
+		*/
 
+		/*
 		LOG << "[CReadMap::LoadMap] [4]\n";
 
-		/* Read type map */
 		MapBitmapInfo tbi;
 		unsigned char* typemap = rm->GetInfoMap("type", &tbi);
 
@@ -68,6 +72,7 @@ CReadMap* CReadMap::GetInstance(const std::string& mapname) {
 		}
 
 		LOG << "[CReadMap::LoadMap] [7]\n";
+		*/
 	}
 
 	return rm;
@@ -121,8 +126,8 @@ void CReadMap::Initialize() {
 void CReadMap::CalcHeightfieldData() {
 	const float* heightmap = GetHeightmap();
 
-	minheight = +123456.0f;
-	maxheight = -123456.0f;
+	minheight =  std::numeric_limits<float>::max();
+	maxheight = -std::numeric_limits<float>::max();
 
 	mapChecksum = 0;
 	for (int y = 0; y < ((mapy + 1) * (mapx + 1)); ++y) {

@@ -13,12 +13,12 @@ class CSMFMapFile {
 		CSMFMapFile(const std::string& mapname);
 
 		void ReadMinimap(void* data);
-		void ReadHeightmap(unsigned short* heightmap);
-		void ReadHeightmap(float* heightmap, float base, float mod);
+		// void ReadHeightmap(unsigned short*);
+		void ReadHeightmap(float*, float, float, bool);
 		void ReadFeatureInfo();
 		void ReadFeatureInfo(MapFeatureInfo* f);
-		MapBitmapInfo GetInfoMapSize(const std::string& name) const;
-		bool ReadInfoMap(const std::string& name, void* data);
+		// MapBitmapInfo GetInfoMapSize(const std::string& name) const;
+		// bool ReadInfoMap(const std::string& name, void* data);
 
 		int GetNumFeatures()     const { return featureHeader.numFeatures; }
 		int GetNumFeatureTypes() const { return featureHeader.numFeatureType; }

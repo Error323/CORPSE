@@ -35,6 +35,7 @@ void CSMFMapFile::ReadMinimap(void* data) {
 }
 
 
+/*
 void CSMFMapFile::ReadHeightmap(unsigned short* heightmap) {
 	const int hmx = header.mapx + 1;
 	const int hmy = header.mapy + 1;
@@ -46,9 +47,9 @@ void CSMFMapFile::ReadHeightmap(unsigned short* heightmap) {
 		heightmap[y] = swabword(heightmap[y]);
 	}
 }
+*/
 
-
-void CSMFMapFile::ReadHeightmap(float* heightmap, float base, float mod) {
+void CSMFMapFile::ReadHeightmap(float* heightmap, float base, float mod, bool flatten) {
 	const int hmx = header.mapx + 1;
 	const int hmy = header.mapy + 1;
 	unsigned short* temphm = new unsigned short[hmx * hmy];
@@ -57,7 +58,11 @@ void CSMFMapFile::ReadHeightmap(float* heightmap, float base, float mod) {
 	ifs.Read(temphm, hmx * hmy * 2);
 
 	for (int y = 0; y < hmx * hmy; ++y) {
-		heightmap[y] = base + swabword(temphm[y]) * mod;
+		if (!flatten) {
+			heightmap[y] = base + swabword(temphm[y]) * mod;
+		} else {
+			heightmap[y] = 0.0f;
+		}
 	}
 
 	delete[] temphm;
@@ -102,7 +107,7 @@ const char* CSMFMapFile::GetFeatureType(int typeID) const {
 	return featureTypes[typeID].c_str();
 }
 
-
+/*
 MapBitmapInfo CSMFMapFile::GetInfoMapSize(const string& name) const {
 	if (name == "height") {
 		return MapBitmapInfo(header.mapx + 1, header.mapy + 1);
@@ -118,8 +123,9 @@ MapBitmapInfo CSMFMapFile::GetInfoMapSize(const string& name) const {
 	}
 	return MapBitmapInfo(0, 0);
 }
+*/
 
-
+/*
 bool CSMFMapFile::ReadInfoMap(const string& name, void* data) {
 	if (name == "height") {
 		ReadHeightmap((unsigned short*)data);
@@ -141,7 +147,7 @@ bool CSMFMapFile::ReadInfoMap(const string& name, void* data) {
 	}
 	return false;
 }
-
+*/
 
 void CSMFMapFile::ReadGrassMap(void* data) {
 	ifs.Seek(sizeof(SMFHeader));
