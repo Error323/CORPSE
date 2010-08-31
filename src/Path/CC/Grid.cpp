@@ -215,8 +215,10 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 		for (unsigned int x = 0; x < numCellsX; x++) {
 			currCells.push_back(Cell(x, y));
 			prevCells.push_back(Cell(x, y));
-			currEdges.push_back(Grid::Cell::Edge());
-			prevEdges.push_back(Grid::Cell::Edge());
+			currEdges.push_back(Grid::Cell::Edge()); // Nf
+			currEdges.push_back(Grid::Cell::Edge()); // Wf
+			prevEdges.push_back(Grid::Cell::Edge()); // Nb
+			prevEdges.push_back(Grid::Cell::Edge()); // Wb
 
 			Cell* currCell = &currCells.back();
 			Cell* prevCell = &prevCells.back();
@@ -225,10 +227,10 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 			unsigned int edgeIdxW = currEdges.size() - 2;
 			unsigned int edgeIdxN = currEdges.size() - 1;
 
-			currCell->edges[DIR_W] = edgeIdxW;
 			currCell->edges[DIR_N] = edgeIdxN;
-			prevCell->edges[DIR_W] = edgeIdxW;
+			currCell->edges[DIR_W] = edgeIdxW;
 			prevCell->edges[DIR_N] = edgeIdxN;
+			prevCell->edges[DIR_W] = edgeIdxW;
 
 			// bind the east face of the cell west of the current cell
 			if (x > 0) {
@@ -271,8 +273,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	}
 
 	PFFG_ASSERT(currCells.size() == numCells);
-	// FIXME: the loop above does not generate <numEdges> unique edges?
-	// PFFG_ASSERT(prevEdges.size() == numEdges);
+	PFFG_ASSERT(prevEdges.size() == numEdges);
 
 	// perform a full reset of the cells and compute their heights
 	for (unsigned int y = 0; y < numCellsZ; y++) {
