@@ -169,21 +169,59 @@ params = {
 	},
 }
 
--- Initiate with N tanks, M vs M
-N = 16
-M = N / 2
-for i = 1, N do
-	if (i < M + 1) then
-		params["objects"][i] = {
-			def = "core_goliath",
-			pos = {200.0, 0.0, i * 200.0},
-			dir = {  1.0, 0.0,     0.0},
-		}
-	else
-		params["objects"][i] = {
-			def = "core_goliath",
-			pos = {3800.0, 0.0, (i - M) * 200.0},
-			dir = { -1.0,  0.0,     0.0},
-		}
+
+
+local function AddObjects(paramsTable, cols, mapW, mapH, rowH, colW)
+	local rows = (mapH / rowH) - 1
+	local idx = 0
+
+	for g = 0, 1 do
+		for row = 0, rows - 1 do
+			for col = 0, cols - 1 do
+				local posx = 0.0
+				local posz = 0.0
+				local dirx = 0.0
+
+				if (g == 0) then
+					posx = colW * (col + 1)
+					posz = rowH * (row + 1)
+					dirx = 1.0
+				else
+					posx = mapW - (colW * (col + 1))
+					posz =        (rowH * (row + 1))
+					dirx = -1.0
+				end
+
+				paramsTable["objects"][idx] = {
+					def = "core_goliath",
+					pos = {posx, 0.0, posz},
+					dir = {dirx, 0.0, 0.0},
+				}
+
+				idx = idx + 1
+			end
+		end
 	end
 end
+
+local function AddObjectsMvsM(paramsTable, N)
+	-- Initiate with N tanks, M vs M
+	M = N / 2
+	for i = 1, N do
+		if (i < M + 1) then
+			params["objects"][i] = {
+				def = "core_goliath",
+				pos = {200.0, 0.0, i * 200.0},
+				dir = {  1.0, 0.0,     0.0},
+			}
+		else
+			params["objects"][i] = {
+				def = "core_goliath",
+				pos = {3800.0, 0.0, (i - M) * 200.0},
+				dir = { -1.0,  0.0,     0.0},
+			}
+		end
+	end
+end
+
+AddObjects(params, 4, 4096, 4096, 128, 128)
