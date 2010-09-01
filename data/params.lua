@@ -171,7 +171,8 @@ params = {
 
 
 
-local function AddObjects(paramsTable, cols, mapW, mapH, rowH, colW)
+local function AddObjectsWH(paramsTable, cols, mapW, mapH, rowH, colW)
+	-- add two <rows>x<cols>-sized groups facing east and west
 	local rows = (mapH / rowH) - 1
 	local idx = 0
 
@@ -204,6 +205,33 @@ local function AddObjects(paramsTable, cols, mapW, mapH, rowH, colW)
 	end
 end
 
+local function AddObjectsMNPQ(paramsTable, g0x, g0z, M, N, a, b,   g1x, g1z, P, Q, u, v)
+	-- add one MxN-sized group facing east and one PxQ-sized group facing west
+	local idx = 0
+
+	for i = 1, M do
+		for j = 1, N do
+			paramsTable["objects"][idx] = {
+				def = "core_goliath",
+				pos = {g0x + i * a, 0.0, g0z + j * b},
+				dir = {1.0, 0.0, 0.0}
+			}
+			idx = idx + 1
+		end
+	end
+
+	for i = 1, P do
+		for j = 1, Q do
+			paramsTable["objects"][idx] = {
+				def = "core_goliath",
+				pos = {g1x - i * u, 0.0, g1z + j * v},
+				dir = {-1.0, 0.0, 0.0}
+			}
+			idx = idx + 1
+		end
+	end
+end
+
 local function AddObjectsMvsM(paramsTable, N)
 	-- Initiate with N tanks, M vs M
 	M = N / 2
@@ -224,4 +252,5 @@ local function AddObjectsMvsM(paramsTable, N)
 	end
 end
 
-AddObjects(params, 4, 4096, 4096, 128, 128)
+AddObjectsMNPQ(params, 256.0, 256.0, 5, 5, 128.0, 128.0,   4096.0 - 256.0, 256.0, 5, 5, 128.0, 128.0)
+-- AddObjectsWH(params, 4, 4096, 4096, 128, 128)
