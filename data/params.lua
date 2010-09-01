@@ -169,21 +169,33 @@ params = {
 	},
 }
 
--- Initiate with N tanks, M vs M
-N = 16
-M = N / 2
-for i = 1, N do
-	if (i < M + 1) then
-		params["objects"][i] = {
-			def = "core_goliath",
-			pos = {200.0, 0.0, i * 200.0},
-			dir = {  1.0, 0.0,     0.0},
-		}
-	else
-		params["objects"][i] = {
-			def = "core_goliath",
-			pos = {3800.0, 0.0, (i - M) * 200.0},
-			dir = { -1.0,  0.0,     0.0},
-		}
+
+
+local function AddObjectsMNPQ(paramsTable, g0px, g0pz, g0dx, g0dz, M, N, a, b,   g1px, g1pz, g1dx, g1dz, P, Q, u, v)
+	-- add one MxN-sized group and one PxQ-sized group
+	local idx = 0
+
+	for i = 1, M do
+		for j = 1, N do
+			paramsTable["objects"][idx] = {
+				def = "core_goliath",
+				pos = {g0px + i * a, 0.0, g0pz + j * b},
+				dir = {g0dx, 0.0, g0dz}
+			}
+			idx = idx + 1
+		end
+	end
+
+	for i = 1, P do
+		for j = 1, Q do
+			paramsTable["objects"][idx] = {
+				def = "core_goliath",
+				pos = {g1px + i * u, 0.0, g1pz + j * v},
+				dir = {g1dx, 0.0, g1dz}
+			}
+			idx = idx + 1
+		end
 	end
 end
+
+AddObjectsMNPQ(params, 256.0, 256.0, 1.0, 0.0, 5, 5, 128.0, 128.0,   (4096.0 - 256.0) - (5 * 128.0), 256.0, -1.0, 0.0, 5, 5, 128.0, 128.0)
