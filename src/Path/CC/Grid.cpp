@@ -531,6 +531,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 
 		float dx = pos.x - cellMidPos.x;
 		float dy = pos.z - cellMidPos.z;
+
 		int cx = cell->x, ncx = cell->x;
 		int cy = cell->y, ncy = cell->y;
 
@@ -606,7 +607,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		static const float DENSITY_RANGE = (DENSITY_UPPER - DENSITY_LOWER);
 
 		// splat the density
-		if (ncx < cx && ncy > cy) {
+		if (ncx < cx && ncy < cy) {
 			const float rhoA = (powf(std::min<float>(1.0f - dx, 1.0f - dy), DENSITY_EXPON) - DENSITY_LOWER) / DENSITY_RANGE;
 
 			Af->density += rhoA;
@@ -615,7 +616,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 			Ab->avgVelocity += (vel * rhoA);
 		}
 
-		if (ncx == cx && ncy > cy) {
+		if (ncx == cx && ncy < cy) {
 			const float rhoB = (powf(std::min<float>(dx, 1.0f - dy), DENSITY_EXPON) - DENSITY_LOWER) / DENSITY_RANGE;
 
 			Bf->density += rhoB;
