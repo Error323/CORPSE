@@ -160,6 +160,8 @@ params = {
 			rho_bar = 0.20, -- density per object, must be <= rho_min
 			rho_min = 0.25, -- if rho <= rho_min, f == f_topo
 			rho_max = 0.75, -- if rho >= rho_max, f == f_flow
+
+			updateInt = 1,  -- number of sim-frames between grid updates
 		},
 
 		["dummy"] = {
@@ -169,18 +171,18 @@ params = {
 
 -- Initiate with N tanks, M vs M
 N = 16
-M = N/2
-for i=1,N do
-	if i < M+1 then
+M = N / 2
+for i = 1, N do
+	if (i < M + 1) then
 		params["objects"][i] = {
 			def = "core_goliath",
-			pos = {200.0, 0.0, i*200.0},
+			pos = {200.0, 0.0, i * 200.0},
 			dir = {  1.0, 0.0,     0.0},
 		}
 	else
 		params["objects"][i] = {
 			def = "core_goliath",
-			pos = {3800.0, 0.0, (i-M)*200.0},
+			pos = {3800.0, 0.0, (i - M) * 200.0},
 			dir = { -1.0,  0.0,     0.0},
 		}
 	end

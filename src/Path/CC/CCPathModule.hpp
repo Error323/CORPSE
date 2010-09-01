@@ -51,8 +51,8 @@ public:
 	unsigned int GetNumVectorDataTypes() const { return Grid::NUM_VECTOR_DATATYPES; }
 
 private:
-	void UpdateGrid();
-	void UpdateGroups();
+	void UpdateGrid(bool);
+	void UpdateGroups(bool);
 
 	void AddObjectToGroup(unsigned int, unsigned int);
 	bool DelObjectFromGroup(unsigned int);

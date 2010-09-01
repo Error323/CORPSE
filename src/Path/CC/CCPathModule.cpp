@@ -169,6 +169,8 @@ void CCPathModule::Init() {
 }
 
 void CCPathModule::Update() {
+	static unsigned int frame = 0;
+
 	#ifdef CCPATHMODULE_PROFILE
 	const static std::string s = "[CCPathModule::Update]";
 	const unsigned int t = ScopedTimer::GetTaskTime(s);
@@ -179,13 +181,15 @@ void CCPathModule::Update() {
 		ScopedTimer timer(s);
 		#endif
 
-		UpdateGrid();
-		UpdateGroups();
+		UpdateGrid((frame == 0) || ((frame % mGrid.GetUpdateInterval()) == 0));
+		UpdateGroups((frame == 0) || ((frame % mGrid.GetUpdateInterval()) == 0));
 	}
 
 	#ifdef CCPATHMODULE_PROFILE
 	printf("%s time: %ums\n\n", s.c_str(), (ScopedTimer::GetTaskTime(s) - t));;
 	#endif
+
+	frame += 1;
 }
 
 void CCPathModule::Kill() {
@@ -208,50 +212,52 @@ void CCPathModule::Kill() {
 
 
 
-void CCPathModule::UpdateGrid() {
-	// reset all grid-cells to the global-static state
-	mGrid.Reset();
+void CCPathModule::UpdateGrid(bool isUpdateFrame) {
+	if (isUpdateFrame) {
+		// reset all grid-cells to the global-static state
+		mGrid.Reset();
 
-	// convert the crowd into a density field (rho)
-	for (std::map<unsigned int, MObject*>::iterator it = mObjects.begin(); it != mObjects.end(); ++it) {
-		const unsigned int objID = (it->first);
-		const SimObjectDef* objDef = (it->second)->GetDef();
-		const vec3f& objPos = coh->GetSimObjectPosition(objID);
-		const vec3f objVel =
-			coh->GetSimObjectDirection(objID) *
-			coh->GetSimObjectSpeed(objID);
-		const float objRad = coh->GetSimObjectRadius(objID);
+		// convert the crowd into a density field (rho)
+		for (std::map<unsigned int, MObject*>::iterator it = mObjects.begin(); it != mObjects.end(); ++it) {
+			const unsigned int objID = (it->first);
+			const SimObjectDef* objDef = (it->second)->GetDef();
+			const vec3f& objPos = coh->GetSimObjectPosition(objID);
+			const vec3f objVel =
+				coh->GetSimObjectDirection(objID) *
+				coh->GetSimObjectSpeed(objID);
+			const float objRad = coh->GetSimObjectRadius(objID);
 
-		// NOTE:
-		//   if objVel is a zero-vector, then avgVel will not change
-		//   therefore the flow speed can stay zero in a region, so
-		//   that *only* the topological speed determines the speed
-		//   field there
-		mGrid.AddDensity(objPos, objVel, objRad);
+			// NOTE:
+			//   if objVel is a zero-vector, then avgVel will not change
+			//   therefore the flow speed can stay zero in a region, so
+			//   that *only* the topological speed determines the speed
+			//   field there
+			mGrid.AddDensity(objPos, objVel, objRad);
 
-		#if (PREDICTIVE_DISCOMFORT_FRAMES > 0)
-		// NOTE:
-		//   combine this with AddDensity?
-		//
-		//   adding discomfort in front of every unit just results
-		//   in more self-obstructions, unless the discomfort-field
-		//   is per-group and discomfort for a unit in group <g> is
-		//   only registered on the fields of the groups != <g> (but
-		//   then units within the same group would lack foresight)
-		//
-		//   the amount of lookahead should depend on the object's
-		//   maximum speed and radius (wrt. the cell-size) instead
-		//   of a fixed value
-		mGrid.AddDiscomfort(objPos, objVel, objRad, PREDICTIVE_DISCOMFORT_FRAMES, (mGrid.GetSquareSize() / objDef->GetMaxForwardSpeed()));
-		#endif
+			#if (PREDICTIVE_DISCOMFORT_FRAMES > 0)
+			// NOTE:
+			//   combine this with AddDensity?
+			//
+			//   adding discomfort in front of every unit just results
+			//   in more self-obstructions, unless the discomfort-field
+			//   is per-group and discomfort for a unit in group <g> is
+			//   only registered on the fields of the groups != <g> (but
+			//   then units within the same group would lack foresight)
+			//
+			//   the amount of lookahead should depend on the object's
+			//   maximum speed and radius (wrt. the cell-size) instead
+			//   of a fixed value
+			mGrid.AddDiscomfort(objPos, objVel, objRad, PREDICTIVE_DISCOMFORT_FRAMES, (mGrid.GetSquareSize() / objDef->GetMaxForwardSpeed()));
+			#endif
+		}
+
+		// now that we know the cumulative density per cell,
+		// we can compute the average velocity field (v-bar)
+		mGrid.ComputeAvgVelocity();
 	}
-
-	// now that we know the cumulative density per cell,
-	// we can compute the average velocity field (v-bar)
-	mGrid.ComputeAvgVelocity();
 }
 
-void CCPathModule::UpdateGroups() {
+void CCPathModule::UpdateGroups(bool isUpdateFrame) {
 	typedef std::list<unsigned int> List;
 	typedef std::list<unsigned int>::const_iterator ListIt;
 	typedef std::set<unsigned int> Set;
@@ -267,15 +273,17 @@ void CCPathModule::UpdateGroups() {
 		const Set& groupGoalIDs = group->GetGoals();
 		const Set& groupObjectIDs = group->GetObjectIDs();
 
-		// for each active group <groupID>, first construct the speed- and
-		// unit-cost field (f and C); second, calculate the potential- and
-		// gradient-fields (phi and delta-phi)
-		//
-		// NOTE: discomfort regarding this group can be computed here
-		// NOTE: it might be possible to compute the speed- and cost-
-		//       fields in the UpdateGroupPotentialField as cells are
-		//       picked from the UNKNOWN set, saving N iterations
-		mGrid.UpdateGroupPotentialField(groupID, groupGoalIDs, groupObjectIDs);
+		if (isUpdateFrame) {
+			// for each active group <groupID>, first construct the speed- and
+			// unit-cost field (f and C); second, calculate the potential- and
+			// gradient-fields (phi and delta-phi)
+			//
+			// NOTE: discomfort regarding this group can be computed here
+			// NOTE: it might be possible to compute the speed- and cost-
+			//       fields in the UpdateGroupPotentialField as cells are
+			//       picked from the UNKNOWN set, saving N iterations
+			mGrid.UpdateGroupPotentialField(groupID, groupGoalIDs, groupObjectIDs);
+		}
 
 
 		unsigned int numArrivedObjects = 0;
