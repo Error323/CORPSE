@@ -550,7 +550,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 			cellIdxC = GRID_INDEX( cx,  cy),
 			cellIdxD = GRID_INDEX(ncx,  cy);
 
-		// NOTE: should each of {A,B,C,D} be unique? (if so, d{x,y} would NOT always fall in [0.0, 1.0])
+		// NOTE: {A,B,C,D} are not necessarily all distinct (d{x,y} must always fall in [0.0, 1.0])
 		Cell *Af = &currCells[cellIdxA], *Ab = &prevCells[cellIdxA]; mTouchedCells.insert(cellIdxA);
 		Cell *Bf = &currCells[cellIdxB], *Bb = &prevCells[cellIdxB]; mTouchedCells.insert(cellIdxB);
 		Cell *Cf = &currCells[cellIdxC], *Cb = &prevCells[cellIdxC]; mTouchedCells.insert(cellIdxC);
@@ -603,23 +603,45 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		static const float DENSITY_EXPON = -(logf(1.0f / mRhoBar) / logf(2.0f));
 		static const float DENSITY_LOWER = powf(0.9f, DENSITY_EXPON);
 		static const float DENSITY_UPPER = powf(0.1f, DENSITY_EXPON);
+		static const float DENSITY_RANGE = (DENSITY_UPPER - DENSITY_LOWER);
 
 		// splat the density
-		const float rhoA = (powf(std::min<float>(1.0f - dx, 1.0f - dy), DENSITY_EXPON) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
-		const float rhoB = (powf(std::min<float>(       dx, 1.0f - dy), DENSITY_EXPON) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
-		const float rhoC = (powf(std::min<float>(       dx,        dy), DENSITY_EXPON) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
-		const float rhoD = (powf(std::min<float>(1.0f - dx,        dy), DENSITY_EXPON) - DENSITY_LOWER) / (DENSITY_UPPER - DENSITY_LOWER);
+		if (ncx < cx && ncy > cy) {
+			const float rhoA = (powf(std::min<float>(1.0f - dx, 1.0f - dy), DENSITY_EXPON) - DENSITY_LOWER) / DENSITY_RANGE;
 
-		Af->density += rhoA; Ab->density = Af->density;
-		Bf->density += rhoB; Bb->density = Bf->density;
-		Cf->density += rhoC; Cb->density = Cf->density;
-		Df->density += rhoD; Db->density = Df->density;
+			Af->density += rhoA;
+			Ab->density  = Af->density;
+			Af->avgVelocity += (vel * rhoA);
+			Ab->avgVelocity += (vel * rhoA);
+		}
 
-		// add velocity (NOTE: should only C receive this?)
-		Af->avgVelocity += (vel * rhoA); Ab->avgVelocity += (vel * rhoA);
-		Bf->avgVelocity += (vel * rhoB); Bb->avgVelocity += (vel * rhoB);
-		Cf->avgVelocity += (vel * rhoC); Cb->avgVelocity += (vel * rhoC);
-		Df->avgVelocity += (vel * rhoD); Db->avgVelocity += (vel * rhoD);
+		if (ncx == cx && ncy > cy) {
+			const float rhoB = (powf(std::min<float>(dx, 1.0f - dy), DENSITY_EXPON) - DENSITY_LOWER) / DENSITY_RANGE;
+
+			Bf->density += rhoB;
+			Bb->density  = Bf->density;
+			Bf->avgVelocity += (vel * rhoB);
+			Bb->avgVelocity += (vel * rhoB);
+		}
+
+		if (true && true) {
+			// cell C *always* receives a density contribution
+			const float rhoC = (powf(std::min<float>(dx, dy), DENSITY_EXPON) - DENSITY_LOWER) / DENSITY_RANGE;
+
+			Cf->density += rhoC;
+			Cb->density  = Cf->density;
+			Cf->avgVelocity += (vel * rhoC);
+			Cb->avgVelocity += (vel * rhoC);
+		}
+
+		if (ncx < cx && ncy == cy) {
+			const float rhoD = (powf(std::min<float>(1.0f - dx, dy), DENSITY_EXPON) - DENSITY_LOWER) / DENSITY_RANGE;
+
+			Df->density += rhoD;
+			Db->density  = Df->density;
+			Df->avgVelocity += (vel * rhoD);
+			Db->avgVelocity += (vel * rhoD);
+		}
 	#endif
 }
 
