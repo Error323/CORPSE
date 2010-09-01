@@ -171,50 +171,16 @@ params = {
 
 
 
-local function AddObjectsWH(paramsTable, cols, mapW, mapH, rowH, colW)
-	-- add two <rows>x<cols>-sized groups facing east and west
-	local rows = (mapH / rowH) - 1
-	local idx = 0
-
-	for g = 0, 1 do
-		for row = 0, rows - 1 do
-			for col = 0, cols - 1 do
-				local posx = 0.0
-				local posz = 0.0
-				local dirx = 0.0
-
-				if (g == 0) then
-					posx = colW * (col + 1)
-					posz = rowH * (row + 1)
-					dirx = 1.0
-				else
-					posx = mapW - (colW * (col + 1))
-					posz =        (rowH * (row + 1))
-					dirx = -1.0
-				end
-
-				paramsTable["objects"][idx] = {
-					def = "core_goliath",
-					pos = {posx, 0.0, posz},
-					dir = {dirx, 0.0, 0.0},
-				}
-
-				idx = idx + 1
-			end
-		end
-	end
-end
-
-local function AddObjectsMNPQ(paramsTable, g0x, g0z, M, N, a, b,   g1x, g1z, P, Q, u, v)
-	-- add one MxN-sized group facing east and one PxQ-sized group facing west
+local function AddObjectsMNPQ(paramsTable, g0px, g0pz, g0dx, g0dz, M, N, a, b,   g1px, g1pz, g1dx, g1dz, P, Q, u, v)
+	-- add one MxN-sized group and one PxQ-sized group
 	local idx = 0
 
 	for i = 1, M do
 		for j = 1, N do
 			paramsTable["objects"][idx] = {
 				def = "core_goliath",
-				pos = {g0x + i * a, 0.0, g0z + j * b},
-				dir = {1.0, 0.0, 0.0}
+				pos = {g0px + i * a, 0.0, g0pz + j * b},
+				dir = {g0dx, 0.0, g0dz}
 			}
 			idx = idx + 1
 		end
@@ -224,33 +190,12 @@ local function AddObjectsMNPQ(paramsTable, g0x, g0z, M, N, a, b,   g1x, g1z, P, 
 		for j = 1, Q do
 			paramsTable["objects"][idx] = {
 				def = "core_goliath",
-				pos = {g1x - i * u, 0.0, g1z + j * v},
-				dir = {-1.0, 0.0, 0.0}
+				pos = {g1px + i * u, 0.0, g1pz + j * v},
+				dir = {g1dx, 0.0, g1dz}
 			}
 			idx = idx + 1
 		end
 	end
 end
 
-local function AddObjectsMvsM(paramsTable, N)
-	-- Initiate with N tanks, M vs M
-	M = N / 2
-	for i = 1, N do
-		if (i < M + 1) then
-			params["objects"][i] = {
-				def = "core_goliath",
-				pos = {200.0, 0.0, i * 200.0},
-				dir = {  1.0, 0.0,     0.0},
-			}
-		else
-			params["objects"][i] = {
-				def = "core_goliath",
-				pos = {3800.0, 0.0, (i - M) * 200.0},
-				dir = { -1.0,  0.0,     0.0},
-			}
-		end
-	end
-end
-
-AddObjectsMNPQ(params, 256.0, 256.0, 5, 5, 128.0, 128.0,   4096.0 - 256.0, 256.0, 5, 5, 128.0, 128.0)
--- AddObjectsWH(params, 4, 4096, 4096, 128, 128)
+AddObjectsMNPQ(params, 256.0, 256.0, 1.0, 0.0, 5, 5, 128.0, 128.0,   (4096.0 - 256.0) - (5 * 128.0), 256.0, -1.0, 0.0, 5, 5, 128.0, 128.0)
