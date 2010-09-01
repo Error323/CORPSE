@@ -181,8 +181,8 @@ void CCPathModule::Update() {
 		ScopedTimer timer(s);
 		#endif
 
-		UpdateGrid((frame == 0) || ((mGrid.GetUpdateInterval() % frame) == 0));
-		UpdateGroups((frame == 0) || ((mGrid.GetUpdateInterval() % frame) == 0));
+		UpdateGrid((frame == 0) || ((frame % mGrid.GetUpdateInterval()) == 0));
+		UpdateGroups((frame == 0) || ((frame % mGrid.GetUpdateInterval()) == 0));
 	}
 
 	#ifdef CCPATHMODULE_PROFILE
