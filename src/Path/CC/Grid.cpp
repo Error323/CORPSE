@@ -167,6 +167,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	mRhoBar      = mCOH->GetFloatConfigParam(tableNames, "rho_bar", -1.0f);
 	mRhoMin      = mCOH->GetFloatConfigParam(tableNames, "rho_min", -1.0f);
 	mRhoMax      = mCOH->GetFloatConfigParam(tableNames, "rho_max", -1.0f);
+	mUpdateInt   = mCOH->GetFloatConfigParam(tableNames, "updateInt", 1.0f);
 
 	// NOTE:
 	//   if the terrain is completely flat, these will be zero (causing DIV0's)

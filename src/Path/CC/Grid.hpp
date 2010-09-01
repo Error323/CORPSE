@@ -95,7 +95,7 @@ public:
 		unsigned int numNeighbors;
 	};
 
-	Grid(): numCellsX(0), numCellsZ(0), mSquareSize(0), mDownScale(0) {
+	Grid(): numCellsX(0), numCellsZ(0), mSquareSize(0), mDownScale(0), mUpdateInt(1) {
 		mDirVectors[DIR_N] = -ZVECf;
 		mDirVectors[DIR_S] =  ZVECf;
 		mDirVectors[DIR_E] =  XVECf;
@@ -141,6 +141,7 @@ public:
 	unsigned int GetGridWidth() const { return numCellsX; }
 	unsigned int GetGridHeight() const { return numCellsZ; }
 	unsigned int GetSquareSize() const { return mSquareSize; }
+	unsigned int GetUpdateInterval() const { return mUpdateInt; }
 
 private:
 	float mRhoMin;
@@ -154,6 +155,7 @@ private:
 	unsigned int numCellsZ;
 	unsigned int mSquareSize;
 	unsigned int mDownScale;
+	unsigned int mUpdateInt;
 
 	float mMinGroupSlope, mMinTerrainSlope; // ?, sMin (not normalised)
 	float mMaxGroupSlope, mMaxTerrainSlope; // ?, sMax (not normalised)
