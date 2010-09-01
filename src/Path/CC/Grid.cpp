@@ -177,7 +177,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	//   than in [0, 1]) to determine the extrema
 	mMinTerrainSlope =  std::numeric_limits<float>::max();
 	mMaxTerrainSlope = -std::numeric_limits<float>::max();
-	mFlatTerrain = false;
+	mFlatTerrain     = ((mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()) < EPSILON);
 
 	printf("[Grid::Init] resolution: %dx%d %d\n", numCellsX, numCellsZ, mSquareSize);
 	printf("\tDENSITY_CONVERSION_TCP06:                %d\n", DENSITY_CONVERSION_TCP06);
@@ -300,8 +300,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 			//
 			//    for now, avoid higher areas (problem: discomfort is a much larger
 			//    term than speed, but needs to be around same order of magnitude)
-			currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
-			prevCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
+			currCell->discomfort = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
+			prevCell->discomfort = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
 
 			mHeightVisData[GRID_INDEX(x, y)] = currCell->height;
 			mDiscomfortVisData[GRID_INDEX(x, y)] = currCell->discomfort;
@@ -407,7 +407,9 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 		}
 	}
 
-	mFlatTerrain = ((mMaxTerrainSlope - mMinTerrainSlope) < EPSILON);
+	if (mFlatTerrain) {
+		PFFG_ASSERT((mMaxTerrainSlope - mMinTerrainSlope) < EPSILON);
+	}
 }
 
 void Grid::Reset() {
@@ -425,8 +427,8 @@ void Grid::Reset() {
 		prevCell->ResetGlobalDynamicVars();
 
 		// restore the baseline discomfort values
-		currCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
-		prevCell->discomfort = (currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight());
+		currCell->discomfort = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
+		prevCell->discomfort = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
 
 		mDensityVisData[idx]     = 0.0f;
 		mDiscomfortVisData[idx]  = currCell->discomfort;
