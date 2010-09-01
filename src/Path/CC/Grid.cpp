@@ -25,7 +25,7 @@
 #define MMIN(a, b) (((a) >= (b))? (b): (a))
 #define CLAMP(v, vmin, vmax) MMAX((vmin), MMIN((vmax), (v)))
 
-#define DENSITY_CONVERSION_TCP06                1
+#define DENSITY_CONVERSION_TCP06                0
 
 #define SPEED_COST_POTENTIAL_MERGED_COMPUTATION 1
 #define SPEED_COST_SINGLE_PASS_COMPUTATION      0
