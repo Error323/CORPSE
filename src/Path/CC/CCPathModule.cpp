@@ -7,7 +7,7 @@
 #include "../../Sim/SimObjectState.hpp"
 #include "../../System/ScopedTimer.hpp"
 
-#define GRID_DOWNSCALE_FACTOR         8
+#define GRID_DOWNSCALE_FACTOR        16
 #define MINIMUM_DISTANCE_ENFORCEMENT  1
 #define PREDICTIVE_DISCOMFORT_FRAMES 10
 
@@ -162,6 +162,13 @@ void CCPathModule::Init() {
 	printf("\tMINIMUM_DISTANCE_ENFORCEMENT: %d\n", MINIMUM_DISTANCE_ENFORCEMENT);
 	printf("\tPREDICTIVE_DISCOMFORT_FRAMES: %d\n", PREDICTIVE_DISCOMFORT_FRAMES);
 
+	// NOTE:
+	//     GRID_DOWNSCALE_FACTOR needs to be set such that the
+	//     *radius* of the largest agent model (in world space)
+	//     is <= the center-to-edge distance of a grid cell (in
+	//     world space), otherwise the TCP06 density conversion
+	//     (involving cells ABCD) is ill-defined
+	//     (alternative conversion schemes are allowed however)
 	mGrid.Init(GRID_DOWNSCALE_FACTOR, coh);
 
 	static const DataTypeInfo scalarData = DATATYPEINFO_CACHED; cachedScalarData = scalarData;
