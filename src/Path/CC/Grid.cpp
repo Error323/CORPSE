@@ -685,14 +685,16 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
+	const Cell* cell = &currCells[WorldPosToCellID(pos)];
+
 	#if (DENSITY_CONVERSION_TCP06 == 0)
 		// given the grid resolution, find the number of cells spanned by <r>
-		AddGlobalDynamicCellData(currCells, prevCells, &currCells[WorldPosToCellID(pos)], (radius / (mSquareSize >> 1)) + 1, vel, DATATYPE_DENSITY);
+		AddGlobalDynamicCellData(currCells, prevCells, cell, (radius / (mSquareSize >> 1)) + 1, vel, DATATYPE_DENSITY);
 
 	#else
-		vel * radius;
+		radius * radius;
 
-		AddGlobalDynamicCellDataTCP06(currCells, prevCells, &currCells[WorldPosToCellID(pos)], pos, vel, DATATYPE_DENSITY);
+		AddGlobalDynamicCellDataTCP06(currCells, prevCells, cell, pos, vel, DATATYPE_DENSITY);
 	#endif
 }
 
@@ -713,12 +715,12 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsig
 
 		// skip our own cell
 		if (cellIdx != posCellIdx) {
-			#if (DENSITY_CONVERSION_TCP06 == 1)
-				vel * radius;
+			#if (DENSITY_CONVERSION_TCP06 == 0)
+				AddGlobalDynamicCellData(currCells, prevCells, cell, (radius / (mSquareSize >> 1)) + 1, NVECf, DATATYPE_DISCOMFORT);
+			#else
+				radius * radius;
 
 				AddGlobalDynamicCellDataTCP06(currCells, prevCells, cell, stepPos, vel, DATATYPE_DISCOMFORT);
-			#else
-				AddGlobalDynamicCellData(currCells, prevCells, cell, (radius / (mSquareSize >> 1)) + 1, NVECf, DATATYPE_DISCOMFORT);
 			#endif
 		}
 	}
