@@ -551,6 +551,10 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 		dy = CLAMP((pos.z - cellNgbPos.z) / mSquareSize, 0.1f, 0.9f);
 
 		// NOTE: {A,B,C,D} are not necessarily all distinct
+		//     case 1:  one cell (C)
+		//     case 2A: two cells horizontally (AB or DC)
+		//     case 2B: two cells vertically (DA or CB)
+		//     case 3:  four cells (ABCD)
 		Cell *Af = &currCells[GRID_INDEX(ncx, ncy)], *Ab = &prevCells[GRID_INDEX(ncx, ncy)]; mTouchedCells.insert(GRID_INDEX(ncx, ncy));
 		Cell *Bf = &currCells[GRID_INDEX( cx, ncy)], *Bb = &prevCells[GRID_INDEX( cx, ncy)]; mTouchedCells.insert(GRID_INDEX( cx, ncy));
 		Cell *Cf = &currCells[GRID_INDEX( cx,  cy)], *Cb = &prevCells[GRID_INDEX( cx,  cy)]; mTouchedCells.insert(GRID_INDEX( cx,  cy));
