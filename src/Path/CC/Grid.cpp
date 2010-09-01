@@ -170,8 +170,6 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	mUpdateInt   = mCOH->GetFloatConfigParam(tableNames, "updateInt", 1.0f);
 
 	// NOTE:
-	//   if the terrain is completely flat, these will be zero (causing DIV0's)
-	//
 	//   the slope (height difference) from A to B is equal to the inverse
 	//   slope from B to A, therefore we take the absolute value at every
 	//   cell (this means the scale term in f_topo lies in [-1, 1] rather
