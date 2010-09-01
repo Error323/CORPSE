@@ -720,7 +720,7 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsig
 			#else
 				radius * radius;
 
-				AddGlobalDynamicCellDataTCP06(currCells, prevCells, cell, stepPos, vel, DATATYPE_DISCOMFORT);
+				AddGlobalDynamicCellDataTCP06(currCells, prevCells, cell, stepPos, NVECf, DATATYPE_DISCOMFORT);
 			#endif
 		}
 	}
