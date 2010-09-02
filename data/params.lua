@@ -76,7 +76,7 @@ params = {
 		-- smf = "TabulaV2.smf",
 		-- smt = "TabulaV2.smt",
 
-		flatten = 0,
+		flatten = 1,
 
 		groundAmbientColor  = {0.2 * 100.0, 0.2 * 100.0, 0.2 * 100.0, 1.0 * 100.0},
 		groundDiffuseColor  = {1.0 * 100.0, 1.0 * 100.0, 1.0 * 100.0, 1.0 * 100.0},
@@ -155,7 +155,7 @@ params = {
 		["cc"] = {
 			alpha   =  1.0, -- speed weight
 			beta    =  0.0, -- time weight
-			gamma   = 20.0, -- discomfort weight
+			gamma   =  1.0, -- discomfort weight
 
 			rho_bar = 0.20, -- density per object, must be <= rho_min
 			rho_min = 0.25, -- if rho <= rho_min, f == f_topo
