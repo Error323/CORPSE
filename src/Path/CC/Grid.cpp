@@ -919,16 +919,16 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 	// is no greater than rho-bar outside a disc of radius <r>
 	// (such that f == f_topological when rho_min >= rho_bar)
 	//
-	// however, if mMaxGroupRadius < (mSquareSize >> 1) then
-	// this just maps to <currCell>, hence the CELLS_IN_RADIUS
-	// macro (which ensures a minimum offset of 1 cell) is used
+	// however, when mMaxGroupRadius < (mSquareSize >> 1) this
+	// just maps to <currCell>, hence the CELLS_IN_RADIUS macro
+	// (which ensures a minimum offset of 1 cell) is used here
 	// instead
 	//
 	// const vec3f& cellPos = GetCellMidPos(currCell);
 	// const vec3f densityDirOffset = mDirVectors[dir] * (mMaxGroupRadius + EPSILON);
 	// const Cell* currCellDirNgbR = &currCells[ GetCellIndex1D(cellPos + densityDirOffset) ];
 	//
-	// add one cell so we always sample outside outside a unit's disc
+	// add one cell so we always sample outside a unit's disc
 	const unsigned int densityDirOffset = CELLS_IN_RADIUS(mMaxGroupRadius) + 1;
 
 	for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
