@@ -36,8 +36,6 @@
 #define MMIN(a, b) (((a) >= (b))? (b): (a))
 #define CLAMP(v, vmin, vmax) MMAX((vmin), MMIN((vmax), (v)))
 
-#define DENSITY_CONVERSION_TCP06                0
-
 #define SPEED_COST_POTENTIAL_MERGED_COMPUTATION 1
 #define SPEED_COST_SINGLE_PASS_COMPUTATION      0
 
@@ -190,8 +188,6 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	mFlatTerrain     = ((mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()) < EPSILON);
 
 	printf("[Grid::Init] resolution: %dx%d %d\n", numCellsX, numCellsZ, mSquareSize);
-	printf("\tDENSITY_CONVERSION_TCP06:                %d\n", DENSITY_CONVERSION_TCP06);
-	printf("\n");
 	printf("\tSPEED_COST_POTENTIAL_MERGED_COMPUTATION: %d\n", SPEED_COST_POTENTIAL_MERGED_COMPUTATION);
 	printf("\tSPEED_COST_SINGLE_PASS_COMPUTATION:      %d\n", SPEED_COST_SINGLE_PASS_COMPUTATION);
 	printf("\n");
@@ -519,198 +515,13 @@ void Grid::AddGlobalDynamicCellData(
 	}
 }
 
-void Grid::AddGlobalDynamicCellDataTCP06(
-	std::vector<Cell>& currCells,
-	std::vector<Cell>& prevCells,
-	const Cell* cell,
-	const vec3f& pos,
-	const vec3f& vel,
-	unsigned int type
-) {
-	const vec3f& cellMidPos = GetCellMidPos(cell);
-
-	// {x,z}-distances with respect to the cell's center
-	float dx = pos.x - cellMidPos.x;
-	float dy = pos.z - cellMidPos.z;
-
-	const unsigned int cx = cell->x; unsigned int ncx = cell->x;
-	const unsigned int cy = cell->y; unsigned int ncy = cell->y;
-
-	if (dx <= 0.0f) { ncx = CLAMP(ncx - 1, 0, (numCellsX - 1)); } // unit in left half of cell
-	if (dy <= 0.0f) { ncy = CLAMP(ncy - 1, 0, (numCellsZ - 1)); } // unit in top half of cell
-
-	const Cell* cellNgb = &currCells[GRID_INDEX_UNSAFE(ncx, ncy)];
-	const vec3f& cellNgbPos = GetCellMidPos(cellNgb);
-
-	// normalise (needed to calculate rho_{A,B,C,D})
-	// NOTE: smaller d{x,y} values mean that the
-	// density contribution along that dimension
-	// must be *larger* (this implies a negative
-	// lambda)
-	// the density range for rho_{A,B,C,D} is thus
-	// [0.0 ** lambda, 1.0 ** lambda] without clamps
-	dx = CLAMP((pos.x - cellNgbPos.x) / mSquareSize, 0.1f, 0.9f);
-	dy = CLAMP((pos.z - cellNgbPos.z) / mSquareSize, 0.1f, 0.9f);
-
-	// NOTE: {A,B,C,D} are not necessarily all distinct
-	//     case 1:  one cell (C)
-	//     case 2A: two cells horizontally (AB or DC)
-	//     case 2B: two cells vertically (DA or CB)
-	//     case 3:  four cells (ABCD)
-	Cell *Af = &currCells[GRID_INDEX_UNSAFE(ncx, ncy)], *Ab = &prevCells[GRID_INDEX_UNSAFE(ncx, ncy)];
-	Cell *Bf = &currCells[GRID_INDEX_UNSAFE( cx, ncy)], *Bb = &prevCells[GRID_INDEX_UNSAFE( cx, ncy)];
-	Cell *Cf = &currCells[GRID_INDEX_UNSAFE( cx,  cy)], *Cb = &prevCells[GRID_INDEX_UNSAFE( cx,  cy)];
-	Cell *Df = &currCells[GRID_INDEX_UNSAFE(ncx,  cy)], *Db = &prevCells[GRID_INDEX_UNSAFE(ncx,  cy)];
-
-	mTouchedCells.insert(GRID_INDEX_UNSAFE(ncx, ncy));
-	mTouchedCells.insert(GRID_INDEX_UNSAFE( cx, ncy));
-	mTouchedCells.insert(GRID_INDEX_UNSAFE( cx,  cy));
-	mTouchedCells.insert(GRID_INDEX_UNSAFE(ncx,  cy));
-
-	// lambda derivation:
-	//     rho_min (constant)      >=      rho_bar (constant)
-	//     rho_bar                  =      1 / (2 ** lambda)
-	//     rho_bar * (2 ** lambda)  =      1
-	//               (2 ** lambda)  =      1 / rho_bar
-	//            log(2 ** lambda)  =  log(1 / rho_bar)
-	//           (lambda * log(2))  = (log(1) - log(rho_bar))
-	//                      lambda  = (-log(rho_bar) / log(2))
-	//
-	// this is a positive number if and only if 0.0 < rho_bar <= 1.0,
-	// so we "expect" rho_min and rho_max to lie in the range [0.0, 1.0]
-	//
-	//    if they do, then dx and dy will only be raised to exponents in
-	//    [+inf, +0.0], whereas if they do not, then dx and dy will be
-	//    raised to exponents in [+inf, -inf] and it is much harder to
-	//    define "reasonable" thresholds for "low" and "high" density
-	//
-	//    however, in BOTH cases, cell densities are *not* guaranteed to
-	//    lie in [0.0, 1.0] (even when dx and dy themselves do), so they
-	//    still need normalisation (if rho_* is normalised) with just one
-	//    exception: d{x,y} in [0.0, 1.0] and lambda in [0.0, 1.0]
-	//
-	// since we want to achieve radial density falloff, larger values for
-	// dx or dy must result in smaller densities *regardless* of lambda:
-	//    positive non-fractional dx and dy,  positive non-fractional lambda  ==>   2.00^ 5.0 = 32.00000,  4.00^ 5.0 = 1024.000 (WRONG: no falloff)
-	//    positive non-fractional dx and dy,  positive     fractional lambda  ==>   2.00^ 0.5 =  1.41421,  4.00^ 0.5 =    2.000 (WRONG: no falloff)
-	//    positive non-fractional dx and dy,  negative non-fractional lambda  ==>   2.00^-5.0 =  0.03125,  4.00^-5.0 =    0.001
-	//    positive non-fractional dx and dy,  negative     fractional lambda  ==>   2.00^-0.5 =  0.70710,  4.00^-0.5 =    0.500
-	//    ...
-	//    positive     fractional dx and dy,  positive non-fractional lambda  ==>   0.50^ 5.0 =  0.03125,  0.75^ 5.0 =    0.237 (WRONG: no falloff)
-	//    positive     fractional dx and dy,  positive     fractional lambda  ==>   0.50^ 0.5 =  0.70710,  0.75^ 0.5 =    0.866 (WRONG: no falloff)
-	//    positive     fractional dx and dy,  negative non-fractional lambda  ==>   0.50^-5.0 = 32.00000,  0.75^-5.0 =    4.213
-	//    positive     fractional dx and dy,  negative     fractional lambda  ==>   0.50^-0.5 =  1.41421,  0.75^-0.5 =    1.154
-	//
-	// take the *non-normalised* mRhoBar value, so that lambda is
-	// always negative (fractional if [1.0 / mRhoBar] < 2.0, else
-	// fractional) and matches the fractional d{x,y} values
-	//
-	// this nevertheless produces a far-too-wide range of densities:
-	//     d{x,y}=0.10 ** exp=-4.0 == 10000.0
-	//     d{x,y}=0.25 ** exp=-4.0 ==   256.0
-	//     d{x,y}=0.50 ** exp=-4.0 ==    16.0
-	//     d{x,y}=0.75 ** exp=-4.0 ~=     3.1
-	//     d{x,y}=0.90 ** exp=-4.0 ~=     1.5
-	static const float DENSITY_EXPON = -(logf(1.0f / mRhoBar) / logf(2.0f));
-	static const float DENSITY_LOWER = powf(0.9f, DENSITY_EXPON);
-	static const float DENSITY_UPPER = powf(0.1f, DENSITY_EXPON);
-	static const float DENSITY_RANGE = (DENSITY_UPPER - DENSITY_LOWER);
-
-	// splat the density
-	if (ncx < cx && ncy < cy) {
-		const float rhoA = (powf(std::min<float>(1.0f - dx, 1.0f - dy), DENSITY_EXPON) - DENSITY_LOWER) / DENSITY_RANGE;
-
-		switch (type) {
-			case DATATYPE_DENSITY: {
-				Af->density += rhoA;
-				Ab->density += rhoA;
-				Af->avgVelocity += (vel * rhoA);
-				Ab->avgVelocity += (vel * rhoA);
-			} break;
-			case DATATYPE_DISCOMFORT: {
-				Af->discomfort += rhoA;
-				Ab->discomfort += rhoA;
-			} break;
-			default: {
-			} break;
-		}
-	}
-
-	if (ncx == cx && ncy < cy) {
-		const float rhoB = (powf(std::min<float>(dx, 1.0f - dy), DENSITY_EXPON) - DENSITY_LOWER) / DENSITY_RANGE;
-
-		switch (type) {
-			case DATATYPE_DENSITY: {
-				Bf->density += rhoB;
-				Bb->density += rhoB;
-				Bf->avgVelocity += (vel * rhoB);
-				Bb->avgVelocity += (vel * rhoB);
-			} break;
-			case DATATYPE_DISCOMFORT: {
-				Bf->discomfort += rhoB;
-				Bb->discomfort += rhoB;
-			} break;
-			default: {
-			} break;
-		}
-	}
-
-	if (true && true) {
-		// cell C *always* receives a density contribution
-		const float rhoC = (powf(std::min<float>(dx, dy), DENSITY_EXPON) - DENSITY_LOWER) / DENSITY_RANGE;
-
-		switch (type) {
-			case DATATYPE_DENSITY: {
-				Cf->density += rhoC;
-				Cb->density += rhoC;
-				Cf->avgVelocity += (vel * rhoC);
-				Cb->avgVelocity += (vel * rhoC);
-			} break;
-			case DATATYPE_DISCOMFORT: {
-				Cf->discomfort += rhoC;
-				Cb->discomfort += rhoC;
-			} break;
-			default: {
-			} break;
-		}
-	}
-
-	if (ncx < cx && ncy == cy) {
-		const float rhoD = (powf(std::min<float>(1.0f - dx, dy), DENSITY_EXPON) - DENSITY_LOWER) / DENSITY_RANGE;
-
-		switch (type) {
-			case DATATYPE_DENSITY: {
-				Df->density += rhoD;
-				Db->density += rhoD;
-				Df->avgVelocity += (vel * rhoD);
-				Db->avgVelocity += (vel * rhoD);
-			} break;
-			case DATATYPE_DISCOMFORT: {
-				Df->discomfort += rhoD;
-				Db->discomfort += rhoD;
-			} break;
-			default: {
-			} break;
-		}
-	}
-}
-
-
-
 void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
 	const Cell* cell = &currCells[GetCellIndex1D(pos)];
 
-	#if (DENSITY_CONVERSION_TCP06 == 0)
-		AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DENSITY);
-
-	#else
-		radius * radius;
-
-		AddGlobalDynamicCellDataTCP06(currCells, prevCells, cell, pos, vel, DATATYPE_DENSITY);
-	#endif
+	AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DENSITY);
 }
 
 void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsigned int numFrames, float stepSize) {
@@ -730,13 +541,7 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsig
 
 		// skip our own cell
 		if (cellIdx != posCellIdx) {
-			#if (DENSITY_CONVERSION_TCP06 == 0)
-				AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), NVECf, DATATYPE_DISCOMFORT);
-			#else
-				radius * radius;
-
-				AddGlobalDynamicCellDataTCP06(currCells, prevCells, cell, stepPos, NVECf, DATATYPE_DISCOMFORT);
-			#endif
+			AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), NVECf, DATATYPE_DISCOMFORT);
 		}
 	}
 }
