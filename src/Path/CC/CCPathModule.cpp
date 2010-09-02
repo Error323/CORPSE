@@ -86,7 +86,7 @@ void CCPathModule::OnEvent(const IEvent* e) {
 
 				groupPos /= objectIDs.size();
 			} else {
-				newGroup->AddGoal(mGrid.WorldPosToCellID(goalPos));
+				newGroup->AddGoal(mGrid.GetCellIndex1D(goalPos));
 			}
 
 			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
@@ -107,7 +107,7 @@ void CCPathModule::OnEvent(const IEvent* e) {
 					wps.wantedSpeed = coh->GetSimObjectDef(objectID)->GetMaxForwardSpeed();
 
 					// World2Cell clamps the position via World2Grid
-					newGroup->AddGoal(mGrid.WorldPosToCellID(wps.wantedPos));
+					newGroup->AddGoal(mGrid.GetCellIndex1D(wps.wantedPos));
 				} else {
 					wps.wantedPos   = goalPos;
 					wps.wantedDir   = (goalPos - coh->GetSimObjectPosition(objectID)).norm();
@@ -300,7 +300,7 @@ void CCPathModule::UpdateGroups(bool isUpdateFrame) {
 		// the number of goals)
 		for (SetIt goit = groupObjectIDs.begin(); goit != groupObjectIDs.end(); ++goit) {
 			const unsigned int objectID = *goit;
-			const unsigned int objectCellID = mGrid.WorldPosToCellID(coh->GetSimObjectPosition(objectID));
+			const unsigned int objectCellID = mGrid.GetCellIndex1D(coh->GetSimObjectPosition(objectID));
 
 			if (mObjects[objectID]->HasArrived()) {
 				numArrivedObjects += 1;
@@ -314,7 +314,7 @@ void CCPathModule::UpdateGroups(bool isUpdateFrame) {
 
 			for (SetIt ggit = groupGoalIDs.begin(); ggit != groupGoalIDs.end(); ++ggit) {
 				const Grid::Cell* goalCell = mGrid.GetCell(*ggit);
-				const vec3f goalPos = mGrid.GetCellPos(goalCell);
+				const vec3f& goalPos = mGrid.GetCellMidPos(goalCell);
 
 				if ((objectPos - goalPos).sqLen2D() < (mGrid.GetSquareSize() * mGrid.GetSquareSize())) {
 					mObjects[objectID]->SetArrived(true);

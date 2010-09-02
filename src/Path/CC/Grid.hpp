@@ -96,11 +96,11 @@ public:
 	};
 
 	Grid(): numCellsX(0), numCellsZ(0), mSquareSize(0), mDownScale(0), mUpdateInt(1) {
-		mDirVectors[DIR_N] = -ZVECf;
-		mDirVectors[DIR_S] =  ZVECf;
-		mDirVectors[DIR_E] =  XVECf;
-		mDirVectors[DIR_W] = -XVECf;
- 
+		mDirVectors[DIR_N] = -ZVECf;  mDirDeltas[DIR_N].x =  0; mDirDeltas[DIR_N].z = -1;
+		mDirVectors[DIR_S] =  ZVECf;  mDirDeltas[DIR_S].x =  0; mDirDeltas[DIR_S].z =  1;
+		mDirVectors[DIR_E] =  XVECf;  mDirDeltas[DIR_E].x =  1; mDirDeltas[DIR_E].z =  0;
+		mDirVectors[DIR_W] = -XVECf;  mDirDeltas[DIR_W].x = -1; mDirDeltas[DIR_W].z =  0;
+
 		mCurrBufferIdx = 0;
 		mPrevBufferIdx = 1;
 	}
@@ -135,9 +135,11 @@ public:
 	const vec3f* GetVelocityVisDataArray(unsigned int) const;
 	const vec3f* GetPotentialDeltaVisDataArray(unsigned int) const;
 
-	unsigned int WorldPosToCellID(const vec3f&) const;
 	const Cell* GetCell(unsigned int idx, unsigned int buf = 0) const { return &mBuffers[buf].cells[idx]; }
-	vec3f GetCellPos(const Cell* c) const { return vec3f((c->x * mSquareSize) + (mSquareSize >> 1), 0.0f, (c->y * mSquareSize) + (mSquareSize >> 1)); }
+	unsigned int GetCellIndex1D(const vec3f&) const;
+	vec3i GetCellIndex2D(const vec3f&) const;
+	vec3f GetCellMidPos(const Cell*) const;
+	vec3f GetCellCornerPos(const Cell*) const;
 
 	unsigned int GetGridWidth() const { return numCellsX; }
 	unsigned int GetGridHeight() const { return numCellsZ; }
@@ -209,12 +211,12 @@ private:
 	unsigned int mPrevBufferIdx;
 
 
+	// grid-space directions corresponding to NSEW
+	vec3i mDirDeltas[NUM_DIRS];
 	// world-space directions corresponding to NSEW
 	vec3f mDirVectors[NUM_DIRS];
 
 	vec3f GetInterpolatedVelocity(const std::vector<Cell::Edge>&, const Cell*, const vec3f&, const vec3f&) const;
-	vec3i WorldPosToGridIdx(const vec3f&) const;
-	vec3f GridIdxToWorldPos(const Cell*) const;
 
 	void ComputeCellSpeed(unsigned int, unsigned int, std::vector<Cell>&, std::vector<Cell::Edge>&);
 	void ComputeCellCost(unsigned int, unsigned int, std::vector<Cell>&, std::vector<Cell::Edge>&);

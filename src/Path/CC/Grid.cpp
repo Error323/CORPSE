@@ -11,8 +11,19 @@
 
 #define EPSILON 0.01f
 
-#define GRID_INDEX(x, y) (((y) * (numCellsX)) + (x))
+#define GRID_INDEX_UNSAFE(x, y) (((y) * (numCellsX)) + (x))
+#define GRID_INDEX_CLAMPED(x, y) (((CLAMP((y), 0, (numCellsZ - 1))) * (numCellsX)) + (CLAMP((x), 0, (numCellsX - 1))))
+
 #define ELEVATION(x, y) (mCOH->GetCenterHeightMap()[(mDownScale * (y)) * (mDownScale * numCellsX) + (mDownScale * (x))])
+// given the grid resolution, find the discrete number of cells
+// <n> spanned by <r> (the *radius* of the disc projected by an
+// agent onto the grid; used when TCP06-style density conversion
+// is DISabled)
+// note: the total diameter of the projected disc (in cells) is
+// always <n + 1 + n>; see AddGlobalDynamicCellData() (therefore
+// the first unaffected cell along NSEW is located at (x, y) +/-
+// (n + 1, n + 1) where (x, y) is the disc's center-cell)
+#define CELLS_IN_RADIUS(r) ((r / (mSquareSize >> 1)) + 1)
 
 #define POSITIVE_SLOPE(dir, slope)                            \
 	(((dir == DIR_N || dir == DIR_W) && (slope <  0.0f))  ||  \
@@ -161,13 +172,13 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	numCellsZ   = mCOH->GetHeightMapSizeZ() / mDownScale;
 	mSquareSize = mCOH->GetSquareSize()     * mDownScale;
 
-	mAlphaWeight = mCOH->GetFloatConfigParam(tableNames, "alpha",   -1.0f);
-	mBetaWeight  = mCOH->GetFloatConfigParam(tableNames, "beta",    -1.0f);
-	mGammaWeight = mCOH->GetFloatConfigParam(tableNames, "gamma",   -1.0f);
-	mRhoBar      = mCOH->GetFloatConfigParam(tableNames, "rho_bar", -1.0f);
-	mRhoMin      = mCOH->GetFloatConfigParam(tableNames, "rho_min", -1.0f);
-	mRhoMax      = mCOH->GetFloatConfigParam(tableNames, "rho_max", -1.0f);
-	mUpdateInt   = mCOH->GetFloatConfigParam(tableNames, "updateInt", 1.0f);
+	mAlphaWeight = mCOH->GetFloatConfigParam(tableNames, "alpha",     -1.0f);
+	mBetaWeight  = mCOH->GetFloatConfigParam(tableNames, "beta",      -1.0f);
+	mGammaWeight = mCOH->GetFloatConfigParam(tableNames, "gamma",     -1.0f);
+	mRhoBar      = mCOH->GetFloatConfigParam(tableNames, "rho_bar",   -1.0f);
+	mRhoMin      = mCOH->GetFloatConfigParam(tableNames, "rho_min",   -1.0f);
+	mRhoMax      = mCOH->GetFloatConfigParam(tableNames, "rho_max",   -1.0f);
+	mUpdateInt   = mCOH->GetFloatConfigParam(tableNames, "updateInt",  1.0f);
 
 	// NOTE:
 	//   the slope (height difference) from A to B is equal to the inverse
@@ -234,7 +245,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 			// bind the east face of the cell west of the current cell
 			if (x > 0) {
-				cellIdx = GRID_INDEX(x - 1, y);
+				cellIdx = GRID_INDEX_UNSAFE(x - 1, y);
 				PFFG_ASSERT(cellIdx < currCells.size());
 
 				Cell* currWestCell = &currCells[cellIdx];
@@ -245,7 +256,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 			// bind the south face of the cell north of the current cell
 			if (y > 0) {
-				cellIdx = GRID_INDEX(x, y - 1);
+				cellIdx = GRID_INDEX_UNSAFE(x, y - 1);
 				PFFG_ASSERT(cellIdx < currCells.size());
 
 				Cell* currNorthCell = &currCells[cellIdx];
@@ -278,8 +289,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	// perform a full reset of the cells and compute their heights
 	for (unsigned int y = 0; y < numCellsZ; y++) {
 		for (unsigned int x = 0; x < numCellsX; x++) {
-			Cell* currCell = &currCells[GRID_INDEX(x, y)];
-			Cell* prevCell = &prevCells[GRID_INDEX(x, y)];
+			Cell* currCell = &currCells[GRID_INDEX_UNSAFE(x, y)];
+			Cell* prevCell = &prevCells[GRID_INDEX_UNSAFE(x, y)];
 
 			// set potential to +inf, etc.
 			currCell->ResetFull();
@@ -302,15 +313,15 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 			currCell->discomfort = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
 			prevCell->discomfort = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
 
-			mHeightVisData[GRID_INDEX(x, y)] = currCell->height;
-			mDiscomfortVisData[GRID_INDEX(x, y)] = currCell->discomfort;
+			mHeightVisData[GRID_INDEX_UNSAFE(x, y)] = currCell->height;
+			mDiscomfortVisData[GRID_INDEX_UNSAFE(x, y)] = currCell->discomfort;
 		}
 	}
 
 	// compute gradient-heights and neighbors
 	for (unsigned int y = 0; y < numCellsZ; y++) {
 		for (unsigned int x = 0; x < numCellsX; x++) {
-			unsigned int idx = GRID_INDEX(x, y);
+			unsigned int idx = GRID_INDEX_UNSAFE(x, y);
 			unsigned int dir = 0;
 
 			Cell* currCell = &currCells[idx];
@@ -326,14 +337,14 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 				currEdge = &currEdges[currCell->edges[dir]];
 				prevEdge = &prevEdges[prevCell->edges[dir]];
-				currNgb = &currCells[GRID_INDEX(x, y - 1)];
-				prevNgb = &prevCells[GRID_INDEX(x, y - 1)];
+				currNgb = &currCells[GRID_INDEX_UNSAFE(x, y - 1)];
+				prevNgb = &prevCells[GRID_INDEX_UNSAFE(x, y - 1)];
 
 				currEdge->heightDelta = vec3f(0.0f, 0.0f, (currNgb->height - currCell->height));
 				prevEdge->heightDelta = vec3f(0.0f, 0.0f, (prevNgb->height - prevCell->height));
 
-				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX(x, y - 1);
-				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX(x, y - 1);
+				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX_UNSAFE(x, y - 1);
+				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX_UNSAFE(x, y - 1);
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(currEdge->heightDelta.z));
 				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(currEdge->heightDelta.z));
@@ -349,14 +360,14 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 				currEdge = &currEdges[currCell->edges[dir]];
 				prevEdge = &prevEdges[prevCell->edges[dir]];
-				currNgb = &currCells[GRID_INDEX(x, y + 1)];
-				prevNgb = &prevCells[GRID_INDEX(x, y + 1)];
+				currNgb = &currCells[GRID_INDEX_UNSAFE(x, y + 1)];
+				prevNgb = &prevCells[GRID_INDEX_UNSAFE(x, y + 1)];
 
 				currEdge->heightDelta = vec3f(0.0f, 0.0f, (currNgb->height - currCell->height));
 				prevEdge->heightDelta = vec3f(0.0f, 0.0f, (prevNgb->height - prevCell->height));
 
-				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX(x, y + 1);
-				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX(x, y + 1);
+				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX_UNSAFE(x, y + 1);
+				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX_UNSAFE(x, y + 1);
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(currEdge->heightDelta.z));
 				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(currEdge->heightDelta.z));
@@ -369,14 +380,14 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 				currEdge = &currEdges[currCell->edges[dir]];
 				prevEdge = &prevEdges[prevCell->edges[dir]];
-				currNgb = &currCells[GRID_INDEX(x - 1, y)];
-				prevNgb = &prevCells[GRID_INDEX(x - 1, y)];
+				currNgb = &currCells[GRID_INDEX_UNSAFE(x - 1, y)];
+				prevNgb = &prevCells[GRID_INDEX_UNSAFE(x - 1, y)];
 
 				currEdge->heightDelta = vec3f((currNgb->height - currCell->height), 0.0f, 0.0f);
 				prevEdge->heightDelta = vec3f((prevNgb->height - prevCell->height), 0.0f, 0.0f);
 
-				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX(x - 1, y);
-				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX(x - 1, y);
+				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX_UNSAFE(x - 1, y);
+				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX_UNSAFE(x - 1, y);
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(currEdge->heightDelta.x));
 				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(currEdge->heightDelta.x));
@@ -389,14 +400,14 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 				currEdge = &currEdges[currCell->edges[dir]];
 				prevEdge = &prevEdges[prevCell->edges[dir]];
-				currNgb = &currCells[GRID_INDEX(x + 1, y)];
-				prevNgb = &prevCells[GRID_INDEX(x + 1, y)];
+				currNgb = &currCells[GRID_INDEX_UNSAFE(x + 1, y)];
+				prevNgb = &prevCells[GRID_INDEX_UNSAFE(x + 1, y)];
 
 				currEdge->heightDelta = vec3f((currNgb->height - currCell->height), 0.0f, 0.0f);
 				prevEdge->heightDelta = vec3f((prevNgb->height - prevCell->height), 0.0f, 0.0f);
 
-				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX(x + 1, y);
-				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX(x + 1, y);
+				currCell->neighbors[currCell->numNeighbors++] = GRID_INDEX_UNSAFE(x + 1, y);
+				prevCell->neighbors[prevCell->numNeighbors++] = GRID_INDEX_UNSAFE(x + 1, y);
 
 				mMinTerrainSlope = std::min(mMinTerrainSlope, std::fabs(currEdge->heightDelta.x));
 				mMaxTerrainSlope = std::max(mMaxTerrainSlope, std::fabs(currEdge->heightDelta.x));
@@ -462,8 +473,8 @@ void Grid::AddGlobalDynamicCellData(
 				continue;
 			}
 
-			Cell* cf = &currCells[ GRID_INDEX(cx, cz) ];
-			Cell* cb = &prevCells[ GRID_INDEX(cx, cz) ];
+			Cell* cf = &currCells[ GRID_INDEX_UNSAFE(cx, cz) ];
+			Cell* cb = &prevCells[ GRID_INDEX_UNSAFE(cx, cz) ];
 
 			switch (type) {
 				case DATATYPE_DENSITY: {
@@ -503,7 +514,7 @@ void Grid::AddGlobalDynamicCellData(
 				} break;
 			}
 
-			mTouchedCells.insert(GRID_INDEX(cx, cz));
+			mTouchedCells.insert(GRID_INDEX_UNSAFE(cx, cz));
 		}
 	}
 }
@@ -516,7 +527,7 @@ void Grid::AddGlobalDynamicCellDataTCP06(
 	const vec3f& vel,
 	unsigned int type
 ) {
-	const vec3f& cellMidPos = GetCellPos(cell);
+	const vec3f& cellMidPos = GetCellMidPos(cell);
 
 	// {x,z}-distances with respect to the cell's center
 	float dx = pos.x - cellMidPos.x;
@@ -528,8 +539,8 @@ void Grid::AddGlobalDynamicCellDataTCP06(
 	if (dx <= 0.0f) { ncx = CLAMP(ncx - 1, 0, (numCellsX - 1)); } // unit in left half of cell
 	if (dy <= 0.0f) { ncy = CLAMP(ncy - 1, 0, (numCellsZ - 1)); } // unit in top half of cell
 
-	const Cell* cellNgb = &currCells[GRID_INDEX(ncx, ncy)];
-	const vec3f& cellNgbPos = GetCellPos(cellNgb);
+	const Cell* cellNgb = &currCells[GRID_INDEX_UNSAFE(ncx, ncy)];
+	const vec3f& cellNgbPos = GetCellMidPos(cellNgb);
 
 	// normalise (needed to calculate rho_{A,B,C,D})
 	// NOTE: smaller d{x,y} values mean that the
@@ -546,10 +557,15 @@ void Grid::AddGlobalDynamicCellDataTCP06(
 	//     case 2A: two cells horizontally (AB or DC)
 	//     case 2B: two cells vertically (DA or CB)
 	//     case 3:  four cells (ABCD)
-	Cell *Af = &currCells[GRID_INDEX(ncx, ncy)], *Ab = &prevCells[GRID_INDEX(ncx, ncy)]; mTouchedCells.insert(GRID_INDEX(ncx, ncy));
-	Cell *Bf = &currCells[GRID_INDEX( cx, ncy)], *Bb = &prevCells[GRID_INDEX( cx, ncy)]; mTouchedCells.insert(GRID_INDEX( cx, ncy));
-	Cell *Cf = &currCells[GRID_INDEX( cx,  cy)], *Cb = &prevCells[GRID_INDEX( cx,  cy)]; mTouchedCells.insert(GRID_INDEX( cx,  cy));
-	Cell *Df = &currCells[GRID_INDEX(ncx,  cy)], *Db = &prevCells[GRID_INDEX(ncx,  cy)]; mTouchedCells.insert(GRID_INDEX(ncx,  cy));
+	Cell *Af = &currCells[GRID_INDEX_UNSAFE(ncx, ncy)], *Ab = &prevCells[GRID_INDEX_UNSAFE(ncx, ncy)];
+	Cell *Bf = &currCells[GRID_INDEX_UNSAFE( cx, ncy)], *Bb = &prevCells[GRID_INDEX_UNSAFE( cx, ncy)];
+	Cell *Cf = &currCells[GRID_INDEX_UNSAFE( cx,  cy)], *Cb = &prevCells[GRID_INDEX_UNSAFE( cx,  cy)];
+	Cell *Df = &currCells[GRID_INDEX_UNSAFE(ncx,  cy)], *Db = &prevCells[GRID_INDEX_UNSAFE(ncx,  cy)];
+
+	mTouchedCells.insert(GRID_INDEX_UNSAFE(ncx, ncy));
+	mTouchedCells.insert(GRID_INDEX_UNSAFE( cx, ncy));
+	mTouchedCells.insert(GRID_INDEX_UNSAFE( cx,  cy));
+	mTouchedCells.insert(GRID_INDEX_UNSAFE(ncx,  cy));
 
 	// lambda derivation:
 	//     rho_min (constant)      >=      rho_bar (constant)
@@ -685,11 +701,10 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
-	const Cell* cell = &currCells[WorldPosToCellID(pos)];
+	const Cell* cell = &currCells[GetCellIndex1D(pos)];
 
 	#if (DENSITY_CONVERSION_TCP06 == 0)
-		// given the grid resolution, find the number of cells spanned by <r>
-		AddGlobalDynamicCellData(currCells, prevCells, cell, (radius / (mSquareSize >> 1)) + 1, vel, DATATYPE_DENSITY);
+		AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DENSITY);
 
 	#else
 		radius * radius;
@@ -706,17 +721,17 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsig
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
-	const unsigned int posCellIdx = WorldPosToCellID(pos);
+	const unsigned int posCellIdx = GetCellIndex1D(pos);
 
 	for (unsigned int n = 0; n < numFrames; n++) {
 		const vec3f        stepPos = pos + (vel * n * stepSize);
-		const unsigned int cellIdx = WorldPosToCellID(stepPos);
+		const unsigned int cellIdx = GetCellIndex1D(stepPos);
 		const Cell*        cell    = &currCells[cellIdx];
 
 		// skip our own cell
 		if (cellIdx != posCellIdx) {
 			#if (DENSITY_CONVERSION_TCP06 == 0)
-				AddGlobalDynamicCellData(currCells, prevCells, cell, (radius / (mSquareSize >> 1)) + 1, NVECf, DATATYPE_DISCOMFORT);
+				AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), NVECf, DATATYPE_DISCOMFORT);
 			#else
 				radius * radius;
 
@@ -725,6 +740,8 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsig
 		}
 	}
 }
+
+
 
 void Grid::ComputeAvgVelocity() {
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
@@ -744,7 +761,8 @@ void Grid::ComputeAvgVelocity() {
 			cb->avgVelocity  = cf->avgVelocity;
 		}
 
-		// note: unnecessary?
+		// note: unnecessary? (density is only used to
+		// decide between topological and flow speed)
 		cf->density = CLAMP(cf->density, 0.0f, mRhoMax + EPSILON);
 		cb->density = CLAMP(cb->density, 0.0f, mRhoMax + EPSILON);
 
@@ -788,18 +806,15 @@ void Grid::ComputeAvgVelocity() {
 	void Grid::ComputeCellSpeed(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 		Cell* currCell = &currCells[cellIdx];
 
-		const vec3f& cellPos = GetCellPos(currCell);
+		const unsigned int densityDirOffset = CELLS_IN_RADIUS(mMaxGroupRadius) + 1;
 
 		for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
-			// this assumes a unit's contribution to the density field
-			// is no greater than rho-bar outside a disc of radius <r>
-			// (such that f == f_topological when rho_min >= rho_bar)
-			// also note that if mMaxGroupRadius < (mSquareSize >> 1)
-			// this just maps to <currCell>
-			const vec3f densityDirOffset = mDirVectors[dir] * (mMaxGroupRadius + EPSILON);
+			const unsigned int densityDirIndex = GRID_INDEX_CLAMPED(
+				currCell->x + mDirDeltas[dir].x * densityDirOffset,
+				currCell->y + mDirDeltas[dir].z * densityDirOffset);
 
+			const Cell*       currCellDirNgb  = &currCells[densityDirIndex];
 			const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
-			const Cell*       currCellDirNgb  = &currCells[WorldPosToCellID(cellPos + densityDirOffset)];
 
 			const float cellDirSlope    = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
 			      float cellDirSlopeMod = 0.0f;
@@ -836,10 +851,10 @@ void Grid::ComputeAvgVelocity() {
 			const Cell*       currCellDirNgb  = NULL;
 
 			switch (dir) {
-				case DIR_N: { currCellDirNgb = (currCell->y >             0)? &currCells[GRID_INDEX(currCell->x,     currCell->y - 1)]: currCell; } break;
-				case DIR_S: { currCellDirNgb = (currCell->y < numCellsZ - 1)? &currCells[GRID_INDEX(currCell->x,     currCell->y + 1)]: currCell; } break;
-				case DIR_E: { currCellDirNgb = (currCell->x < numCellsX - 1)? &currCells[GRID_INDEX(currCell->x + 1, currCell->y    )]: currCell; } break;
-				case DIR_W: { currCellDirNgb = (currCell->x >             0)? &currCells[GRID_INDEX(currCell->x - 1, currCell->y    )]: currCell; } break;
+				case DIR_N: { currCellDirNgb = (currCell->y >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x,     currCell->y - 1)]: currCell; } break;
+				case DIR_S: { currCellDirNgb = (currCell->y < numCellsZ - 1)? &currCells[GRID_INDEX_UNSAFE(currCell->x,     currCell->y + 1)]: currCell; } break;
+				case DIR_E: { currCellDirNgb = (currCell->x < numCellsX - 1)? &currCells[GRID_INDEX_UNSAFE(currCell->x + 1, currCell->y    )]: currCell; } break;
+				case DIR_W: { currCellDirNgb = (currCell->x >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x - 1, currCell->y    )]: currCell; } break;
 			}
 
 			const float cellDirDiscomfort = currCellDirNgb->discomfort;
@@ -900,20 +915,36 @@ void Grid::ComputeAvgVelocity() {
 void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 	Cell* currCell = &currCells[cellIdx];
 
-	const vec3f& cellPos = GetCellPos(currCell);
+	// this assumes a unit's contribution to the density field
+	// is no greater than rho-bar outside a disc of radius <r>
+	// (such that f == f_topological when rho_min >= rho_bar)
+	//
+	// however, if mMaxGroupRadius < (mSquareSize >> 1) then
+	// this just maps to <currCell>, hence the CELLS_IN_RADIUS
+	// macro (which ensures a minimum offset of 1 cell) is used
+	// instead
+	//
+	// const vec3f& cellPos = GetCellMidPos(currCell);
+	// const vec3f densityDirOffset = mDirVectors[dir] * (mMaxGroupRadius + EPSILON);
+	// const Cell* currCellDirNgbR = &currCells[ GetCellIndex1D(cellPos + densityDirOffset) ];
+	//
+	// add one cell so we always sample outside outside a unit's disc
+	const unsigned int densityDirOffset = CELLS_IN_RADIUS(mMaxGroupRadius) + 1;
 
 	for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
-		const vec3f densityDirOffset = mDirVectors[dir] * (mMaxGroupRadius + EPSILON);
+		const unsigned int densityDirIndex = GRID_INDEX_CLAMPED(
+			currCell->x + mDirDeltas[dir].x * densityDirOffset,
+			currCell->y + mDirDeltas[dir].z * densityDirOffset);
 
-		const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
-		const Cell*       currCellDirNgbR = &currCells[WorldPosToCellID(cellPos + densityDirOffset)];
+		const Cell*       currCellDirNgbR = &currCells[densityDirIndex];
 		const Cell*       currCellDirNgbC = NULL;
+		const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
 
 		switch (dir) {
-			case DIR_N: { currCellDirNgbC = (currCell->y >             0)? &currCells[GRID_INDEX(currCell->x,     currCell->y - 1)]: currCell; } break;
-			case DIR_S: { currCellDirNgbC = (currCell->y < numCellsZ - 1)? &currCells[GRID_INDEX(currCell->x,     currCell->y + 1)]: currCell; } break;
-			case DIR_E: { currCellDirNgbC = (currCell->x < numCellsX - 1)? &currCells[GRID_INDEX(currCell->x + 1, currCell->y    )]: currCell; } break;
-			case DIR_W: { currCellDirNgbC = (currCell->x >             0)? &currCells[GRID_INDEX(currCell->x - 1, currCell->y    )]: currCell; } break;
+			case DIR_N: { currCellDirNgbC = (currCell->y >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x,     currCell->y - 1)]: currCell; } break;
+			case DIR_S: { currCellDirNgbC = (currCell->y < numCellsZ - 1)? &currCells[GRID_INDEX_UNSAFE(currCell->x,     currCell->y + 1)]: currCell; } break;
+			case DIR_E: { currCellDirNgbC = (currCell->x < numCellsX - 1)? &currCells[GRID_INDEX_UNSAFE(currCell->x + 1, currCell->y    )]: currCell; } break;
+			case DIR_W: { currCellDirNgbC = (currCell->x >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x - 1, currCell->y    )]: currCell; } break;
 		}
 
 		const float cellDirDiscomfort = currCellDirNgbC->discomfort;
@@ -984,7 +1015,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 #if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 1)
 	void Grid::ComputeCellSpeedAndCostMERGED(unsigned int groupID, Cell* currCell, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 		// recycled from (MERGED == 0 && SINGLE_PASS == 1)
-		ComputeCellSpeedAndCost(groupID, GRID_INDEX(currCell->x, currCell->y), currCells, currEdges);
+		ComputeCellSpeedAndCost(groupID, GRID_INDEX_UNSAFE(currCell->x, currCell->y), currCells, currEdges);
 	}
 #else
 	void Grid::ComputeSpeedAndCost(unsigned int groupID) {
@@ -1090,7 +1121,7 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsign
 		currCell = mCandidates.top();
 		currCell->known = true;
 
-		cellIdx = GRID_INDEX(currCell->x, currCell->y);
+		cellIdx = GRID_INDEX_UNSAFE(currCell->x, currCell->y);
 
 		prevCell = &prevCells[cellIdx];
 		prevCell->ResetGroupVars();
@@ -1160,10 +1191,10 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 		groupID = groupID;
 		#endif
 
-		dirCells[DIR_N] = (currNgb->y >             0) ? &currCells[GRID_INDEX(currNgb->x    , currNgb->y - 1)] : NULL;
-		dirCells[DIR_S] = (currNgb->y < numCellsZ - 1) ? &currCells[GRID_INDEX(currNgb->x    , currNgb->y + 1)] : NULL;
-		dirCells[DIR_E] = (currNgb->x < numCellsX - 1) ? &currCells[GRID_INDEX(currNgb->x + 1, currNgb->y    )] : NULL;
-		dirCells[DIR_W] = (currNgb->x >             0) ? &currCells[GRID_INDEX(currNgb->x - 1, currNgb->y    )] : NULL;
+		dirCells[DIR_N] = (currNgb->y >             0) ? &currCells[GRID_INDEX_UNSAFE(currNgb->x    , currNgb->y - 1)] : NULL;
+		dirCells[DIR_S] = (currNgb->y < numCellsZ - 1) ? &currCells[GRID_INDEX_UNSAFE(currNgb->x    , currNgb->y + 1)] : NULL;
+		dirCells[DIR_E] = (currNgb->x < numCellsX - 1) ? &currCells[GRID_INDEX_UNSAFE(currNgb->x + 1, currNgb->y    )] : NULL;
+		dirCells[DIR_W] = (currNgb->x >             0) ? &currCells[GRID_INDEX_UNSAFE(currNgb->x - 1, currNgb->y    )] : NULL;
 
 		for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
 			if (dirCells[dir] == NULL) {
@@ -1457,8 +1488,8 @@ vec3f Grid::GetInterpolatedVelocity(const std::vector<Cell::Edge>& edges, const 
 
 
 
-// convert a world-space position to <x, y> grid-indices
-vec3i Grid::WorldPosToGridIdx(const vec3f& worldPos) const {
+// convert a world-space position to (CLAMPED) <x, y> grid-indices
+vec3i Grid::GetCellIndex2D(const vec3f& worldPos) const {
 	const int gx = (worldPos.x / mSquareSize);
 	const int gz = (worldPos.z / mSquareSize);
 	const int cx = CLAMP(gx, 0, int(numCellsX - 1));
@@ -1466,21 +1497,25 @@ vec3i Grid::WorldPosToGridIdx(const vec3f& worldPos) const {
 	return vec3i(cx, 0, cz);
 }
 
-// get the (clamped) 1D grid-cell index corresponding to a world-space position
-unsigned int Grid::WorldPosToCellID(const vec3f& worldPos) const {
-	const vec3i&       gridPos = WorldPosToGridIdx(worldPos);
-	const unsigned int gridIdx = GRID_INDEX(gridPos.x, gridPos.z);
-
-	PFFG_ASSERT_MSG(gridIdx < mBuffers[0].cells.size(), "world(%2.2f, %2.2f) grid(%d, %d)", worldPos.x, worldPos.z, gridPos.x, gridPos.z);
-
+// get the (CLAMPED ) 1D grid-cell index corresponding to a world-space position
+unsigned int Grid::GetCellIndex1D(const vec3f& worldPos) const {
+	const vec3i&       gridPos = GetCellIndex2D(worldPos);
+	const unsigned int gridIdx = GRID_INDEX_UNSAFE(gridPos.x, gridPos.z);
 	return gridIdx;
 }
 
-// convert a cell's <x, y> grid-indices to world-space coordinates
-vec3f Grid::GridIdxToWorldPos(const Cell* c) const {
+// convert a cell's <x, y> grid-indices to the
+// world-space position of its top-left corner
+vec3f Grid::GetCellCornerPos(const Cell* c) const {
 	const float wx = c->x * mSquareSize;
 	const float wz = c->y * mSquareSize;
 	return vec3f(wx, ELEVATION(c->x, c->y), wz);
+}
+
+vec3f Grid::GetCellMidPos(const Cell* c) const {
+	const float wx = (c->x * mSquareSize) + (mSquareSize >> 1);
+	const float wz = (c->y * mSquareSize) + (mSquareSize >> 1);
+	return vec3f(wx, 0.0f, wz);
 }
 
 
