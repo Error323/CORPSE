@@ -40,6 +40,7 @@
 #define SPEED_COST_SHARED_NEIGHBOR_CELL         1
 #define SPEED_COST_POTENTIAL_MERGED_COMPUTATION 1
 #define SPEED_COST_SINGLE_PASS_COMPUTATION      0
+#define SPEED_COST_DIRECTIONAL_DISCOMFORT       1
 
 #define VELOCITY_FIELD_DIRECT_INTERPOLATION     0
 #define VELOCITY_FIELD_BILINEAR_INTERPOLATION   1
@@ -193,6 +194,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	printf("\tSPEED_COST_SHARED_NEIGHBOR_CELL:         %d\n", SPEED_COST_SHARED_NEIGHBOR_CELL);
 	printf("\tSPEED_COST_POTENTIAL_MERGED_COMPUTATION: %d\n", SPEED_COST_POTENTIAL_MERGED_COMPUTATION);
 	printf("\tSPEED_COST_SINGLE_PASS_COMPUTATION:      %d\n", SPEED_COST_SINGLE_PASS_COMPUTATION);
+	printf("\tSPEED_COST_DIRECTIONAL_DISCOMFORT:       %d\n", SPEED_COST_DIRECTIONAL_DISCOMFORT);
 	printf("\n");
 	printf("\tVELOCITY_FIELD_DIRECT_INTERPOLATION:     %d\n", VELOCITY_FIELD_DIRECT_INTERPOLATION);
 	printf("\tVELOCITY_FIELD_BILINEAR_INTERPOLATION:   %d\n", VELOCITY_FIELD_BILINEAR_INTERPOLATION);
@@ -727,6 +729,7 @@ void Grid::ComputeAvgVelocity() {
 	// so we always compile it
 #endif
 
+
 // compute the speed- and unit-cost fields, per cell
 //
 // NOTE: engine slope-representation should be the same?
@@ -783,10 +786,22 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			currCellDirNgbC = currCellDirNgbR;
 		#endif
 
-		// TODO: also use the directional information stored in {x,z}
-		const float cellDirDiscomfort = currCellDirNgbC->discomfort.y;
 		const float cellDirSlope      = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
 		      float cellDirSlopeMod   = 0.0f;
+		      float cellDirDiscomfort = 0.0f;
+
+		#if (SPEED_COST_DIRECTIONAL_DISCOMFORT == 1)
+			// negate the dot-product and map it from [-1.0, 1.0] to [0.0, 1.0]
+			//   dot  1.0 (parallel) ==> minimal discomfort contribution to cost ==> ((( 1.0 * -1.0) + 1.0) * 0.5) = 0.0
+			//   dot  0.0 (orthogon) ==> medium  discomfort contribution to cost ==> ((( 0.0 * -1.0) + 1.0) * 0.5) = 0.5
+			//   dot -1.0 (opposite) ==> maximum discomfort contribution to cost ==> (((-1.0 * -1.0) + 1.0) * 0.5) = 1.0
+			const float discomfortVal = currCellDirNgbC->discomfort.y;
+			const float discomfortDot = ((currCellDirNgbC->discomfort.dot2D(mDirVectors[dir]) * -1.0f) + 1.0f) * 0.5f;
+
+			cellDirDiscomfort = discomfortVal * discomfortDot);
+		#else
+			cellDirDiscomfort = currCellDirNgbC->discomfort.y;
+		#endif
 
 		float cellDirSpeedR = 0.0f; // f_{M --> dir} for computing f, based on offset density (R=RHO)
 		float cellDirSpeedC = 0.0f; // f_{M --> dir} for computing C, based on direct neighbor density (C=COST)
