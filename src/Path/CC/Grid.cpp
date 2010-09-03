@@ -514,7 +514,7 @@ void Grid::AddGlobalDynamicCellData(
 
 					cf->discomfort.x += (vel.x * mRhoBar);
 					cf->discomfort.z += (vel.z * mRhoBar);
-					cf->discomfort.y += (vel.len3D() * mRhoBar);
+					cf->discomfort.y += (vel.len2D() * mRhoBar);
 					cb->discomfort    = cf->discomfort;
 				} break;
 				default: {
@@ -673,7 +673,7 @@ void Grid::ComputeAvgVelocity() {
 				case DIR_W: { currCellDirNgb = (currCell->x >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x - 1, currCell->y    )]: currCell; } break;
 			}
 
-			const float cellDirDiscomfort = currCellDirNgb->discomfort.len3D();
+			const float cellDirDiscomfort = currCellDirNgb->discomfort.y;
 			const float cellDirSlope      = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
 			      float cellDirSlopeMod   = 0.0f;
 
@@ -768,7 +768,8 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			currCellDirNgbC = currCellDirNgbR;
 		#endif
 
-		const float cellDirDiscomfort = currCellDirNgbC->discomfort.len3D();
+		// TODO: also use the directional information stored in {x,z}
+		const float cellDirDiscomfort = currCellDirNgbC->discomfort.y;
 		const float cellDirSlope      = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
 		      float cellDirSlopeMod   = 0.0f;
 
