@@ -190,6 +190,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	mFlatTerrain     = ((mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()) < EPSILON);
 
 	printf("[Grid::Init] resolution: %dx%d %d\n", numCellsX, numCellsZ, mSquareSize);
+	printf("\tSPEED_COST_SHARED_NEIGHBOR_CELL:         %d\n", SPEED_COST_SHARED_NEIGHBOR_CELL);
 	printf("\tSPEED_COST_POTENTIAL_MERGED_COMPUTATION: %d\n", SPEED_COST_POTENTIAL_MERGED_COMPUTATION);
 	printf("\tSPEED_COST_SINGLE_PASS_COMPUTATION:      %d\n", SPEED_COST_SINGLE_PASS_COMPUTATION);
 	printf("\n");
@@ -749,15 +750,15 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 		const Cell::Edge* currCellDirEdge = &currEdges[currCell->edges[dir]];
 
 		#if (SPEED_COST_SHARED_NEIGHBOR_CELL == 0)
-		switch (dir) {
-			case DIR_N: { currCellDirNgbC = (currCell->y >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x,     currCell->y - 1)]: currCell; } break;
-			case DIR_S: { currCellDirNgbC = (currCell->y < numCellsZ - 1)? &currCells[GRID_INDEX_UNSAFE(currCell->x,     currCell->y + 1)]: currCell; } break;
-			case DIR_E: { currCellDirNgbC = (currCell->x < numCellsX - 1)? &currCells[GRID_INDEX_UNSAFE(currCell->x + 1, currCell->y    )]: currCell; } break;
-			case DIR_W: { currCellDirNgbC = (currCell->x >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x - 1, currCell->y    )]: currCell; } break;
-		}
+			switch (dir) {
+				case DIR_N: { currCellDirNgbC = (currCell->y >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x,     currCell->y - 1)]: currCell; } break;
+				case DIR_S: { currCellDirNgbC = (currCell->y < numCellsZ - 1)? &currCells[GRID_INDEX_UNSAFE(currCell->x,     currCell->y + 1)]: currCell; } break;
+				case DIR_E: { currCellDirNgbC = (currCell->x < numCellsX - 1)? &currCells[GRID_INDEX_UNSAFE(currCell->x + 1, currCell->y    )]: currCell; } break;
+				case DIR_W: { currCellDirNgbC = (currCell->x >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x - 1, currCell->y    )]: currCell; } break;
+			}
 		#else
-		// same neighbor to calculate C and f
-		currCellDirNgbC = currCellDirNgbR;
+			// use the same neighbor for C as for f
+			currCellDirNgbC = currCellDirNgbR;
 		#endif
 
 		const float cellDirDiscomfort = currCellDirNgbC->discomfort.len3D();
