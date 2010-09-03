@@ -37,7 +37,7 @@
 #define MMIX(a, b, t) ((a) * t + (b) * (1.0f - t))
 #define CLAMP(v, vmin, vmax) MMAX((vmin), MMIN((vmax), (v)))
 
-#define SPEED_COST_SHARED_NEIGHBOR_CELL         0
+#define SPEED_COST_SHARED_NEIGHBOR_CELL         1
 #define SPEED_COST_POTENTIAL_MERGED_COMPUTATION 1
 #define SPEED_COST_SINGLE_PASS_COMPUTATION      0
 
