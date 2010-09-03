@@ -498,8 +498,8 @@ void Grid::AddGlobalDynamicCellData(
 					// if (vel.sqLen3D() <= EPSILON) { rho = mRhoMax; }
 					// if (x == 0 && z == 0) { rho = mRhoMax; }
 
-					cf->density += rho;
-					cb->density += rho;
+					cf->density += mRhoBar;
+					cb->density += mRhoBar;
 					cf->avgVelocity += (vel * mRhoBar);
 					cb->avgVelocity += (vel * mRhoBar);
 				} break;
