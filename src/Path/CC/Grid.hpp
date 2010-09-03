@@ -25,21 +25,25 @@ public:
 		// scalar fields
 		DATATYPE_DENSITY         = 0, // rho (global,    stored at cell-centers, 1 scalar  per cell)
 		DATATYPE_HEIGHT          = 1, // h   (global,    stored at cell-centers, 1 scalar  per cell)
-		DATATYPE_DISCOMFORT      = 2, // g   (global,    stored at cell-centers, 1 scalar  per cell)
-		DATATYPE_SPEED           = 3, // f   (per-group, stored at cell-edges,   4 scalars per cell)
-		DATATYPE_COST            = 4, // C   (per-group, stored at cell-edges,   4 scalars per cell)
-		DATATYPE_POTENTIAL       = 5, // phi (per-group, stored at cell-centers, 1 scalar  per cell)
+		DATATYPE_SPEED           = 2, // f   (per-group, stored at cell-edges,   4 scalars per cell)
+		DATATYPE_COST            = 3, // C   (per-group, stored at cell-edges,   4 scalars per cell)
+		DATATYPE_POTENTIAL       = 4, // phi (per-group, stored at cell-centers, 1 scalar  per cell)
 
-		NUM_SCALAR_DATATYPES     = 6,
+		NUM_SCALAR_DATATYPES     = 5,
 	};
 	enum {
 		// vector fields
+		// NOTE:
+		//     discomfort is a scalar-field in TCP06, but we want directional information
+		//     this has various implications (see AddDiscomfort, ComputeCellSpeedAndCost,
+		//     etc)
+		DATATYPE_DISCOMFORT      = 5, // g         (global,    stored at cell-centers, 1 vector  per cell)
 		DATATYPE_HEIGHT_DELTA    = 6, // delta-h   (global,    stored at cell-edges,   4 vectors per cell)
 		DATATYPE_VELOCITY_AVG    = 7, // v-bar     (global,    stored at cell-centers, 1 vector  per cell)
 		DATATYPE_VELOCITY        = 8, // v         (per-group, stored at cell-edges,   4 vectors per cell)
 		DATATYPE_POTENTIAL_DELTA = 9, // delta-phi (per-group, stored at cell-edges,   4 vectors per cell)
 
-		NUM_VECTOR_DATATYPES     = 4,
+		NUM_VECTOR_DATATYPES     = 5,
 	};
 
 	struct Cell {
@@ -75,11 +79,11 @@ public:
 
 		vec3f GetNormalisedPotentialGradient(const std::vector<Edge>&, unsigned int) const;
 		vec3f avgVelocity;
+		vec3f discomfort;
 
 		unsigned int x, y;
 		bool  known;
 		bool  candidate;
-		float discomfort;
 		float potential;
 		float density;
 		float height;
@@ -123,12 +127,12 @@ public:
 	// visualisation data accessors for scalar fields
 	const float* GetDensityVisDataArray() const;
 	const float* GetHeightVisDataArray() const;
-	const float* GetDiscomfortVisDataArray() const;
 	const float* GetSpeedVisDataArray(unsigned int) const;
 	const float* GetCostVisDataArray(unsigned int) const;
 	const float* GetPotentialVisDataArray(unsigned int) const;
 
 	// visualisation data accessors for vector fields
+	const vec3f* GetDiscomfortVisDataArray() const;
 	const vec3f* GetHeightDeltaVisDataArray() const;
 	const vec3f* GetVelocityAvgVisDataArray() const;
 	const vec3f* GetVelocityVisDataArray(unsigned int) const;
@@ -178,12 +182,12 @@ private:
 	// visualization data for scalar fields
 	std::vector<float> mDensityVisData;
 	std::vector<float> mHeightVisData;
-	std::vector<float> mDiscomfortVisData;
 	std::map<unsigned int, std::vector<float> > mSpeedVisData;
 	std::map<unsigned int, std::vector<float> > mCostVisData;
 	std::map<unsigned int, std::vector<float> > mPotentialVisData;
 
 	// visualization data for vector fields
+	std::vector<vec3f> mDiscomfortVisData;
 	std::vector<vec3f> mHeightDeltaVisData;
 	std::vector<vec3f> mAvgVelocityVisData;
 	std::map<unsigned int, std::vector<vec3f> > mVelocityVisData;

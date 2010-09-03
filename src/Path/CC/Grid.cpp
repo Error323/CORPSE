@@ -77,10 +77,6 @@ const float* Grid::GetDensityVisDataArray() const {
 	return (mDensityVisData.empty())? NULL: &mDensityVisData[0];
 }
 
-const float* Grid::GetDiscomfortVisDataArray() const {
-	return (mDiscomfortVisData.empty())? NULL: &mDiscomfortVisData[0];
-}
-
 const float* Grid::GetSpeedVisDataArray(unsigned int groupID) const {
 	std::map<unsigned int, std::vector<float> >::const_iterator it = mSpeedVisData.find(groupID);
 
@@ -113,6 +109,10 @@ const float* Grid::GetPotentialVisDataArray(unsigned int groupID) const {
 }
 
 // visualisation data accessors for vector fields
+const vec3f* Grid::GetDiscomfortVisDataArray() const {
+	return (mDiscomfortVisData.empty())? NULL: &mDiscomfortVisData[0];
+}
+
 const vec3f* Grid::GetVelocityVisDataArray(unsigned int groupID) const {
 	std::map<unsigned int, std::vector<vec3f> >::const_iterator it = mVelocityVisData.find(groupID);
 
@@ -201,9 +201,9 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	// visualisation data for global scalar fields
 	mDensityVisData.resize(numCells, 0.0f);
 	mHeightVisData.resize(numCells, 0.0f);
-	mDiscomfortVisData.resize(numCells, 0.0f);
 
 	// visualisation data for global vector fields
+	mDiscomfortVisData.resize(numCells, NVECf);
 	mAvgVelocityVisData.resize(numCells, NVECf);
 	mHeightDeltaVisData.resize(numCells * NUM_DIRS);
 
@@ -307,8 +307,8 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 			//
 			//    for now, avoid higher areas (problem: discomfort is a much larger
 			//    term than speed, but needs to be around same order of magnitude)
-			currCell->discomfort = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
-			prevCell->discomfort = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
+			currCell->discomfort.y = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
+			prevCell->discomfort.y = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
 
 			mHeightVisData[GRID_INDEX_UNSAFE(x, y)] = currCell->height;
 			mDiscomfortVisData[GRID_INDEX_UNSAFE(x, y)] = currCell->discomfort;
@@ -434,8 +434,8 @@ void Grid::Reset() {
 		prevCell->ResetGlobalDynamicVars();
 
 		// restore the baseline discomfort values
-		currCell->discomfort = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
-		prevCell->discomfort = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
+		currCell->discomfort.y = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
+		prevCell->discomfort.y = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
 
 		mDensityVisData[idx]     = 0.0f;
 		mDiscomfortVisData[idx]  = currCell->discomfort;
@@ -492,20 +492,21 @@ void Grid::AddGlobalDynamicCellData(
 					// two contradictory requirements, regardless of cell-size:
 					//     1) units must contribute a minimum amount of density so other units avoid them
 					//     2) units must contribute a maximum amount of density so they do not self-impede
-					const float scale = 1.0f - ((std::abs(x) + std::abs(z)) / float(cellsInRadius << 1));
-					const float rho = mRhoBar + ((mRhoMin - mRhoBar - EPSILON) * scale);
+					// const float scale = 1.0f - ((std::abs(x) + std::abs(z)) / float(cellsInRadius << 1));
+					// const float rho = mRhoBar + ((mRhoMin - mRhoBar - EPSILON) * scale);
 
 					// if (vel.sqLen3D() <= EPSILON) { rho = mRhoMax; }
 					// if (x == 0 && z == 0) { rho = mRhoMax; }
 
 					cf->density += rho;
 					cb->density += rho;
-					cf->avgVelocity += (vel * rho);
-					cb->avgVelocity += (vel * rho);
+					cf->avgVelocity += (vel * mRhoBar);
+					cb->avgVelocity += (vel * mRhoBar);
 				} break;
 				case DATATYPE_DISCOMFORT: {
-					cf->discomfort += mRhoBar;
-					cb->discomfort += mRhoBar;
+					// scale the discomfort vector
+					cf->discomfort += (vel * mRhoBar);
+					cb->discomfort += (vel * mRhoBar);
 				} break;
 				default: {
 				} break;
@@ -542,7 +543,7 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsig
 
 		// skip our own cell
 		if (cellIdx != posCellIdx) {
-			AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), NVECf, DATATYPE_DISCOMFORT);
+			AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DISCOMFORT);
 		}
 	}
 }
@@ -663,7 +664,7 @@ void Grid::ComputeAvgVelocity() {
 				case DIR_W: { currCellDirNgb = (currCell->x >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x - 1, currCell->y    )]: currCell; } break;
 			}
 
-			const float cellDirDiscomfort = currCellDirNgb->discomfort;
+			const float cellDirDiscomfort = currCellDirNgb->discomfort.len3D();
 			const float cellDirSlope      = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
 			      float cellDirSlopeMod   = 0.0f;
 
@@ -753,7 +754,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			case DIR_W: { currCellDirNgbC = (currCell->x >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x - 1, currCell->y    )]: currCell; } break;
 		}
 
-		const float cellDirDiscomfort = currCellDirNgbC->discomfort;
+		const float cellDirDiscomfort = currCellDirNgbC->discomfort.len3D();
 		const float cellDirSlope      = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
 		      float cellDirSlopeMod   = 0.0f;
 
@@ -1341,8 +1342,8 @@ void Grid::Cell::ResetGlobalStaticVars() {
 
 void Grid::Cell::ResetGlobalDynamicVars() {
 	avgVelocity = NVECf;
+	discomfort  = NVECf;
 	density     = 0.0f;
-	discomfort  = 0.0f;
 }
 
 void Grid::Cell::ResetGroupVars() {
