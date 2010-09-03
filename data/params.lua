@@ -123,6 +123,7 @@ params = {
 
 	["models"] = {
 		["core_goliath.s3o"] = {
+			scale   = 1.0,
 			vShader = "S3OVP.glsl",
 			fShader = "S3OFP.glsl",
 		},

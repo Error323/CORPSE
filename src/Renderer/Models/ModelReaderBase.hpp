@@ -74,6 +74,7 @@ public:
 	std::string tex2;
 
 	int numObjects;
+	float scale;
 	float radius;
 	float height;
 

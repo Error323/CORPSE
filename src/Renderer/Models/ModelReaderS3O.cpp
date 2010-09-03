@@ -6,10 +6,11 @@
 #include "./ModelDrawerS3O.hpp"
 #include "../Textures/TextureHandlerS3O.hpp"
 #include "../../System/ByteOrder.hpp"
+#include "../../System/Debugger.hpp"
 #include "../../System/EngineAux.hpp"
 #include "../../System/FileHandler.hpp"
 #include "../../System/Logger.hpp"
-#include "../../System/Debugger.hpp"
+#include "../../System/LuaParser.hpp"
 
 #define SWAP(x) (x)
 
@@ -51,11 +52,15 @@ ModelBase* CModelReaderS3O::Load(const std::string& name) {
 		return NULL;
 	}
 
-	unsigned char* fileBuf = new unsigned char[file.FileSize()];
-	file.Read(fileBuf, file.FileSize());
+	const std::string sname = name.substr(name.rfind('/') + 1); printf("SNAME: %s\n", sname.c_str());
+	const LuaTable* modelsTable = LUA->GetRoot()->GetTblVal("models");
+	const LuaTable* modelTable = modelsTable->GetTblVal(sname);
+
+	std::vector<unsigned char> fileBuf(file.FileSize());
+	file.Read(&fileBuf[0], file.FileSize());
 
 	RawS3O::RHeader header;
-	memcpy(&header, fileBuf, sizeof(header));
+	memcpy(&header, &fileBuf[0], sizeof(header));
 
 	ModelBase* model = new ModelBase();
 		model->name = name;
@@ -63,6 +68,7 @@ ModelBase* CModelReaderS3O::Load(const std::string& name) {
 		model->numObjects = 0;
 		model->tex1 = (char*) &fileBuf[header.tex1offset];
 		model->tex2 = (char*) &fileBuf[header.tex2offset];
+		model->scale = ((modelTable != NULL)? modelTable->GetFltVal("scale", 1.0f): 1.0f);
 		model->mins = DEF_MIN_SIZE;
 		model->maxs = DEF_MAX_SIZE;
 		model->drawer = drawerS3O;
@@ -83,7 +89,7 @@ ModelBase* CModelReaderS3O::Load(const std::string& name) {
 	LOG << "\t(model base) texture 1:     \"" << model->tex1 << "\"\n";
 	LOG << "\t(model base) texture 2:     \"" << model->tex2 << "\"\n";
 
-	PieceS3O* rootPiece = LoadPiece(model, NULL, fileBuf, header.rootPieceOffset, 0);
+	PieceS3O* rootPiece = LoadPiece(model, NULL, &fileBuf[0], header.rootPieceOffset, 0);
 
 	model->rootPiece = rootPiece;
 	model->radius = header.radius;
@@ -100,7 +106,6 @@ ModelBase* CModelReaderS3O::Load(const std::string& name) {
 	// create the display list tree
 	model->drawer->Init(model->rootPiece);
 
-	delete[] fileBuf;
 	return (CloneModel(model));
 }
 
@@ -113,9 +118,9 @@ PieceS3O* CModelReaderS3O::LoadPiece(ModelBase* model, PieceS3O* parent, unsigne
 		piece->type = MODELTYPE_S3O;
 		piece->mins = DEF_MIN_SIZE;
 		piece->maxs = DEF_MAX_SIZE;
-		piece->offset.x = rawPiece->xoffset;
-		piece->offset.y = rawPiece->yoffset;
-		piece->offset.z = rawPiece->zoffset;
+		piece->offset.x = rawPiece->xoffset * model->scale;
+		piece->offset.y = rawPiece->yoffset * model->scale;
+		piece->offset.z = rawPiece->zoffset * model->scale;
 		piece->primitiveType = rawPiece->primitiveType;
 		piece->name = (char*) &buf[rawPiece->nameOffset];
 		piece->parent = parent;
@@ -145,6 +150,7 @@ PieceS3O* CModelReaderS3O::LoadPiece(ModelBase* model, PieceS3O* parent, unsigne
 
 	for (int a = 0; a < rawPiece->numVertices; ++a) {
 		VertexS3O v = *(VertexS3O*) &buf[vertexOffset];
+			v.pos *= model->scale;
 			v.normal.norm3D();
 		piece->vertices.push_back(v);
 
