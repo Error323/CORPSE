@@ -52,7 +52,7 @@ ModelBase* CModelReaderS3O::Load(const std::string& name) {
 		return NULL;
 	}
 
-	const std::string sname = name.substr(name.rfind('/') + 1); printf("SNAME: %s\n", sname.c_str());
+	const std::string sname = name.substr(name.rfind('/') + 1);
 	const LuaTable* modelsTable = LUA->GetRoot()->GetTblVal("models");
 	const LuaTable* modelTable = modelsTable->GetTblVal(sname);
 
