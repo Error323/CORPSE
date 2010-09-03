@@ -798,7 +798,11 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			const float discomfortValue = currCellDirNgbC->discomfort.y;
 			const float discomfortScale = ((currCellDirNgbC->discomfort.dot2D(mDirVectors[dir]) * -1.0f) + 1.0f) * 0.5f;
 
-			cellDirDiscomfort = discomfortValue * discomfortScale;
+			// for a unit moving in a direction parallel to a discomfort zone,
+			// the discomfort inside the zone should still be slightly higher
+			// than outside it (the zones should not act as attractors, though
+			// this produces more pronounced lanes), so use G + (G * scale)
+			cellDirDiscomfort = discomfortValue + (discomfortValue * discomfortScale);
 		#else
 			cellDirDiscomfort = currCellDirNgbC->discomfort.y;
 		#endif
