@@ -507,8 +507,15 @@ void Grid::AddGlobalDynamicCellData(
 				} break;
 				case DATATYPE_DISCOMFORT: {
 					// scale the discomfort vector
-					cf->discomfort += (vel * mRhoBar);
-					cb->discomfort += (vel * mRhoBar);
+					// NOTE; this causes opposing velocity vectors
+					// projected onto the same cell to cancel out
+					// cf->discomfort += (vel * mRhoBar);
+					// cb->discomfort += (vel * mRhoBar);
+
+					cf->discomfort.x += (vel.x * mRhoBar);
+					cf->discomfort.z += (vel.z * mRhoBar);
+					cf->discomfort.y += (vel.len3D() * mRhoBar);
+					cb->discomfort    = cf->discomfort;
 				} break;
 				default: {
 				} break;
