@@ -795,10 +795,10 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			//   dot  1.0 (parallel) ==> minimal discomfort contribution to cost ==> ((( 1.0 * -1.0) + 1.0) * 0.5) = 0.0
 			//   dot  0.0 (orthogon) ==> medium  discomfort contribution to cost ==> ((( 0.0 * -1.0) + 1.0) * 0.5) = 0.5
 			//   dot -1.0 (opposite) ==> maximum discomfort contribution to cost ==> (((-1.0 * -1.0) + 1.0) * 0.5) = 1.0
-			const float discomfortVal = currCellDirNgbC->discomfort.y;
-			const float discomfortDot = ((currCellDirNgbC->discomfort.dot2D(mDirVectors[dir]) * -1.0f) + 1.0f) * 0.5f;
+			const float discomfortValue = currCellDirNgbC->discomfort.y;
+			const float discomfortScale = ((currCellDirNgbC->discomfort.dot2D(mDirVectors[dir]) * -1.0f) + 1.0f) * 0.5f;
 
-			cellDirDiscomfort = discomfortVal * discomfortDot);
+			cellDirDiscomfort = discomfortValue * discomfortScale);
 		#else
 			cellDirDiscomfort = currCellDirNgbC->discomfort.y;
 		#endif
