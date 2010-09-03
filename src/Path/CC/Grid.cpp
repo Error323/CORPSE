@@ -518,6 +518,7 @@ void Grid::AddGlobalDynamicCellData(
 					// cf->discomfort.z += (vel.z * mRhoBar);
 					// cf->discomfort.y += (vel.len2D() * mRhoBar);
 
+					// x and z are normalised later
 					cf->discomfort.x += vel.x;
 					cf->discomfort.z += vel.z;
 					cf->discomfort.y += mRhoBar;
@@ -576,12 +577,6 @@ void Grid::ComputeAvgVelocity() {
 		Cell* cf = &currCells[idx];
 		Cell* cb = &prevCells[idx];
 
-		// normalise the discomfort xz-direction
-		if (cf->discomfort.sqLen2D() > EPSILON) {
-			cf->discomfort = cf->discomfort.norm2D();
-			cb->discomfort = cf->discomfort;
-		}
-
 		// v(i) is multiplied by rho(i) when summing v-bar,
 		// so we need to divide by the non-normalised rho
 		// to get the final per-cell average velocity
@@ -623,6 +618,13 @@ void Grid::ComputeAvgVelocity() {
 		mDensityVisData[idx]     = cf->density;
 		mDiscomfortVisData[idx]  = cf->discomfort;
 		mAvgVelocityVisData[idx] = cf->avgVelocity;
+
+		// normalise xz to get the discomfort direction
+		// (should be more or less equal to avgVelocity)
+		if (cf->discomfort.sqLen2D() > EPSILON) {
+			cf->discomfort = cf->discomfort.norm2D();
+			cb->discomfort = cf->discomfort;
+		}
 	}
 }
 
