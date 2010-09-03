@@ -100,8 +100,16 @@ template<typename T> struct vec3 {
 	}
 
 
-	// normalize this vector
-	inline vec3<T> norm() const {
+	// normalize this vector (2D and 3D)
+	inline vec3<T> norm2D() const {
+		PFFG_ASSERT(x != T(0) || z != T(0));
+
+		T dp = sqLen2D();
+		T rt = (dp == T(1))?  dp:  T(1) / T(sqrtf(dp));
+
+		return vec3<T>(x * rt, y, z * rt);
+	}
+	inline vec3<T> norm3D() const {
 		PFFG_ASSERT(x != T(0) || y != T(0) || z != T(0));
 
 		T dp = sqLen3D();
@@ -109,8 +117,20 @@ template<typename T> struct vec3 {
 
 		return vec3<T>(x * rt, y * rt, z * rt);
 	}
-	// normalize this vector (in-place)
-	inline vec3<T>& inorm() {
+
+	// normalize this vector in-place (2D and 3D)
+	inline vec3<T>& inorm2D() {
+		PFFG_ASSERT(x != T(0) || z != T(0));
+
+		T dp = sqLen3D();
+		T rt = (dp == T(1))?  dp:  T(1) / T(sqrtf(dp));
+
+		x *= rt;
+		z *= rt;
+
+		return *this;
+	}
+	inline vec3<T>& inorm3D() {
 		PFFG_ASSERT(x != T(0) || y != T(0) || z != T(0));
 
 		T dp = sqLen3D();
@@ -122,8 +142,9 @@ template<typename T> struct vec3 {
 
 		return *this;
 	}
-	// normalize this vector quickly
-	inline vec3<T>& ifnorm() {
+
+	// normalize this vector quickly (3D)
+	inline vec3<T>& ifnorm3D() {
 		PFFG_ASSERT(x != T(0) || y != T(0) || z != T(0));
 
 		T dp = sqLen3D();

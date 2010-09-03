@@ -9,7 +9,7 @@ template<> vec3<float>& vec3<float>::randomize() {
 	x = random();
 	y = random();
 	z = random();
-	return (inorm());
+	return (inorm3D());
 }
 
 template<> std::string vec3<float>::str() const {

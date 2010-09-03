@@ -103,14 +103,14 @@ void CCPathModule::OnEvent(const IEvent* e) {
 
 				if (ee->GetQueued()) {
 					wps.wantedPos   = goalPos + (objectPos - groupPos);
-					wps.wantedDir   = (wps.wantedPos - objectPos).norm();
+					wps.wantedDir   = (wps.wantedPos - objectPos).norm3D();
 					wps.wantedSpeed = coh->GetSimObjectDef(objectID)->GetMaxForwardSpeed();
 
 					// World2Cell clamps the position via World2Grid
 					newGroup->AddGoal(mGrid.GetCellIndex1D(wps.wantedPos));
 				} else {
 					wps.wantedPos   = goalPos;
-					wps.wantedDir   = (goalPos - coh->GetSimObjectPosition(objectID)).norm();
+					wps.wantedDir   = (goalPos - coh->GetSimObjectPosition(objectID)).norm3D();
 					wps.wantedSpeed = coh->GetSimObjectDef(objectID)->GetMaxForwardSpeed();
 				}
 

@@ -497,7 +497,7 @@ void Grid::AddGlobalDynamicCellData(
 					// const float scale = 1.0f - ((std::abs(x) + std::abs(z)) / float(cellsInRadius << 1));
 					// const float rho = mRhoBar + ((mRhoMin - mRhoBar - EPSILON) * scale);
 
-					// if (vel.sqLen3D() <= EPSILON) { rho = mRhoMax; }
+					// if (vel.sqLen2D() <= EPSILON) { rho = mRhoMax; }
 					// if (x == 0 && z == 0) { rho = mRhoMax; }
 
 					cf->density += mRhoBar;
@@ -508,14 +508,21 @@ void Grid::AddGlobalDynamicCellData(
 				case DATATYPE_DISCOMFORT: {
 					// scale the discomfort vector
 					// NOTE; this causes opposing velocity vectors
-					// projected onto the same cell to cancel out
+					// projected onto the same cell to cancel out,
+					// so we store the total discomfort value in y
 					// cf->discomfort += (vel * mRhoBar);
 					// cb->discomfort += (vel * mRhoBar);
 
-					cf->discomfort.x += (vel.x * mRhoBar);
-					cf->discomfort.z += (vel.z * mRhoBar);
-					cf->discomfort.y += (vel.len2D() * mRhoBar);
-					cb->discomfort    = cf->discomfort;
+					// we require only the direction along xz
+					// cf->discomfort.x += (vel.x * mRhoBar);
+					// cf->discomfort.z += (vel.z * mRhoBar);
+					// cf->discomfort.y += (vel.len2D() * mRhoBar);
+
+					cf->discomfort.x += vel.x;
+					cf->discomfort.z += vel.z;
+					cf->discomfort.y += mRhoBar;
+
+					cb->discomfort = cf->discomfort;
 				} break;
 				default: {
 				} break;
@@ -536,7 +543,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 }
 
 void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsigned int numFrames, float stepSize) {
-	if (vel.sqLen3D() <= EPSILON) {
+	if (vel.sqLen2D() <= EPSILON) {
 		return;
 	}
 
@@ -568,6 +575,12 @@ void Grid::ComputeAvgVelocity() {
 
 		Cell* cf = &currCells[idx];
 		Cell* cb = &prevCells[idx];
+
+		// normalise the discomfort xz-direction
+		if (cf->discomfort.sqLen2D() > EPSILON) {
+			cf->discomfort = cf->discomfort.norm2D();
+			cb->discomfort = cf->discomfort;
+		}
 
 		// v(i) is multiplied by rho(i) when summing v-bar,
 		// so we need to divide by the non-normalised rho
@@ -1188,9 +1201,9 @@ bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCel
 	PFFG_ASSERT_MSG(!(std::isnan(objectCellVel.x) || std::isnan(objectCellVel.y) || std::isnan(objectCellVel.z)), "Inf velocity-field for cell <%u,%u>", objectCell->x, objectCell->y);
 	PFFG_ASSERT_MSG(!(std::isinf(objectCellVel.x) || std::isinf(objectCellVel.y) || std::isinf(objectCellVel.z)), "NaN velocity-field for cell <%u,%u>", objectCell->x, objectCell->y);
 
-	if (objectCellVel.sqLen3D() > EPSILON) {
+	if (objectCellVel.sqLen2D() > EPSILON) {
 		#if (VELOCITY_FIELD_DIRECT_INTERPOLATION == 1)
-			mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + objectCellVel, objectCellVel.norm(), objectCellVel.len3D());
+			mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + objectCellVel, objectCellVel.norm3D(), objectCellVel.len2D());
 		#else
 			const SimObjectDef* objectDef = mCOH->GetSimObjectDef(objectID);
 
@@ -1201,8 +1214,8 @@ bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCel
 			// in theory, the velocity-field should never cause units
 			// in any group to exceed that group's speed limitations
 			// (note that this is not true on slopes)
-			// float wantedSpeed = std::min(objectCellVel.len3D(), objectDef->GetMaxForwardSpeed());
-			float wantedSpeed = objectCellVel.len3D();
+			// float wantedSpeed = std::min(objectCellVel.len2D(), objectDef->GetMaxForwardSpeed());
+			float wantedSpeed = objectCellVel.len2D();
 
 			// note: should accelerate and deccelerate more quickly on slopes
 			if (objectSpeed < wantedSpeed) { wantedSpeed = objectSpeed + maxAccRate; }

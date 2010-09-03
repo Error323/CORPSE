@@ -16,7 +16,7 @@ void PhysicalState::Update(const SimObject* owner) {
 	vec3f currentPos = mat.GetPos();
 	vec3f forwardDir = mat.GetZDir();
 		forwardDir.y = 0.0f;
-		forwardDir.inorm();
+		forwardDir.inorm2D();
 
 	// figure out whether to turn left or right to match wantedDir
 	//

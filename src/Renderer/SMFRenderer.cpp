@@ -155,7 +155,7 @@ inline static const vec3f& GetVertexNormal(const float* /*hm*/, const RSquare& q
 		e1 = tl - bl;
 	}
 
-	return (e1.cross(e0).inorm());
+	return (e1.cross(e0).inorm3D());
 	*/
 
 	// use the precomputed highest-LOD normal
@@ -376,7 +376,7 @@ void CSMFRenderer::DrawPotentiallyVisibleSquares() {
 
 					//// const vec3f e0 = tr - tl;
 					//// const vec3f e1 = bl - tl;
-					//// const vec3f nv = e1.cross(e0).inorm();
+					//// const vec3f nv = e1.cross(e0).inorm3D();
 					//// glNormal3f(nv.x, nv.y, nv.z);
 
 					glVertex3f(tl.x, tl.y, tl.z);

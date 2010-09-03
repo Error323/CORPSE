@@ -358,8 +358,8 @@ template<typename T> struct mat44 {
 	inline void SetYDirXZ(const vec3<T>& y) {
 		SetYDir(y);
 
-		xdir = (zdir.cross(ydir)).inorm();
-		zdir = (ydir.cross(xdir)).inorm();
+		xdir = (zdir.cross(ydir)).inorm3D();
+		zdir = (ydir.cross(xdir)).inorm3D();
 
 		m[ 0] = xdir.x;
 		m[ 1] = xdir.y;

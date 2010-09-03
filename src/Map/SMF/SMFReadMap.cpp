@@ -228,7 +228,7 @@ vec3f CSMFReadMap::GetLightValue(int x, int y) {
 		facenormals[((y * mapx) + x) * 2 + 1];
 	vec3f light =
 		mapInfo->light.groundDiffuseColor *
-		mapInfo->light.sunDir.dot3D(n1.inorm());
+		mapInfo->light.sunDir.dot3D(n1.inorm3D());
 
 	light.x = std::max(light.x, 0.0f);
 	light.y = std::max(light.y, 0.0f);

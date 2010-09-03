@@ -145,7 +145,7 @@ PieceS3O* CModelReaderS3O::LoadPiece(ModelBase* model, PieceS3O* parent, unsigne
 
 	for (int a = 0; a < rawPiece->numVertices; ++a) {
 		VertexS3O v = *(VertexS3O*) &buf[vertexOffset];
-			v.normal.norm();
+			v.normal.norm3D();
 		piece->vertices.push_back(v);
 
 		vertexOffset += sizeof(VertexS3O);
@@ -374,7 +374,7 @@ void PieceS3O::SetVertexTangents() {
 
 		h = ((n.cross(s)).dot3D(t) < 0.0f)? -1: 1;
 		s = (s - n * n.dot3D(s));
-		s = s.norm();
+		s = s.norm3D();
 		t = (s.cross(n)) * h;
 
 		// t = (s.cross(n));

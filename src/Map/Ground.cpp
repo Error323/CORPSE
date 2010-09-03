@@ -45,7 +45,7 @@ float CGround::LineGroundCol(const vec3f& from, const vec3f& to) {
 
 	// segment (squared) length and direction
 	const float len = (to - from).sqLen3D();
-	const vec3f dir = (to - from).norm();
+	const vec3f dir = (to - from).norm3D();
 
 	// position being stepped, (squared) distance travelled
 	vec3f pos = from;
@@ -346,7 +346,7 @@ vec3f CGround::GetSmoothNormal(float x, float y) {
 	vec3f n4 = (readMap->facenormals[((sy2) * readMap->mapx + sx2) * 2] + readMap->facenormals[(sy2 * readMap->mapx + sx2) * 2 + 1]) *  fx * fy;
 
 	vec3f norm1 = n1 + n2 + n3 + n4;
-	norm1.inorm();
+	norm1.inorm3D();
 
 	return norm1;
 }

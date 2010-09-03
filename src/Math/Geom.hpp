@@ -9,7 +9,7 @@ namespace geom {
 	public:
 		Plane(): n(NVECf), d(0.0f) {
 		}
-		Plane(const vec3f& abc, float dst): n(abc.norm()), d(dst) {
+		Plane(const vec3f& abc, float dst): n(abc.norm3D()), d(dst) {
 			p = d / abc.len3D();
 		}
 

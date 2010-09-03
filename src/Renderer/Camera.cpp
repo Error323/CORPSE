@@ -74,7 +74,7 @@ vec3f Camera::GetPixelDir(int x, int y) const {
 	const float dx = ((x - vppx - vpsx * 0.5f) / vpsy) * (thvFOVrad * 2.0f);
 	const float dy = ((y - vpsy        * 0.5f) / vpsy) * (thvFOVrad * 2.0f);
 
-	return ((zdir - (ydir * dy) + (xdir * dx)).norm());
+	return ((zdir - (ydir * dy) + (xdir * dx)).norm3D());
 }
 
 void Camera::SetInternalParameters() {
@@ -112,9 +112,9 @@ void Camera::WindowResized(int, int) {
 
 
 void Camera::UpdateCoorSys() {
-	zdir = (vrp - pos).inorm();
-	xdir = (zdir.cross(ydir)).inorm();
-	ydir = (xdir.cross(zdir)).inorm();
+	zdir = (vrp - pos).inorm3D();
+	xdir = (zdir.cross(ydir)).inorm3D();
+	ydir = (xdir.cross(zdir)).inorm3D();
 	vrp  = pos + zdir;
 
 	mat.SetPos(pos); //!
@@ -127,10 +127,10 @@ void Camera::UpdateFrustum() {
 	const vec3f zdirY = (-zdir * (    thvFOVrad               ));
 	const vec3f zdirX = (-zdir * (tanf(hvFOVrad * hAspectRatio)));
 
-	frustumT = (zdirY + ydir).inorm();
-	frustumB = (zdirY - ydir).inorm();
-	frustumR = (zdirX + xdir).inorm();
-	frustumL = (zdirX - xdir).inorm();
+	frustumT = (zdirY + ydir).inorm3D();
+	frustumB = (zdirY - ydir).inorm3D();
+	frustumR = (zdirX + xdir).inorm3D();
+	frustumL = (zdirX - xdir).inorm3D();
 }
 
 void Camera::SetState(const Camera* c) {
@@ -390,8 +390,8 @@ void FPSCamera::Yaw(int sign, float sens) {
 
 	// keep rotations level in xz-plane
 	ydir = YVECf;
-	zdir = (tmp - pos).inorm();
-	xdir = (zdir.cross(ydir)).inorm();
+	zdir = (tmp - pos).inorm3D();
+	xdir = (zdir.cross(ydir)).inorm3D();
 	vrp  = pos + zdir;
 
 	mat.SetZDir(zdir);
@@ -401,8 +401,8 @@ void FPSCamera::Yaw(int sign, float sens) {
 void FPSCamera::Pitch(int sign, float sens) {
 	const vec3f tmp = vrp + (ydir * sign * sens);
 
-	zdir = (tmp - pos).inorm();
-	ydir = (xdir.cross(zdir)).inorm();
+	zdir = (tmp - pos).inorm3D();
+	ydir = (xdir.cross(zdir)).inorm3D();
 	vrp  = pos + zdir;
 
 	mat.SetZDir(zdir);
@@ -412,8 +412,8 @@ void FPSCamera::Roll(int sign, float sens) {
 	ydir += (xdir * sign * sens);
 	xdir = (zdir.cross(ydir));
 
-	xdir.inorm();
-	ydir.inorm();
+	xdir.inorm3D();
+	ydir.inorm3D();
 
 	mat.SetXDir(xdir);
 	mat.SetYDir(ydir);
@@ -445,7 +445,7 @@ void FPSCamera::RotateX(float angle, bool b) {
 	angle = (b? DEG2RAD(angle): angle);
 
 	ydir = YVECf;
-	zdir = (zdir * cosf(angle) + ydir * sinf(angle)).norm();
+	zdir = (zdir * cosf(angle) + ydir * sinf(angle)).norm3D();
 	ydir = (xdir.cross(zdir));
 	vrp  = pos + zdir;
 
@@ -455,7 +455,7 @@ void FPSCamera::RotateX(float angle, bool b) {
 void FPSCamera::RotateY(float angle, bool b) {
 	angle = (b? DEG2RAD(angle): angle);
 
-	zdir = (zdir * cosf(angle) - xdir * sinf(angle)).norm();
+	zdir = (zdir * cosf(angle) - xdir * sinf(angle)).norm3D();
 	xdir = (zdir.cross(ydir));
 	vrp  = pos + zdir;
 
@@ -465,7 +465,7 @@ void FPSCamera::RotateY(float angle, bool b) {
 void FPSCamera::RotateZ(float angle, bool b) {
 	angle = (b? DEG2RAD(angle): angle);
 
-	xdir = (xdir * cosf(angle) + ydir * sinf(angle)).norm();
+	xdir = (xdir * cosf(angle) + ydir * sinf(angle)).norm3D();
 	ydir = (xdir.cross(zdir));
 
 	mat.SetXDir(xdir);
@@ -479,7 +479,7 @@ void FPSCamera::RotateZ(float angle, bool b) {
 
 void OrbitCamera::Init(const vec3f& p, const vec3f& t) {
 	const vec3f v = (t - p);
-	const vec3f w = v.norm();
+	const vec3f w = v.norm3D();
 	const float d = v.len3D();
 	// acosf() takes values in [-1.0, 1.0]
 	const float e = RAD2DEG(acosf(v.len2D() / d));
@@ -588,7 +588,7 @@ void OrbitCamera::MouseMoved(int x, int y, int dx, int dy) {
 	switch (inputHandler->GetLastMouseButton()) {
 		case SDL_BUTTON_LEFT: {
 			pos  = cen + GetOrbitPos();
-			vrp  = pos + ((cen - pos).inorm());
+			vrp  = pos + ((cen - pos).inorm3D());
 			ydir = YVECf;
 
 			// keep rotations level in xz-plane
@@ -709,7 +709,7 @@ void OverheadCamera::Rotate(float alpha) {
 
 	alpha = DEG2RAD(alpha);
 	tmp   = tmp.rotateX(alpha);
-	zdir  = -tmp.norm();
+	zdir  = -tmp.norm3D();
 	ydir  = (xdir.cross(zdir));
 	pos   = tmp + tar;
 	vrp   = pos + zdir;

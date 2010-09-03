@@ -753,7 +753,7 @@ void CSMFGroundDrawer::UpdateCamRestraints(const Camera* cam) {
 	vec3f side = cam->zdir;
 	vec3f camHor = side;
 		camHor.y = 0.0f;
-		camHor.inorm();
+		camHor.inorm3D();
 
 	// get vector for collision between frustum and horizontal plane
 	vec3f b = YVECf.cross(camHor);

@@ -46,7 +46,7 @@ CMapInfo::CMapInfo(const std::string& mapName) {
 
 	// w-component is not affected by normalization
 	light.sunDir.w /= 100.0f;
-	light.sunDir.inorm();
+	light.sunDir.inorm3D();
 }
 
 

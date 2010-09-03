@@ -49,7 +49,7 @@ void DummyPathModule::OnEvent(const IEvent* e) {
 				// note: direction is based on our current position
 				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID, true);
 					wps.wantedPos   = goalPos;
-					wps.wantedDir   = (goalPos - objPos).norm();
+					wps.wantedDir   = (goalPos - objPos).norm3D();
 					wps.wantedSpeed = simObjectIDs[objID]->GetMaxForwardSpeed();
 
 				coh->PushSimObjectWantedPhysicalState(objID, wps, ee->GetQueued(), false);
@@ -118,7 +118,7 @@ void DummyPathModule::Update() {
 			const WantedPhysicalState& nwps = coh->GetSimObjectWantedPhysicalState(objID, true);
 
 			wps.wantedPos   = (nwps.wantedPos);
-			wps.wantedDir   = (nwps.wantedPos - pos).norm();
+			wps.wantedDir   = (nwps.wantedPos - pos).norm3D();
 			wps.wantedSpeed = nwps.wantedSpeed;
 		}
 

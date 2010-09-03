@@ -33,9 +33,9 @@ struct PhysicalState {
 	PhysicalState& operator / (float s) {
 		// note: re-orthonormalize?
 		mat.SetPos(mat.GetPos() / s);
-		mat.SetXDir((mat.GetXDir() / s).norm());
-		mat.SetYDir((mat.GetYDir() / s).norm());
-		mat.SetZDir((mat.GetZDir() / s).norm());
+		mat.SetXDir((mat.GetXDir() / s).norm3D());
+		mat.SetYDir((mat.GetYDir() / s).norm3D());
+		mat.SetZDir((mat.GetZDir() / s).norm3D());
 
 		speed /= s;
 		return *this;

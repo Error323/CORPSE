@@ -177,12 +177,12 @@ void CReadMap::CalcHeightfieldData() {
 			vec3f e1(-SQUARE_SIZE, heightmap[idx0] - heightmap[idx0 + 1],            0);
 			vec3f e2(           0, heightmap[idx0] - heightmap[idx1    ], -SQUARE_SIZE);
 
-			facenormals[(y * mapx + x) * 2] = e2.cross(e1).inorm();
+			facenormals[(y * mapx + x) * 2] = e2.cross(e1).inorm3D();
 
 			e1 = vec3f( SQUARE_SIZE, heightmap[idx1 + 1] - heightmap[idx1    ],           0);
 			e2 = vec3f(           0, heightmap[idx1 + 1] - heightmap[idx0 + 1], SQUARE_SIZE);
 
-			facenormals[(y * mapx + x) * 2 + 1] = e2.cross(e1).inorm();
+			facenormals[(y * mapx + x) * 2 + 1] = e2.cross(e1).inorm3D();
 		}
 	}
 
@@ -202,13 +202,13 @@ void CReadMap::CalcHeightfieldData() {
 			vec3f e2(   0, heightmap[idx0 + (x - 1)] - heightmap[idx1 + (x - 1)], -ss4);
 
 			vec3f n = e2.cross(e1);
-			n.inorm();
+			n.inorm3D();
 
 			e1 = vec3f(ss4, heightmap[idx1 + x + 3] - heightmap[idx1 + (x - 1)],   0);
 			e2 = vec3f(  0, heightmap[idx1 + x + 3] - heightmap[idx0 +  x + 3 ], ss4);
 
 			vec3f n2 = e2.cross(e1);
-			n2.inorm();
+			n2.inorm3D();
 
 			slopemap[(y / 2) * hmapx + (x / 2)] = 1.0f - (n.y + n2.y) * 0.5f;
 		}
@@ -285,19 +285,19 @@ void CReadMap::GenerateVertexNormals() {
 				tn = (vml - vmm).cross((vtl - vmm)); if (tn.y < 0.0f) { tn = -tn; }; n += tn;
 
 			/*
-			n += (vtl - vmm).cross((vtm - vmm)).norm();
-			n += (vtm - vmm).cross((vtr - vmm)).norm();
-			n += (vtr - vmm).cross((vmr - vmm)).norm();
-			n += (vmr - vmm).cross((vbr - vmm)).norm();
-			n += (vbr - vmm).cross((vbm - vmm)).norm();
-			n += (vbm - vmm).cross((vbl - vmm)).norm();
-			n += (vbl - vmm).cross((vml - vmm)).norm();
-			n += (vml - vmm).cross((vtl - vmm)).norm();
+			n += (vtl - vmm).cross((vtm - vmm)).norm3D();
+			n += (vtm - vmm).cross((vtr - vmm)).norm3D();
+			n += (vtr - vmm).cross((vmr - vmm)).norm3D();
+			n += (vmr - vmm).cross((vbr - vmm)).norm3D();
+			n += (vbr - vmm).cross((vbm - vmm)).norm3D();
+			n += (vbm - vmm).cross((vbl - vmm)).norm3D();
+			n += (vbl - vmm).cross((vml - vmm)).norm3D();
+			n += (vml - vmm).cross((vtl - vmm)).norm3D();
 			n *= -0.125f;
-			n.inorm();
+			n.inorm3D();
 			*/
 
-			vertexNormals[i] = n.norm();
+			vertexNormals[i] = n.norm3D();
 		}
 	}
 
