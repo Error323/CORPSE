@@ -548,6 +548,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsigned int numFrames, float stepSize) {
 	if (vel.sqLen2D() <= EPSILON) {
 		// no predictive discomfort for stationary objects
+		// (density alone should cause those to be avoided)
 		return;
 	}
 
