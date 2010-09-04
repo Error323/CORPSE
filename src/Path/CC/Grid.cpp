@@ -488,6 +488,8 @@ void Grid::AddGlobalDynamicCellData(
 					// density based on unit's position within the center cell
 					// NOTE: when rho_bar is always <= rho_min, how can we get
 					// avoidance behavior around a single non-moving object?
+					// FIXME: even when rho_bar == rho_max, density seems to
+					// not have *any* effect on shape of speed- or cost-field
 					//
 					// two contradictory requirements, regardless of cell-size:
 					//     1) units must contribute a minimum amount of density so other units avoid them
@@ -545,7 +547,7 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsig
 	if (vel.sqLen2D() <= EPSILON) {
 		// no predictive discomfort for stationary objects
 		// (density alone should cause those to be avoided)
-		return;
+		// return;
 	}
 
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
@@ -1194,14 +1196,15 @@ float Grid::Potential2D(const float p1, const float c1, const float p2, const fl
 	// (c1^2*p2 + c2^2*p1) / (c1^2+c2^2) +/- (c1*c2 / sqrt(c1^2 + c2^2))
 	const float c1s = c1 * c1;
 	const float c2s = c2 * c2;
-	const float c1s_plus_c2s = c1s + c2s;
+	const float c1s_plus_c2s = CLAMP(c1s + c2s, EPSILON, std::numeric_limits<float>::max());
 
 	PFFG_ASSERT(c1s_plus_c2s > 0.0f);
 
 	const float a = (c1s * p2 + c2s * p1) / (c1s_plus_c2s);
-	const float b = sqrtf(c1s_plus_c2s);
-	const float c = c1 * c2 / b;
+	const float b = CLAMP(sqrtf(c1s_plus_c2s), EPSILON, std::numeric_limits<float>::max());
+	const float c = (c1 * c2) / b;
 
+	// FIXME: huge variance in potential values (excessive gradients)
 	return std::max<float>(a + c, a - c);
 }
 
