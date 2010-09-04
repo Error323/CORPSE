@@ -7,7 +7,7 @@
 #include "../../Sim/SimObjectState.hpp"
 #include "../../System/ScopedTimer.hpp"
 
-#define GRID_DOWNSCALE_FACTOR        16
+#define GRID_DOWNSCALE_FACTOR         8
 #define MINIMUM_DISTANCE_ENFORCEMENT  1
 #define PREDICTIVE_DISCOMFORT_FRAMES 10
 

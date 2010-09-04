@@ -547,23 +547,24 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 
 void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsigned int numFrames, float stepSize) {
 	if (vel.sqLen2D() <= EPSILON) {
+		// no predictive discomfort for stationary objects
 		return;
 	}
 
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
-	const unsigned int posCellIdx = GetCellIndex1D(pos);
+	// const unsigned int posCellIdx = GetCellIndex1D(pos);
 
-	for (unsigned int n = 0; n < numFrames; n++) {
+	for (unsigned int n = 0; n <= numFrames; n++) {
 		const vec3f        stepPos = pos + (vel * n * stepSize);
 		const unsigned int cellIdx = GetCellIndex1D(stepPos);
 		const Cell*        cell    = &currCells[cellIdx];
 
 		// skip our own cell
-		if (cellIdx != posCellIdx) {
+		// if (cellIdx != posCellIdx) {
 			AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DISCOMFORT);
-		}
+		// }
 	}
 }
 
@@ -802,7 +803,12 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			// the discomfort inside the zone should still be slightly higher
 			// than outside it (the zones should not act as attractors, though
 			// this produces more pronounced lanes), so use G + (G * scale)
-			cellDirDiscomfort = discomfortValue + (discomfortValue * discomfortScale);
+			//
+			// cellDirDiscomfort = discomfortValue + (discomfortValue * discomfortScale);
+			//
+			// NOTE: this should only cancel discomfort zones projected by units,
+			// not static discomfort projected by terrain (needs a separate field)
+			cellDirDiscomfort = (discomfortValue * discomfortScale);
 		#else
 			cellDirDiscomfort = currCellDirNgbC->discomfort.y;
 		#endif
