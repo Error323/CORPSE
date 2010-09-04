@@ -79,7 +79,8 @@ public:
 
 		vec3f GetNormalisedPotentialGradient(const std::vector<Edge>&, unsigned int) const;
 		vec3f avgVelocity;
-		vec3f discomfort;
+		vec3f staticDiscomfort;
+		vec3f mobileDiscomfort;
 
 		unsigned int x, y;
 		bool  known;

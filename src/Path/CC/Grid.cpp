@@ -301,7 +301,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 			currCell->height = ELEVATION(x, y);
 			prevCell->height = ELEVATION(x, y);
 
-			// set the baseline discomfort values
+			// set the baseline static discomfort values
 			// NOTE:
 			//    this assumes all groups experience discomfort in the same way,
 			//    because the field is global (converting it back to per-group
@@ -311,11 +311,11 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 			//
 			//    for now, avoid higher areas (problem: discomfort is a much larger
 			//    term than speed, but needs to be around same order of magnitude)
-			currCell->discomfort.y = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
-			prevCell->discomfort.y = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
+			currCell->staticDiscomfort.y = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
+			prevCell->staticDiscomfort.y = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
 
 			mHeightVisData[GRID_INDEX_UNSAFE(x, y)] = currCell->height;
-			mDiscomfortVisData[GRID_INDEX_UNSAFE(x, y)] = currCell->discomfort;
+			mDiscomfortVisData[GRID_INDEX_UNSAFE(x, y)] = currCell->staticDiscomfort;
 		}
 	}
 
@@ -437,12 +437,8 @@ void Grid::Reset() {
 		currCell->ResetGlobalDynamicVars();
 		prevCell->ResetGlobalDynamicVars();
 
-		// restore the baseline discomfort values
-		currCell->discomfort.y = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
-		prevCell->discomfort.y = mFlatTerrain? 0.0f: ((currCell->height - mCOH->GetMinMapHeight()) / (mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()));
-
 		mDensityVisData[idx]     = 0.0f;
-		mDiscomfortVisData[idx]  = currCell->discomfort;
+		mDiscomfortVisData[idx]  = currCell->staticDiscomfort;
 		mAvgVelocityVisData[idx] = NVECf;
 	}
 
@@ -521,11 +517,11 @@ void Grid::AddGlobalDynamicCellData(
 					// cf->discomfort.y += (vel.len2D() * mRhoBar);
 
 					// x and z are normalised later
-					cf->discomfort.x += vel.x;
-					cf->discomfort.z += vel.z;
-					cf->discomfort.y += mRhoBar;
+					cf->mobileDiscomfort.x += vel.x;
+					cf->mobileDiscomfort.z += vel.z;
+					cf->mobileDiscomfort.y += mRhoBar;
 
-					cb->discomfort = cf->discomfort;
+					cb->mobileDiscomfort = cf->mobileDiscomfort;
 				} break;
 				default: {
 				} break;
@@ -620,14 +616,14 @@ void Grid::ComputeAvgVelocity() {
 		// cb->avgVelocity  = cf->avgVelocity;
 
 		mDensityVisData[idx]     = cf->density;
-		mDiscomfortVisData[idx]  = cf->discomfort;
+		mDiscomfortVisData[idx]  = cf->staticDiscomfort + cf->mobileDiscomfort;
 		mAvgVelocityVisData[idx] = cf->avgVelocity;
 
 		// normalise xz to get the discomfort direction
 		// (should be more or less equal to avgVelocity)
-		if (cf->discomfort.sqLen2D() > EPSILON) {
-			cf->discomfort = cf->discomfort.norm2D();
-			cb->discomfort = cf->discomfort;
+		if (cf->mobileDiscomfort.sqLen2D() > EPSILON) {
+			cf->mobileDiscomfort = cf->mobileDiscomfort.norm2D();
+			cb->mobileDiscomfort = cf->mobileDiscomfort;
 		}
 	}
 }
@@ -692,7 +688,7 @@ void Grid::ComputeAvgVelocity() {
 				case DIR_W: { currCellDirNgb = (currCell->x >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x - 1, currCell->y    )]: currCell; } break;
 			}
 
-			const float cellDirDiscomfort = currCellDirNgb->discomfort.y;
+			const float cellDirDiscomfort = currCellDirNgb->staticDiscomfort.y + currCellDirNgb->mobileDiscomfort.y;
 			const float cellDirSlope      = currCellDirEdge->heightDelta.dot2D(mDirVectors[dir]);
 			      float cellDirSlopeMod   = 0.0f;
 
@@ -797,21 +793,16 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			//   dot  1.0 (parallel) ==> minimal discomfort contribution to cost ==> scale ((( 1.0 * -1.0) + 1.0) * 0.5) = 0.0
 			//   dot  0.0 (orthogon) ==> medium  discomfort contribution to cost ==> scale ((( 0.0 * -1.0) + 1.0) * 0.5) = 0.5
 			//   dot -1.0 (opposite) ==> maximum discomfort contribution to cost ==> scale (((-1.0 * -1.0) + 1.0) * 0.5) = 1.0
-			const float discomfortValue = currCellDirNgbC->discomfort.y;
-			const float discomfortScale = ((currCellDirNgbC->discomfort.dot2D(mDirVectors[dir]) * -1.0f) + 1.0f) * 0.5f;
+			const float mobileDiscomfortValue = currCellDirNgbC->mobileDiscomfort.y;
+			const float mobileDiscomfortScale = ((currCellDirNgbC->mobileDiscomfort.dot2D(mDirVectors[dir]) * -1.0f) + 1.0f) * 0.5f;
 
 			// for a unit moving in a direction parallel to a discomfort zone,
 			// the discomfort inside the zone should still be slightly higher
 			// than outside it (the zones should not act as attractors, though
-			// this produces more pronounced lanes), so use G + (G * scale)
-			//
-			// cellDirDiscomfort = discomfortValue + (discomfortValue * discomfortScale);
-			//
-			// NOTE: this should only cancel discomfort zones projected by units,
-			// not static discomfort projected by terrain (needs a separate field)
-			cellDirDiscomfort = (discomfortValue * discomfortScale);
+			// this produces more pronounced lanes)?
+			cellDirDiscomfort = currCellDirNgbC->staticDiscomfort.y + (mobileDiscomfortValue * mobileDiscomfortScale);
 		#else
-			cellDirDiscomfort = currCellDirNgbC->discomfort.y;
+			cellDirDiscomfort = currCellDirNgbC->staticDiscomfort.y + currCellDirNgbC->mobileDiscomfort.y;
 		#endif
 
 		float cellDirSpeedR = 0.0f; // f_{M --> dir} for computing f, based on offset density (R=RHO)
@@ -1393,13 +1384,13 @@ void Grid::Cell::ResetFull() {
 }
 
 void Grid::Cell::ResetGlobalStaticVars() {
-	height = 0.0f;
+	height = 0.0f; staticDiscomfort = NVECf;
 }
 
 void Grid::Cell::ResetGlobalDynamicVars() {
-	avgVelocity = NVECf;
-	discomfort  = NVECf;
-	density     = 0.0f;
+	avgVelocity      = NVECf;
+	mobileDiscomfort = NVECf;
+	density          = 0.0f;
 }
 
 void Grid::Cell::ResetGroupVars() {
