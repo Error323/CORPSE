@@ -648,9 +648,9 @@ void OverheadCamera::KeyPressed(int key, bool) {
 
 	switch (key) {
 		case SDLK_w: { ScrollNorthSouth(-1, scrollSpeed); } break;
-		case SDLK_s: { ScrollNorthSouth( 1, scrollSpeed); } break;
+		case SDLK_s: { ScrollNorthSouth(+1, scrollSpeed); } break;
 		case SDLK_a: { ScrollEastWest(  -1, scrollSpeed); } break;
-		case SDLK_d: { ScrollEastWest(   1, scrollSpeed); } break;
+		case SDLK_d: { ScrollEastWest(  +1, scrollSpeed); } break;
 	}
 }
 void OverheadCamera::KeyReleased(int key) {
@@ -671,11 +671,11 @@ void OverheadCamera::MousePressed(int button, int, int, bool) {
 			if (ctrlPressed)
 				Rotate(-5.0f);
 			else
-				Zoom( 1, zoomSpeed); 
+				Zoom(+1, zoomSpeed); 
 		} break;
 		case SDL_BUTTON_WHEELUP: { 
 			if (ctrlPressed)
-				Rotate( 5.0f);
+				Rotate(+5.0f);
 			else
 				Zoom(-1, zoomSpeed);
 		} break;
@@ -686,7 +686,7 @@ void OverheadCamera::ScrollNorthSouth(int sign, float sens) {
 	// translate in world-space
 	pos += (ZVECf * sign * sens);
 	vrp += (ZVECf * sign * sens);
-	tar += (ZVECf * sign * sens);
+	tgt += (ZVECf * sign * sens);
 
 	mat.SetPos(pos);
 }
@@ -694,24 +694,27 @@ void OverheadCamera::ScrollEastWest(int sign, float sens) {
 	// translate in world-space
 	pos += (XVECf * sign * sens);
 	vrp += (XVECf * sign * sens);
-	tar += (XVECf * sign * sens);
+	tgt += (XVECf * sign * sens);
 
 	mat.SetPos(pos);
 }
 void OverheadCamera::Zoom(int sign, float sens) {
-	pos += (zdir * sign * sens);
-	vrp += (zdir * sign * sens);
+	if (((tgt - (pos + zdir * sign * sens)).norm3D()).dot3D((tgt - pos).norm3D()) > 0.0f) {
+		// disallow zooming past <tgt>
+		pos += (zdir * sign * sens);
+		vrp += (zdir * sign * sens);
 
-	mat.SetPos(pos);
+		mat.SetPos(pos);
+	}
 }
 void OverheadCamera::Rotate(float alpha) {
-	vec3f tmp = pos - tar;
+	vec3f tmp = pos - tgt;
 
 	alpha = DEG2RAD(alpha);
 	tmp   = tmp.rotateX(alpha);
 	zdir  = -tmp.norm3D();
 	ydir  = (xdir.cross(zdir));
-	pos   = tmp + tar;
+	pos   = tmp + tgt;
 	vrp   = pos + zdir;
 
 	mat.SetZDir(zdir);
