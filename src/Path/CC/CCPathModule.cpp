@@ -7,6 +7,8 @@
 #include "../../Sim/SimObjectState.hpp"
 #include "../../System/ScopedTimer.hpp"
 
+#define CCPATHMODULE_PROFILE          0
+#define GRID_UNIT_TEST                1
 #define GRID_DOWNSCALE_FACTOR         8
 #define MINIMUM_DISTANCE_ENFORCEMENT  1
 #define PREDICTIVE_DISCOMFORT_FRAMES 10
@@ -178,13 +180,13 @@ void CCPathModule::Init() {
 void CCPathModule::Update() {
 	static unsigned int frame = 0;
 
-	#ifdef CCPATHMODULE_PROFILE
+	#if (CCPATHMODULE_PROFILE == 1)
 	const static std::string s = "[CCPathModule::Update]";
 	const unsigned int t = ScopedTimer::GetTaskTime(s);
 	#endif
 
 	{
-		#ifdef CCPATHMODULE_PROFILE
+		#if (CCPATHMODULE_PROFILE == 1)
 		ScopedTimer timer(s);
 		#endif
 
@@ -192,7 +194,7 @@ void CCPathModule::Update() {
 		UpdateGroups((frame == 0) || ((frame % mGrid.GetUpdateInterval()) == 0));
 	}
 
-	#ifdef CCPATHMODULE_PROFILE
+	#if (CCPATHMODULE_PROFILE == 1)
 	printf("%s time: %ums\n\n", s.c_str(), (ScopedTimer::GetTaskTime(s) - t));;
 	#endif
 
@@ -223,6 +225,23 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 	if (isUpdateFrame) {
 		// reset all grid-cells to the global-static state
 		mGrid.Reset();
+
+		#if (GRID_UNIT_TEST == 1)
+		{
+			const unsigned int X = mGrid.GetGridWidth(); // numCellsX
+			const unsigned int Z = mGrid.GetGridHeight(); // numCellsZ
+
+			for (unsigned int x = (X >> 2); x < (X - (X >> 2)); x++) {
+				for (unsigned int z = (Z >> 2); z < (Z - (Z >> 2)); z++) {
+					const Grid::Cell* c = mGrid.GetCell(z * X + x);
+					const vec3f& cp = mGrid.GetCellMidPos(c);
+
+					mGrid.AddDensity(cp, NVECf, (mGrid.GetSquareSize() >> 1));
+					// mGrid.AddDiscomfort(cp, NVECf, (mGrid.GetSquareSize() >> 1), 1, 0.0f);
+				}
+			}
+		}
+		#endif
 
 		// convert the crowd into a density field (rho)
 		for (std::map<unsigned int, MObject*>::iterator it = mObjects.begin(); it != mObjects.end(); ++it) {
