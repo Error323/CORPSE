@@ -174,7 +174,7 @@ params = {
 
 local function AddObjectsMNPQ(paramsTable, g0px, g0pz, g0dx, g0dz, M, N, a, b,   g1px, g1pz, g1dx, g1dz, P, Q, u, v)
 	-- add one MxN-sized group and one PxQ-sized group
-	local idx = 0
+	local idx = #paramsTable["objects"] + 1
 
 	for i = 1, M do
 		for j = 1, N do
@@ -199,4 +199,5 @@ local function AddObjectsMNPQ(paramsTable, g0px, g0pz, g0dx, g0dz, M, N, a, b,  
 	end
 end
 
-AddObjectsMNPQ(params, 256.0, 256.0, 1.0, 0.0, 5, 5, 128.0, 128.0,   (4096.0 - 256.0) - (5 * 128.0), 256.0, -1.0, 0.0, 5, 5, 128.0, 128.0)
+AddObjectsMNPQ(params, 256.0,                256.0,  1.0, 0.0,  5,  5, 128.0, 128.0,    (4096.0 - 256.0) - (5 * 128.0),  256.0,  -1.0, 0.0,  5,  5, 128.0, 128.0)
+AddObjectsMNPQ(params, 256.0 + (4 * 128.0), 1536.0,  1.0, 0.0,  1, 15, 128.0, 128.0,    (4096.0 - 256.0) - (5 * 128.0), 1536.0,  -1.0, 0.0,  1, 15, 128.0, 128.0)
