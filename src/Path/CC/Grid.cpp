@@ -855,7 +855,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			if (currCellDirNgbC->density <= mRhoMin) { cellDirSpeedC = cellDirTopoSpeed;  }
 
 			if (cellDirSpeedC > EPSILON) {
-				cellDirCost = ((mAlphaWeight * cellDirSpeedC) + mBetaWeight + (mGammaWeight * cellDirDiscomfort)) / cellDirSpeedC;
+				cellDirCost = ((mAlphaWeight * cellDirSpeedC) + mBetaWeight + (mGammaWeight * cellDirDiscomfort)) / (cellDirSpeedC * cellDirSpeedC);
 			} else {
 				// should this case be allowed to happen?
 				// (infinite costs very heavily influence
@@ -864,7 +864,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 				// cost = std::numeric_limits<float>::infinity();
 				// cost = std::numeric_limits<float>::max();
 				cellDirSpeedC = EPSILON;
-				cellDirCost = ((mAlphaWeight * cellDirSpeedC) + mBetaWeight + (mGammaWeight * cellDirDiscomfort)) / cellDirSpeedC;
+				cellDirCost = ((mAlphaWeight * cellDirSpeedC) + mBetaWeight + (mGammaWeight * cellDirDiscomfort)) / (cellDirSpeedC * cellDirSpeedC);
 			}
 		}
 

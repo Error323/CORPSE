@@ -8,7 +8,7 @@
 #include "../../System/ScopedTimer.hpp"
 
 #define CCPATHMODULE_PROFILE          0
-#define GRID_UNIT_TEST                1
+#define GRID_UNIT_TEST                0
 #define GRID_DOWNSCALE_FACTOR         8
 #define MINIMUM_DISTANCE_ENFORCEMENT  1
 #define PREDICTIVE_DISCOMFORT_FRAMES 10
@@ -241,6 +241,21 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 					// since avgSpeed is (0, 0, 0) everywhere, this in turn should affect the
 					// cost-field (and thus the potential) in such a way that objects want to
 					// avoid the region, but this does not happen
+					// reason: cost remains equal despite effect of varying density on speed
+					//
+					//   assume alpha = 1.0, beta = 0.0, gamma = 1.0, no discomfort
+					//
+					//   C = (alpha * f    + b   + gamma * g  ) / f
+					//   C = (  1.0 * 2.00 + 0.0 +   1.0 * 0.0) / 2.00 = 1.0
+					//   C = (  1.0 * 0.01 + 0.0 +   1.0 * 0.0) / 0.01 = 1.0
+					//
+					//   dir=0  alpha=1.0 beta=0.0 gamma=1.0   slope=-0.00  disc=0.00  dens=0.76  speedC=0.01 (flowspeedC=0.00)  cost=1.00
+					//   dir=1  alpha=1.0 beta=0.0 gamma=1.0   slope= 0.00  disc=0.00  dens=0.76  speedC=0.01 (flowspeedC=0.00)  cost=1.00
+					//   dir=2  alpha=1.0 beta=0.0 gamma=1.0   slope= 0.00  disc=0.00  dens=0.00  speedC=2.00 (flowspeedC=0.00)  cost=1.00
+					//   dir=3  alpha=1.0 beta=0.0 gamma=1.0   slope=-0.00  disc=0.00  dens=0.76  speedC=0.01 (flowspeedC=0.00)  cost=1.00
+					//
+					// thus we probably want the square of the speed in the denominator
+					// (such that speeds > 1.0 will produce smaller and smaller costs)
 					//
 					// note: rho will be clamped to rho_max by ComputeAvgVelocity()
 					for (unsigned int n = 0; n < 10; n++) {
