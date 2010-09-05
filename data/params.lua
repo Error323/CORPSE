@@ -174,27 +174,28 @@ params = {
 
 local function AddObjectsMNPQ(paramsTable, g0px, g0pz, g0dx, g0dz, M, N, a, b,   g1px, g1pz, g1dx, g1dz, P, Q, u, v)
 	-- add one MxN-sized group and one PxQ-sized group
-	local idx = #paramsTable["objects"] + 1
+	local objectsTable = paramsTable["objects"]
+	local objectIndex = #objectsTable + 1
 
 	for i = 1, M do
 		for j = 1, N do
-			paramsTable["objects"][idx] = {
+			objectsTable[objectIndex] = {
 				def = "core_goliath",
 				pos = {g0px + i * a, 0.0, g0pz + j * b},
-				dir = {g0dx, 0.0, g0dz}
+				dir = {g0dx,         0.0, g0dz        }
 			}
-			idx = idx + 1
+			objectIndex = objectIndex + 1
 		end
 	end
 
 	for i = 1, P do
 		for j = 1, Q do
-			paramsTable["objects"][idx] = {
+			objectsTable[objectIndex] = {
 				def = "core_goliath",
 				pos = {g1px + i * u, 0.0, g1pz + j * v},
-				dir = {g1dx, 0.0, g1dz}
+				dir = {g1dx,         0.0, g1dz        }
 			}
-			idx = idx + 1
+			objectIndex = objectIndex + 1
 		end
 	end
 end
