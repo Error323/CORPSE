@@ -4,7 +4,7 @@
 #include <map>
 #include <set>
 
-#include "./Grid.hpp"
+#include "./CCGrid.hpp"
 #include "../IPathModule.hpp"
 #include "../../System/IEvent.hpp"
 
@@ -47,8 +47,8 @@ public:
 
 	bool GetScalarDataTypeInfo(DataTypeInfo*) const;
 	bool GetVectorDataTypeInfo(DataTypeInfo*) const;
-	unsigned int GetNumScalarDataTypes() const { return Grid::NUM_SCALAR_DATATYPES; }
-	unsigned int GetNumVectorDataTypes() const { return Grid::NUM_VECTOR_DATATYPES; }
+	unsigned int GetNumScalarDataTypes() const { return CCGrid::NUM_SCALAR_DATATYPES; }
+	unsigned int GetNumVectorDataTypes() const { return CCGrid::NUM_VECTOR_DATATYPES; }
 
 private:
 	void UpdateGrid(bool);
@@ -63,7 +63,7 @@ private:
 	// each group is updated sequentially, so we only
 	// require one grid in which the per-group fields
 	// are recycled
-	Grid mGrid;
+	CCGrid mGrid;
 
 	struct MObject {
 		public:

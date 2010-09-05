@@ -11,7 +11,7 @@
 #include "../../Math/vec3.hpp"
 
 class ICallOutHandler;
-class Grid {
+class CCGrid {
 public:
 	enum {
 		DIR_N    = 0,
@@ -100,7 +100,7 @@ public:
 		unsigned int numNeighbors;
 	};
 
-	Grid(): numCellsX(0), numCellsZ(0), mSquareSize(0), mDownScale(0), mUpdateInt(1) {
+	CCGrid(): numCellsX(0), numCellsZ(0), mSquareSize(0), mDownScale(0), mUpdateInt(1) {
 		mDirVectors[DIR_N] = -ZVECf;  mDirDeltas[DIR_N].x =  0; mDirDeltas[DIR_N].z = -1;
 		mDirVectors[DIR_S] =  ZVECf;  mDirDeltas[DIR_S].x =  0; mDirDeltas[DIR_S].z =  1;
 		mDirVectors[DIR_E] =  XVECf;  mDirDeltas[DIR_E].x =  1; mDirDeltas[DIR_E].z =  0;

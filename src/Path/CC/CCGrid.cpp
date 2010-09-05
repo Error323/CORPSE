@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <limits>
 
-#include "./Grid.hpp"
+#include "./CCGrid.hpp"
 #include "../../Ext/ICallOutHandler.hpp"
 #include "../../Math/Trig.hpp"
 #include "../../Sim/SimObjectDef.hpp"
@@ -47,7 +47,7 @@
 
 
 
-void Grid::AddGroup(unsigned int groupID) {
+void CCGrid::AddGroup(unsigned int groupID) {
 	mSpeedVisData[groupID] = std::vector<float>();
 	mSpeedVisData[groupID].resize(numCellsX * numCellsZ * NUM_DIRS, 0.0f);
 	mCostVisData[groupID] = std::vector<float>();
@@ -63,7 +63,7 @@ void Grid::AddGroup(unsigned int groupID) {
 	mPotentialDeltaVisData[groupID].resize(numCellsX * numCellsZ * NUM_DIRS, NVECf);
 }
 
-void Grid::DelGroup(unsigned int groupID) {
+void CCGrid::DelGroup(unsigned int groupID) {
 	mSpeedVisData[groupID].clear(); mSpeedVisData.erase(groupID);
 	mCostVisData[groupID].clear(); mCostVisData.erase(groupID);
 	mPotentialVisData[groupID].clear(); mPotentialVisData.erase(groupID);
@@ -75,11 +75,11 @@ void Grid::DelGroup(unsigned int groupID) {
 
 
 // visualisation data accessors for scalar fields
-const float* Grid::GetDensityVisDataArray() const {
+const float* CCGrid::GetDensityVisDataArray() const {
 	return (mDensityVisData.empty())? NULL: &mDensityVisData[0];
 }
 
-const float* Grid::GetSpeedVisDataArray(unsigned int groupID) const {
+const float* CCGrid::GetSpeedVisDataArray(unsigned int groupID) const {
 	std::map<unsigned int, std::vector<float> >::const_iterator it = mSpeedVisData.find(groupID);
 
 	if (it == mSpeedVisData.end()) { return NULL; }
@@ -88,7 +88,7 @@ const float* Grid::GetSpeedVisDataArray(unsigned int groupID) const {
 	return &(it->second)[0];
 }
 
-const float* Grid::GetCostVisDataArray(unsigned int groupID) const {
+const float* CCGrid::GetCostVisDataArray(unsigned int groupID) const {
 	std::map<unsigned int, std::vector<float> >::const_iterator it = mCostVisData.find(groupID);
 
 	if (it == mCostVisData.end()) { return NULL; }
@@ -97,11 +97,11 @@ const float* Grid::GetCostVisDataArray(unsigned int groupID) const {
 	return &(it->second)[0];
 }
 
-const float* Grid::GetHeightVisDataArray() const {
+const float* CCGrid::GetHeightVisDataArray() const {
 	return (mHeightVisData.empty())? NULL: &mHeightVisData[0];
 }
 
-const float* Grid::GetPotentialVisDataArray(unsigned int groupID) const {
+const float* CCGrid::GetPotentialVisDataArray(unsigned int groupID) const {
 	std::map<unsigned int, std::vector<float> >::const_iterator it = mPotentialVisData.find(groupID);
 
 	if (it == mPotentialVisData.end()) { return NULL; }
@@ -111,11 +111,11 @@ const float* Grid::GetPotentialVisDataArray(unsigned int groupID) const {
 }
 
 // visualisation data accessors for vector fields
-const vec3f* Grid::GetDiscomfortVisDataArray() const {
+const vec3f* CCGrid::GetDiscomfortVisDataArray() const {
 	return (mDiscomfortVisData.empty())? NULL: &mDiscomfortVisData[0];
 }
 
-const vec3f* Grid::GetVelocityVisDataArray(unsigned int groupID) const {
+const vec3f* CCGrid::GetVelocityVisDataArray(unsigned int groupID) const {
 	std::map<unsigned int, std::vector<vec3f> >::const_iterator it = mVelocityVisData.find(groupID);
 
 	if (it == mVelocityVisData.end()) { return NULL; }
@@ -124,11 +124,11 @@ const vec3f* Grid::GetVelocityVisDataArray(unsigned int groupID) const {
 	return &(it->second)[0];
 }
 
-const vec3f* Grid::GetVelocityAvgVisDataArray() const {
+const vec3f* CCGrid::GetVelocityAvgVisDataArray() const {
 	return (mAvgVelocityVisData.empty())? NULL: &mAvgVelocityVisData[0];
 }
 
-const vec3f* Grid::GetPotentialDeltaVisDataArray(unsigned int groupID) const {
+const vec3f* CCGrid::GetPotentialDeltaVisDataArray(unsigned int groupID) const {
 	std::map<unsigned int, std::vector<vec3f> >::const_iterator it = mPotentialDeltaVisData.find(groupID);
 
 	if (it == mPotentialDeltaVisData.end()) { return NULL; }
@@ -137,13 +137,13 @@ const vec3f* Grid::GetPotentialDeltaVisDataArray(unsigned int groupID) const {
 	return &(it->second)[0];
 }
 
-const vec3f* Grid::GetHeightDeltaVisDataArray() const {
+const vec3f* CCGrid::GetHeightDeltaVisDataArray() const {
 	return (mHeightDeltaVisData.empty())? NULL: &mHeightDeltaVisData[0];
 }
 
 
 
-void Grid::Kill() {
+void CCGrid::Kill() {
 	// clear the global scalar field visualisation data
 	mDensityVisData.clear();
 	mHeightVisData.clear();
@@ -159,7 +159,7 @@ void Grid::Kill() {
 	mBuffers[mPrevBufferIdx].edges.clear();
 }
 
-void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
+void CCGrid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	PFFG_ASSERT(downScaleFactor >= 1);
 
 	static const char* tableNames[] = {
@@ -190,7 +190,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	mMaxTerrainSlope = -std::numeric_limits<float>::max();
 	mFlatTerrain     = ((mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()) < EPSILON);
 
-	printf("[Grid::Init] resolution: %dx%d %d\n", numCellsX, numCellsZ, mSquareSize);
+	printf("[CCGrid::Init] resolution: %dx%d %d\n", numCellsX, numCellsZ, mSquareSize);
 	printf("\tSPEED_COST_SHARED_NEIGHBOR_CELL:         %d\n", SPEED_COST_SHARED_NEIGHBOR_CELL);
 	printf("\tSPEED_COST_POTENTIAL_MERGED_COMPUTATION: %d\n", SPEED_COST_POTENTIAL_MERGED_COMPUTATION);
 	printf("\tSPEED_COST_SINGLE_PASS_COMPUTATION:      %d\n", SPEED_COST_SINGLE_PASS_COMPUTATION);
@@ -227,10 +227,10 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 		for (unsigned int x = 0; x < numCellsX; x++) {
 			currCells.push_back(Cell(x, y));
 			prevCells.push_back(Cell(x, y));
-			currEdges.push_back(Grid::Cell::Edge()); // Wf
-			currEdges.push_back(Grid::Cell::Edge()); // Nf
-			prevEdges.push_back(Grid::Cell::Edge()); // Wb
-			prevEdges.push_back(Grid::Cell::Edge()); // Nb
+			currEdges.push_back(CCGrid::Cell::Edge()); // Wf
+			currEdges.push_back(CCGrid::Cell::Edge()); // Nf
+			prevEdges.push_back(CCGrid::Cell::Edge()); // Wb
+			prevEdges.push_back(CCGrid::Cell::Edge()); // Nb
 
 			Cell* currCell = &currCells.back();
 			Cell* prevCell = &prevCells.back();
@@ -268,16 +268,16 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 
 			// bind a new face to the southern face of the border cell
 			if (y == numCellsZ - 1) {
-				currEdges.push_back(Grid::Cell::Edge());
-				prevEdges.push_back(Grid::Cell::Edge());
+				currEdges.push_back(CCGrid::Cell::Edge());
+				prevEdges.push_back(CCGrid::Cell::Edge());
 				currCell->edges[DIR_S] = currEdges.size() - 1;
 				prevCell->edges[DIR_S] = prevEdges.size() - 1;
 			}
 
 			// bind a new face to the eastern face of the border cell
 			if (x == numCellsX - 1) {
-				currEdges.push_back(Grid::Cell::Edge());
-				prevEdges.push_back(Grid::Cell::Edge());
+				currEdges.push_back(CCGrid::Cell::Edge());
+				prevEdges.push_back(CCGrid::Cell::Edge());
 				currCell->edges[DIR_E] = currEdges.size() - 1;
 				prevCell->edges[DIR_E] = prevEdges.size() - 1;
 			}
@@ -423,7 +423,7 @@ void Grid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	}
 }
 
-void Grid::Reset() {
+void CCGrid::Reset() {
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
@@ -450,7 +450,7 @@ void Grid::Reset() {
 
 
 
-void Grid::AddGlobalDynamicCellData(
+void CCGrid::AddGlobalDynamicCellData(
 	std::vector<Cell>& currCells,
 	std::vector<Cell>& prevCells,
 	const Cell* cell,
@@ -535,7 +535,7 @@ void Grid::AddGlobalDynamicCellData(
 	}
 }
 
-void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
+void CCGrid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
@@ -544,7 +544,7 @@ void Grid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 	AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DENSITY);
 }
 
-void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsigned int numFrames, float stepSize) {
+void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsigned int numFrames, float stepSize) {
 	if (vel.sqLen2D() <= EPSILON) {
 		// no predictive discomfort for stationary objects
 		// (density alone should cause those to be avoided)
@@ -570,7 +570,7 @@ void Grid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsig
 
 
 
-void Grid::ComputeAvgVelocity() {
+void CCGrid::ComputeAvgVelocity() {
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
 
@@ -639,7 +639,7 @@ void Grid::ComputeAvgVelocity() {
 
 #if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 0)
 /*
-	void Grid::ComputeCellSpeed(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
+	void CCGrid::ComputeCellSpeed(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 		Cell* currCell = &currCells[cellIdx];
 
 		const unsigned int densityDirOffset = CELLS_IN_RADIUS(mMaxGroupRadius) + 1;
@@ -679,7 +679,7 @@ void Grid::ComputeAvgVelocity() {
 		}
 	}
 
-	void Grid::ComputeCellCost(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
+	void CCGrid::ComputeCellCost(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 		Cell* currCell = &currCells[cellIdx];
 
 		for (unsigned int dir = 0; dir < NUM_DIRS; dir++) {
@@ -737,21 +737,14 @@ void Grid::ComputeAvgVelocity() {
 
 // compute the speed- and unit-cost fields, per cell
 //
-// NOTE: engine slope-representation should be the same?
 // NOTE:
 //    if the flow-speed is zero in a region, then the cost for
 //    cells with normalised density >= mRhoMax will be infinite
 //    everywhere and the potential-field group update triggers
 //    asserts; this happens for cells with density <= mRhoMin
 //    whenever topoSpeed is less than or equal to zero as well
-// FIXME:
-//    at coarse grid resolutions, the density offset of the
-//    neighbor cell often just maps back to the current one,
-//    (units take mSquareSize / mMaxGroupSpeed sim-frames to
-//    traverse one cell horizontally or vertically) so that
-//    flow-speed becomes zero due to self-density influence
 //
-void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
+void CCGrid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 	Cell* currCell = &currCells[cellIdx];
 
 	// this assumes a unit's contribution to the density field
@@ -879,12 +872,12 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 
 
 #if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 1)
-	void Grid::ComputeCellSpeedAndCostMERGED(unsigned int groupID, Cell* currCell, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
+	void CCGrid::ComputeCellSpeedAndCostMERGED(unsigned int groupID, Cell* currCell, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 		// recycled from (MERGED == 0 && SINGLE_PASS == 1)
 		ComputeCellSpeedAndCost(groupID, GRID_INDEX_UNSAFE(currCell->x, currCell->y), currCells, currEdges);
 	}
 #else
-	void Grid::ComputeSpeedAndCost(unsigned int groupID) {
+	void CCGrid::ComputeSpeedAndCost(unsigned int groupID) {
 		std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
 		std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
 
@@ -904,7 +897,7 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 
 
 
-void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsigned int>& goalIDs, const std::set<unsigned int>& objectIDs) {
+void CCGrid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsigned int>& goalIDs, const std::set<unsigned int>& objectIDs) {
 	PFFG_ASSERT(!goalIDs.empty());
 	PFFG_ASSERT(mCandidates.empty());
 
@@ -1019,7 +1012,7 @@ void Grid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsign
 	PFFG_ASSERT(numInfinitePotentialCases == 0 && numIllegalDirectionCases == 0);
 }
 
-void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
+void CCGrid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 	std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
 	std::vector<Cell      >& prevCells = mBuffers[mPrevBufferIdx].cells;
 	std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
@@ -1198,11 +1191,11 @@ void Grid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
 
 
 
-float Grid::Potential1D(const float p, const float c) const {
+float CCGrid::Potential1D(const float p, const float c) const {
 	return std::max<float>(p + c, p - c);
 }
 
-float Grid::Potential2D(const float p1, const float c1, const float p2, const float c2) const {
+float CCGrid::Potential2D(const float p1, const float c1, const float p2, const float c2) const {
 	// (c1^2*p2 + c2^2*p1) / (c1^2+c2^2) +/- (c1*c2 / sqrt(c1^2 + c2^2))
 	const float c1s = c1 * c1;
 	const float c2s = c2 * c2;
@@ -1220,7 +1213,7 @@ float Grid::Potential2D(const float p1, const float c1, const float p2, const fl
 
 
 
-bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCellID) {
+bool CCGrid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCellID) {
 	const vec3f& objectPos = mCOH->GetSimObjectPosition(objectID);
 	const vec3f& objectDir = mCOH->GetSimObjectDirection(objectID);
 
@@ -1285,7 +1278,7 @@ bool Grid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCel
 	return true;
 }
 
-vec3f Grid::GetInterpolatedVelocity(const std::vector<Cell::Edge>& edges, const Cell* c, const vec3f& pos, const vec3f& dir) const {
+vec3f CCGrid::GetInterpolatedVelocity(const std::vector<Cell::Edge>& edges, const Cell* c, const vec3f& pos, const vec3f& dir) const {
 	vec3f vel;
 
 	float a = 0.0f;
@@ -1356,7 +1349,7 @@ vec3f Grid::GetInterpolatedVelocity(const std::vector<Cell::Edge>& edges, const 
 
 
 // convert a world-space position to (CLAMPED) <x, y> grid-indices
-vec3i Grid::GetCellIndex2D(const vec3f& worldPos) const {
+vec3i CCGrid::GetCellIndex2D(const vec3f& worldPos) const {
 	const int gx = (worldPos.x / mSquareSize);
 	const int gz = (worldPos.z / mSquareSize);
 	const int cx = CLAMP(gx, 0, int(numCellsX - 1));
@@ -1365,7 +1358,7 @@ vec3i Grid::GetCellIndex2D(const vec3f& worldPos) const {
 }
 
 // get the (CLAMPED ) 1D grid-cell index corresponding to a world-space position
-unsigned int Grid::GetCellIndex1D(const vec3f& worldPos) const {
+unsigned int CCGrid::GetCellIndex1D(const vec3f& worldPos) const {
 	const vec3i&       gridPos = GetCellIndex2D(worldPos);
 	const unsigned int gridIdx = GRID_INDEX_UNSAFE(gridPos.x, gridPos.z);
 	return gridIdx;
@@ -1373,13 +1366,13 @@ unsigned int Grid::GetCellIndex1D(const vec3f& worldPos) const {
 
 // convert a cell's <x, y> grid-indices to the
 // world-space position of its top-left corner
-vec3f Grid::GetCellCornerPos(const Cell* c) const {
+vec3f CCGrid::GetCellCornerPos(const Cell* c) const {
 	const float wx = c->x * mSquareSize;
 	const float wz = c->y * mSquareSize;
 	return vec3f(wx, ELEVATION(c->x, c->y), wz);
 }
 
-vec3f Grid::GetCellMidPos(const Cell* c) const {
+vec3f CCGrid::GetCellMidPos(const Cell* c) const {
 	const float wx = (c->x * mSquareSize) + (mSquareSize >> 1);
 	const float wz = (c->y * mSquareSize) + (mSquareSize >> 1);
 	return vec3f(wx, 0.0f, wz);
@@ -1390,23 +1383,23 @@ vec3f Grid::GetCellMidPos(const Cell* c) const {
 
 
 
-void Grid::Cell::ResetFull() {
+void CCGrid::Cell::ResetFull() {
 	ResetGlobalStaticVars();
 	ResetGlobalDynamicVars();
 	ResetGroupVars();
 }
 
-void Grid::Cell::ResetGlobalStaticVars() {
+void CCGrid::Cell::ResetGlobalStaticVars() {
 	height = 0.0f; staticDiscomfort = NVECf;
 }
 
-void Grid::Cell::ResetGlobalDynamicVars() {
+void CCGrid::Cell::ResetGlobalDynamicVars() {
 	avgVelocity      = NVECf;
 	mobileDiscomfort = NVECf;
 	density          = 0.0f;
 }
 
-void Grid::Cell::ResetGroupVars() {
+void CCGrid::Cell::ResetGroupVars() {
 	potential  = std::numeric_limits<float>::infinity();
 
 	known     = false;
@@ -1418,7 +1411,7 @@ void Grid::Cell::ResetGroupVars() {
 	speed[DIR_W] = cost[DIR_W] = 0.0f;
 }
 
-vec3f Grid::Cell::GetNormalisedPotentialGradient(const std::vector<Cell::Edge>& gridEdges, unsigned int dir) const {
+vec3f CCGrid::Cell::GetNormalisedPotentialGradient(const std::vector<Cell::Edge>& gridEdges, unsigned int dir) const {
 	const Edge* edge = &gridEdges[edges[dir]];
 	const vec3f& edgePotDelta = edge->potentialDelta;
 	const float edgePotDeltaLen = edgePotDelta.len2D();

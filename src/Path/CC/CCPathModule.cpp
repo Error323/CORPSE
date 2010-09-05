@@ -233,7 +233,7 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 
 			for (unsigned int x = (X >> 2); x < (X - (X >> 2)); x++) {
 				for (unsigned int z = (Z >> 2); z < (Z - (Z >> 2)); z++) {
-					const Grid::Cell* c = mGrid.GetCell(z * X + x);
+					const CCGrid::Cell* c = mGrid.GetCell(z * X + x);
 					const vec3f& cp = mGrid.GetCellMidPos(c);
 
 					// expected behavior: in all areas where rho >= rho_max, the speed-field
@@ -358,7 +358,7 @@ void CCPathModule::UpdateGroups(bool isUpdateFrame) {
 			const vec3f& objectDir = coh->GetSimObjectDirection(objectID);
 
 			for (SetIt ggit = groupGoalIDs.begin(); ggit != groupGoalIDs.end(); ++ggit) {
-				const Grid::Cell* goalCell = mGrid.GetCell(*ggit);
+				const CCGrid::Cell* goalCell = mGrid.GetCell(*ggit);
 				const vec3f& goalPos = mGrid.GetCellMidPos(goalCell);
 
 				if ((objectPos - goalPos).sqLen2D() < (mGrid.GetSquareSize() * mGrid.GetSquareSize())) {
@@ -468,11 +468,11 @@ bool CCPathModule::GetScalarDataTypeInfo(DataTypeInfo* i) const {
 		i->sizey = mGrid.GetGridHeight();
 
 		switch (i->type) {
-			case Grid::DATATYPE_DENSITY:    { i->fdata = mGrid.GetDensityVisDataArray();            i->stride =              1; i->global = true;  i->name =    "DENSITY"; } break;
-			case Grid::DATATYPE_HEIGHT:     { i->fdata = mGrid.GetHeightVisDataArray();             i->stride =              1; i->global = true;  i->name =     "HEIGHT"; } break;
-			case Grid::DATATYPE_SPEED:      { i->fdata = mGrid.GetSpeedVisDataArray(i->group);      i->stride = Grid::NUM_DIRS; i->global = false; i->name =      "SPEED"; } break;
-			case Grid::DATATYPE_COST:       { i->fdata = mGrid.GetCostVisDataArray(i->group);       i->stride = Grid::NUM_DIRS; i->global = false; i->name =       "COST"; } break;
-			case Grid::DATATYPE_POTENTIAL:  { i->fdata = mGrid.GetPotentialVisDataArray(i->group);  i->stride =              1; i->global = false; i->name =  "POTENTIAL"; } break;
+			case CCGrid::DATATYPE_DENSITY:    { i->fdata = mGrid.GetDensityVisDataArray();            i->stride =                1; i->global = true;  i->name =    "DENSITY"; } break;
+			case CCGrid::DATATYPE_HEIGHT:     { i->fdata = mGrid.GetHeightVisDataArray();             i->stride =                1; i->global = true;  i->name =     "HEIGHT"; } break;
+			case CCGrid::DATATYPE_SPEED:      { i->fdata = mGrid.GetSpeedVisDataArray(i->group);      i->stride = CCGrid::NUM_DIRS; i->global = false; i->name =      "SPEED"; } break;
+			case CCGrid::DATATYPE_COST:       { i->fdata = mGrid.GetCostVisDataArray(i->group);       i->stride = CCGrid::NUM_DIRS; i->global = false; i->name =       "COST"; } break;
+			case CCGrid::DATATYPE_POTENTIAL:  { i->fdata = mGrid.GetPotentialVisDataArray(i->group);  i->stride =                1; i->global = false; i->name =  "POTENTIAL"; } break;
 			default: { ret = false; } break;
 		}
 
@@ -495,11 +495,11 @@ bool CCPathModule::GetVectorDataTypeInfo(DataTypeInfo* i) const {
 		i->sizey = mGrid.GetGridHeight();
 
 		switch (i->type) {
-			case Grid::DATATYPE_DISCOMFORT:      { i->vdata = mGrid.GetDiscomfortVisDataArray();             i->stride =              1; i->global = true;  i->name =      "DISCOMFORT"; } break;
-			case Grid::DATATYPE_HEIGHT_DELTA:    { i->vdata = mGrid.GetHeightDeltaVisDataArray();            i->stride = Grid::NUM_DIRS; i->global = true;  i->name =    "HEIGHT_DELTA"; } break;
-			case Grid::DATATYPE_VELOCITY_AVG:    { i->vdata = mGrid.GetVelocityAvgVisDataArray();            i->stride =              1; i->global = true;  i->name =    "VELOCITY_AVG"; } break;
-			case Grid::DATATYPE_VELOCITY:        { i->vdata = mGrid.GetVelocityVisDataArray(i->group);       i->stride = Grid::NUM_DIRS; i->global = false; i->name =        "VELOCITY"; } break;
-			case Grid::DATATYPE_POTENTIAL_DELTA: { i->vdata = mGrid.GetPotentialDeltaVisDataArray(i->group); i->stride = Grid::NUM_DIRS; i->global = false; i->name = "POTENTIAL_DELTA"; } break;
+			case CCGrid::DATATYPE_DISCOMFORT:      { i->vdata = mGrid.GetDiscomfortVisDataArray();             i->stride =                1; i->global = true;  i->name =      "DISCOMFORT"; } break;
+			case CCGrid::DATATYPE_HEIGHT_DELTA:    { i->vdata = mGrid.GetHeightDeltaVisDataArray();            i->stride = CCGrid::NUM_DIRS; i->global = true;  i->name =    "HEIGHT_DELTA"; } break;
+			case CCGrid::DATATYPE_VELOCITY_AVG:    { i->vdata = mGrid.GetVelocityAvgVisDataArray();            i->stride =                1; i->global = true;  i->name =    "VELOCITY_AVG"; } break;
+			case CCGrid::DATATYPE_VELOCITY:        { i->vdata = mGrid.GetVelocityVisDataArray(i->group);       i->stride = CCGrid::NUM_DIRS; i->global = false; i->name =        "VELOCITY"; } break;
+			case CCGrid::DATATYPE_POTENTIAL_DELTA: { i->vdata = mGrid.GetPotentialDeltaVisDataArray(i->group); i->stride = CCGrid::NUM_DIRS; i->global = false; i->name = "POTENTIAL_DELTA"; } break;
 			default: { ret = false; } break;
 		}
 

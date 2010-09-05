@@ -150,8 +150,8 @@ SET(PATHMODULE_DUMMY_SOURCE
 
 SET(PATHMODULE_CC_SOURCE
 	src/Path/IPathModule.hpp
-	src/Path/CC/Grid.hpp
-	src/Path/CC/Grid.cpp
+	src/Path/CC/CCGrid.hpp
+	src/Path/CC/CCGrid.cpp
 	src/Path/CC/CCPathModule.hpp
 	src/Path/CC/CCPathModule.cpp
 )
