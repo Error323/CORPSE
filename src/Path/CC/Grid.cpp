@@ -782,7 +782,8 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 				case DIR_W: { currCellDirNgbC = (currCell->x >             0)? &currCells[GRID_INDEX_UNSAFE(currCell->x - 1, currCell->y    )]: currCell; } break;
 			}
 		#else
-			// use the same neighbor for C as for f
+			// use the same neighbor (to sample density,
+			// discomfort, and vAvg from) for C as for f
 			currCellDirNgbC = currCellDirNgbR;
 		#endif
 
@@ -795,16 +796,20 @@ void Grid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx, s
 			//   dot  1.0 (parallel) ==> minimal discomfort contribution to cost ==> scale ((( 1.0 * -1.0) + 1.0) * 0.5) = 0.0
 			//   dot  0.0 (orthogon) ==> medium  discomfort contribution to cost ==> scale ((( 0.0 * -1.0) + 1.0) * 0.5) = 0.5
 			//   dot -1.0 (opposite) ==> maximum discomfort contribution to cost ==> scale (((-1.0 * -1.0) + 1.0) * 0.5) = 1.0
-			const float mobileDiscomfortValue = currCellDirNgbC->mobileDiscomfort.y;
+			const float staticDiscomfortScale = ((currCellDirNgbC->staticDiscomfort.dot2D(mDirVectors[dir]) * -1.0f) + 1.0f) * 0.5f;
 			const float mobileDiscomfortScale = ((currCellDirNgbC->mobileDiscomfort.dot2D(mDirVectors[dir]) * -1.0f) + 1.0f) * 0.5f;
 
 			// for a unit moving in a direction parallel to a discomfort zone,
 			// the discomfort inside the zone should still be slightly higher
 			// than outside it (the zones should not act as attractors, though
 			// this produces more pronounced lanes)?
-			cellDirDiscomfort = currCellDirNgbC->staticDiscomfort.y + (mobileDiscomfortValue * mobileDiscomfortScale);
+			cellDirDiscomfort =
+				currCellDirNgbC->staticDiscomfort.y * staticDiscomfortScale +
+				currCellDirNgbC->mobileDiscomfort.y * mobileDiscomfortScale;
 		#else
-			cellDirDiscomfort = currCellDirNgbC->staticDiscomfort.y + currCellDirNgbC->mobileDiscomfort.y;
+			cellDirDiscomfort =
+				currCellDirNgbC->staticDiscomfort.y +
+				currCellDirNgbC->mobileDiscomfort.y;
 		#endif
 
 		float cellDirSpeedR = 0.0f; // f_{M --> dir} for computing f, based on offset density (R=RHO)
