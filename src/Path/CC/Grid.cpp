@@ -507,16 +507,17 @@ void Grid::AddGlobalDynamicCellData(
 				} break;
 				case DATATYPE_DISCOMFORT: {
 					// scale the discomfort vector
+					//
 					// NOTE; this causes opposing velocity vectors
 					// projected onto the same cell to cancel out,
 					// so we store the total discomfort value in y
-					// cf->discomfort += (vel * mRhoBar);
-					// cb->discomfort += (vel * mRhoBar);
+					// cf->mobileDiscomfort += (vel * mRhoBar);
+					// cb->mobileDiscomfort += (vel * mRhoBar);
 
 					// we require only the direction along xz
-					// cf->discomfort.x += (vel.x * mRhoBar);
-					// cf->discomfort.z += (vel.z * mRhoBar);
-					// cf->discomfort.y += (vel.len2D() * mRhoBar);
+					// cf->mobileDiscomfort.x += (vel.x * mRhoBar);
+					// cf->mobileDiscomfort.z += (vel.z * mRhoBar);
+					// cf->mobileDiscomfort.y += (vel.len2D() * mRhoBar);
 
 					// x and z are normalised later
 					cf->mobileDiscomfort.x += vel.x;
@@ -636,6 +637,7 @@ void Grid::ComputeAvgVelocity() {
 
 
 #if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 0)
+/*
 	void Grid::ComputeCellSpeed(unsigned int groupID, unsigned int cellIdx, std::vector<Cell>& currCells, std::vector<Cell::Edge>& currEdges) {
 		Cell* currCell = &currCells[cellIdx];
 
@@ -727,7 +729,9 @@ void Grid::ComputeAvgVelocity() {
 	// ComputeCellSpeedAndCost(uint, uint) falls within the
 	// #if branch as well, but is re-used when MERGED == 1
 	// so we always compile it
+*/
 #endif
+
 
 
 // compute the speed- and unit-cost fields, per cell

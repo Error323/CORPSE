@@ -236,7 +236,17 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 					const Grid::Cell* c = mGrid.GetCell(z * X + x);
 					const vec3f& cp = mGrid.GetCellMidPos(c);
 
-					mGrid.AddDensity(cp, NVECf, (mGrid.GetSquareSize() >> 1));
+					// expected behavior: in all areas where rho >= rho_max, the speed-field
+					// should contain the clamped flow=max(0, dot(avgSpeed, dirVector[NSEW]))
+					// since avgSpeed is (0, 0, 0) everywhere, this in turn should affect the
+					// cost-field (and thus the potential) in such a way that objects want to
+					// avoid the region, but this does not happen
+					//
+					for (unsigned int n = 0; n < 10; n++) {
+						mGrid.AddDensity(cp, NVECf, (mGrid.GetSquareSize() >> 1));
+					}
+
+					// add to the mobile-discomfort field
 					// mGrid.AddDiscomfort(cp, NVECf, (mGrid.GetSquareSize() >> 1), 1, 0.0f);
 				}
 			}
