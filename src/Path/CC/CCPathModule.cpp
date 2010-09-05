@@ -242,6 +242,7 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 					// cost-field (and thus the potential) in such a way that objects want to
 					// avoid the region, but this does not happen
 					//
+					// note: rho will be clamped to rho_max by ComputeAvgVelocity()
 					for (unsigned int n = 0; n < 10; n++) {
 						mGrid.AddDensity(cp, NVECf, (mGrid.GetSquareSize() >> 1));
 					}

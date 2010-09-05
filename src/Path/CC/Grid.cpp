@@ -622,8 +622,9 @@ void Grid::ComputeAvgVelocity() {
 		mDiscomfortVisData[idx]  = cf->staticDiscomfort + cf->mobileDiscomfort;
 		mAvgVelocityVisData[idx] = cf->avgVelocity;
 
-		// normalise xz to get the discomfort direction
-		// (should be more or less equal to avgVelocity)
+		// normalise xz to get the mobile discomfort direction
+		// (should be more or less equal to avgVelocity, static
+		// discomfort is assumed to already be normalised)
 		if (cf->mobileDiscomfort.sqLen2D() > EPSILON) {
 			cf->mobileDiscomfort = cf->mobileDiscomfort.norm2D();
 			cb->mobileDiscomfort = cf->mobileDiscomfort;
