@@ -801,6 +801,9 @@ void CCGrid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx,
 			// the discomfort inside the zone should still be slightly higher
 			// than outside it (the zones should not act as attractors, though
 			// this produces more pronounced lanes)?
+			// FIXME: one group moving SE and another moving SW produce a net
+			// discomfort direction of S, which is only misaligned 45 degrees
+			// with their own (thus both experience minimal discomfort value)
 			cellDirDiscomfort =
 				currCellDirNgbC->staticDiscomfort.y * staticDiscomfortScale +
 				currCellDirNgbC->mobileDiscomfort.y * mobileDiscomfortScale;
