@@ -7,11 +7,11 @@
 #include "../../Sim/SimObjectState.hpp"
 #include "../../System/ScopedTimer.hpp"
 
-#define CCPATHMODULE_PROFILE          0
-#define GRID_UNIT_TEST                0
-#define GRID_DOWNSCALE_FACTOR         8
-#define MINIMUM_DISTANCE_ENFORCEMENT  1
-#define PREDICTIVE_DISCOMFORT_FRAMES 10
+#define CCPATHMODULE_PROFILE            0
+#define GRID_UNIT_TEST                  0
+#define GRID_DOWNSCALE_FACTOR           8
+#define MINIMUM_DISTANCE_ENFORCEMENT    1
+#define PREDICTIVE_DISCOMFORT_FRAMES   10
 
 void CCPathModule::OnEvent(const IEvent* e) {
 	switch (e->GetType()) {

@@ -172,8 +172,8 @@ params = {
 
 
 
-local function AddObjectsMNPQ(paramsTable, g0px, g0pz, g0dx, g0dz, M, N, a, b,   g1px, g1pz, g1dx, g1dz, P, Q, u, v)
-	-- add one MxN-sized group and one PxQ-sized group
+local function AddObjects(paramsTable, gpx, gpz, gdx, gdz, M, N, A, B)
+	-- add one MxN-sized group of <AxB>-spaced objects
 	local objectsTable = paramsTable["objects"]
 	local objectIndex = #objectsTable + 1
 
@@ -181,24 +181,20 @@ local function AddObjectsMNPQ(paramsTable, g0px, g0pz, g0dx, g0dz, M, N, a, b,  
 		for j = 1, N do
 			objectsTable[objectIndex] = {
 				def = "core_goliath",
-				pos = {g0px + i * a, 0.0, g0pz + j * b},
-				dir = {g0dx,         0.0, g0dz        }
-			}
-			objectIndex = objectIndex + 1
-		end
-	end
-
-	for i = 1, P do
-		for j = 1, Q do
-			objectsTable[objectIndex] = {
-				def = "core_goliath",
-				pos = {g1px + i * u, 0.0, g1pz + j * v},
-				dir = {g1dx,         0.0, g1dz        }
+				pos = {gpx + i * A, 0.0, gpz + j * B},
+				dir = {gdx,         0.0, gdz        }
 			}
 			objectIndex = objectIndex + 1
 		end
 	end
 end
 
-AddObjectsMNPQ(params, 256.0,                256.0,  1.0, 0.0,  5,  5, 128.0, 128.0,    (4096.0 - 256.0) - (5 * 128.0),  256.0,  -1.0, 0.0,  5,  5, 128.0, 128.0)
-AddObjectsMNPQ(params, 256.0 + (4 * 128.0), 1536.0,  1.0, 0.0,  1, 15, 128.0, 128.0,    (4096.0 - 256.0) - (5 * 128.0), 1536.0,  -1.0, 0.0,  1, 15, 128.0, 128.0)
+-- parameters for 4-way vortex-generation test: rho_bar = 0.25, gamma = 5.0, PREDICTIVE_DISCOMFORT_FRAMES = 500
+   AddObjects(params,           256.0,                           256.0,                  1.0,  1.0,  5,  5, 128.0, 128.0)
+   AddObjects(params, (4096.0 - 256.0) - (5 * 128.0),            256.0,                 -1.0,  1.0,  5,  5, 128.0, 128.0)
+-- AddObjects(params,           256.0,                 (4096.0 - 256.0) - (5 * 128.0),   1.0, -1.0,  5,  5, 128.0, 128.0)
+-- AddObjects(params, (4096.0 - 256.0) - (5 * 128.0),  (4096.0 - 256.0) - (5 * 128.0),  -1.0, -1.0,  5,  5, 128.0, 128.0)
+
+-- parameters for lane-formation test: rho_bar = 0.20, gamma = 2.0, PREDICTIVE_DISCOMFORT_FRAMES = 10
+-- AddObjects(params,           256.0  + (4 * 128.0), 1536.0,   1.0, 0.0,  1, 15, 128.0, 128.0)
+-- AddObjects(params, (4096.0 - 256.0) - (5 * 128.0), 1536.0,  -1.0, 0.0,  1, 15, 128.0, 128.0)

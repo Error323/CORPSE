@@ -487,9 +487,7 @@ void CCGrid::AddGlobalDynamicCellData(
 					// frame due to unit movement ==> need some way to "shift" 
 					// density based on unit's position within the center cell
 					// NOTE: when rho_bar is always <= rho_min, how can we get
-					// avoidance behavior around a single non-moving object?
-					// FIXME: even when rho_bar == rho_max, density seems to
-					// not have *any* effect on shape of speed- or cost-field
+					// avoidance behavior around a *single* non-moving object?
 					//
 					// two contradictory requirements, regardless of cell-size:
 					//     1) units must contribute a minimum amount of density so other units avoid them
@@ -562,9 +560,8 @@ void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, uns
 		const Cell*        cell    = &currCells[cellIdx];
 
 		// skip our own cell
-		// if (cellIdx != posCellIdx) {
-			AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DISCOMFORT);
-		// }
+		// if (cellIdx == posCellIdx) { continue; }
+		AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DISCOMFORT);
 	}
 }
 
@@ -804,6 +801,7 @@ void CCGrid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx,
 			// FIXME: one group moving SE and another moving SW produce a net
 			// discomfort direction of S, which is only misaligned 45 degrees
 			// with their own (thus both experience minimal discomfort value)
+			// can be partially offset with more (hundreds) prediction frames
 			cellDirDiscomfort =
 				currCellDirNgbC->staticDiscomfort.y * staticDiscomfortScale +
 				currCellDirNgbC->mobileDiscomfort.y * mobileDiscomfortScale;
@@ -1293,11 +1291,6 @@ vec3f CCGrid::GetInterpolatedVelocity(const std::vector<Cell::Edge>& edges, cons
 		// corners and represent vectors rather than
 		// scalars (note: the unit's direction vector
 		// is not used here)
-		//
-		// FIXME: the interpolated vector can be near
-		// <0, 0, 0>, which causes units to get stuck
-		// on the grid (happens frequently at coarser
-		// resolutions, related to density projection)
 		//
 		// first get the relative distance to the
 		// DIR_W (a) and DIR_N (b) edges based on
