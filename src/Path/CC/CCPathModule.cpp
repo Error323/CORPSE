@@ -258,12 +258,16 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 					// (such that speeds > 1.0 will produce smaller and smaller costs)
 					//
 					// note: rho will be clamped to rho_max by ComputeAvgVelocity()
+
+					/*
 					for (unsigned int n = 0; n < 10; n++) {
 						mGrid.AddDensity(cp, NVECf, (mGrid.GetSquareSize() >> 1));
 					}
+					*/
 
 					// add to the mobile-discomfort field
-					// mGrid.AddDiscomfort(cp, NVECf, (mGrid.GetSquareSize() >> 1), 1, 0.0f);
+					mGrid.AddDiscomfort(cp, ( XVECf + ZVECf), (mGrid.GetSquareSize() >> 1), 1, 0.0f); // DIR_E + DIR_S
+					mGrid.AddDiscomfort(cp, (-XVECf + ZVECf), (mGrid.GetSquareSize() >> 1), 1, 0.0f); // DIR_W + DIR_S
 				}
 			}
 		}
