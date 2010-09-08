@@ -8,7 +8,7 @@
 #include "../../System/ScopedTimer.hpp"
 
 #define CCPATHMODULE_PROFILE            0
-#define GRID_UNIT_TEST                  0
+#define GRID_UNIT_TEST                  1
 #define GRID_DOWNSCALE_FACTOR           8
 #define MINIMUM_DISTANCE_ENFORCEMENT    1
 #define PREDICTIVE_DISCOMFORT_FRAMES  150
@@ -268,6 +268,9 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 					// add to the mobile-discomfort field
 					mGrid.AddDiscomfort(cp, ( XVECf + ZVECf), (mGrid.GetSquareSize() >> 1), 1, 0.0f); // DIR_E + DIR_S
 					mGrid.AddDiscomfort(cp, (-XVECf + ZVECf), (mGrid.GetSquareSize() >> 1), 1, 0.0f); // DIR_W + DIR_S
+
+					// mGrid.AddDiscomfort(cp, ( XVECf - ZVECf), (mGrid.GetSquareSize() >> 1), 1, 0.0f); // DIR_E + DIR_N
+					// mGrid.AddDiscomfort(cp, (-XVECf - ZVECf), (mGrid.GetSquareSize() >> 1), 1, 0.0f); // DIR_W + DIR_N
 				}
 			}
 		}
