@@ -78,8 +78,6 @@ void CCPathModule::OnEvent(const IEvent* e) {
 			MGroup* newGroup = new MGroup();
 			mGroups[groupID] = newGroup;
 
-			PFFG_ASSERT(newGroup != NULL);
-
 			if (ee->GetQueued()) {
 				// get the geometric average position
 				for (ListIt it = objectIDs.begin(); it != objectIDs.end(); ++it) {
@@ -211,9 +209,9 @@ void CCPathModule::Kill() {
 		delete it->second;
 	}
 
-	mGrid.Kill();
 	mGroups.clear();
 	mObjects.clear();
+	mGrid.Kill();
 }
 
 

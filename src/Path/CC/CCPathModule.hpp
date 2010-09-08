@@ -1,15 +1,10 @@
 #ifndef PFFG_PATH_MODULE_HDR
 #define PFFG_PATH_MODULE_HDR
 
-#include <map>
-#include <set>
-
 #include "./CCGrid.hpp"
 #include "../IPathModule.hpp"
 #include "../../System/IEvent.hpp"
 
-class IEvent;
-class SimObjectDef;
 class CCPathModule: public IPathModule {
 public:
 	CCPathModule(ICallOutHandler* icoh): IPathModule(icoh) {
@@ -33,34 +28,14 @@ public:
 	void Update();
 	void Kill();
 
-	unsigned int GetNumGroupIDs() const { return mGroups.size(); }
-	unsigned int GetGroupIDs(unsigned int* array, unsigned int size) const {
-		unsigned int n = 0;
-
-		std::map<unsigned int, MGroup*>::const_iterator it;
-		for (it = mGroups.begin(); it != mGroups.end() && n < size; ++it) {
-			array[n++] = it->first;
-		}
-
-		return n;
-	}
-
 	bool GetScalarDataTypeInfo(DataTypeInfo*) const;
 	bool GetVectorDataTypeInfo(DataTypeInfo*) const;
 	unsigned int GetNumScalarDataTypes() const { return CCGrid::NUM_SCALAR_DATATYPES; }
 	unsigned int GetNumVectorDataTypes() const { return CCGrid::NUM_VECTOR_DATATYPES; }
 
 private:
-	struct MGroup;
-	struct MObject;
 	typedef std::list<unsigned int> List;
 	typedef std::list<unsigned int>::const_iterator ListIt;
-	typedef std::set<unsigned int> Set;
-	typedef std::set<unsigned int>::const_iterator SetIt;
-	typedef std::map<unsigned int, MGroup*> GroupMap;
-	typedef std::map<unsigned int, MGroup*>::iterator GroupMapIt;
-	typedef std::map<unsigned int, MObject*> ObjectMap;
-	typedef std::map<unsigned int, MObject*>::iterator ObjectMapIt;
 
 	void UpdateGrid(bool);
 	void UpdateGroups(bool);
@@ -70,52 +45,10 @@ private:
 	bool DelObjectFromGroup(unsigned int);
 	bool DelGroup(unsigned int);
 
-	unsigned int numGroupIDs;
-
 	// each group is updated sequentially, so we only
 	// require one grid in which the per-group fields
 	// are recycled
 	CCGrid mGrid;
-
-	struct MObject {
-		public:
-			MObject(): mGroupID(-1), mObjectDef(NULL), mArrived(false) {}
-			MObject(const SimObjectDef* def): mGroupID(-1), mObjectDef(def) {}
-
-			const SimObjectDef* GetDef() const { return mObjectDef; }
-			void SetGroupID(unsigned int gID) { mGroupID = gID; }
-			unsigned int GetGroupID() const { return mGroupID; }
-
-			void SetArrived(bool b) { mArrived = b; }
-			bool HasArrived() const { return mArrived; }
-
-		private:
-			unsigned int mGroupID;
-			const SimObjectDef* mObjectDef;
-			bool mArrived;
-	};
-
-	struct MGroup {
-		public:
-			MGroup() {}
-			~MGroup() { mObjectIDs.clear(); mGoalIDs.clear(); }
-
-			void DelObject(unsigned int objectID) { mObjectIDs.erase(objectID); }
-			void AddObject(unsigned int objectID) { mObjectIDs.insert(objectID); }
-			unsigned int GetSize() const { return mObjectIDs.size(); }
-			bool IsEmpty() const { return mObjectIDs.empty(); }
-			const std::set<unsigned int>& GetObjectIDs() const { return mObjectIDs; }
-
-			void AddGoal(const unsigned int goalID) { mGoalIDs.insert(goalID); }
-			const std::set<unsigned int>& GetGoals() const { return mGoalIDs; }
-
-		private:
-			std::set<unsigned int> mObjectIDs;  // unit member ID's
-			std::set<unsigned int> mGoalIDs;
-	};
-
-	std::map<unsigned int, MGroup*> mGroups;
-	std::map<unsigned int, MObject*> mObjects;
 
 	DataTypeInfo cachedScalarData;
 	DataTypeInfo cachedVectorData;

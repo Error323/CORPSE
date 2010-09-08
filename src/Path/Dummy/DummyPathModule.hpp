@@ -1,14 +1,9 @@
 #ifndef PFFG_PATH_MODULE_HDR
 #define PFFG_PATH_MODULE_HDR
 
-#include <map>
-#include <set>
-
 #include "../IPathModule.hpp"
 #include "../../System/IEvent.hpp"
 
-class IEvent;
-class SimObjectDef;
 class DummyPathModule: public IPathModule {
 public:
 	DummyPathModule(ICallOutHandler* icoh): IPathModule(icoh) {
@@ -32,18 +27,6 @@ public:
 	void Update();
 	void Kill();
 
-	unsigned int GetNumGroupIDs() const { return objectGroups.size(); }
-	unsigned int GetGroupIDs(unsigned int* array, unsigned int size) const {
-		unsigned int n = 0;
-
-		std::map<unsigned int, std::set<unsigned int> >::const_iterator it;
-		for (it = objectGroups.begin(); it != objectGroups.end() && n < size; ++it) {
-			array[n++] = it->first;
-		}
-
-		return n;
-	}
-
 	bool GetScalarDataTypeInfo(DataTypeInfo*) const { return false; }
 	bool GetVectorDataTypeInfo(DataTypeInfo*) const { return false; }
 	unsigned int GetNumScalarDataTypes() const { return 0; }
@@ -52,14 +35,7 @@ public:
 private:
 	void AddObjectToGroup(unsigned int, unsigned int);
 	bool DelObjectFromGroup(unsigned int);
-
-	// running counter used to assign ID's to new groups
-	// (not the actual number of currently active groups)
-	unsigned int numGroupIDs;
-
-	std::map<unsigned int, const SimObjectDef*> simObjectIDs;     // object ID ==> object def
-	std::map<unsigned int, unsigned int> objectGroupIDs;          // object ID ==> group ID
-	std::map<unsigned int, std::set<unsigned int> > objectGroups; // group ID ==> object IDs
+	bool DelGroup(unsigned int);
 };
 
 IPathModule* CALL_CONV GetPathModuleInstance(ICallOutHandler* icoh) { return (new DummyPathModule(icoh)); }

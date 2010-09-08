@@ -12,19 +12,18 @@ void DummyPathModule::OnEvent(const IEvent* e) {
 			const SimObjectCreatedEvent* ee = dynamic_cast<const SimObjectCreatedEvent*>(e);
 			const unsigned int objectID = ee->GetObjectID();
 
-			simObjectIDs[objectID] = coh->GetSimObjectDef(objectID);
+			mObjects[objectID] = new MObject(coh->GetSimObjectDef(objectID));
 		} break;
 
 		case EVENT_SIMOBJECT_DESTROYED: {
 			const SimObjectDestroyedEvent* ee = dynamic_cast<const SimObjectDestroyedEvent*>(e);
 			const unsigned int objectID = ee->GetObjectID();
 
-			simObjectIDs.erase(objectID);
 			DelObjectFromGroup(objectID);
+			mObjects.erase(objectID);
 
-			if (simObjectIDs.empty()) {
-				PFFG_ASSERT(objectGroupIDs.empty());
-				PFFG_ASSERT(objectGroups.empty());
+			if (mObjects.empty()) {
+				PFFG_ASSERT(mGroups.empty());
 
 				// reset the group counter
 				numGroupIDs = 0;
@@ -40,6 +39,9 @@ void DummyPathModule::OnEvent(const IEvent* e) {
 			// create a new group
 			const unsigned int groupID = numGroupIDs++;
 
+			MGroup* newGroup = new MGroup();
+			mGroups[groupID] = newGroup;
+
 			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
 				const unsigned int objID = *it;
 				const vec3f& objPos = coh->GetSimObjectPosition(objID);
@@ -50,26 +52,39 @@ void DummyPathModule::OnEvent(const IEvent* e) {
 				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID, true);
 					wps.wantedPos   = goalPos;
 					wps.wantedDir   = (goalPos - objPos).norm3D();
-					wps.wantedSpeed = simObjectIDs[objID]->GetMaxForwardSpeed();
+					wps.wantedSpeed = mObjects[objID]->GetDef()->GetMaxForwardSpeed();
 
 				coh->PushSimObjectWantedPhysicalState(objID, wps, ee->GetQueued(), false);
 
 				DelObjectFromGroup(objID);
-				AddObjectToGroup(objID, groupID);
+				AddObjectToGroup(groupID, objID);
 			}
 		} break;
 
 		case EVENT_SIMOBJECT_COLLISION: {
-			/*
 			const SimObjectCollisionEvent* ee = dynamic_cast<const SimObjectCollisionEvent*>(e);
 
 			const unsigned int colliderID = ee->GetColliderID();
 			const unsigned int collideeID = ee->GetCollideeID();
 
-			// TODO: react to this more intelligently
-			coh->SetSimObjectWantedSpeed(colliderID, 0.0f);
-			coh->SetSimObjectWantedSpeed(collideeID, 0.0f);
-			*/
+			const vec3f& colliderPos = coh->GetSimObjectPosition(colliderID);
+			const vec3f& collideePos = coh->GetSimObjectPosition(collideeID);
+
+			const float colliderRadius = coh->GetSimObjectRadius(colliderID);
+			const float collideeRadius = coh->GetSimObjectRadius(collideeID);
+
+			const vec3f separationVec = colliderPos - collideePos;
+			const float separationMin = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
+
+			// enforce minimum distance between objects
+			if ((separationVec.sqLen3D() - separationMin) < 0.0f) {
+				const float dst = (separationVec.len3D());
+				const vec3f dir = (separationVec / dst);
+				const vec3f dif = (dir * (((colliderRadius + collideeRadius) - dst) * 0.5f));
+
+				coh->SetSimObjectRawPosition(colliderID, colliderPos + dif);
+				coh->SetSimObjectRawPosition(collideeID, collideePos - dif);
+			}
 		} break;
 
 		default: {
@@ -83,9 +98,10 @@ void DummyPathModule::Init() {
 
 void DummyPathModule::Update() {
 	// steer the sim-objects around the map based on user commands
-	for (std::map<unsigned int, const SimObjectDef*>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
+	for (ObjectMapIt it = mObjects.begin(); it != mObjects.end(); ++it) {
+		const MObject* obj = it->second;
 		const unsigned int objID = it->first;
-		const SimObjectDef* objDef = it->second;
+		const SimObjectDef* objDef = obj->GetDef();
 
 		// get the front-most wanted state
 		WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objID, true);
@@ -129,34 +145,73 @@ void DummyPathModule::Update() {
 
 void DummyPathModule::Kill() {
 	std::cout << "[DummyPathModule::Kill]" << std::endl;
-}
 
-
-
-void DummyPathModule::AddObjectToGroup(unsigned int objID, unsigned int groupID) {
-	if (objectGroups.find(groupID) == objectGroups.end()) {
-		objectGroups[groupID] = std::set<unsigned int>();
+	for (GroupMapIt it = mGroups.begin(); it != mGroups.end(); ++it) {
+		delete it->second;
+	}
+	for (ObjectMapIt it = mObjects.begin(); it != mObjects.end(); ++it) {
+		delete it->second;
 	}
 
-	objectGroupIDs[objID] = groupID;
-	objectGroups[groupID].insert(objID);
+	mGroups.clear();
+	mObjects.clear();
 }
 
-bool DummyPathModule::DelObjectFromGroup(unsigned int objID) {
-	if (objectGroupIDs.find(objID) != objectGroupIDs.end()) {
-		const unsigned int groupID = objectGroupIDs[objID];
 
-		objectGroupIDs.erase(objID);
-		objectGroups[groupID].erase(objID);
 
-		if (objectGroups[groupID].empty()) {
+bool DummyPathModule::DelObjectFromGroup(unsigned int objectID) {
+	MObject* object = mObjects[objectID]; // already created
+	MGroup* group = NULL;
+
+	PFFG_ASSERT(object != NULL);
+
+	GroupMapIt git = mGroups.find(object->GetGroupID());
+
+	if (git != mGroups.end()) {
+		const unsigned int groupID = object->GetGroupID();
+
+		group = (git->second);
+		group->DelObject(objectID);
+
+		if (group->IsEmpty()) {
 			// old group is now empty, delete it
-			objectGroups.erase(groupID);
+			mGroups.erase(groupID);
+			delete group;
 		}
 
+		object->SetGroupID(-1);
 		return true;
 	}
 
 	// object was not in a group
 	return false;
+}
+
+void DummyPathModule::AddObjectToGroup(unsigned int groupID, unsigned int objectID) {
+	MGroup* group = mGroups[groupID]; // already created
+	MObject* object = mObjects[objectID];
+
+	PFFG_ASSERT(group != NULL && object != NULL);
+
+	group->AddObject(objectID);
+	object->SetGroupID(groupID);
+}
+
+bool DummyPathModule::DelGroup(unsigned int groupID) {
+	GroupMapIt git = mGroups.find(groupID);
+
+	if (git == mGroups.end()) {
+		return false;
+	}
+
+	const MGroup* group = git->second;
+	const std::set<unsigned int>& gObjectIDs = group->GetObjectIDs();
+
+	for (std::set<unsigned int>::const_iterator git = gObjectIDs.begin(); git != gObjectIDs.end(); ++git) {
+		mObjects[*git]->SetGroupID(-1);
+	}
+
+	mGroups.erase(groupID);
+	delete group;
+	return true;
 }
