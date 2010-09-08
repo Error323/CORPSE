@@ -201,7 +201,9 @@ local function AddObjects(paramsTable, teamID, gpx, gpz, gdx, gdz, M, N, A, B)
 	end
 end
 
--- parameters for 4-way vortex-generation test: rho_bar = 0.25, gamma = 5.0, PREDICTIVE_DISCOMFORT_FRAMES = 500
+-- parameters for 4-way vortex-generation test:
+--     rho_bar = 0.25, gamma = 5.0, PREDICTIVE_DISCOMFORT_FRAMES = 500
+--     rho_bar = 0.25, gamma = 2.0, PREDICTIVE_DISCOMFORT_FRAMES = 200 (tighter swirl)
    AddObjects(params, 1,           256.0,                           256.0,                  1.0,  1.0,  5,  5, 128.0, 128.0)
    AddObjects(params, 2, (4096.0 - 256.0) - (5 * 128.0),            256.0,                 -1.0,  1.0,  5,  5, 128.0, 128.0)
    AddObjects(params, 3,           256.0,                 (4096.0 - 256.0) - (5 * 128.0),   1.0, -1.0,  5,  5, 128.0, 128.0)
