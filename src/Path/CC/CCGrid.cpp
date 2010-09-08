@@ -553,10 +553,15 @@ void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, uns
 	std::vector<Cell>& currCells = mGridStates[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mGridStates[mPrevBufferIdx].cells;
 
+	// NOTE:
+	//    stepSize seems to be crucial for 4-way vortex formation
+	//    but its use here is incorrect (discomfort from a single
+	//    unit can now extend across the entire map, yet vortices
+	//    fail to show up without this)
 	// const unsigned int posCellIdx = GetCellIndex1D(pos);
 
 	for (unsigned int n = 0; n <= numFrames; n++) {
-		const vec3f        stepPos = pos + (vel * n * stepSize);
+		const vec3f        stepPos = pos + vel * n * stepSize;
 		const unsigned int cellIdx = GetCellIndex1D(stepPos);
 		const Cell*        cell    = &currCells[cellIdx];
 
