@@ -8,7 +8,7 @@
 #include "../../System/ScopedTimer.hpp"
 
 #define CCPATHMODULE_PROFILE            0
-#define GRID_UNIT_TEST                  1
+#define GRID_UNIT_TEST                  0
 #define GRID_DOWNSCALE_FACTOR           8
 #define MINIMUM_DISTANCE_ENFORCEMENT    1
 #define PREDICTIVE_DISCOMFORT_FRAMES  150
