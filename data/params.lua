@@ -120,8 +120,8 @@ params = {
 	["objectdefs"] = {
 		core_goliath = {
 			mdl                  = "core_goliath.s3o",
-			maxForwardSpeed      =  50.0,
-			maxTurningRate       =  20.0,
+			maxForwardSpeed      =  75.0,
+			maxTurningRate       =  25.0,
 			maxAccelerationRate  =   1.0,
 			maxDeccelerationRate =   1.0,
 		},
@@ -173,7 +173,7 @@ params = {
 			rho_min = 0.25,  -- if rho <= rho_min, f == f_topo
 			rho_max = 0.75,  -- if rho >= rho_max, f == f_flow
 
-			updateInt  = 1,  -- number of sim-frames between grid updates
+			updateInt  = 5,  -- number of sim-frames between grid updates
 			updateMode = 0,  -- UPDATE_MODE_ALLATONCE
 		},
 
@@ -205,11 +205,12 @@ end
 -- parameters for 4-way vortex-generation test:
 --     rho_bar = 0.25, gamma = 5.0, PREDICTIVE_DISCOMFORT_FRAMES = 500
 --     rho_bar = 0.25, gamma = 2.0, PREDICTIVE_DISCOMFORT_FRAMES = 200 (tighter swirl)
-   AddObjects(params, 1,           256.0,                           256.0,                  1.0,  1.0,  5,  5, 128.0, 128.0)
-   AddObjects(params, 2, (4096.0 - 256.0) - (5 * 128.0),            256.0,                 -1.0,  1.0,  5,  5, 128.0, 128.0)
-   AddObjects(params, 3,           256.0,                 (4096.0 - 256.0) - (5 * 128.0),   1.0, -1.0,  5,  5, 128.0, 128.0)
-   AddObjects(params, 4, (4096.0 - 256.0) - (5 * 128.0),  (4096.0 - 256.0) - (5 * 128.0),  -1.0, -1.0,  5,  5, 128.0, 128.0)
+AddObjects(params, 1,           256.0,                           256.0,                  1.0,  1.0,  5,  5, 128.0, 128.0)
+AddObjects(params, 2, (4096.0 - 256.0) - (5 * 128.0),            256.0,                 -1.0,  1.0,  5,  5, 128.0, 128.0)
+AddObjects(params, 3,           256.0,                 (4096.0 - 256.0) - (5 * 128.0),   1.0, -1.0,  5,  5, 128.0, 128.0)
+AddObjects(params, 4, (4096.0 - 256.0) - (5 * 128.0),  (4096.0 - 256.0) - (5 * 128.0),  -1.0, -1.0,  5,  5, 128.0, 128.0)
 
--- parameters for lane-formation test: rho_bar = 0.20, gamma = 2.0, PREDICTIVE_DISCOMFORT_FRAMES = 10
+-- parameters for lane-formation test:
+--     rho_bar = 0.20, gamma = 2.0, PREDICTIVE_DISCOMFORT_FRAMES = 10
 -- AddObjects(params, 5,           256.0  + (4 * 128.0), 1536.0,   1.0, 0.0,  1, 15, 128.0, 128.0)
 -- AddObjects(params, 6, (4096.0 - 256.0) - (5 * 128.0), 1536.0,  -1.0, 0.0,  1, 15, 128.0, 128.0)

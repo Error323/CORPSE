@@ -61,6 +61,8 @@ void CCGrid::AddGroup(unsigned int groupID) {
 
 	mPotentialDeltaVisData[groupID] = std::vector<vec3f>();
 	mPotentialDeltaVisData[groupID].resize(numCellsX * numCellsZ * NUM_DIRS, NVECf);
+
+	mGroupGridStates[groupID] = Buffer(numCellsX, numCellsZ);
 }
 
 void CCGrid::DelGroup(unsigned int groupID) {
@@ -70,6 +72,8 @@ void CCGrid::DelGroup(unsigned int groupID) {
 
 	mVelocityVisData[groupID].clear(); mVelocityVisData.erase(groupID);
 	mPotentialDeltaVisData[groupID].clear(); mPotentialDeltaVisData.erase(groupID);
+
+	mGroupGridStates.erase(groupID);
 }
 
 
@@ -153,10 +157,9 @@ void CCGrid::Kill() {
 	mHeightDeltaVisData.clear();
 
 	mTouchedCells.clear();
-	mBuffers[mCurrBufferIdx].cells.clear();
-	mBuffers[mCurrBufferIdx].edges.clear();
-	mBuffers[mPrevBufferIdx].cells.clear();
-	mBuffers[mPrevBufferIdx].edges.clear();
+
+	mGridStates[mCurrBufferIdx].cells.clear(); mGridStates[mCurrBufferIdx].edges.clear();
+	mGridStates[mPrevBufferIdx].cells.clear(); mGridStates[mPrevBufferIdx].edges.clear();
 }
 
 void CCGrid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
@@ -166,7 +169,6 @@ void CCGrid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 		"pathmodule", "cc", NULL,
 	};
 
-	// NOTE: if mDownScale > 1, the height-map must be downsampled
 	mCOH        = coh;
 	mDownScale  = downScaleFactor;
 	numCellsX   = mCOH->GetHeightMapSizeX() / mDownScale;
@@ -187,6 +189,7 @@ void CCGrid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	//   slope from B to A, therefore we take the absolute value at every
 	//   cell (this means the scale term in f_topo lies in [-1, 1] rather
 	//   than in [0, 1]) to determine the extrema
+	// NOTE: height-map must be downsampled if mDownScale > 1
 	mMinTerrainSlope =  std::numeric_limits<float>::max();
 	mMaxTerrainSlope = -std::numeric_limits<float>::max();
 	mFlatTerrain     = ((mCOH->GetMaxMapHeight() - mCOH->GetMinMapHeight()) < EPSILON);
@@ -213,16 +216,13 @@ void CCGrid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	mHeightDeltaVisData.resize(numCells * NUM_DIRS);
 
 
+	Buffer& currGridBuffer = mGridStates[mCurrBufferIdx];
+	Buffer& prevGridBuffer = mGridStates[mPrevBufferIdx];
 
-	mBuffers[mCurrBufferIdx].cells.reserve(numCells);
-	mBuffers[mPrevBufferIdx].cells.reserve(numCells);
-	mBuffers[mCurrBufferIdx].edges.reserve(numEdges);
-	mBuffers[mPrevBufferIdx].edges.reserve(numEdges);
-
-	std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
-	std::vector<Cell      >& prevCells = mBuffers[mPrevBufferIdx].cells;
-	std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
-	std::vector<Cell::Edge>& prevEdges = mBuffers[mPrevBufferIdx].edges;
+	std::vector<Cell      >& currCells = currGridBuffer.cells; currCells.reserve(numCells);
+	std::vector<Cell      >& prevCells = prevGridBuffer.cells; prevCells.reserve(numCells);
+	std::vector<Cell::Edge>& currEdges = currGridBuffer.edges; currEdges.reserve(numEdges);
+	std::vector<Cell::Edge>& prevEdges = prevGridBuffer.edges; prevEdges.reserve(numEdges);
 
 	for (unsigned int y = 0; y < numCellsZ; y++) {
 		for (unsigned int x = 0; x < numCellsX; x++) {
@@ -425,8 +425,8 @@ void CCGrid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 }
 
 void CCGrid::Reset() {
-	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
-	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
+	std::vector<Cell>& currCells = mGridStates[mCurrBufferIdx].cells;
+	std::vector<Cell>& prevCells = mGridStates[mPrevBufferIdx].cells;
 
 	// undo last frame's dynamic-global data writes
 	for (std::set<unsigned int>::const_iterator it = mTouchedCells.begin(); it != mTouchedCells.end(); ++it) {
@@ -535,10 +535,10 @@ void CCGrid::AddGlobalDynamicCellData(
 }
 
 void CCGrid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
-	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
-	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
+	std::vector<Cell>& currCells = mGridStates[mCurrBufferIdx].cells;
+	std::vector<Cell>& prevCells = mGridStates[mPrevBufferIdx].cells;
 
-	const Cell* cell = &currCells[GetCellIndex1D(pos)];
+	const Cell* cell = &currCells[ GetCellIndex1D(pos) ];
 
 	AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DENSITY);
 }
@@ -550,8 +550,8 @@ void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, uns
 		return;
 	}
 
-	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
-	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
+	std::vector<Cell>& currCells = mGridStates[mCurrBufferIdx].cells;
+	std::vector<Cell>& prevCells = mGridStates[mPrevBufferIdx].cells;
 
 	// const unsigned int posCellIdx = GetCellIndex1D(pos);
 
@@ -569,8 +569,8 @@ void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, uns
 
 
 void CCGrid::ComputeAvgVelocity() {
-	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
-	std::vector<Cell>& prevCells = mBuffers[mPrevBufferIdx].cells;
+	std::vector<Cell>& currCells = mGridStates[mCurrBufferIdx].cells;
+	std::vector<Cell>& prevCells = mGridStates[mPrevBufferIdx].cells;
 
 	for (std::set<unsigned int>::const_iterator it = mTouchedCells.begin(); it != mTouchedCells.end(); ++it) {
 		const unsigned int idx = *it;
@@ -584,6 +584,13 @@ void CCGrid::ComputeAvgVelocity() {
 		if (cf->density > EPSILON) {
 			cf->avgVelocity /= cf->density;
 			cb->avgVelocity  = cf->avgVelocity;
+		}
+		// normalise xz to get the mobile discomfort direction
+		// (should be more or less equal to avgVelocity, static
+		// discomfort is assumed to already be normalised)
+		if (cf->mobileDiscomfort.sqLen2D() > EPSILON) {
+			cf->mobileDiscomfort = cf->mobileDiscomfort.norm2D();
+			cb->mobileDiscomfort = cf->mobileDiscomfort;
 		}
 
 		// note: unnecessary? (density is only used to
@@ -617,16 +624,8 @@ void CCGrid::ComputeAvgVelocity() {
 		// cb->avgVelocity  = cf->avgVelocity;
 
 		mDensityVisData[idx]     = cf->density;
-		mDiscomfortVisData[idx]  = cf->staticDiscomfort + cf->mobileDiscomfort;
+		mDiscomfortVisData[idx]  = (cf->staticDiscomfort + cf->mobileDiscomfort);
 		mAvgVelocityVisData[idx] = cf->avgVelocity;
-
-		// normalise xz to get the mobile discomfort direction
-		// (should be more or less equal to avgVelocity, static
-		// discomfort is assumed to already be normalised)
-		if (cf->mobileDiscomfort.sqLen2D() > EPSILON) {
-			cf->mobileDiscomfort = cf->mobileDiscomfort.norm2D();
-			cb->mobileDiscomfort = cf->mobileDiscomfort;
-		}
 	}
 }
 
@@ -879,9 +878,10 @@ void CCGrid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx,
 		ComputeCellSpeedAndCost(groupID, GRID_INDEX_UNSAFE(currCell->x, currCell->y), currCells, currEdges);
 	}
 #else
+	/*
 	void CCGrid::ComputeSpeedAndCost(unsigned int groupID) {
-		std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
-		std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
+		std::vector<Cell      >& currCells = mGridStates[mCurrBufferIdx].cells;
+		std::vector<Cell::Edge>& currEdges = mGridStates[mCurrBufferIdx].edges;
 
 		#if (SPEED_COST_SINGLE_PASS_COMPUTATION == 1)
 			for (unsigned int cellIdx = 0; cellIdx < (numCellsX * numCellsZ); cellIdx++) {
@@ -892,6 +892,7 @@ void CCGrid::ComputeCellSpeedAndCost(unsigned int groupID, unsigned int cellIdx,
 			for (unsigned int cellIdx = 0; cellIdx < (numCellsX * numCellsZ); cellIdx++) { ComputeCellCost(groupID, cellIdx, currCells, currEdges); }
 		#endif
 	}
+	*/
 #endif
 
 
@@ -933,14 +934,18 @@ void CCGrid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsi
 	ComputeSpeedAndCost(groupID);
 	#endif
 
+	Buffer& currGridBuffer = mGridStates[mCurrBufferIdx];
+	Buffer& prevGridBuffer = mGridStates[mPrevBufferIdx];
+	Buffer& groupGridState = mGroupGridStates[groupID];
+
 	std::vector<float>& potVisData      = mPotentialVisData[groupID];
 	std::vector<vec3f>& velVisData      = mVelocityVisData[groupID];
 	std::vector<vec3f>& potDeltaVisData = mPotentialDeltaVisData[groupID];
 
-	std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
-	std::vector<Cell      >& prevCells = mBuffers[mPrevBufferIdx].cells;
-	std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
-	std::vector<Cell::Edge>& prevEdges = mBuffers[mPrevBufferIdx].edges;
+	std::vector<Cell      >& currCells = currGridBuffer.cells;
+	std::vector<Cell      >& prevCells = prevGridBuffer.cells;
+	std::vector<Cell::Edge>& currEdges = currGridBuffer.edges;
+	std::vector<Cell::Edge>& prevEdges = prevGridBuffer.edges;
 
 	Cell* currCell = NULL;
 	Cell* prevCell = NULL;
@@ -963,7 +968,8 @@ void CCGrid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsi
 		prevCell->ResetGroupVars();
 
 		#if (SPEED_COST_POTENTIAL_MERGED_COMPUTATION == 1)
-		ComputeCellSpeedAndCostMERGED(groupID, currCell, currCells, currEdges);
+		// <currCell> is a goal-cell, so this is not necessary?
+		// ComputeCellSpeedAndCostMERGED(groupID, currCell, currCells, currEdges);
 		#endif
 		UpdateCandidates(groupID, currCell);
 
@@ -998,6 +1004,17 @@ void CCGrid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsi
 		prevEdges[ currCell->edges[DIR_E] ].velocity = NVECf;
 		prevEdges[ currCell->edges[DIR_W] ].velocity = NVECf;
 
+		if (mUpdateInt > 1) {
+			// the grid-state gets recycled for the next group,
+			// so when mUpdateInt is not 1 we need to keep the
+			// values cached during the non-update frames
+			groupGridState.cells[cellIdx] = *currCell;
+			groupGridState.edges[ currCell->edges[DIR_N] ] = currEdges[ currCell->edges[DIR_N]];
+			groupGridState.edges[ currCell->edges[DIR_S] ] = currEdges[ currCell->edges[DIR_S]];
+			groupGridState.edges[ currCell->edges[DIR_E] ] = currEdges[ currCell->edges[DIR_E]];
+			groupGridState.edges[ currCell->edges[DIR_W] ] = currEdges[ currCell->edges[DIR_W]];
+		}
+
 		potVisData[cellIdx] = (currCell->potential == std::numeric_limits<float>::infinity())? -1.0f: currCell->potential;
 		velVisData[cellIdx * NUM_DIRS + DIR_N] = currEdges[ currCell->edges[DIR_N] ].velocity * (mSquareSize >> 1);
 		velVisData[cellIdx * NUM_DIRS + DIR_S] = currEdges[ currCell->edges[DIR_S] ].velocity * (mSquareSize >> 1);
@@ -1015,10 +1032,13 @@ void CCGrid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsi
 }
 
 void CCGrid::UpdateCandidates(unsigned int groupID, const Cell* parent) {
-	std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
-	std::vector<Cell      >& prevCells = mBuffers[mPrevBufferIdx].cells;
-	std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
-	std::vector<Cell::Edge>& prevEdges = mBuffers[mPrevBufferIdx].edges;
+	Buffer& currGridBuffer = mGridStates[mCurrBufferIdx];
+	Buffer& prevGridBuffer = mGridStates[mPrevBufferIdx];
+
+	std::vector<Cell      >& currCells = currGridBuffer.cells;
+	std::vector<Cell      >& prevCells = prevGridBuffer.cells;
+	std::vector<Cell::Edge>& currEdges = currGridBuffer.edges;
+	std::vector<Cell::Edge>& prevEdges = prevGridBuffer.edges;
 
 	static float       dirCosts[NUM_DIRS] = {0.0f};
 	static bool        dirValid[NUM_DIRS] = {false};
@@ -1215,12 +1235,18 @@ float CCGrid::Potential2D(const float p1, const float c1, const float p2, const 
 
 
 
-bool CCGrid::UpdateSimObjectLocation(unsigned int objectID, unsigned int objectCellID) {
+bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID, unsigned int objectCellID) {
 	const vec3f& objectPos = mCOH->GetSimObjectPosition(objectID);
 	const vec3f& objectDir = mCOH->GetSimObjectDirection(objectID);
 
-	const std::vector<Cell      >& currCells = mBuffers[mCurrBufferIdx].cells;
-	const std::vector<Cell::Edge>& currEdges = mBuffers[mCurrBufferIdx].edges;
+	const Buffer& buffer =
+		(mUpdateInt > 1)?
+		mGroupGridStates[groupID]:
+		mGridStates[mCurrBufferIdx];
+
+	const std::vector<Cell      >& currCells = buffer.cells;
+	const std::vector<Cell::Edge>& currEdges = buffer.edges;
+
 
 	const Cell* objectCell = &currCells[objectCellID];
 	const vec3f& objectCellVel = GetInterpolatedVelocity(currEdges, objectCell, objectPos, objectDir);
@@ -1410,12 +1436,13 @@ void CCGrid::Cell::ResetGroupVars() {
 
 vec3f CCGrid::Cell::GetNormalisedPotentialGradient(const std::vector<Cell::Edge>& gridEdges, unsigned int dir) const {
 	const Edge* edge = &gridEdges[edges[dir]];
-	const vec3f& edgePotDelta = edge->potentialDelta;
-	const float edgePotDeltaLen = edgePotDelta.len2D();
+	const float plen = edge->potentialDelta.len2D();
 
-	if (edgePotDeltaLen > 0.0f) {
-		return (edgePotDelta / edgePotDeltaLen);
+	vec3f pgrad;
+
+	if (plen > 0.0f) {
+		pgrad = (edge->potentialDelta / plen);
 	}
 
-	return NVECf;
+	return pgrad;
 }

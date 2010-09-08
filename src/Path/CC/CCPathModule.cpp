@@ -11,7 +11,7 @@
 #define GRID_UNIT_TEST                  0
 #define GRID_DOWNSCALE_FACTOR           8
 #define MINIMUM_DISTANCE_ENFORCEMENT    1
-#define PREDICTIVE_DISCOMFORT_FRAMES   10
+#define PREDICTIVE_DISCOMFORT_FRAMES  150
 
 void CCPathModule::OnEvent(const IEvent* e) {
 	switch (e->GetType()) {
@@ -303,6 +303,10 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 			//   the amount of lookahead should depend on the object's
 			//   maximum speed and radius (wrt. the cell-size) instead
 			//   of a fixed value
+			//
+			//   faster units require more PREDICTIVE_DISCOMFORT_FRAMES
+			//   (and a smaller grid update interval) for proper vortex
+			//   and lane formation
 			mGrid.AddDiscomfort(objPos, objVel, objRad, PREDICTIVE_DISCOMFORT_FRAMES, (mGrid.GetSquareSize() / objDef->GetMaxForwardSpeed()));
 			#endif
 		}
@@ -356,13 +360,14 @@ bool CCPathModule::UpdateObjects(const Set& groupObjectIDs, const Set& groupGoal
 	for (SetIt goit = groupObjectIDs.begin(); goit != groupObjectIDs.end(); ++goit) {
 		const unsigned int objectID = *goit;
 		const unsigned int objectCellID = mGrid.GetCellIndex1D(coh->GetSimObjectPosition(objectID));
+		const MObject* object = mObjects[objectID];
 
-		if (mObjects[objectID]->HasArrived()) {
+		if (object->HasArrived()) {
 			numArrivedObjects += 1;
 			continue;
 		}
 
-		mGrid.UpdateSimObjectLocation(objectID, objectCellID);
+		mGrid.UpdateSimObjectLocation(object->GetGroupID(), objectID, objectCellID);
 
 		const vec3f& objectPos = coh->GetSimObjectPosition(objectID);
 		const vec3f& objectDir = coh->GetSimObjectDirection(objectID);

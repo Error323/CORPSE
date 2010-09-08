@@ -46,7 +46,7 @@ public:
 		NUM_VECTOR_DATATYPES     = 5,
 	};
 	enum {
-		UPDATE_MODE_ALLATONCE = 0,  // FIXME: breaks when mUpdateInt > 1
+		UPDATE_MODE_ALLATONCE = 0,
 		UPDATE_MODE_STAGGERED = 1,  // TODO
 	};
 
@@ -124,7 +124,7 @@ public:
 	void ComputeAvgVelocity();
 
 	void UpdateGroupPotentialField(unsigned int, const std::set<unsigned int>&, const std::set<unsigned int>&);
-	bool UpdateSimObjectLocation(unsigned int, unsigned int);
+	bool UpdateSimObjectLocation(unsigned int, unsigned int, unsigned int);
 
 	void AddGroup(unsigned int);
 	void DelGroup(unsigned int);
@@ -143,7 +143,7 @@ public:
 	const vec3f* GetVelocityVisDataArray(unsigned int) const;
 	const vec3f* GetPotentialDeltaVisDataArray(unsigned int) const;
 
-	const Cell* GetCell(unsigned int idx, unsigned int buf = 0) const { return &mBuffers[buf].cells[idx]; }
+	const Cell* GetCell(unsigned int idx, unsigned int buf = 0) const { return &mGridStates[buf].cells[idx]; }
 	unsigned int GetCellIndex1D(const vec3f&) const;
 	vec3i GetCellIndex2D(const vec3f&) const;
 	vec3f GetCellMidPos(const Cell*) const;
@@ -212,13 +212,24 @@ private:
 	// UpdateGroupPotentialField, one buffer is made dirty (wrt.
 	// the per-group dynamic data) while the other is cleaned
 	struct Buffer {
+		Buffer() {}
+		Buffer(unsigned int ncx, unsigned int ncz) {
+			cells.resize(ncx * ncz);
+			edges.resize((ncx + 1) * ncz + (ncz + 1) * ncx);
+		}
+		~Buffer() {
+			cells.clear();
+			edges.clear();
+		}
 		std::vector<Cell      > cells;
 		std::vector<Cell::Edge> edges;
 	};
-	Buffer mBuffers[2];
+	Buffer mGridStates[2];
 
 	unsigned int mCurrBufferIdx;
 	unsigned int mPrevBufferIdx;
+
+	std::map<unsigned int, Buffer> mGroupGridStates;
 
 
 	// grid-space directions corresponding to NSEW
