@@ -70,7 +70,7 @@ void CCPathModule::OnEvent(const IEvent* e) {
 			// create a new group
 			const unsigned int groupID = numGroupIDs++;
 
-			const std::list<unsigned int>& objectIDs = ee->GetObjectIDs();
+			const List& objectIDs = ee->GetObjectIDs();
 			const vec3f& goalPos = ee->GetGoalPos();
 
 			vec3f groupPos;
@@ -82,7 +82,7 @@ void CCPathModule::OnEvent(const IEvent* e) {
 
 			if (ee->GetQueued()) {
 				// get the geometric average position
-				for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
+				for (ListIt it = objectIDs.begin(); it != objectIDs.end(); ++it) {
 					groupPos += coh->GetSimObjectPosition(*it);
 				}
 
@@ -91,7 +91,7 @@ void CCPathModule::OnEvent(const IEvent* e) {
 				newGroup->AddGoal(mGrid.GetCellIndex1D(goalPos));
 			}
 
-			for (std::list<unsigned int>::const_iterator it = objectIDs.begin(); it != objectIDs.end(); ++it) {
+			for (ListIt it = objectIDs.begin(); it != objectIDs.end(); ++it) {
 				const unsigned int objectID = *it;
 				const vec3f& objectPos = coh->GetSimObjectPosition(objectID);
 
@@ -204,10 +204,10 @@ void CCPathModule::Update() {
 void CCPathModule::Kill() {
 	printf("[CCPathModule::Kill]\n");
 
-	for (std::map<unsigned int, MGroup*>::const_iterator it = mGroups.begin(); it != mGroups.end(); ++it) {
+	for (GroupMapIt it = mGroups.begin(); it != mGroups.end(); ++it) {
 		mGrid.DelGroup(it->first); delete it->second;
 	}
-	for (std::map<unsigned int, MObject*>::const_iterator it = mObjects.begin(); it != mObjects.end(); ++it) {
+	for (ObjectMapIt it = mObjects.begin(); it != mObjects.end(); ++it) {
 		delete it->second;
 	}
 
@@ -274,7 +274,7 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 		#endif
 
 		// convert the crowd into a density field (rho)
-		for (std::map<unsigned int, MObject*>::iterator it = mObjects.begin(); it != mObjects.end(); ++it) {
+		for (ObjectMapIt it = mObjects.begin(); it != mObjects.end(); ++it) {
 			const unsigned int objID = (it->first);
 			const SimObjectDef* objDef = (it->second)->GetDef();
 			const vec3f& objPos = coh->GetSimObjectPosition(objID);
@@ -314,15 +314,10 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 }
 
 void CCPathModule::UpdateGroups(bool isUpdateFrame) {
-	typedef std::list<unsigned int> List;
-	typedef std::list<unsigned int>::const_iterator ListIt;
-	typedef std::set<unsigned int> Set;
-	typedef std::set<unsigned int>::const_iterator SetIt;
-
 	List idleGroups;
 	ListIt idleGroupsIt;
 
-	for (std::map<unsigned int, MGroup*>::iterator it = mGroups.begin(); it != mGroups.end(); ++it) {
+	for (GroupMapIt it = mGroups.begin(); it != mGroups.end(); ++it) {
 		const MGroup*      group         = it->second;
 		const unsigned int groupID       = it->first;
 
@@ -341,49 +336,7 @@ void CCPathModule::UpdateGroups(bool isUpdateFrame) {
 			mGrid.UpdateGroupPotentialField(groupID, groupGoalIDs, groupObjectIDs);
 		}
 
-
-		unsigned int numArrivedObjects = 0;
-
-		// finally, update the locations of objects in this group ("advection")
-		// (the complexity of this is O(M * K) with M the number of units and K
-		// the number of goals)
-		for (SetIt goit = groupObjectIDs.begin(); goit != groupObjectIDs.end(); ++goit) {
-			const unsigned int objectID = *goit;
-			const unsigned int objectCellID = mGrid.GetCellIndex1D(coh->GetSimObjectPosition(objectID));
-
-			if (mObjects[objectID]->HasArrived()) {
-				numArrivedObjects += 1;
-				continue;
-			}
-
-			mGrid.UpdateSimObjectLocation(objectID, objectCellID);
-
-			const vec3f& objectPos = coh->GetSimObjectPosition(objectID);
-			const vec3f& objectDir = coh->GetSimObjectDirection(objectID);
-
-			for (SetIt ggit = groupGoalIDs.begin(); ggit != groupGoalIDs.end(); ++ggit) {
-				const CCGrid::Cell* goalCell = mGrid.GetCell(*ggit);
-				const vec3f& goalPos = mGrid.GetCellMidPos(goalCell);
-
-				if ((objectPos - goalPos).sqLen2D() < (mGrid.GetSquareSize() * mGrid.GetSquareSize())) {
-					mObjects[objectID]->SetArrived(true);
-
-					WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objectID, true);
-
-					// just come to a halt if close to some goal cell
-					// (by letting the engine stop the unit's movement)
-					wps.wantedPos   = objectPos;
-					wps.wantedDir   = objectDir;
-					wps.wantedSpeed = 0.0f;
-
-					coh->PushSimObjectWantedPhysicalState(objectID, wps, false, true);
-					coh->SetSimObjectPhysicsUpdates(objectID, true);
-					break;
-				}
-			}
-		}
-
-		if (numArrivedObjects >= groupObjectIDs.size()) {
+		if (UpdateObjects(groupObjectIDs, groupGoalIDs)) {
 			// all units have arrived, mark the group for deletion
 			idleGroups.push_back(groupID);
 		}
@@ -394,6 +347,51 @@ void CCPathModule::UpdateGroups(bool isUpdateFrame) {
 	}
 }
 
+bool CCPathModule::UpdateObjects(const Set& groupObjectIDs, const Set& groupGoalIDs) {
+	unsigned int numArrivedObjects = 0;
+
+	// finally, update the locations of objects in this group ("advection")
+	// (the complexity of this is O(M * K) with M the number of units and K
+	// the number of goals)
+	for (SetIt goit = groupObjectIDs.begin(); goit != groupObjectIDs.end(); ++goit) {
+		const unsigned int objectID = *goit;
+		const unsigned int objectCellID = mGrid.GetCellIndex1D(coh->GetSimObjectPosition(objectID));
+
+		if (mObjects[objectID]->HasArrived()) {
+			numArrivedObjects += 1;
+			continue;
+		}
+
+		mGrid.UpdateSimObjectLocation(objectID, objectCellID);
+
+		const vec3f& objectPos = coh->GetSimObjectPosition(objectID);
+		const vec3f& objectDir = coh->GetSimObjectDirection(objectID);
+
+		for (SetIt ggit = groupGoalIDs.begin(); ggit != groupGoalIDs.end(); ++ggit) {
+			const CCGrid::Cell* goalCell = mGrid.GetCell(*ggit);
+			const vec3f& goalPos = mGrid.GetCellMidPos(goalCell);
+
+			if ((objectPos - goalPos).sqLen2D() < (mGrid.GetSquareSize() * mGrid.GetSquareSize())) {
+				mObjects[objectID]->SetArrived(true);
+
+				WantedPhysicalState wps = coh->GetSimObjectWantedPhysicalState(objectID, true);
+
+				// just come to a halt if close to some goal cell
+				// (by letting the engine stop the unit's movement)
+				wps.wantedPos   = objectPos;
+				wps.wantedDir   = objectDir;
+				wps.wantedSpeed = 0.0f;
+
+				coh->PushSimObjectWantedPhysicalState(objectID, wps, false, true);
+				coh->SetSimObjectPhysicsUpdates(objectID, true);
+				break;
+			}
+		}
+	}
+
+	return (numArrivedObjects >= groupObjectIDs.size());
+}
+
 
 
 bool CCPathModule::DelObjectFromGroup(unsigned int objectID) {
@@ -402,10 +400,7 @@ bool CCPathModule::DelObjectFromGroup(unsigned int objectID) {
 
 	PFFG_ASSERT(object != NULL);
 
-	typedef std::map<unsigned int, MGroup*> Map;
-	typedef std::map<unsigned int, MGroup*>::iterator MapIt;
-
-	MapIt git = mGroups.find(object->GetGroupID());
+	GroupMapIt git = mGroups.find(object->GetGroupID());
 
 	if (git != mGroups.end()) {
 		const unsigned int groupID = object->GetGroupID();
@@ -440,7 +435,7 @@ void CCPathModule::AddObjectToGroup(unsigned int groupID, unsigned int objectID)
 }
 
 bool CCPathModule::DelGroup(unsigned int groupID) {
-	std::map<unsigned int, MGroup*>::iterator git = mGroups.find(groupID);
+	GroupMapIt git = mGroups.find(groupID);
 
 	if (git == mGroups.end()) {
 		return false;

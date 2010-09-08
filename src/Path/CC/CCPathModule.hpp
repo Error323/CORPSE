@@ -51,8 +51,20 @@ public:
 	unsigned int GetNumVectorDataTypes() const { return CCGrid::NUM_VECTOR_DATATYPES; }
 
 private:
+	struct MGroup;
+	struct MObject;
+	typedef std::list<unsigned int> List;
+	typedef std::list<unsigned int>::const_iterator ListIt;
+	typedef std::set<unsigned int> Set;
+	typedef std::set<unsigned int>::const_iterator SetIt;
+	typedef std::map<unsigned int, MGroup*> GroupMap;
+	typedef std::map<unsigned int, MGroup*>::iterator GroupMapIt;
+	typedef std::map<unsigned int, MObject*> ObjectMap;
+	typedef std::map<unsigned int, MObject*>::iterator ObjectMapIt;
+
 	void UpdateGrid(bool);
 	void UpdateGroups(bool);
+	bool UpdateObjects(const Set&, const Set&);
 
 	void AddObjectToGroup(unsigned int, unsigned int);
 	bool DelObjectFromGroup(unsigned int);

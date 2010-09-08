@@ -23,13 +23,13 @@ public:
 
 	enum {
 		// scalar fields
-		DATATYPE_DENSITY         = 0, // rho (global,    stored at cell-centers, 1 scalar  per cell)
-		DATATYPE_HEIGHT          = 1, // h   (global,    stored at cell-centers, 1 scalar  per cell)
-		DATATYPE_SPEED           = 2, // f   (per-group, stored at cell-edges,   4 scalars per cell)
-		DATATYPE_COST            = 3, // C   (per-group, stored at cell-edges,   4 scalars per cell)
-		DATATYPE_POTENTIAL       = 4, // phi (per-group, stored at cell-centers, 1 scalar  per cell)
+		DATATYPE_DENSITY     = 0, // rho (global,    stored at cell-centers, 1 scalar  per cell)
+		DATATYPE_HEIGHT      = 1, // h   (global,    stored at cell-centers, 1 scalar  per cell)
+		DATATYPE_SPEED       = 2, // f   (per-group, stored at cell-edges,   4 scalars per cell)
+		DATATYPE_COST        = 3, // C   (per-group, stored at cell-edges,   4 scalars per cell)
+		DATATYPE_POTENTIAL   = 4, // phi (per-group, stored at cell-centers, 1 scalar  per cell)
 
-		NUM_SCALAR_DATATYPES     = 5,
+		NUM_SCALAR_DATATYPES = 5,
 	};
 	enum {
 		// vector fields
@@ -44,6 +44,10 @@ public:
 		DATATYPE_POTENTIAL_DELTA = 9, // delta-phi (per-group, stored at cell-edges,   4 vectors per cell)
 
 		NUM_VECTOR_DATATYPES     = 5,
+	};
+	enum {
+		UPDATE_MODE_ALLATONCE = 0,  // FIXME: breaks when mUpdateInt > 1
+		UPDATE_MODE_STAGGERED = 1,  // TODO
 	};
 
 	struct Cell {
@@ -100,7 +104,7 @@ public:
 		unsigned int numNeighbors;
 	};
 
-	CCGrid(): numCellsX(0), numCellsZ(0), mSquareSize(0), mDownScale(0), mUpdateInt(1) {
+	CCGrid(): numCellsX(0), numCellsZ(0), mSquareSize(0), mDownScale(0), mUpdateInt(1), mUpdateMode(UPDATE_MODE_ALLATONCE) {
 		mDirVectors[DIR_N] = -ZVECf;  mDirDeltas[DIR_N].x =  0; mDirDeltas[DIR_N].z = -1;
 		mDirVectors[DIR_S] =  ZVECf;  mDirDeltas[DIR_S].x =  0; mDirDeltas[DIR_S].z =  1;
 		mDirVectors[DIR_E] =  XVECf;  mDirDeltas[DIR_E].x =  1; mDirDeltas[DIR_E].z =  0;
@@ -149,6 +153,7 @@ public:
 	unsigned int GetGridHeight() const { return numCellsZ; }
 	unsigned int GetSquareSize() const { return mSquareSize; }
 	unsigned int GetUpdateInterval() const { return mUpdateInt; }
+	unsigned int GetUpdateMode() const { return mUpdateMode; }
 
 private:
 	float mRhoMin;
@@ -163,6 +168,7 @@ private:
 	unsigned int mSquareSize;
 	unsigned int mDownScale;
 	unsigned int mUpdateInt;
+	unsigned int mUpdateMode;
 
 	float mMinGroupSlope, mMinTerrainSlope; // ?, sMin (not normalised)
 	float mMaxGroupSlope, mMaxTerrainSlope; // ?, sMax (not normalised)

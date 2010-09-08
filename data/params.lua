@@ -165,15 +165,16 @@ params = {
 
 	["pathmodule"] = {
 		["cc"] = {
-			alpha   =  1.0, -- speed weight
-			beta    =  0.0, -- time weight
-			gamma   =  2.0, -- discomfort weight
+			alpha   =  1.0,  -- speed weight
+			beta    =  0.0,  -- time weight
+			gamma   =  2.0,  -- discomfort weight
 
-			rho_bar = 0.25, -- density per object, "must" be <= rho_min (if DENSITY_CONVERSION_TCP06)
-			rho_min = 0.25, -- if rho <= rho_min, f == f_topo
-			rho_max = 0.75, -- if rho >= rho_max, f == f_flow
+			rho_bar = 0.25,  -- density per object, "must" be <= rho_min (if DENSITY_CONVERSION_TCP06)
+			rho_min = 0.25,  -- if rho <= rho_min, f == f_topo
+			rho_max = 0.75,  -- if rho >= rho_max, f == f_flow
 
-			updateInt = 1,  -- number of sim-frames between grid updates
+			updateInt  = 1,  -- number of sim-frames between grid updates
+			updateMode = 0,  -- UPDATE_MODE_ALLATONCE
 		},
 
 		["dummy"] = {

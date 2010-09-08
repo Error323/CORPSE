@@ -173,13 +173,14 @@ void CCGrid::Init(unsigned int downScaleFactor, ICallOutHandler* coh) {
 	numCellsZ   = mCOH->GetHeightMapSizeZ() / mDownScale;
 	mSquareSize = mCOH->GetSquareSize()     * mDownScale;
 
-	mAlphaWeight = mCOH->GetFloatConfigParam(tableNames, "alpha",     -1.0f);
-	mBetaWeight  = mCOH->GetFloatConfigParam(tableNames, "beta",      -1.0f);
-	mGammaWeight = mCOH->GetFloatConfigParam(tableNames, "gamma",     -1.0f);
-	mRhoBar      = mCOH->GetFloatConfigParam(tableNames, "rho_bar",   -1.0f);
-	mRhoMin      = mCOH->GetFloatConfigParam(tableNames, "rho_min",   -1.0f);
-	mRhoMax      = mCOH->GetFloatConfigParam(tableNames, "rho_max",   -1.0f);
-	mUpdateInt   = mCOH->GetFloatConfigParam(tableNames, "updateInt",  1.0f);
+	mAlphaWeight = mCOH->GetFloatConfigParam(tableNames, "alpha",      -1.0f);
+	mBetaWeight  = mCOH->GetFloatConfigParam(tableNames, "beta",       -1.0f);
+	mGammaWeight = mCOH->GetFloatConfigParam(tableNames, "gamma",      -1.0f);
+	mRhoBar      = mCOH->GetFloatConfigParam(tableNames, "rho_bar",    -1.0f);
+	mRhoMin      = mCOH->GetFloatConfigParam(tableNames, "rho_min",    -1.0f);
+	mRhoMax      = mCOH->GetFloatConfigParam(tableNames, "rho_max",    -1.0f);
+	mUpdateInt   = mCOH->GetFloatConfigParam(tableNames, "updateInt",   1.0f);
+	mUpdateMode  = mCOH->GetFloatConfigParam(tableNames, "updateMode",  1.0f);
 
 	// NOTE:
 	//   the slope (height difference) from A to B is equal to the inverse
@@ -546,7 +547,7 @@ void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, uns
 	if (vel.sqLen2D() <= EPSILON) {
 		// no predictive discomfort for stationary objects
 		// (density alone should cause those to be avoided)
-		// return;
+		return;
 	}
 
 	std::vector<Cell>& currCells = mBuffers[mCurrBufferIdx].cells;
