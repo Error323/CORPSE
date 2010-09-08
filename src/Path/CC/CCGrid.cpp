@@ -624,7 +624,7 @@ void CCGrid::ComputeAvgVelocity() {
 		// cb->avgVelocity  = cf->avgVelocity;
 
 		mDensityVisData[idx]     = cf->density;
-		mDiscomfortVisData[idx]  = (cf->staticDiscomfort + cf->mobileDiscomfort);
+		mDiscomfortVisData[idx]  = cf->staticDiscomfort + cf->mobileDiscomfort;
 		mAvgVelocityVisData[idx] = cf->avgVelocity;
 	}
 }
