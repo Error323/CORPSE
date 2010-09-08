@@ -9,7 +9,7 @@ struct LocalModel;
 class SimObjectDef;
 class SimObject {
 public:
-	SimObject(SimObjectDef* d, unsigned int _id): def(d), id(_id) {
+	SimObject(SimObjectDef* d, unsigned int oid, unsigned int tid): def(d), objectID(oid), teamID(tid) {
 		// NOTE:
 		//    this is set by rendering code when it receives the
 		//    SimObjectCreatedEvent, so simulation logic will not
@@ -26,7 +26,8 @@ public:
 	virtual void Update();
 
 	const SimObjectDef* GetDef() const { return def; }
-	unsigned int GetID() const { return id; }
+	unsigned int GetID() const { return objectID; }
+	unsigned int GetTeamID() const { return teamID; }
 
 	void SetModel(LocalModel* m) { mdl = m; }
 	LocalModel* GetModel() const { return mdl; }
@@ -51,7 +52,9 @@ public:
 
 private:
 	const SimObjectDef* def;
-	const unsigned int id;
+
+	const unsigned int objectID;
+	      unsigned int teamID;
 
 	LocalModel* mdl;
 	float mdlRadius;

@@ -67,10 +67,11 @@ void SimObjectHandler::AddObjects() {
 			const LuaTable* objectTable = objectsTable->GetTblVal(*it);
 
 			const SimObjectDef* def = mSimObjectDefHandler->GetDef(objectTable->GetStrVal("def", ""));
+			const unsigned int teamID = objectTable->GetFltVal("tid", 0);
 			const vec3f& pos = objectTable->GetVec<vec3f>("pos", 3);
 			const vec3f& dir = objectTable->GetVec<vec3f>("dir", 3);
 
-			AddObject(def->GetID(), pos, dir, true);
+			AddObject(def->GetID(), teamID, pos, dir, true);
 		}
 	}
 }
@@ -113,7 +114,7 @@ void SimObjectHandler::Update(unsigned int frame) {
 
 
 
-void SimObjectHandler::AddObject(unsigned int defID, const vec3f& pos, const vec3f& dir, bool inConstructor) {
+void SimObjectHandler::AddObject(unsigned int defID, unsigned int teamID, const vec3f& pos, const vec3f& dir, bool inConstructor) {
 	if (!simObjectFreeIDs.empty()) {
 		vec3f gpos = pos;
 			gpos.y = ground->GetHeight(pos.x, pos.z);
@@ -124,7 +125,7 @@ void SimObjectHandler::AddObject(unsigned int defID, const vec3f& pos, const vec
 			wps.wantedDir = mat.GetZDir();
 
 		SimObjectDef* sod = mSimObjectDefHandler->GetDef(defID);
-		SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()));
+		SimObject* so = new SimObject(sod, *(simObjectFreeIDs.begin()), teamID);
 			so->SetMat(mat);
 			so->PushWantedPhysicalState(wps, false, false);
 

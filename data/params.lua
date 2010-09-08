@@ -106,6 +106,17 @@ params = {
 		[4] = "nebulus.dds",
 	},
 
+	["teams"] = {
+		[0] = {color = {1.0, 1.0, 1.0, 1.0}},   -- white
+		[1] = {color = {1.0, 0.0, 0.0, 1.0}},   -- red
+		[2] = {color = {0.0, 1.0, 0.0, 1.0}},   -- green
+		[3] = {color = {0.0, 0.0, 1.0, 1.0}},   -- blue
+		[4] = {color = {1.0, 1.0, 0.0, 1.0}},   -- yellow
+		[5] = {color = {0.0, 1.0, 1.0, 1.0}},   -- teal
+		[6] = {color = {1.0, 0.0, 1.0, 1.0}},   -- purple
+		[7] = {color = {0.0, 0.0, 0.0, 1.0}},   -- black
+	},
+
 	["objectdefs"] = {
 		core_goliath = {
 			mdl                  = "core_goliath.s3o",
@@ -172,7 +183,7 @@ params = {
 
 
 
-local function AddObjects(paramsTable, gpx, gpz, gdx, gdz, M, N, A, B)
+local function AddObjects(paramsTable, teamID, gpx, gpz, gdx, gdz, M, N, A, B)
 	-- add one MxN-sized group of <AxB>-spaced objects
 	local objectsTable = paramsTable["objects"]
 	local objectIndex = #objectsTable + 1
@@ -182,7 +193,8 @@ local function AddObjects(paramsTable, gpx, gpz, gdx, gdz, M, N, A, B)
 			objectsTable[objectIndex] = {
 				def = "core_goliath",
 				pos = {gpx + i * A, 0.0, gpz + j * B},
-				dir = {gdx,         0.0, gdz        }
+				dir = {gdx,         0.0, gdz        },
+				tid = teamID,
 			}
 			objectIndex = objectIndex + 1
 		end
@@ -190,11 +202,11 @@ local function AddObjects(paramsTable, gpx, gpz, gdx, gdz, M, N, A, B)
 end
 
 -- parameters for 4-way vortex-generation test: rho_bar = 0.25, gamma = 5.0, PREDICTIVE_DISCOMFORT_FRAMES = 500
-   AddObjects(params,           256.0,                           256.0,                  1.0,  1.0,  5,  5, 128.0, 128.0)
-   AddObjects(params, (4096.0 - 256.0) - (5 * 128.0),            256.0,                 -1.0,  1.0,  5,  5, 128.0, 128.0)
--- AddObjects(params,           256.0,                 (4096.0 - 256.0) - (5 * 128.0),   1.0, -1.0,  5,  5, 128.0, 128.0)
--- AddObjects(params, (4096.0 - 256.0) - (5 * 128.0),  (4096.0 - 256.0) - (5 * 128.0),  -1.0, -1.0,  5,  5, 128.0, 128.0)
+   AddObjects(params, 1,           256.0,                           256.0,                  1.0,  1.0,  5,  5, 128.0, 128.0)
+   AddObjects(params, 2, (4096.0 - 256.0) - (5 * 128.0),            256.0,                 -1.0,  1.0,  5,  5, 128.0, 128.0)
+   AddObjects(params, 3,           256.0,                 (4096.0 - 256.0) - (5 * 128.0),   1.0, -1.0,  5,  5, 128.0, 128.0)
+   AddObjects(params, 4, (4096.0 - 256.0) - (5 * 128.0),  (4096.0 - 256.0) - (5 * 128.0),  -1.0, -1.0,  5,  5, 128.0, 128.0)
 
 -- parameters for lane-formation test: rho_bar = 0.20, gamma = 2.0, PREDICTIVE_DISCOMFORT_FRAMES = 10
--- AddObjects(params,           256.0  + (4 * 128.0), 1536.0,   1.0, 0.0,  1, 15, 128.0, 128.0)
--- AddObjects(params, (4096.0 - 256.0) - (5 * 128.0), 1536.0,  -1.0, 0.0,  1, 15, 128.0, 128.0)
+-- AddObjects(params, 5,           256.0  + (4 * 128.0), 1536.0,   1.0, 0.0,  1, 15, 128.0, 128.0)
+-- AddObjects(params, 6, (4096.0 - 256.0) - (5 * 128.0), 1536.0,  -1.0, 0.0,  1, 15, 128.0, 128.0)

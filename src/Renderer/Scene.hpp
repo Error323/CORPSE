@@ -1,10 +1,11 @@
 #ifndef PFFG_SCENE_HDR
 #define PFFG_SCENE_HDR
 
-#include <list>
+#include <vector>
 
 #include "../System/IEvent.hpp"
 #include "../System/IEventReceiver.hpp"
+#include "../Math/vec4fwd.hpp"
 
 class CSMFRenderer;
 class CSkyBox;
@@ -22,6 +23,8 @@ public:
 	void OnEvent(const IEvent*);
 
 private:
+	void LoadTeamColors();
+	void LoadObjectModel(unsigned int);
 	void LoadObjectModels();
 	void DrawModels(Camera*, bool);
 	void DrawMapAndModels(Camera*, bool);
@@ -37,6 +40,9 @@ private:
 	// map
 	float boundingRadiusSq;
 	float boundingRadius;
+
+	// note: store color in object or model instead?
+	std::vector<vec4f> teamColors;
 };
 
 #endif

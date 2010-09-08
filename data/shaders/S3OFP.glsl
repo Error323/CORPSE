@@ -1,3 +1,5 @@
+uniform vec4 teamColor;
+
 uniform sampler2D diffuseMap;
 uniform sampler2D shadowMap;
 
@@ -24,13 +26,17 @@ void main() {
 	}
 
 
+	vec4 diffuseColor = texture2D(diffuseMap, vertexDiffuseTexCoors);
+
 	float cosAngleDiffuse = max(dot(normalize(lightDir), normalize(vertexNormal)), 0.0);
 	float cosAngleSpecular = max(dot(normalize(halfDir), normalize(vertexNormal)), 0.0);
+	float teamColorScale = diffuseColor.a;
 	float specExp = 16.0;
 	float specMult = (/*cosAngleDiffuse == 0.0 ||*/ colorScalar < 1.0)? 0.0: 1.0;
 
 	gl_FragColor =
 		gl_LightSource[0].ambient +
-		gl_LightSource[0].diffuse * texture2D(diffuseMap, vertexDiffuseTexCoors) * cosAngleDiffuse * colorScalar +
+		gl_LightSource[0].diffuse * diffuseColor * cosAngleDiffuse * colorScalar +
 		gl_LightSource[0].specular * pow(cosAngleSpecular, specExp) * specMult;
+	gl_FragColor.rgb = mix(gl_FragColor.rgb, teamColor.rgb, teamColorScale);
 }

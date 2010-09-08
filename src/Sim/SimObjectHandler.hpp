@@ -24,7 +24,7 @@ public:
 
 	void AddObjects();
 	void DelObjects();
-	void AddObject(unsigned int, const vec3f&, const vec3f&, bool = false);
+	void AddObject(unsigned int, unsigned int, const vec3f&, const vec3f&, bool = false);
 	void DelObject(unsigned int, bool = false);
 
 	const std::set<unsigned int>& GetSimObjectFreeIDs() const { return simObjectFreeIDs; }

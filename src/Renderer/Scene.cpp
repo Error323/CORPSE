@@ -51,6 +51,7 @@ CScene::CScene() {
 	readerS3O = new CModelReaderS3O();
 
 	SetBoundingRadius();
+	LoadTeamColors();
 	LoadObjectModels();
 	shadowHandler->GenDepthTextureFBO();
 	InitLight();
@@ -72,6 +73,26 @@ CScene::~CScene() {
 	delete readerS3O; readerS3O = NULL;
 
 	shaderHandler->ReleaseProgramObjects("[S3O]");
+}
+
+void CScene::LoadTeamColors() {
+	const LuaTable* rootTable = LUA->GetRoot();
+	const LuaTable* teamsTable = rootTable->GetTblVal("teams");
+
+	std::list<int> teamKeys;
+	std::list<int>::const_iterator teamKeysIt;
+
+	teamsTable->GetIntTblKeys(&teamKeys);
+	teamColors.resize(teamKeys.size());
+
+	unsigned int teamIdx = 0;
+
+	for (teamKeysIt = teamKeys.begin(); teamKeysIt != teamKeys.end(); ++teamKeysIt) {
+		const LuaTable* teamTable = teamsTable->GetTblVal(*teamKeysIt);
+		const vec4f& teamColor = teamTable->GetVec<vec4f>("color", 4);
+
+		teamColors[teamIdx++] = teamColor;
+	}
 }
 
 void CScene::LoadObjectModels() {
@@ -121,14 +142,16 @@ void CScene::LoadObjectModels() {
 
 				if (pObj->IsValid()) {
 					modelBase->SetShaderProgramObj(pObj);
-					pObj->SetUniformLocation("diffuseMap"); // idx 0
-					pObj->SetUniformLocation("shadowMap");  // idx 1
-					pObj->SetUniformLocation("shadowMat");  // idx 2
-					pObj->SetUniformLocation("viewMat");    // idx 3
+
+					pObj->SetUniformLocation("teamColor");  // idx 0
+					pObj->SetUniformLocation("diffuseMap"); // idx 1
+					pObj->SetUniformLocation("shadowMap");  // idx 2
+					pObj->SetUniformLocation("shadowMat");  // idx 3
+					pObj->SetUniformLocation("viewMat");    // idx 4
 
 					pObj->Enable();
-					pObj->SetUniform1i(0, 0);               // (idx 0, texunit 0)
-					pObj->SetUniform1i(1, 7);               // (idx 1, texunit 7)
+					pObj->SetUniform1i(1, 0);               // (idx 1, texunit 0)
+					pObj->SetUniform1i(2, 7);               // (idx 2, texunit 7)
 					pObj->Disable();
 				} else {
 					PFFG_ASSERT(false);
@@ -154,12 +177,20 @@ void CScene::LoadObjectModels() {
 	const std::set<unsigned int>& simObjectIDs = simObjectHandler->GetSimObjectUsedIDs();
 
 	for (std::set<unsigned int>::const_iterator it = simObjectIDs.begin(); it != simObjectIDs.end(); ++it) {
-		SimObject* obj = simObjectHandler->GetSimObject(*it);
-		ModelBase* objMdl = obj->GetDef()->GetModel();
-
-		obj->SetModel(new LocalModel(objMdl));
-		obj->SetRadius(objMdl->radius);
+		LoadObjectModel(*it);
 	}
+}
+
+void CScene::LoadObjectModel(unsigned int objectID) {
+	SimObject* obj = simObjectHandler->GetSimObject(objectID);
+	ModelBase* objMdl = obj->GetDef()->GetModel();
+
+	// NOTE: can't do it this way, all objects share the same shader
+	// Shader::IProgramObject* objShader = const_cast<Shader::IProgramObject*>(objMdl->GetShaderProgramObj());
+	// objShader->SetUniform4fv(0, const_cast<float*>( &teamColors[ obj->GetTeamID() ].x ));
+
+	obj->SetModel(new LocalModel(objMdl));
+	obj->SetRadius(objMdl->radius);
 }
 
 
@@ -175,11 +206,7 @@ void CScene::OnEvent(const IEvent* e) {
 			const unsigned int objectID = ee->GetObjectID();
 
 			// all object-defs are loaded at this point
-			SimObject* obj = simObjectHandler->GetSimObject(objectID);
-			ModelBase* objMdl = obj->GetDef()->GetModel();
-
-			obj->SetModel(new LocalModel(objMdl));
-			obj->SetRadius(objMdl->radius);
+			LoadObjectModel(objectID);
 		} break;
 
 		case EVENT_SIMOBJECT_DESTROYED: {
@@ -234,13 +261,15 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 				(mat.GetZDir() * obj->GetPhysicalState().speed * server->GetLastTickDeltaRatio()) +
 				vec3f(0.0f, obj->GetRadius(), 0.0f);
 			const mat44f rMat(rPos, mat.GetXDir(), mat.GetYDir(), mat.GetZDir());
+			const vec4f& col = teamColors[obj->GetTeamID()];
 
 			Shader::IProgramObject* shObj = const_cast<Shader::IProgramObject*>(mb->GetShaderProgramObj());
 
 			if (!inShadowPass) {
 				shObj->Enable();
-					shObj->SetUniformMatrix4fv(2, false, const_cast<float*>(shadowHandler->GetShadowProjectionMatrix()));
-					shObj->SetUniformMatrix4fv(3, false, const_cast<float*>(eye->GetViewMatrix()));
+					shObj->SetUniformMatrix4fv(3, false, const_cast<float*>(shadowHandler->GetShadowProjectionMatrix()));
+					shObj->SetUniformMatrix4fv(4, false, const_cast<float*>(eye->GetViewMatrix()));
+					shObj->SetUniform4f(0, col.x, col.y, col.z, col.w);
 
 					glActiveTexture(GL_TEXTURE7);
 					glBindTexture(GL_TEXTURE_2D, shadowHandler->GetDepthTextureID());

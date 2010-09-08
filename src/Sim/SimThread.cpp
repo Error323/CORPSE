@@ -98,7 +98,7 @@ void CSimThread::SimCommand(NetMessage& m) {
 			PFFG_ASSERT(!m.End()); m >> objectDir.z;
 
 			if (readMap->PosInBounds(objectPos)) {
-				mSimObjectHandler->AddObject(objectDefID, objectPos, objectDir, false);
+				mSimObjectHandler->AddObject(objectDefID, 0, objectPos, objectDir, false);
 			}
 		} break;
 

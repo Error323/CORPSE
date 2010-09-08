@@ -56,13 +56,24 @@ public:
 
 
 
-	template<typename T> void GetArray(const LuaTable* tbl, T* array, int len) const {
-		for (int i = 0; i < len; i++) {
+	template<typename T> void GetArray(const LuaTable* tbl, T* array, unsigned int len) const {
+		for (unsigned int i = 0; i < len; i++) {
 			array[i] = T(tbl->GetFltVal(i + 1, T(0)));
 		}
 	}
 
-	template<typename V> V GetVec(const std::string& key, int len) const {
+	template<typename V> V GetVec(int key, unsigned int len) const {
+		const std::map<int, LuaTable*>::const_iterator it = IntTblPairs.find(key);
+
+		V v;
+
+		if (it != IntTblPairs.end()) {
+			GetArray(it->second, &v.x, len);
+		}
+
+		return v;
+	}
+	template<typename V> V GetVec(const std::string& key, unsigned int len) const {
 		const std::map<std::string, LuaTable*>::const_iterator it = StrTblPairs.find(key);
 
 		V v;
