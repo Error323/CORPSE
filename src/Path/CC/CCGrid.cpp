@@ -729,9 +729,9 @@ void CCGrid::ComputeAvgVelocity() {
 			mCostVisData[groupID][cellIdx * NUM_DIRS + dir] = cellDirCost;
 		}
 	}
-	// ComputeCellSpeedAndCost(uint, uint) falls within the
-	// #if branch as well, but is re-used when MERGED == 1
-	// so we always compile it
+	// ComputeCellSpeedAndCost() falls within the #if branch
+	// as well, but is re-used when MERGED == 1 so we always
+	// compile it
 */
 #endif
 
@@ -1234,7 +1234,9 @@ float CCGrid::Potential2D(const float p1, const float c1, const float p2, const 
 	const float b = CLAMP(sqrtf(c1s_plus_c2s), EPSILON, std::numeric_limits<float>::max());
 	const float c = (c1 * c2) / b;
 
-	// FIXME: huge variance in potential values (excessive gradients)
+	// FIXME:
+	//     huge variance in potential values (==> excessive gradients) because
+	//     because of division by EPSILON * EPSILON in ComputeCellSpeedAndCost
 	return std::max<float>(a + c, a - c);
 }
 
