@@ -459,6 +459,12 @@ void CCGrid::AddGlobalDynamicCellData(
 	const vec3f& vel,
 	unsigned int type
 ) {
+	// if objects are tightly clustered, they project one
+	// large density blob and inter-weaving lanes are much
+	// less likely to form when groups approach one another
+	// (typically a small number of wider "tracks" appear)
+	// cellsInRadius = 0;
+
 	for (int x = -cellsInRadius; x <= cellsInRadius; x++) {
 		for (int z = -cellsInRadius; z <= cellsInRadius; z++) {
 			const int cx = int(cell->x) + x;
@@ -557,8 +563,11 @@ void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, uns
 	//    stepSize seems to be crucial for 4-way vortex formation
 	//    but its use here is incorrect (discomfort from a single
 	//    unit can now extend across the entire map, yet vortices
-	//    fail to show up without this)
+	//    fail to show up without this ==> center of the map needs
+	//    to become a no-go discomfort zone such that every group
+	//    will start to circle around it)
 	// const unsigned int posCellIdx = GetCellIndex1D(pos);
+	// stepSize = 1.0f;
 
 	for (unsigned int n = 0; n <= numFrames; n++) {
 		const vec3f        stepPos = pos + vel * n * stepSize;
