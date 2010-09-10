@@ -299,7 +299,6 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 					glEnable(GL_ALPHA_TEST);
 					glColor4f(objCol.x, objCol.y, objCol.z, 0.8f);
 
-					// FIXME: in GL_LINES mode, tracers are stippled (check OGL state in UI widget)
 					tracerVA.Initialize();
 					tracerVA.EnlargeArrays(objPrevPhysStates.size() * 2, 0, VA_SIZE_N);
 
