@@ -247,47 +247,73 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 				continue;
 			}
 
-			const mat44f& mat = obj->GetMat();
-			const LocalModel* lm = obj->GetModel();
-			const ModelBase* mb = lm->GetModelBase();
+			const std::list<PhysicalState>& objPrevPhysStates = obj->GetPrevPhysicalStates();
+
+			const mat44f& objMat = obj->GetMat();
+			const LocalModel* objLM = obj->GetModel();
+			const ModelBase*  objMB = objLM->GetModelBase();
 
 			// interpolate the draw-position between sim-frames
 			// NOTE:
 			//  we add a vertical offset so we can inspect
 			//  the CC density-texture (large models block
 			//  all texels)
-			const vec3f rPos =
-				mat.GetPos() +
-				(mat.GetZDir() * obj->GetPhysicalState().speed * server->GetLastTickDeltaRatio()) +
-				vec3f(0.0f, obj->GetRadius(), 0.0f);
-			const mat44f rMat(rPos, mat.GetXDir(), mat.GetYDir(), mat.GetZDir());
-			const vec4f& col = teamColors[obj->GetTeamID()];
+			const vec3f offsetPos = vec3f(0.0f, obj->GetRadius(), 0.0f);
+			const vec3f objRenderPos =
+				objMat.GetPos() +
+				(objMat.GetZDir() * obj->GetPhysicalState().speed * server->GetLastTickDeltaRatio()) +
+				offsetPos;
+			const mat44f objRenderMat(objRenderPos, objMat.GetXDir(), objMat.GetYDir(), objMat.GetZDir());
+			const vec4f& objCol = teamColors[obj->GetTeamID()];
 
-			Shader::IProgramObject* shObj = const_cast<Shader::IProgramObject*>(mb->GetShaderProgramObj());
+			Shader::IProgramObject* shObj = const_cast<Shader::IProgramObject*>(objMB->GetShaderProgramObj());
 
 			if (!inShadowPass) {
 				shObj->Enable();
 					shObj->SetUniformMatrix4fv(3, false, const_cast<float*>(shadowHandler->GetShadowProjectionMatrix()));
 					shObj->SetUniformMatrix4fv(4, false, const_cast<float*>(eye->GetViewMatrix()));
-					shObj->SetUniform4f(0, col.x, col.y, col.z, col.w);
+					shObj->SetUniform4f(0, objCol.x, objCol.y, objCol.z, objCol.w);
 
 					glActiveTexture(GL_TEXTURE7);
 					glBindTexture(GL_TEXTURE_2D, shadowHandler->GetDepthTextureID());
 
 					glPushMatrix();
-						glMultMatrixf(rMat.m);
-						mb->texturer->Bind(mb);
-						mb->drawer->Draw(mb->rootPiece);
-						mb->texturer->UnBind();
+						glMultMatrixf(objRenderMat.m);
+						objMB->texturer->Bind(objMB);
+						objMB->drawer->Draw(objMB->rootPiece);
+						objMB->texturer->UnBind();
 					glPopMatrix();
 
 					glBindTexture(GL_TEXTURE_2D, 0);
 					glActiveTexture(GL_TEXTURE0);
 				shObj->Disable();
+
+
+				glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glEnable(GL_ALPHA_TEST);
+				glColor4f(objCol.x, objCol.y, objCol.z, 0.8f);
+
+				// FIXME: in GL_LINES mode, tracers are stippled (check OGL state in UI widget)
+				glBegin(GL_QUAD_STRIP);
+					for (std::list<PhysicalState>::const_iterator it = objPrevPhysStates.begin(); it != objPrevPhysStates.end(); ++it) {
+						const mat44f& tmat = (*it).mat;
+						const vec3f& tpos = tmat.GetPos();
+						const vec3f& tdir = tmat.GetXDir();
+
+						const vec3f v0 = (tpos - tdir * readMap->SQUARE_SIZE) + offsetPos;
+						const vec3f v1 = (tpos + tdir * readMap->SQUARE_SIZE) + offsetPos;
+
+						glNormal3f(YVECf.x, YVECf.y, YVECf.z); glVertex3f(v0.x, v0.y, v0.z);
+						glNormal3f(YVECf.x, YVECf.y, YVECf.z); glVertex3f(v1.x, v1.y, v1.z);
+					}
+				glEnd();
+				glPopAttrib();
 			} else {
 				glPushMatrix();
-					glMultMatrixf(rMat.m);
-					mb->drawer->Draw(mb->rootPiece);
+					glMultMatrixf(objRenderMat.m);
+					objMB->drawer->Draw(objMB->rootPiece);
 				glPopMatrix();
 			}
 		}

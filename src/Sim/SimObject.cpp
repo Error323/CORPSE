@@ -1,8 +1,18 @@
 #include "./SimObject.hpp"
 #include "./SimObjectDef.hpp"
 
+#define SIMOBJECT_TRACE_FRAMES 150
+
 void SimObject::Update() {
 	PhysicalState p = physicalState;
+
+	#if (SIMOBJECT_TRACE_FRAMES > 0)
+	prevPhysicalStates.push_front(p);
+
+	if (prevPhysicalStates.size() >= SIMOBJECT_TRACE_FRAMES) {
+		prevPhysicalStates.pop_back();
+	}
+	#endif
 
 	p.Update(this);
 	this->SetPhysicalState(p);
@@ -10,7 +20,7 @@ void SimObject::Update() {
 
 
 
-// get the first or last wanted state this object wants to be in
+// get the first- or last-in-queue wanted state this object wants to be in
 const WantedPhysicalState& SimObject::GetWantedPhysicalState(bool front) const {
 	static WantedPhysicalState wps; // dummy
 

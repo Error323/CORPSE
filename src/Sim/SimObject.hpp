@@ -49,6 +49,7 @@ public:
 	bool PopWantedPhysicalStates(unsigned int, bool);
 
 	const std::list<WantedPhysicalState>& GetWantedPhysicalStates() const { return wantedPhysicalStates; }
+	const std::list<PhysicalState>& GetPrevPhysicalStates() const { return prevPhysicalStates; }
 
 private:
 	const SimObjectDef* def;
@@ -60,7 +61,9 @@ private:
 	float mdlRadius;
 
 	PhysicalState physicalState;
+
 	std::list<WantedPhysicalState> wantedPhysicalStates;
+	std::list<PhysicalState> prevPhysicalStates;
 };
 
 #endif
