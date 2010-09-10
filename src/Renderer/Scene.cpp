@@ -18,6 +18,7 @@
 
 #include "./Scene.hpp"
 #include "./Camera.hpp"
+#include "./VertexArray.hpp"
 
 #include "../Map/Ground.hpp"
 #include "../Map/MapInfo.hpp"
@@ -225,6 +226,8 @@ void CScene::OnEvent(const IEvent* e) {
 }
 
 void CScene::DrawModels(Camera* eye, bool inShadowPass) {
+	VertexArray tracerVA;
+
 	glPushAttrib(GL_POLYGON_BIT);
 		#ifdef WIREFRAME_DRAW
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -289,27 +292,32 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 				shObj->Disable();
 
 
-				glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
-				glEnable(GL_BLEND);
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				glEnable(GL_ALPHA_TEST);
-				glColor4f(objCol.x, objCol.y, objCol.z, 0.8f);
+				if (!objPrevPhysStates.empty()) {
+					glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
+					glEnable(GL_BLEND);
+					glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+					glEnable(GL_ALPHA_TEST);
+					glColor4f(objCol.x, objCol.y, objCol.z, 0.8f);
 
-				// FIXME: in GL_LINES mode, tracers are stippled (check OGL state in UI widget)
-				glBegin(GL_QUAD_STRIP);
+					// FIXME: in GL_LINES mode, tracers are stippled (check OGL state in UI widget)
+					tracerVA.Initialize();
+					tracerVA.EnlargeArrays(objPrevPhysStates.size() * 2, 0, VA_SIZE_N);
+
 					for (std::list<PhysicalState>::const_iterator it = objPrevPhysStates.begin(); it != objPrevPhysStates.end(); ++it) {
 						const mat44f& tmat = (*it).mat;
-						const vec3f& tpos = tmat.GetPos();
-						const vec3f& tdir = tmat.GetXDir();
+						const vec3f&  tpos = tmat.GetPos();
+						const vec3f&  tdir = tmat.GetXDir();
 
 						const vec3f v0 = (tpos - tdir * readMap->SQUARE_SIZE) + offsetPos;
 						const vec3f v1 = (tpos + tdir * readMap->SQUARE_SIZE) + offsetPos;
 
-						glNormal3f(YVECf.x, YVECf.y, YVECf.z); glVertex3f(v0.x, v0.y, v0.z);
-						glNormal3f(YVECf.x, YVECf.y, YVECf.z); glVertex3f(v1.x, v1.y, v1.z);
+						tracerVA.AddVertexN(v0, YVECf);
+						tracerVA.AddVertexN(v1, YVECf);
 					}
-				glEnd();
-				glPopAttrib();
+
+					tracerVA.DrawArrayN(GL_QUAD_STRIP);
+					glPopAttrib();
+				}
 			} else {
 				glPushMatrix();
 					glMultMatrixf(objRenderMat.m);
