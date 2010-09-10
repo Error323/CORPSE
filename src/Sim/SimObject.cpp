@@ -1,16 +1,20 @@
 #include "./SimObject.hpp"
 #include "./SimObjectDef.hpp"
+#include "./SimThread.hpp"
 
-#define SIMOBJECT_TRACE_FRAMES 150
+#define SIMOBJECT_TRACE_FRAME_COUNT    150
+#define SIMOBJECT_TRACE_FRAME_INTERVAL   5
 
 void SimObject::Update() {
 	PhysicalState p = physicalState;
 
-	#if (SIMOBJECT_TRACE_FRAMES > 0)
-	prevPhysicalStates.push_front(p);
+	#if (SIMOBJECT_TRACE_FRAME_COUNT > 0)
+	if ((sThread->GetFrame() % SIMOBJECT_TRACE_FRAME_INTERVAL) == 0) {
+		prevPhysicalStates.push_front(p);
 
-	if (prevPhysicalStates.size() >= SIMOBJECT_TRACE_FRAMES) {
-		prevPhysicalStates.pop_back();
+		if (prevPhysicalStates.size() >= (SIMOBJECT_TRACE_FRAME_COUNT / SIMOBJECT_TRACE_FRAME_INTERVAL)) {
+			prevPhysicalStates.pop_back();
+		}
 	}
 	#endif
 
