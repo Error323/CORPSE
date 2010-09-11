@@ -463,6 +463,11 @@ void CCGrid::AddGlobalDynamicCellData(
 	// large density blob and inter-weaving lanes are much
 	// less likely to form when groups approach one another
 	// (typically a small number of wider "tracks" appear)
+	//
+	// the lane-effect is strongest when groups move along
+	// directions parallel to grid-axes and weakest along
+	// directions at 45-degree angles (because the grid is
+	// 4- rather than 8-connected)
 	// cellsInRadius = 0;
 
 	for (int x = -cellsInRadius; x <= cellsInRadius; x++) {
