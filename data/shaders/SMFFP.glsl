@@ -22,13 +22,14 @@ void main() {
 	vec4 vertexDepthTexCoorsOffset;
 	vec2 vertexDiffuseTexCoors = gl_TexCoord[0].st;
 
+
 	bool vertexInShadow = false;
 	float pixelDistanceFromLight = 0.0;
 	float colorScalar = 1.0;
 	float xPixelOffset = (1.0 / (1024.0 * 4.0));
 	float yPixelOffset = (1.0 / ( 768.0 * 4.0));
 
-
+	/*
 	#ifdef SHADOWS_BASIC
 		pixelDistanceFromLight = texture2D(shadowMap, vertexDepthTexCoorsNorm.st).z;
 
@@ -74,7 +75,7 @@ void main() {
 				colorScalar /= 64.0;
 			#endif
 	}
-
+	*/
 
 	float cosAngleDiffuse = max(dot(normalize(lightDir), normalize(vertexNormal)), 0.0);
 	float cosAngleSpecular = max(dot(normalize(halfDir), normalize(vertexNormal)), 0.0);
