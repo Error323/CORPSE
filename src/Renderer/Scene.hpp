@@ -43,6 +43,13 @@ private:
 
 	// note: store color in object or model instead?
 	std::vector<vec4f> teamColors;
+
+	// NOTE: these should be members of RenderThread
+	unsigned int simFrameIntervalTicks;
+	float        simFrameDeltaTickRatio;
+
+	unsigned int currSimFrame;
+	unsigned int currSimFrameTick;
 };
 
 #endif

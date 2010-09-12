@@ -1,15 +1,16 @@
 #include <GL/gl.h>
+#include <SDL/SDL.h>
 
 #include <sstream>
 
 #include "../Math/vec3fwd.hpp"
 #include "../Math/mat44fwd.hpp"
 
+#include "../Sim/SimThread.hpp"
 #include "../System/EngineAux.hpp"
 #include "../System/EventHandler.hpp"
 #include "../System/LuaParser.hpp"
 #include "../System/Logger.hpp"
-#include "../System/Server.hpp"
 
 #include "../Sim/SimObjectDefHandler.hpp"
 #include "../Sim/SimObjectHandler.hpp"
@@ -59,6 +60,20 @@ CScene::CScene() {
 
 	this->SetPriority(456);
 	eventHandler->AddReceiver(this);
+
+	const LuaTable* rootTbl = LUA->GetRoot();
+	const LuaTable* srvrTbl = rootTbl->GetTblVal("server");
+
+	// set the number of SDL ticks between two sim-frames; this
+	// does not change at run-time even when the multiplier is
+	// increased or decreased
+	simFrameIntervalTicks  = (srvrTbl->GetFltVal("simFrameRate", 25.0f) / srvrTbl->GetFltVal("simFrameMult", 1.0f)) * 1000;
+	simFrameDeltaTickRatio = 1.0f;
+
+	// for interpolation we need to know which sim-frame we are
+	// currently at and the corresponding SDL tick (timestamp)
+	currSimFrame     = 0;
+	currSimFrameTick = SDL_GetTicks();
 }
 
 CScene::~CScene() {
@@ -264,7 +279,7 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 			const vec3f offsetPos = vec3f(0.0f, obj->GetRadius(), 0.0f);
 			const vec3f objRenderPos =
 				objMat.GetPos() +
-				(objMat.GetZDir() * obj->GetPhysicalState().speed * server->GetLastTickDeltaRatio()) +
+				(objMat.GetZDir() * obj->GetPhysicalState().speed * simFrameDeltaTickRatio) +
 				offsetPos;
 			const mat44f objRenderMat(objRenderPos, objMat.GetXDir(), objMat.GetYDir(), objMat.GetZDir());
 			const vec4f& objCol = teamColors[obj->GetTeamID()];
@@ -403,6 +418,13 @@ void CScene::DrawMapAndModels(Camera* eye, bool shadows) {
 
 
 void CScene::Draw(Camera* eye) {
+	if (sThread->GetFrame() != currSimFrame) {
+		currSimFrame     = sThread->GetFrame();
+		currSimFrameTick = SDL_GetTicks();
+
+		simFrameDeltaTickRatio = ((SDL_GetTicks() - currSimFrameTick) / simFrameIntervalTicks);
+	}
+
 	// DrawMapAndModels(eye, false);
 	DrawMapAndModels(eye, true);
 }
