@@ -109,6 +109,8 @@ void CScene::LoadTeamColors() {
 
 		teamColors[teamIdx++] = teamColor;
 	}
+
+	PFFG_ASSERT(!teamColors.empty());
 }
 
 void CScene::LoadObjectModels() {
@@ -282,7 +284,7 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 				(objMat.GetZDir() * obj->GetPhysicalState().speed * simFrameDeltaTickRatio) +
 				offsetPos;
 			const mat44f objRenderMat(objRenderPos, objMat.GetXDir(), objMat.GetYDir(), objMat.GetZDir());
-			const vec4f& objCol = teamColors[obj->GetTeamID()];
+			const vec4f& objCol = teamColors[obj->GetTeamID() % teamColors.size()];
 
 			Shader::IProgramObject* shObj = const_cast<Shader::IProgramObject*>(objMB->GetShaderProgramObj());
 
