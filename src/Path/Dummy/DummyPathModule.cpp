@@ -111,7 +111,7 @@ void DummyPathModule::Update() {
 		const float  dst = vec.sqLen3D();
 
 		const float brakeTime = coh->GetSimObjectSpeed(objID) / objDef->GetMaxDeccelerationRate();
-		const float brakeDist = coh->GetSimObjectSpeed(objID) * brakeTime; // conservative
+		const float brakeDist = 0.5f * objDef->GetMaxDeccelerationRate() * (brakeTime * brakeTime);
 
 		// if only one waypoint left in queue:
 		//    set wanted speed to 0 and replace the front of the queue
