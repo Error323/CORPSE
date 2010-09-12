@@ -1297,10 +1297,9 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 
 
 			// NOTE: also scale wantedSpeed by the required absolute turning angle?
-			// FIXME: oscillation even when moving in straight line (at high turn-rates)
 			vec3f wantedDir = objectCellVel / wantedSpeed;
 
-			if (true /*wantedDir.dot2D(objectDir) < 0.9f*/) {
+			{
 				float forwardGlobalAngleRad = atan2f(-objectDir.z, -objectDir.x);
 				float wantedGlobalAngleRad = atan2f(-wantedDir.z, -wantedDir.x);
 				float deltaGlobalAngleRad = 0.0f;
@@ -1315,7 +1314,13 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 				if (deltaGlobalAngleRad >  M_PI) { deltaGlobalAngleRad = -((M_PI * 2.0f) - deltaGlobalAngleRad); }
 				if (deltaGlobalAngleRad < -M_PI) { deltaGlobalAngleRad =  ((M_PI * 2.0f) + deltaGlobalAngleRad); }
 
-				wantedDir = objectDir.rotateY(DEG2RAD(objectDef->GetMaxTurningRate()) * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
+				// ignore angles smaller than 2 degrees (PI/180 radians) or
+				// units will experience oscillations (at higher turn-rates)
+				// even when travelling in straight lines
+				// FIXME: units in tightly clustered groups still fish-tail
+				if (std::fabs(deltaGlobalAngleRad) > (DEG2RAD(2.0f))) {
+					wantedDir = objectDir.rotateY(DEG2RAD(objectDef->GetMaxTurningRate()) * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
+				}
 			}
 
 			// note: when using the individual Set*Raw* callouts,
