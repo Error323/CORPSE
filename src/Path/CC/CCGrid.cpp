@@ -1314,7 +1314,7 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 				if (deltaGlobalAngleRad >  M_PI) { deltaGlobalAngleRad = -((M_PI * 2.0f) - deltaGlobalAngleRad); }
 				if (deltaGlobalAngleRad < -M_PI) { deltaGlobalAngleRad =  ((M_PI * 2.0f) + deltaGlobalAngleRad); }
 
-				// ignore angles smaller than 2 degrees (PI/180 radians) or
+				// ignore angles smaller than 2 degrees (2PI/180 radians) or
 				// units will experience oscillations (at higher turn-rates)
 				// even when travelling in straight lines
 				// FIXME: units in tightly clustered groups still fish-tail
