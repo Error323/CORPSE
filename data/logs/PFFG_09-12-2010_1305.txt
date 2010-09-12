@@ -1,0 +1,167 @@
+[EngineAux::EngineAux] current working-directory: 
+[CClient::InitSDL]
+	GL_VERSION:  2.1.2 NVIDIA 177.80
+	GL_VENDOR:   NVIDIA Corporation
+	GL_RENDERER: GeForce 8800 GT/PCI/SSE2/3DNOW!
+
+	compiled major, minor, patch: , , 
+	linked major, minor, patch: , , 
+[CReadMap::LoadMap] [1]
+[CSMFReadMap::CSMFReadMap] [1]
+[CSMFReadMap::CSMFReadMap] [2]
+[CSMFReadMap::CSMFReadMap] [2]
+	width,    height:   512, 512
+	mapx,     mapy:     512, 512
+	hmapx,    hmapy:    256, 256
+	pwr2mapx, pwr2mapy: 512, 512
+	maxxpos,  maxzpos:  4095, 4095
+	heightmap size ((mapx + 1) * (mapy + 1)): 263169
+	mapSquares     ((mapx    ) * (mapy    )): 262144
+[CSMFReadMap::CSMFReadMap] [3]
+[CReadMap::Initialize] [1]
+[CReadMap::Initialize] [2]
+[CReadMap::Initialize] [3]
+[CReadMap::Initialize] [4]
+[CReadMap::CalcHeightfieldData]
+	terrain normals and slopes calculated
+	minHeight: 0, maxHeight: 0
+[CReadMap::GenerateVertexNormals] [1]
+[CReadMap::GenerateVertexNormals] [2]
+[CSMFReadMap::CSMFReadMap] [4]
+[CSMFReadMap::CSMFReadMap] [5]
+[CSMFReadMap::HeightmapUpdated] [1]
+	x1, x2: 0, 512
+	y1, y2: 0, 512
+[CSMFReadMap::HeightmapUpdated] [2]
+[CSMFGroundTextures::CSMFGroundTextures]
+	number of tile-files: 1
+	original tile-file name: SmallDivide.smt, size: 4898
+	header->mapx: 512
+	header->mapy: 512
+	numBigTexX:   4
+	numBigTexY:   4
+	tile-count:   16384
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 0, 0
+	lvl, idx: 2, 0
+	usePBO, currentPBO: 1, 0
+	square->textureID: 2
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 1, 0
+	lvl, idx: 2, 1
+	usePBO, currentPBO: 1, 1
+	square->textureID: 3
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 2, 0
+	lvl, idx: 2, 2
+	usePBO, currentPBO: 1, 2
+	square->textureID: 4
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 3, 0
+	lvl, idx: 2, 3
+	usePBO, currentPBO: 1, 3
+	square->textureID: 5
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 0, 1
+	lvl, idx: 2, 4
+	usePBO, currentPBO: 1, 4
+	square->textureID: 6
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 1, 1
+	lvl, idx: 2, 5
+	usePBO, currentPBO: 1, 5
+	square->textureID: 7
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 2, 1
+	lvl, idx: 2, 6
+	usePBO, currentPBO: 1, 6
+	square->textureID: 8
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 3, 1
+	lvl, idx: 2, 7
+	usePBO, currentPBO: 1, 7
+	square->textureID: 9
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 0, 2
+	lvl, idx: 2, 8
+	usePBO, currentPBO: 1, 8
+	square->textureID: 10
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 1, 2
+	lvl, idx: 2, 9
+	usePBO, currentPBO: 1, 9
+	square->textureID: 11
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 2, 2
+	lvl, idx: 2, 10
+	usePBO, currentPBO: 1, 10
+	square->textureID: 12
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 3, 2
+	lvl, idx: 2, 11
+	usePBO, currentPBO: 1, 1
+	square->textureID: 13
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 0, 3
+	lvl, idx: 2, 12
+	usePBO, currentPBO: 1, 2
+	square->textureID: 14
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 1, 3
+	lvl, idx: 2, 13
+	usePBO, currentPBO: 1, 3
+	square->textureID: 15
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 2, 3
+	lvl, idx: 2, 14
+	usePBO, currentPBO: 1, 4
+	square->textureID: 16
+[CSMFGroundTextures::LoadSquare]
+	  x,   y: 3, 3
+	lvl, idx: 2, 15
+	usePBO, currentPBO: 1, 5
+	square->textureID: 17
+[CSMFGroundDrawer] loading vert. shader ./data/shaders/SMFVP.glsl for map
+[CSMFGroundDrawer] loading frag. shader ./data/shaders/SMFFP.glsl for map
+[CSMFGroundDrawer] shader program object info
+	pObj->GetObjID(): 1
+	pObj->IsValid():  1
+
+	pObj->GetLog():
+
+
+
+
+
+[CSMFReadMap::CSMFReadMap] [6]
+	groundDrawer instance: 0x9504598
+[CSMFReadMap::CSMFReadMap] [7]
+[CReadMap::LoadMap] [2]
+[CTextureHandlerS3O::LoadTextures]
+	loaded textures (key: Goliath1.ddsGoliath2.dds) for model ./data/models/core_goliath.s3o (idx: 1)
+[CModelReaderS3O::Load]
+	(header) magic string:      "Spring unit"
+	(header) root piece offset:  52
+	(header) radius:             32
+	(header) height:             40
+	(header) midx:               -0
+	(header) midy:               8
+	(header) midz:               -2
+	(header) tex. 1 name offset: 63391
+	(header) tex. 2 name offset: 63404
+	(model base) texture 1:     "Goliath1.dds"
+	(model base) texture 2:     "Goliath2.dds"
+[CScene] loading vert. shader ./data/shaders/S3OVP.glsl for model ./data/models/core_goliath.s3o
+[CScene] loading frag. shader ./data/shaders/S3OFP.glsl for model ./data/models/core_goliath.s3o
+[CScene] shader program object info
+	pObj->GetObjID(): 4
+	pObj->IsValid():  1
+
+	pObj.GetLog():
+
+
+
+
+
+[CClient::~CClient]
+	cumulative [CClient::Update] time: 28216ms

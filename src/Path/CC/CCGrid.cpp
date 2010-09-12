@@ -1296,10 +1296,11 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 			if (objectSpeed > wantedSpeed) { wantedSpeed = objectSpeed - maxDecRate; }
 
 
-			// note: also scale wantedSpeed by the required absolute turning angle?
+			// NOTE: also scale wantedSpeed by the required absolute turning angle?
+			// FIXME: oscillation even when moving in straight line (at high turn-rates)
 			vec3f wantedDir = objectCellVel / wantedSpeed;
 
-			{
+			if (true /*wantedDir.dot2D(objectDir) < 0.9f*/) {
 				float forwardGlobalAngleRad = atan2f(-objectDir.z, -objectDir.x);
 				float wantedGlobalAngleRad = atan2f(-wantedDir.z, -wantedDir.x);
 				float deltaGlobalAngleRad = 0.0f;
