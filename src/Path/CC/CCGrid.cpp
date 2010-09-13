@@ -468,7 +468,7 @@ void CCGrid::AddGlobalDynamicCellData(
 	// directions parallel to grid-axes and weakest along
 	// directions at 45-degree angles (because the grid is
 	// 4- rather than 8-connected)
-	// cellsInRadius = 0;
+	cellsInRadius = 0;
 
 	for (int x = -cellsInRadius; x <= cellsInRadius; x++) {
 		for (int z = -cellsInRadius; z <= cellsInRadius; z++) {
@@ -1323,12 +1323,13 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 				// FIXME: units in tightly clustered groups still fish-tail
 				const bool  instaTurn = (std::fabs(deltaGlobalAngleRad) <= maxTurnAngleRad);
 				const float turnAngle = instaTurn? deltaGlobalAngleRad: maxTurnAngleRad;
-				const float angleSign = (deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f;
+				const float turnSign  = (deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f;
 
-				if (std::fabs(turnAngle) > DEG2RAD(2.0f)) {
-					wantedDir = objectDir.rotateY(turnAngle * angleSign);
+				static const float MIN_ANGLE_RAD = DEG2RAD(2.0f);
+
+				if (std::fabs(turnAngle) > MIN_ANGLE_RAD || maxTurnAngleRad <= MIN_ANGLE_RAD) {
+					wantedDir = objectDir.rotateY(turnAngle * turnSign);
 				} else {
-					// dampen minor angles
 					wantedDir = objectDir;
 				}
 			}
