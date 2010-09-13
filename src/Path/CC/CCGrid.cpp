@@ -476,6 +476,8 @@ void CCGrid::AddGlobalDynamicCellData(
 			const int cx = int(cell->x) + x;
 			const int cz = int(cell->y) + z;
 
+			bool cellTouched = false;
+
 			if (cx < 0 || cx >= int(numCellsX)) { continue; }
 			if (cz < 0 || cz >= int(numCellsZ)) { continue; }
 
@@ -515,6 +517,8 @@ void CCGrid::AddGlobalDynamicCellData(
 					cb->density += mRhoBar;
 					cf->avgVelocity += (vel * mRhoBar);
 					cb->avgVelocity += (vel * mRhoBar);
+
+					cellTouched = true;
 				} break;
 				case DATATYPE_DISCOMFORT: {
 					if (cf->tmpID != cellTmpID) {
@@ -540,13 +544,17 @@ void CCGrid::AddGlobalDynamicCellData(
 						cf->mobileDiscomfort.y += mRhoBar;
 
 						cb->mobileDiscomfort = cf->mobileDiscomfort;
+
+						cellTouched = true;
 					}
 				} break;
 				default: {
 				} break;
 			}
 
-			mTouchedCells.insert(GRID_INDEX_UNSAFE(cx, cz));
+			if (cellTouched) {
+				mTouchedCells.insert(GRID_INDEX_UNSAFE(cx, cz));
+			}
 		}
 	}
 }
