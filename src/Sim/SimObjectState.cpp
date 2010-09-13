@@ -45,8 +45,11 @@ void PhysicalState::Update(const SimObject* owner) {
 		if (deltaGlobalAngleRad >  M_PI) { deltaGlobalAngleRad = -((M_PI * 2.0f) - deltaGlobalAngleRad); }
 		if (deltaGlobalAngleRad < -M_PI) { deltaGlobalAngleRad =  ((M_PI * 2.0f) + deltaGlobalAngleRad); }
 
-		if (fabs(deltaGlobalAngleRad) > 0.01f) {
-			mat.RotateY(DEG2RAD(def->GetMaxTurningRate()) * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
+		const bool  instaTurn = (std::fabs(deltaGlobalAngleRad) <= DEG2RAD(def->GetMaxTurningRate()));
+		const float turnAngle = instaTurn? deltaGlobalAngleRad: DEG2RAD(def->GetMaxTurningRate());
+
+		if (std::fabs(turnAngle) > (M_PI / 180.0f)) {
+			mat.RotateY(turnAngle * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
 		}
 	}
 
