@@ -1359,8 +1359,8 @@ vec3f CCGrid::GetInterpolatedVelocity(const std::vector<Cell::Edge>& edges, cons
 		// first get the relative distance to the
 		// DIR_W (a) and DIR_N (b) edges based on
 		// <pos>
-		a = (pos.x - c->x * mSquareSize) / mSquareSize;
-		b = (pos.z - c->y * mSquareSize) / mSquareSize;
+		a = CLAMP(((pos.x - c->x * mSquareSize) / mSquareSize), 0.0f, 1.0f);
+		b = CLAMP(((pos.z - c->y * mSquareSize) / mSquareSize), 0.0f, 1.0f);
 
 		const vec3f& vN = edges[ c->edges[DIR_N] ].velocity;
 		const vec3f& vS = edges[ c->edges[DIR_S] ].velocity;
@@ -1417,7 +1417,7 @@ vec3i CCGrid::GetCellIndex2D(const vec3f& worldPos) const {
 	return vec3i(cx, 0, cz);
 }
 
-// get the (CLAMPED ) 1D grid-cell index corresponding to a world-space position
+// get the (CLAMPED) 1D grid-cell index corresponding to a world-space position
 unsigned int CCGrid::GetCellIndex1D(const vec3f& worldPos) const {
 	const vec3i&       gridPos = GetCellIndex2D(worldPos);
 	const unsigned int gridIdx = GRID_INDEX_UNSAFE(gridPos.x, gridPos.z);
