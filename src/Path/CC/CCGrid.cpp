@@ -468,7 +468,7 @@ void CCGrid::AddGlobalDynamicCellData(
 	// directions parallel to grid-axes and weakest along
 	// directions at 45-degree angles (because the grid is
 	// 4- rather than 8-connected)
-	cellsInRadius = 0;
+	// cellsInRadius = 0;
 
 	for (int x = -cellsInRadius; x <= cellsInRadius; x++) {
 		for (int z = -cellsInRadius; z <= cellsInRadius; z++) {
