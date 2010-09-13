@@ -457,7 +457,8 @@ void CCGrid::AddGlobalDynamicCellData(
 	const Cell* cell,
 	int cellsInRadius,
 	const vec3f& vel,
-	unsigned int type
+	unsigned int cellDataType,
+	unsigned int cellTmpID
 ) {
 	// if objects are tightly clustered, they project one
 	// large density blob and inter-weaving lanes are much
@@ -485,7 +486,7 @@ void CCGrid::AddGlobalDynamicCellData(
 			Cell* cf = &currCells[ GRID_INDEX_UNSAFE(cx, cz) ];
 			Cell* cb = &prevCells[ GRID_INDEX_UNSAFE(cx, cz) ];
 
-			switch (type) {
+			switch (cellDataType) {
 				case DATATYPE_DENSITY: {
 					// a unit's density contribution must be *at least* equal
 					// to the threshold value rho_bar within (the cells of) a
@@ -516,25 +517,30 @@ void CCGrid::AddGlobalDynamicCellData(
 					cb->avgVelocity += (vel * mRhoBar);
 				} break;
 				case DATATYPE_DISCOMFORT: {
-					// scale the discomfort vector
-					//
-					// NOTE; this causes opposing velocity vectors
-					// projected onto the same cell to cancel out,
-					// so we store the total discomfort value in y
-					// cf->mobileDiscomfort += (vel * mRhoBar);
-					// cb->mobileDiscomfort += (vel * mRhoBar);
+					if (cf->tmpID != cellTmpID) {
+						cf->tmpID = cellTmpID;
+						cb->tmpID = cellTmpID;
 
-					// we require only the direction along xz
-					// cf->mobileDiscomfort.x += (vel.x * mRhoBar);
-					// cf->mobileDiscomfort.z += (vel.z * mRhoBar);
-					// cf->mobileDiscomfort.y += (vel.len2D() * mRhoBar);
+						// scale the discomfort vector
+						//
+						// NOTE; this causes opposing velocity vectors
+						// projected onto the same cell to cancel out,
+						// so we store the total discomfort value in y
+						// cf->mobileDiscomfort += (vel * mRhoBar);
+						// cb->mobileDiscomfort += (vel * mRhoBar);
 
-					// x and z are normalised later
-					cf->mobileDiscomfort.x += vel.x;
-					cf->mobileDiscomfort.z += vel.z;
-					cf->mobileDiscomfort.y += mRhoBar;
+						// we require only the direction along xz
+						// cf->mobileDiscomfort.x += (vel.x * mRhoBar);
+						// cf->mobileDiscomfort.z += (vel.z * mRhoBar);
+						// cf->mobileDiscomfort.y += (vel.len2D() * mRhoBar);
 
-					cb->mobileDiscomfort = cf->mobileDiscomfort;
+						// x and z are normalised later
+						cf->mobileDiscomfort.x += vel.x;
+						cf->mobileDiscomfort.z += vel.z;
+						cf->mobileDiscomfort.y += mRhoBar;
+
+						cb->mobileDiscomfort = cf->mobileDiscomfort;
+					}
 				} break;
 				default: {
 				} break;
@@ -551,7 +557,7 @@ void CCGrid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
 
 	const Cell* cell = &currCells[ GetCellIndex1D(pos) ];
 
-	AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DENSITY);
+	AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DENSITY, -1);
 }
 
 void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsigned int numFrames, float stepSize) {
@@ -574,6 +580,8 @@ void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, uns
 	// const unsigned int posCellIdx = GetCellIndex1D(pos);
 	// stepSize = 1.0f;
 
+	static unsigned int tmpID = -1;
+
 	for (unsigned int n = 0; n <= numFrames; n++) {
 		const vec3f        stepPos = pos + vel * n * stepSize;
 		const unsigned int cellIdx = GetCellIndex1D(stepPos);
@@ -581,8 +589,10 @@ void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, uns
 
 		// skip our own cell
 		// if (cellIdx == posCellIdx) { continue; }
-		AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DISCOMFORT);
+		AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DISCOMFORT, tmpID);
 	}
+
+	tmpID += 1;
 }
 
 

@@ -57,14 +57,14 @@ public:
 			vec3f potentialDelta;
 		};
 
-		Cell(): x(0), y(0), known(false), candidate(false), numNeighbors(0) {
+		Cell(): x(0), y(0), tmpID(0), known(false), candidate(false), numNeighbors(0) {
 			edges[DIR_N] = 0; neighbors[DIR_N] = 0;
 			edges[DIR_E] = 0; neighbors[DIR_E] = 0;
 			edges[DIR_S] = 0; neighbors[DIR_S] = 0;
 			edges[DIR_W] = 0; neighbors[DIR_W] = 0;
 		}
 
-		Cell(unsigned int _x, unsigned int _y): x(_x), y(_y), known(false), candidate(false), numNeighbors(0) {
+		Cell(unsigned int _x, unsigned int _y): x(_x), y(_y), tmpID(0), known(false), candidate(false), numNeighbors(0) {
 			edges[DIR_N] = 0; neighbors[DIR_N] = 0;
 			edges[DIR_E] = 0; neighbors[DIR_E] = 0;
 			edges[DIR_S] = 0; neighbors[DIR_S] = 0;
@@ -87,6 +87,8 @@ public:
 		vec3f mobileDiscomfort;
 
 		unsigned int x, y;
+		unsigned int tmpID;
+
 		bool  known;
 		bool  candidate;
 		float potential;
@@ -118,7 +120,7 @@ public:
 	void Kill();
 	void Reset();
 
-	void AddGlobalDynamicCellData(std::vector<Cell>&, std::vector<Cell>&, const Cell*, int, const vec3f&, unsigned int);
+	void AddGlobalDynamicCellData(std::vector<Cell>&, std::vector<Cell>&, const Cell*, int, const vec3f&, unsigned int, unsigned int);
 	void AddDensity(const vec3f&, const vec3f&, float);
 	void AddDiscomfort(const vec3f&, const vec3f&, float, unsigned int, float);
 	void ComputeAvgVelocity();
