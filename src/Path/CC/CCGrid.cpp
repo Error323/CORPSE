@@ -1281,9 +1281,10 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 		#else
 			const SimObjectDef* objectDef = mCOH->GetSimObjectDef(objectID);
 
-			const float objectSpeed = mCOH->GetSimObjectSpeed(objectID);
-			const float maxAccRate = objectDef->GetMaxAccelerationRate();
-			const float maxDecRate = objectDef->GetMaxDeccelerationRate();
+			const float objectSpeed     = mCOH->GetSimObjectSpeed(objectID);
+			const float maxAccRate      = objectDef->GetMaxAccelerationRate();
+			const float maxDecRate      = objectDef->GetMaxDeccelerationRate();
+			const float maxTurnAngleRad = DEG2RAD(objectDef->GetMaxTurningRate());
 
 			// in theory, the velocity-field should never cause units
 			// in any group to exceed that group's speed limitations
@@ -1297,7 +1298,9 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 
 
 			// NOTE: also scale wantedSpeed by the required absolute turning angle?
-			vec3f wantedDir = objectCellVel / wantedSpeed;
+			// NOTE: this does not properly normalise <objectCellVel> due to acc&dec
+			// vec3f wantedDir = objectCellVel / wantedSpeed;
+			vec3f wantedDir = objectCellVel.norm3D();
 
 			{
 				float forwardGlobalAngleRad = atan2f(-objectDir.z, -objectDir.x);
@@ -1318,8 +1321,11 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 				// units will experience oscillations (at higher turn-rates)
 				// even when travelling in straight lines
 				// FIXME: units in tightly clustered groups still fish-tail
-				if (std::fabs(deltaGlobalAngleRad) > (DEG2RAD(2.0f))) {
-					wantedDir = objectDir.rotateY(DEG2RAD(objectDef->GetMaxTurningRate()) * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
+				const bool  instaTurn = (std::fabs(deltaGlobalAngleRad) <= maxTurnAngleRad);
+				const float turnAngle = instaTurn? deltaGlobalAngleRad: maxTurnAngleRad;
+
+				if (std::fabs(turnAngle) > DEG2RAD(2.0f)) {
+					wantedDir = objectDir.rotateY(turnAngle * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
 				}
 			}
 
