@@ -1284,7 +1284,7 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 			const float objectSpeed     = mCOH->GetSimObjectSpeed(objectID);
 			const float maxAccRate      = objectDef->GetMaxAccelerationRate();
 			const float maxDecRate      = objectDef->GetMaxDeccelerationRate();
-			const float maxTurnAngleRad = DEG2RAD(objectDef->GetMaxTurningRate());
+			const float maxTurnAngleRad = DEG2RAD(objectDef->GetMaxTurningRate()); // radians per frame
 
 			// in theory, the velocity-field should never cause units
 			// in any group to exceed that group's speed limitations
@@ -1323,9 +1323,13 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 				// FIXME: units in tightly clustered groups still fish-tail
 				const bool  instaTurn = (std::fabs(deltaGlobalAngleRad) <= maxTurnAngleRad);
 				const float turnAngle = instaTurn? deltaGlobalAngleRad: maxTurnAngleRad;
+				const float angleSign = (deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f;
 
 				if (std::fabs(turnAngle) > DEG2RAD(2.0f)) {
-					wantedDir = objectDir.rotateY(turnAngle * ((deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f));
+					wantedDir = objectDir.rotateY(turnAngle * angleSign);
+				} else {
+					// dampen minor angles
+					wantedDir = objectDir;
 				}
 			}
 
