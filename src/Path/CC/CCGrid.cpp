@@ -1315,10 +1315,10 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 
 			float turnAngleDeg = maxTurnAngleDeg;
 
-			#if (SIMOBJECT_ALLOW_INPLACE_TURNS == 123)
-		//	turnAngleDeg = MMIX(maxTurnAngleDeg * 0.2f, maxTurnAngleDeg, spdFactor);       // linear interpolation
-		//	turnAngleDeg = (spdFactor < EPSILON)? maxTurnAngleDeg: maxTurnAngleDeg * 0.2f; // step function
-		//	turnAngleDeg = (spdFactor < EPSILON)? 180.0f: maxTurnAngleDeg;                 // insta-turns when idle
+			#if (SIMOBJECT_ALLOW_INPLACE_TURNS == 1)
+			// turnAngleDeg = MMIX(maxTurnAngleDeg * 0.2f, maxTurnAngleDeg, spdFactor);       // linear interpolation
+			// turnAngleDeg = (spdFactor < EPSILON)? maxTurnAngleDeg: maxTurnAngleDeg * 0.2f; // step function
+			// turnAngleDeg = (spdFactor < EPSILON)? 180.0f: maxTurnAngleDeg;                 // insta-turns when idle
 
 			if (spdFactor < MAX_SPEED_FAC) {
 				turnAngleDeg = MAX_ANGLE_DEG - (MAX_ANGLE_DEG * spdFactor * (1.0f / MAX_SPEED_FAC));
