@@ -20,6 +20,7 @@
 #define VA_SIZE_TN   8
 #define VA_SIZE_TNT 14
 #define VA_SIZE_TC   6
+#define VA_SIZE_T2   7
 #define VA_SIZE_2DT  4
 
 class VertexArray {
@@ -53,7 +54,7 @@ public:
 	void DrawArrayTC(const int drawType, unsigned int stride = 4 * VA_SIZE_TC);
 	void DrawArrayTN(const int drawType, unsigned int stride = 4 * VA_SIZE_TN);
 	void DrawArrayTNT(const int drawType, unsigned int stride = 4 * VA_SIZE_TNT);
-	void DrawArrayT2(const int drawType, unsigned int stride = 4 * 7);
+	void DrawArrayT2(const int drawType, unsigned int stride = 4 * VA_SIZE_T2);
 	void DrawArray2dT(const int drawType, unsigned int stride = 4 * VA_SIZE_2DT);
 	void DrawArray2dT(const int drawType, StripCallback callback, void* data, unsigned int stride = 4 * VA_SIZE_2DT);
 

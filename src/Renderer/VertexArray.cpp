@@ -172,8 +172,8 @@ void VertexArray::DrawArray0(const int drawType, unsigned int stride)
 
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, stride, drawArray);
-	DrawArrays(drawType, stride);
+		glVertexPointer(3, GL_FLOAT, stride, drawArray);
+		DrawArrays(drawType, stride);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
@@ -184,8 +184,8 @@ void VertexArray::DrawArray2d0(const int drawType, unsigned int stride)
 
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(2, GL_FLOAT, stride, drawArray);
-	DrawArrays(drawType, stride);
+		glVertexPointer(2, GL_FLOAT, stride, drawArray);
+		DrawArrays(drawType, stride);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
@@ -197,9 +197,9 @@ void VertexArray::DrawArrayN(const int drawType, unsigned int stride)
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
-	glVertexPointer(3, GL_FLOAT, stride, drawArray);
-	glNormalPointer(GL_FLOAT, stride, drawArray + 3);
-	DrawArrays(drawType, stride);
+		glVertexPointer(3, GL_FLOAT, stride, drawArray);
+		glNormalPointer(GL_FLOAT, stride, drawArray + 3);
+		DrawArrays(drawType, stride);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 }
@@ -213,16 +213,16 @@ void VertexArray::DrawArrayNC(const int drawType, unsigned int stride)
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
-	glVertexPointer(3, GL_FLOAT, stride, drawArray);
-	glNormalPointer(GL_FLOAT, stride, drawArray + 3);
-	glColorPointer(4, GL_UNSIGNED_BYTE, stride, drawArray + 6);
-	DrawArrays(drawType, stride);
+		glVertexPointer(3, GL_FLOAT, stride, drawArray);
+		glNormalPointer(GL_FLOAT, stride, drawArray + 3);
+		glColorPointer(4, GL_UNSIGNED_BYTE, stride, drawArray + 6);
+		DrawArrays(drawType, stride);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 }
 
-void VertexArray::DrawArrayC(const int drawType,unsigned int stride)
+void VertexArray::DrawArrayC(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
@@ -230,14 +230,14 @@ void VertexArray::DrawArrayC(const int drawType,unsigned int stride)
 	CheckEndStrip();
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
-	glVertexPointer(3, GL_FLOAT, stride, drawArray);
-	glColorPointer(4, GL_UNSIGNED_BYTE, stride, drawArray + 3);
-	DrawArrays(drawType, stride);
+		glVertexPointer(3, GL_FLOAT, stride, drawArray);
+		glColorPointer(4, GL_UNSIGNED_BYTE, stride, drawArray + 3);
+		DrawArrays(drawType, stride);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 }
 
-void VertexArray::DrawArrayT(const int drawType,unsigned int stride)
+void VertexArray::DrawArrayT(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
@@ -245,9 +245,9 @@ void VertexArray::DrawArrayT(const int drawType,unsigned int stride)
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, stride, drawArray);
-	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
-	DrawArrays(drawType, stride);
+		glVertexPointer(3, GL_FLOAT, stride, drawArray);
+		glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
+		DrawArrays(drawType, stride);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
@@ -260,9 +260,9 @@ void VertexArray::DrawArray2dT(const int drawType, unsigned int stride)
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(2, GL_FLOAT, stride, drawArray);
-	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 2);
-	DrawArrays(drawType, stride);
+		glVertexPointer(2, GL_FLOAT, stride, drawArray);
+		glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 2);
+		DrawArrays(drawType, stride);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
@@ -275,14 +275,14 @@ void VertexArray::DrawArray2dT(const int drawType, StripCallback callback, void*
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(2, GL_FLOAT, stride, drawArray);
-	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 2);
-	DrawArraysCallback(drawType, stride, callback, data);
+		glVertexPointer(2, GL_FLOAT, stride, drawArray);
+		glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 2);
+		DrawArraysCallback(drawType, stride, callback, data);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void VertexArray::DrawArrayT2(const int drawType,unsigned int stride)
+void VertexArray::DrawArrayT2(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
@@ -290,18 +290,22 @@ void VertexArray::DrawArrayT2(const int drawType,unsigned int stride)
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, stride, drawArray);
-	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
 
-	glClientActiveTextureARB(GL_TEXTURE1_ARB);
-	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 5);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glClientActiveTextureARB(GL_TEXTURE0_ARB);
-	DrawArrays(drawType, stride);
-	glClientActiveTextureARB(GL_TEXTURE1_ARB);
+		glVertexPointer(3, GL_FLOAT, stride, drawArray);
+		glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
+
+		glClientActiveTextureARB(GL_TEXTURE1_ARB);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 5);
+		glClientActiveTextureARB(GL_TEXTURE0_ARB);
+
+		DrawArrays(drawType, stride);
+
+		glClientActiveTextureARB(GL_TEXTURE1_ARB);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		glClientActiveTextureARB(GL_TEXTURE0_ARB);
+
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glClientActiveTextureARB(GL_TEXTURE0_ARB);
-
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
@@ -315,12 +319,10 @@ void VertexArray::DrawArrayTN(const int drawType, unsigned int stride)
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
-
-	glVertexPointer(3, GL_FLOAT, stride, drawArray);
-	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
-	glNormalPointer(GL_FLOAT, stride, drawArray + 5);
-	DrawArrays(drawType, stride);
-
+		glVertexPointer(3, GL_FLOAT, stride, drawArray);
+		glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
+		glNormalPointer(GL_FLOAT, stride, drawArray + 5);
+		DrawArrays(drawType, stride);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
@@ -348,10 +350,9 @@ void VertexArray::DrawArrayTNT(const int drawType, unsigned int stride)
 	SET_ENABLE_ACTIVE_TEX(GL_TEXTURE5); glTexCoordPointer(3, GL_FLOAT, stride, drawArray +  8);
 	SET_ENABLE_ACTIVE_TEX(GL_TEXTURE6); glTexCoordPointer(3, GL_FLOAT, stride, drawArray + 11);
 
-	glVertexPointer(3, GL_FLOAT, stride, drawArray + 0);
-	glNormalPointer(GL_FLOAT, stride, drawArray + 5);
-
-	DrawArrays(drawType, stride);
+		glVertexPointer(3, GL_FLOAT, stride, drawArray + 0);
+		glNormalPointer(GL_FLOAT, stride, drawArray + 5);
+		DrawArrays(drawType, stride);
 
 	SET_DISABLE_ACTIVE_TEX(GL_TEXTURE6);
 	SET_DISABLE_ACTIVE_TEX(GL_TEXTURE5);
@@ -369,14 +370,15 @@ void VertexArray::DrawArrayTC(const int drawType, unsigned int stride)
 {
 	if (drawIndex() == 0)
 		return;
+
 	CheckEndStrip();
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
-	glVertexPointer(3, GL_FLOAT, stride, drawArray);
-	glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
-	glColorPointer(4, GL_UNSIGNED_BYTE, stride, drawArray + 5);
-	DrawArrays(drawType, stride);
+		glVertexPointer(3, GL_FLOAT, stride, drawArray);
+		glTexCoordPointer(2, GL_FLOAT, stride, drawArray + 3);
+		glColorPointer(4, GL_UNSIGNED_BYTE, stride, drawArray + 5);
+		DrawArrays(drawType, stride);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
