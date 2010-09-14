@@ -1277,6 +1277,7 @@ float CCGrid::Potential2D(const float p1, const float c1, const float p2, const 
 bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID, unsigned int objectCellID) {
 	const vec3f& objectPos = mCOH->GetSimObjectPosition(objectID);
 	const vec3f& objectDir = mCOH->GetSimObjectDirection(objectID);
+	const float  objectSpd = mCOH->GetSimObjectSpeed(objectID);
 
 	const Buffer& buffer =
 		(mUpdateInt > 1)?
@@ -1299,10 +1300,19 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 		#else
 			const SimObjectDef* objectDef = mCOH->GetSimObjectDef(objectID);
 
-			const float objectSpeed     = mCOH->GetSimObjectSpeed(objectID);
 			const float maxAccRate      = objectDef->GetMaxAccelerationRate();
 			const float maxDecRate      = objectDef->GetMaxDeccelerationRate();
-			const float maxTurnAngleRad = DEG2RAD(objectDef->GetMaxTurningRate()); // radians per frame
+		//	const float speedFactor     = objectSpd / objectDef->GetMaxForwardSpeed();               // FIXME: greater than 1
+			const float maxTurnAngleDeg = objectDef->GetMaxTurningRate();                            // degrees per frame (!)
+		//	const float minTurnAngleDeg = objectDef->GetMaxTurningRate() * 0.2f;                     // degrees per frame (!)
+
+		//	const float intTurnAngleDeg = MMIX(minTurnAngleDeg, maxTurnAngleDeg, speedFactor);       // linear interpolation
+		//	const float stpTurnAngleDeg = (speedFactor < EPSILON)? maxTurnAngleDeg: minTurnAngleDeg; // step function
+
+			const float maxTurnAngleRad = DEG2RAD(maxTurnAngleDeg);
+		//	const float maxTurnAngleRad = DEG2RAD(intTurnAngleDeg);
+		//	const float maxTurnAngleRad = DEG2RAD(stpTurnAngleDeg);
+
 
 			// in theory, the velocity-field should never cause units
 			// in any group to exceed that group's speed limitations
@@ -1311,8 +1321,8 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 			float wantedSpeed = objectCellVel.len2D();
 
 			// note: should accelerate and deccelerate more quickly on slopes
-			if (objectSpeed < wantedSpeed) { wantedSpeed = objectSpeed + maxAccRate; }
-			if (objectSpeed > wantedSpeed) { wantedSpeed = objectSpeed - maxDecRate; }
+			if (objectSpd < wantedSpeed) { wantedSpeed = objectSpd + maxAccRate; }
+			if (objectSpd > wantedSpeed) { wantedSpeed = objectSpd - maxDecRate; }
 
 
 			// NOTE: also scale wantedSpeed by the required absolute turning angle?
