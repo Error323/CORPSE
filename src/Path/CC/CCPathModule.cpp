@@ -7,11 +7,12 @@
 #include "../../Sim/SimObjectState.hpp"
 #include "../../System/ScopedTimer.hpp"
 
-#define CCPATHMODULE_PROFILE            0
-#define GRID_UNIT_TEST                  0
-#define GRID_DOWNSCALE_FACTOR           8
-#define MINIMUM_DISTANCE_ENFORCEMENT    1
-#define PREDICTIVE_DISCOMFORT_FRAMES  150
+#define CCPATHMODULE_PROFILE                      0
+#define GRID_UNIT_TEST                            0
+#define GRID_DOWNSCALE_FACTOR                     8
+#define SIMOBJECT_FORCE_INPLACE_TURNS             1
+#define SIMOBJECT_MIN_DISTANCE_ENFORCEMENT        1
+#define SIMOBJECT_PREDICTIVE_DISCOMFORT_FRAMES  150
 
 void CCPathModule::OnEvent(const IEvent* e) {
 	switch (e->GetType()) {
@@ -116,13 +117,20 @@ void CCPathModule::OnEvent(const IEvent* e) {
 
 				coh->PushSimObjectWantedPhysicalState(objectID, wps, false, false);
 				coh->SetSimObjectPhysicsUpdates(objectID, false);
+
+				#if (SIMOBJECT_FORCE_INPLACE_TURNS == 1)
+				// force speed to 0 so that UpdateSimObjectLocation
+				// can near-instantly change this object's direction
+				// whenever it receives a move order
+				coh->SetSimObjectRawSpeed(objectID, 0.0f);
+				#endif
 			}
 
 			mGrid.AddGroup(groupID);
 		} break;
 
 		case EVENT_SIMOBJECT_COLLISION: {
-			#if (MINIMUM_DISTANCE_ENFORCEMENT == 1)
+			#if (SIMOBJECT_MIN_DISTANCE_ENFORCEMENT == 1)
 			const SimObjectCollisionEvent* ee = dynamic_cast<const SimObjectCollisionEvent*>(e);
 
 			const unsigned int colliderID = ee->GetColliderID();
@@ -158,9 +166,12 @@ void CCPathModule::OnEvent(const IEvent* e) {
 
 void CCPathModule::Init() {
 	printf("[CCPathModule::Init]\n");
-	printf("\tGRID_DOWNSCALE_FACTOR:        %d\n", GRID_DOWNSCALE_FACTOR);
-	printf("\tMINIMUM_DISTANCE_ENFORCEMENT: %d\n", MINIMUM_DISTANCE_ENFORCEMENT);
-	printf("\tPREDICTIVE_DISCOMFORT_FRAMES: %d\n", PREDICTIVE_DISCOMFORT_FRAMES);
+	printf("\tGRID_UNIT_TEST:                         %d\n", GRID_UNIT_TEST);
+	printf("\tGRID_DOWNSCALE_FACTOR:                  %d\n", GRID_DOWNSCALE_FACTOR);
+	printf("\n");
+	printf("\tSIMOBJECT_FORCE_INPLACE_TURNS:          %d\n", SIMOBJECT_FORCE_INPLACE_TURNS);
+	printf("\tSIMOBJECT_MIN_DISTANCE_ENFORCEMENT:     %d\n", SIMOBJECT_MIN_DISTANCE_ENFORCEMENT);
+	printf("\tSIMOBJECT_PREDICTIVE_DISCOMFORT_FRAMES: %d\n", SIMOBJECT_PREDICTIVE_DISCOMFORT_FRAMES);
 
 	// NOTE:
 	//     GRID_DOWNSCALE_FACTOR needs to be set such that the
@@ -291,7 +302,7 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 			//   field there
 			mGrid.AddDensity(objPos, objVel, objRad);
 
-			#if (PREDICTIVE_DISCOMFORT_FRAMES > 0)
+			#if (SIMOBJECT_PREDICTIVE_DISCOMFORT_FRAMES > 0)
 			// NOTE:
 			//   combine this with AddDensity?
 			//
@@ -305,10 +316,10 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 			//   maximum speed and radius (wrt. the cell-size) instead
 			//   of a fixed value
 			//
-			//   faster units require more PREDICTIVE_DISCOMFORT_FRAMES
-			//   (and a smaller grid update interval) for proper vortex
-			//   and lane formation
-			mGrid.AddDiscomfort(objPos, objVel, objRad, PREDICTIVE_DISCOMFORT_FRAMES, (mGrid.GetSquareSize() / objDef->GetMaxForwardSpeed()));
+			//   for faster units, SIMOBJECT_PREDICTIVE_DISCOMFORT_FRAMES
+			//   must be larger (and the grid update interval shorter) for
+			//   proper vortex and lane formation
+			mGrid.AddDiscomfort(objPos, objVel, objRad, SIMOBJECT_PREDICTIVE_DISCOMFORT_FRAMES, (mGrid.GetSquareSize() / objDef->GetMaxForwardSpeed()));
 			#endif
 		}
 
