@@ -1298,20 +1298,27 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 		#if (VELOCITY_FIELD_DIRECT_INTERPOLATION == 1)
 			mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + objectCellVel, objectCellVel.norm3D(), objectCellVel.len2D());
 		#else
+			static const float MAX_ANGLE_DEG = 45.0f;
+			static const float MIN_ANGLE_RAD = DEG2RAD(2.0f);
+			static const float MAX_SPEED_FAC = EPSILON * 10.0f;
+
 			const SimObjectDef* objectDef = mCOH->GetSimObjectDef(objectID);
 
 			const float maxAccRate      = objectDef->GetMaxAccelerationRate();
 			const float maxDecRate      = objectDef->GetMaxDeccelerationRate();
-		//	const float speedFactor     = objectSpd / objectDef->GetMaxForwardSpeed();               // FIXME: greater than 1
-			const float maxTurnAngleDeg = objectDef->GetMaxTurningRate();                            // degrees per frame (!)
-		//	const float minTurnAngleDeg = objectDef->GetMaxTurningRate() * 0.2f;                     // degrees per frame (!)
+			const float spdFactor       = objectSpd / objectDef->GetMaxForwardSpeed();                    // FIXME: greater than 1
+			const float maxTurnAngleDeg = objectDef->GetMaxTurningRate();                                 // degrees per frame (!)
 
-		//	const float intTurnAngleDeg = MMIX(minTurnAngleDeg, maxTurnAngleDeg, speedFactor);       // linear interpolation
-		//	const float stpTurnAngleDeg = (speedFactor < EPSILON)? maxTurnAngleDeg: minTurnAngleDeg; // step function
+		//	const float intTurnAngleDeg = MMIX(maxTurnAngleDeg * 0.2f, maxTurnAngleDeg, spdFactor);       // linear interpolation
+		//	const float stpTurnAngleDeg = (spdFactor < EPSILON)? maxTurnAngleDeg: maxTurnAngleDeg * 0.2f; // step function
+		//	const float stpTurnAngleDeg = (spdFactor < EPSILON)? 180.0f: maxTurnAngleDeg;                 // insta-turns when idle
+			const float stpTurnAngleDeg = (spdFactor < MAX_SPEED_FAC)?
+				MAX_ANGLE_DEG - (MAX_ANGLE_DEG * spdFactor * (1.0f / MAX_SPEED_FAC)):
+				maxTurnAngleDeg;
 
-			const float maxTurnAngleRad = DEG2RAD(maxTurnAngleDeg);
+		//	const float maxTurnAngleRad = DEG2RAD(maxTurnAngleDeg);
 		//	const float maxTurnAngleRad = DEG2RAD(intTurnAngleDeg);
-		//	const float maxTurnAngleRad = DEG2RAD(stpTurnAngleDeg);
+			const float maxTurnAngleRad = DEG2RAD(stpTurnAngleDeg);
 
 
 			// in theory, the velocity-field should never cause units
@@ -1352,8 +1359,6 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 				const bool  instaTurn = (std::fabs(deltaGlobalAngleRad) <= maxTurnAngleRad);
 				const float turnAngle = instaTurn? deltaGlobalAngleRad: maxTurnAngleRad;
 				const float turnSign  = (deltaGlobalAngleRad > 0.0f)? 1.0f: -1.0f;
-
-				static const float MIN_ANGLE_RAD = DEG2RAD(2.0f);
 
 				if (std::fabs(turnAngle) > MIN_ANGLE_RAD || maxTurnAngleRad <= MIN_ANGLE_RAD) {
 					wantedDir = objectDir.rotateY(turnAngle * turnSign);

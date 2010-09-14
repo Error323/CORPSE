@@ -123,16 +123,16 @@ params = {
 
 			--  [[
 			maxForwardSpeed      = 100.0,
-			maxTurningRate       =  25.0,
-			maxAccelerationRate  =   1.0,
-			maxDeccelerationRate =   1.0,
+			maxTurningRate       =  45.0,
+			maxAccelerationRate  =  10.0,
+			maxDeccelerationRate =   5.0,
 			--  ]]
 
 			--[[
 			maxForwardSpeed      = 100.0, -- units per second^1
 			maxTurningRate       = 180.0, -- degrees per second^1
 			maxAccelerationRate  =  50.0, -- units per second^2
-			maxDeccelerationRate =   1.0, -- units per second^2
+			maxDeccelerationRate =  25.0, -- units per second^2
 			--]]
 		},
 	},
@@ -177,11 +177,11 @@ params = {
 		["cc"] = {
 			alpha   =  1.0,  -- speed weight
 			beta    =  0.0,  -- time weight
-			gamma   =  2.0,  -- discomfort weight
+			gamma   =  3.0,  -- discomfort weight
 
-			rho_bar = 0.25,  -- density per object, "must" be <= rho_min (if DENSITY_CONVERSION_TCP06)
-			rho_min = 0.25,  -- if rho <= rho_min, f == f_topo
-			rho_max = 0.75,  -- if rho >= rho_max, f == f_flow
+			rho_bar = 0.20,  -- density per object, "must" be <= rho_min (if DENSITY_CONVERSION_TCP06)
+			rho_min = 0.20,  -- if rho <= rho_min, f == f_topo
+			rho_max = 2.00,  -- if rho >= rho_max, f == f_flow
 
 			updateInt  = 5,  -- number of sim-frames between grid updates
 			updateMode = 0,  -- UPDATE_MODE_ALLATONCE
@@ -212,15 +212,10 @@ local function AddObjects(paramsTable, teamID, gpx, gpz, gdx, gdz, M, N, A, B)
 	end
 end
 
--- parameters for 4-way vortex-generation test:
---     rho_bar = 0.25, gamma = 5.0, PREDICTIVE_DISCOMFORT_FRAMES = 500
---     rho_bar = 0.25, gamma = 2.0, PREDICTIVE_DISCOMFORT_FRAMES = 200 (tighter swirl)
 AddObjects(params, 1,           256.0,                           256.0,                  1.0,  1.0,  5,  5, 128.0, 128.0)
 AddObjects(params, 2, (4096.0 - 256.0) - (5 * 128.0),            256.0,                 -1.0,  1.0,  5,  5, 128.0, 128.0)
 AddObjects(params, 3,           256.0,                 (4096.0 - 256.0) - (5 * 128.0),   1.0, -1.0,  5,  5, 128.0, 128.0)
 AddObjects(params, 4, (4096.0 - 256.0) - (5 * 128.0),  (4096.0 - 256.0) - (5 * 128.0),  -1.0, -1.0,  5,  5, 128.0, 128.0)
 
--- parameters for lane-formation test:
---     rho_bar = 0.20, gamma = 2.0, PREDICTIVE_DISCOMFORT_FRAMES = 10
 -- AddObjects(params, 5,           256.0  + (4 * 128.0), 1536.0,   1.0, 0.0,  1, 15, 128.0, 128.0)
 -- AddObjects(params, 6, (4096.0 - 256.0) - (5 * 128.0), 1536.0,  -1.0, 0.0,  1, 15, 128.0, 128.0)
