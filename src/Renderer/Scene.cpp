@@ -314,10 +314,11 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 					glEnable(GL_BLEND);
 					glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 					glEnable(GL_ALPHA_TEST);
-					glColor4f(objCol.x, objCol.y, objCol.z, 0.8f);
 
 					tracerVA.Initialize();
-					tracerVA.EnlargeArrays(objPrevPhysStates.size() * 2, 0, VA_SIZE_N);
+					tracerVA.EnlargeArrays(objPrevPhysStates.size() * 2, 0, VA_SIZE_NC);
+
+					float n = 0.0f;
 
 					for (std::list<PhysicalState>::const_iterator it = objPrevPhysStates.begin(); it != objPrevPhysStates.end(); ++it) {
 						const mat44f& tmat = (*it).mat;
@@ -327,11 +328,20 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 						const vec3f v0 = (tpos - tdir * readMap->SQUARE_SIZE) + offsetPos;
 						const vec3f v1 = (tpos + tdir * readMap->SQUARE_SIZE) + offsetPos;
 
-						tracerVA.AddVertexN(v0, YVECf);
-						tracerVA.AddVertexN(v1, YVECf);
+						const unsigned char color[4] = {
+							objCol.x * 255,
+							objCol.y * 255,
+							objCol.z * 255,
+							(1.0f - (n / objPrevPhysStates.size())) * 255
+						};
+
+						tracerVA.AddVertexNC(v0, YVECf, color);
+						tracerVA.AddVertexNC(v1, YVECf, color);
+
+						n += 1.0f;
 					}
 
-					tracerVA.DrawArrayN(GL_QUAD_STRIP);
+					tracerVA.DrawArrayNC(GL_QUAD_STRIP);
 					glPopAttrib();
 				}
 			} else {

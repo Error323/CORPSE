@@ -204,6 +204,24 @@ void VertexArray::DrawArrayN(const int drawType, unsigned int stride)
 	glDisableClientState(GL_NORMAL_ARRAY);
 }
 
+void VertexArray::DrawArrayNC(const int drawType, unsigned int stride)
+{
+	if (drawIndex() == 0)
+		return;
+
+	CheckEndStrip();
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	glVertexPointer(3, GL_FLOAT, stride, drawArray);
+	glNormalPointer(GL_FLOAT, stride, drawArray + 3);
+	glColorPointer(4, GL_UNSIGNED_BYTE, stride, drawArray + 6);
+	DrawArrays(drawType, stride);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
+}
+
 void VertexArray::DrawArrayC(const int drawType,unsigned int stride)
 {
 	if (drawIndex() == 0)

@@ -16,6 +16,7 @@
 #define VA_SIZE_C    4
 #define VA_SIZE_T    5
 #define VA_SIZE_N    6
+#define VA_SIZE_NC   7
 #define VA_SIZE_TN   8
 #define VA_SIZE_TNT 14
 #define VA_SIZE_TC   6
@@ -33,7 +34,8 @@ public:
 	inline void AddVertex0(const vec3f& p);
 	inline void AddVertex0(float x, float y, float z);
 	inline void AddVertex2d0(float x, float z);
-	inline void AddVertexN(const vec3f& p, const vec3f& normal);
+	inline void AddVertexN(const vec3f& p, const vec3f& n);
+	inline void AddVertexNC(const vec3f& p, const vec3f& n, const unsigned char* color);
 	inline void AddVertexT(const vec3f& p, float tx, float ty);
 	inline void AddVertexC(const vec3f& p, const unsigned char* color);
 	inline void AddVertexTC(const vec3f& p, float tx, float ty, const unsigned char* color);
@@ -42,23 +44,25 @@ public:
 	inline void AddVertexT2(const vec3f& p, float t1x, float t1y, float t2x, float t2y);
 	inline void AddVertex2dT(float x, float y, float tx, float ty);
 
-	void DrawArray0(const int drawType, unsigned int stride = 12);
-	void DrawArray2d0(const int drawType, unsigned int stride = 8);
-	void DrawArrayN(const int drawType, unsigned int stride = 24);
-	void DrawArrayT(const int drawType, unsigned int stride = 20);
-	void DrawArrayC(const int drawType, unsigned int stride = 16);
-	void DrawArrayTC(const int drawType, unsigned int stride = 24);
-	void DrawArrayTN(const int drawType, unsigned int stride = 32);
-	void DrawArrayTNT(const int drawType, unsigned int stride = 56);
-	void DrawArrayT2(const int drawType, unsigned int stride = 28);
-	void DrawArray2dT(const int drawType, unsigned int stride = 16);
-	void DrawArray2dT(const int drawType, StripCallback callback, void* data, unsigned int stride = 16);
+	void DrawArray0(const int drawType, unsigned int stride = 4 * VA_SIZE_0);
+	void DrawArray2d0(const int drawType, unsigned int stride = 4 * VA_SIZE_2D0);
+	void DrawArrayN(const int drawType, unsigned int stride = 4 * VA_SIZE_N);
+	void DrawArrayNC(const int drawType, unsigned int stride = 4 * VA_SIZE_NC);
+	void DrawArrayT(const int drawType, unsigned int stride = 4 * VA_SIZE_T);
+	void DrawArrayC(const int drawType, unsigned int stride = 4 * VA_SIZE_C);
+	void DrawArrayTC(const int drawType, unsigned int stride = 4 * VA_SIZE_TC);
+	void DrawArrayTN(const int drawType, unsigned int stride = 4 * VA_SIZE_TN);
+	void DrawArrayTNT(const int drawType, unsigned int stride = 4 * VA_SIZE_TNT);
+	void DrawArrayT2(const int drawType, unsigned int stride = 4 * 7);
+	void DrawArray2dT(const int drawType, unsigned int stride = 4 * VA_SIZE_2DT);
+	void DrawArray2dT(const int drawType, StripCallback callback, void* data, unsigned int stride = 4 * VA_SIZE_2DT);
 
 	//! same as the AddVertex... functions but without automated CheckEnlargeDrawArray
 	inline void AddVertexQ0(float x, float y, float z);
 	inline void AddVertexQ0(const vec3f& f3) { AddVertexQ0(f3.x, f3.y, f3.z); }
 	inline void AddVertex2dQ0(float x, float z);
 	inline void AddVertexQN(const vec3f& p, const vec3f& n);
+	inline void AddVertexQNC(const vec3f& p, const vec3f& n, const unsigned char* color);
 	inline void AddVertexQC(const vec3f& p, const unsigned char* color);
 	inline void AddVertexQT(const vec3f& p, float tx, float ty);
 	inline void AddVertex2dQT(float x, float y, float tx, float ty);
@@ -132,13 +136,24 @@ void VertexArray::AddVertex2dQ0(float x, float z) {
 }
 
 void VertexArray::AddVertexQN(const vec3f& pos, const vec3f& normal) {
-	ASSERT_SIZE(VA_SIZE_0)
+	ASSERT_SIZE(VA_SIZE_N)
 	*drawArrayPos++ = pos.x;
 	*drawArrayPos++ = pos.y;
 	*drawArrayPos++ = pos.z;
 	*drawArrayPos++ = normal.x;
 	*drawArrayPos++ = normal.y;
 	*drawArrayPos++ = normal.z;
+}
+
+void VertexArray::AddVertexQNC(const vec3f& pos, const vec3f& normal, const unsigned char* color) {
+	ASSERT_SIZE(VA_SIZE_NC)
+	*drawArrayPos++ = pos.x;
+	*drawArrayPos++ = pos.y;
+	*drawArrayPos++ = pos.z;
+	*drawArrayPos++ = normal.x;
+	*drawArrayPos++ = normal.y;
+	*drawArrayPos++ = normal.z;
+	*drawArrayPos++ = *((float*) (color));
 }
 
 void VertexArray::AddVertexQC(const vec3f& pos, const unsigned char* color) {
@@ -206,6 +221,8 @@ void VertexArray::AddVertex2dQT(float x, float y, float tx, float ty) {
 	*drawArrayPos++ = ty;
 }
 
+
+
 void VertexArray::AddVertex0(const vec3f& pos) {
 	CheckEnlargeDrawArray();
 	*drawArrayPos++ = pos.x;
@@ -234,6 +251,17 @@ void VertexArray::AddVertexN(const vec3f& pos, const vec3f& normal) {
 	*drawArrayPos++ = normal.x;
 	*drawArrayPos++ = normal.y;
 	*drawArrayPos++ = normal.z;
+}
+
+void VertexArray::AddVertexNC(const vec3f& pos, const vec3f& normal, const unsigned char* color) {
+	CheckEnlargeDrawArray();
+	*drawArrayPos++ = pos.x;
+	*drawArrayPos++ = pos.y;
+	*drawArrayPos++ = pos.z;
+	*drawArrayPos++ = normal.x;
+	*drawArrayPos++ = normal.y;
+	*drawArrayPos++ = normal.z;
+	*drawArrayPos++ = *((float*)(color));
 }
 
 void VertexArray::AddVertexC(const vec3f& pos, const unsigned char* color) {
