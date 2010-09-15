@@ -180,7 +180,7 @@ params = {
 			gamma   =  3.0,  -- discomfort weight
 
 			rho_bar = 0.20,  -- density per object, "must" be <= rho_min (if DENSITY_CONVERSION_TCP06)
-			rho_min = 0.20,  -- if rho <= rho_min, f == f_topo
+			rho_min = 0.00,  -- if rho <= rho_min, f == f_topo
 			rho_max = 2.00,  -- if rho >= rho_max, f == f_flow
 
 			updateInt  = 5,  -- number of sim-frames between grid updates
