@@ -1302,7 +1302,7 @@ bool CCGrid::UpdateSimObjectLocation(unsigned int groupID, unsigned int objectID
 		#if (VELOCITY_FIELD_DIRECT_INTERPOLATION == 1)
 			mCOH->SetSimObjectRawPhysicalState(objectID, objectPos + objectCellVel, objectCellVel.norm3D(), objectCellVel.len2D());
 		#else
-			static const float MAX_ANGLE_DEG = 45.0f;
+			static const float MAX_ANGLE_DEG = 90.0f;
 			static const float MIN_ANGLE_RAD = DEG2RAD(2.0f);
 			static const float MAX_SPEED_FAC = EPSILON * 10.0f;
 
