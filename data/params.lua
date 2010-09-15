@@ -124,7 +124,7 @@ params = {
 			--  [[
 			maxForwardSpeed      = 100.0,
 			maxTurningRate       =  45.0,
-			maxAccelerationRate  =  10.0,
+			maxAccelerationRate  =   5.0,
 			maxDeccelerationRate =   5.0,
 			--  ]]
 
