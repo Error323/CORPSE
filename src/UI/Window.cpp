@@ -128,7 +128,8 @@ void ui::SDLWindow::SetSDLVideoMode() {
 	if (mScreen == NULL) {
 		LOG << "[SDLWindow::SetSDLVideoMode]\n";
 		LOG << "\tSDL video mode error " << SDL_GetError() << "\n";
-		PFFG_ASSERT(false);
+		fprintf(stderr, "SDL Error: %s\n", SDL_GetError());
+		exit(1);
 	}
 }
 
