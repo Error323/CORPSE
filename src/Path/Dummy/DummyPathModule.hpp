@@ -4,6 +4,7 @@
 #include "../IPathModule.hpp"
 #include "../../System/IEvent.hpp"
 
+class FlowGrid;
 class DummyPathModule: public IPathModule {
 public:
 	DummyPathModule(ICallOutHandler* icoh): IPathModule(icoh) {
@@ -36,6 +37,8 @@ private:
 	void AddObjectToGroup(unsigned int, unsigned int);
 	bool DelObjectFromGroup(unsigned int);
 	bool DelGroup(unsigned int);
+
+	FlowGrid* flowGrid;
 };
 
 IPathModule* CALL_CONV GetPathModuleInstance(ICallOutHandler* icoh) { return (new DummyPathModule(icoh)); }

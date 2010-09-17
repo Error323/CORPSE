@@ -230,11 +230,11 @@ unsigned int SimObjectHandler::CheckSimObjectCollisions(unsigned int frame) {
 			collideeIt = colliderIt; ++collideeIt;
 
 			collider = *colliderIt;
-			colliderRadius = collider->GetRadius();
+			colliderRadius = collider->GetModelRadius();
 
 			for (; collideeIt != objects.end(); ++collideeIt) {
 				collidee = *collideeIt;
-				collideeRadius = collidee->GetRadius();
+				collideeRadius = collidee->GetModelRadius();
 
 				dstSq = (collider->GetPos() - collidee->GetPos()).sqLen3D();
 				radSq = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);

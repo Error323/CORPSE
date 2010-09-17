@@ -54,6 +54,7 @@ bool SimObjectDefHandler::LoadDefs() {
 			def->SetMaxSlopeAngleCosine(objectDefTable->GetFltVal("maxSlopeAngleCosine", 1.0f));
 			def->SetMinTerrainHeight(objectDefTable->GetFltVal("minTerrainHeight", 0.0f));
 			def->SetMaxTerrainHeight(objectDefTable->GetFltVal("maxTerrainHeight", 0.0f));
+			def->SetObjectRadius(objectDefTable->GetFltVal("objectRadius", 0.0f));
 
 		objectDefsMap[*it] = def;
 		objectDefsVec[def->GetID()] = def;

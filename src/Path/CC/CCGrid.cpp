@@ -967,7 +967,7 @@ void CCGrid::UpdateGroupPotentialField(unsigned int groupID, const std::set<unsi
 			mMinGroupSlope  = std::min<float>(mMinGroupSlope,  simObjectDef->GetMinSlopeAngleCosine());
 			mMaxGroupSlope  = std::max<float>(mMaxGroupSlope,  simObjectDef->GetMaxSlopeAngleCosine());
 			mMaxGroupSpeed  = std::max<float>(mMaxGroupSpeed,  simObjectDef->GetMaxForwardSpeed());
-			mMaxGroupRadius = std::max<float>(mMaxGroupRadius, mCOH->GetSimObjectRadius(*i));
+			mMaxGroupRadius = std::max<float>(mMaxGroupRadius, simObjectDef->GetObjectRadius());
 		}
 	}
 

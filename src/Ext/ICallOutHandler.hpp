@@ -40,7 +40,7 @@ public:
 	virtual const vec3f& GetSimObjectPosition(unsigned int objID) const = 0;
 	virtual const vec3f& GetSimObjectDirection(unsigned int objID) const = 0;
 	virtual float GetSimObjectSpeed(unsigned int objID) const = 0;
-	virtual float GetSimObjectRadius(unsigned int objID) const = 0;
+	virtual float GetSimObjectModelRadius(unsigned int objID) const = 0;
 
 	virtual unsigned int GetSimObjectNumWantedPhysicalStates(unsigned int objID) const = 0;
 	virtual void PushSimObjectWantedPhysicalState(unsigned int objID, const WantedPhysicalState& state, bool queued, bool front) const = 0;

@@ -13,8 +13,8 @@ public:
 		// NOTE:
 		//    this is set by rendering code when it receives the
 		//    SimObjectCreatedEvent, so simulation logic will not
-		//    see the proper value via GetRadius() until the next
-		//    sim-frame
+		//    see the proper value via GetModelRadius() until the
+		//    next sim-frame
 		mdlRadius = 0.0f;
 	}
 
@@ -32,8 +32,8 @@ public:
 	void SetModel(LocalModel* m) { mdl = m; }
 	LocalModel* GetModel() const { return mdl; }
 
-	void SetRadius(float f) { mdlRadius = f; }
-	float GetRadius() const { return mdlRadius; }
+	float GetModelRadius() const { return mdlRadius; }
+	void SetModelRadius(float f) { mdlRadius = f; }
 
 	const mat44f& GetMat() const { return physicalState.mat; }
 	void SetMat(const mat44f& m) { physicalState.mat = m; }
@@ -57,9 +57,9 @@ private:
 	const unsigned int objectID;
 	      unsigned int teamID;
 
-	LocalModel* mdl;
 	float mdlRadius;
 
+	LocalModel* mdl;
 	PhysicalState physicalState;
 
 	std::list<WantedPhysicalState> wantedPhysicalStates;

@@ -139,8 +139,8 @@ void CCPathModule::OnEvent(const IEvent* e) {
 			const vec3f& colliderPos = coh->GetSimObjectPosition(colliderID);
 			const vec3f& collideePos = coh->GetSimObjectPosition(collideeID);
 
-			const float colliderRadius = coh->GetSimObjectRadius(colliderID);
-			const float collideeRadius = coh->GetSimObjectRadius(collideeID);
+			const float colliderRadius = coh->GetSimObjectModelRadius(colliderID);
+			const float collideeRadius = coh->GetSimObjectModelRadius(collideeID);
 
 			const vec3f separationVec = colliderPos - collideePos;
 			const float separationMin = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
@@ -293,7 +293,12 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 			const vec3f objVel =
 				coh->GetSimObjectDirection(objID) *
 				coh->GetSimObjectSpeed(objID);
-			const float objRad = coh->GetSimObjectRadius(objID);
+			const float objRad = objDef->GetObjectRadius();
+
+			// sanity-check: the influence range of any sim-object should
+			// always be larger than the radius at which minimum distance
+			// enforcement becomes active (regardless of grid resolution)
+			PFFG_ASSERT(objRad >= coh->GetSimObjectModelRadius(objID));
 
 			// NOTE:
 			//   if objVel is a zero-vector, then avgVel will not change

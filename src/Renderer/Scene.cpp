@@ -208,7 +208,7 @@ void CScene::LoadObjectModel(unsigned int objectID) {
 	// objShader->SetUniform4fv(0, const_cast<float*>( &teamColors[ obj->GetTeamID() ].x ));
 
 	obj->SetModel(new LocalModel(objMdl));
-	obj->SetRadius(objMdl->radius);
+	obj->SetModelRadius(objMdl->radius);
 }
 
 
@@ -278,7 +278,7 @@ void CScene::DrawModels(Camera* eye, bool inShadowPass) {
 			//  we add a vertical offset so we can inspect
 			//  the CC density-texture (large models block
 			//  all texels)
-			const vec3f offsetPos = vec3f(0.0f, obj->GetRadius(), 0.0f);
+			const vec3f offsetPos = vec3f(0.0f, obj->GetModelRadius(), 0.0f);
 			const vec3f objRenderPos =
 				objMat.GetPos() +
 				(objMat.GetZDir() * obj->GetPhysicalState().speed * simFrameDeltaTickRatio) +

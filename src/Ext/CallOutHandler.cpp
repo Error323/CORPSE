@@ -182,10 +182,10 @@ float CallOutHandler::GetSimObjectSpeed(unsigned int objID) const {
 	return 0.0f;
 }
 
-float CallOutHandler::GetSimObjectRadius(unsigned int objID) const {
+float CallOutHandler::GetSimObjectModelRadius(unsigned int objID) const {
 	if (IsValidSimObjectID(objID)) {
 		const SimObject* o = simObjectHandler->GetSimObject(objID);
-		const float r = o->GetRadius();
+		const float r = o->GetModelRadius();
 
 		return r;
 	}

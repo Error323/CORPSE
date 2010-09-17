@@ -1,10 +1,14 @@
 #include <iostream>
 
 #include "./DummyPathModule.hpp"
+#include "./FlowGrid.hpp"
 #include "../../Math/vec3.hpp"
 #include "../../Ext/ICallOutHandler.hpp"
 #include "../../Sim/SimObjectDef.hpp"
 #include "../../Sim/SimObjectState.hpp"
+
+#define FLOWGRID_ENABLED 0
+#define FLOWGRID_STEPS   1
 
 void DummyPathModule::OnEvent(const IEvent* e) {
 	switch (e->GetType()) {
@@ -70,8 +74,8 @@ void DummyPathModule::OnEvent(const IEvent* e) {
 			const vec3f& colliderPos = coh->GetSimObjectPosition(colliderID);
 			const vec3f& collideePos = coh->GetSimObjectPosition(collideeID);
 
-			const float colliderRadius = coh->GetSimObjectRadius(colliderID);
-			const float collideeRadius = coh->GetSimObjectRadius(collideeID);
+			const float colliderRadius = coh->GetSimObjectModelRadius(colliderID);
+			const float collideeRadius = coh->GetSimObjectModelRadius(collideeID);
 
 			const vec3f separationVec = colliderPos - collideePos;
 			const float separationMin = (colliderRadius + collideeRadius) * (colliderRadius + collideeRadius);
@@ -94,9 +98,23 @@ void DummyPathModule::OnEvent(const IEvent* e) {
 
 void DummyPathModule::Init() {
 	std::cout << "[DummyPathModule::Init]" << std::endl;
+
+	#if (FLOWGRID_ENABLED == 1)
+	flowGrid = new FlowGrid(coh);
+	#endif
 }
 
 void DummyPathModule::Update() {
+	#if (FLOWGRID_ENABLED == 1)
+	flowGrid->Reset();
+
+	for (ObjectMapIt it = mObjects.begin(); it != mObjects.end(); ++it) {
+		flowGrid->AddFlow(it->first, FLOWGRID_STEPS);
+	}
+
+	flowGrid->AvgFlow();
+	#endif
+
 	// steer the sim-objects around the map based on user commands
 	for (ObjectMapIt it = mObjects.begin(); it != mObjects.end(); ++it) {
 		const MObject* obj = it->second;
@@ -155,6 +173,10 @@ void DummyPathModule::Kill() {
 
 	mGroups.clear();
 	mObjects.clear();
+
+	#if (FLOWGRID_ENABLED == 1)
+	delete flowGrid;
+	#endif
 }
 
 
