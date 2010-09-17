@@ -135,8 +135,8 @@ params = {
 			maxDeccelerationRate =  25.0, -- units per second^2
 			--]]
 
-			-- independent of model radius
-			objectRadius      = 128.0,
+			-- independent of model-radius
+			objectRadius         = 128.0,
 		},
 	},
 
@@ -147,7 +147,7 @@ params = {
 
 	["models"] = {
 		["core_goliath.s3o"] = {
-			-- multiplier for the model radius
+			-- model-radius multiplier
 			scale   = 1.0,
 
 			vShader = "S3OVP.glsl",
