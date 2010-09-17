@@ -296,8 +296,9 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 			const float objRad = objDef->GetObjectRadius();
 
 			// sanity-check: the influence range of any sim-object should
-			// always be larger than the radius at which minimum distance
-			// enforcement becomes active (regardless of grid resolution)
+			// always be larger than the range at which minimum distance
+			// enforcement becomes active (which checks the model radius)
+			// regardless of grid resolution
 			PFFG_ASSERT(objRad >= coh->GetSimObjectModelRadius(objID));
 
 			// NOTE:
