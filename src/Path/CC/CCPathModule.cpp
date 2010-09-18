@@ -270,7 +270,7 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 
 					/*
 					for (unsigned int n = 0; n < 10; n++) {
-						mGrid.AddDensity(cp, NVECf, (mGrid.GetSquareSize() >> 1));
+						mGrid.AddDensity(cp, NVECf, (mGrid.GetSquareSize() >> 1), (mGrid.GetSquareSize() >> 1));
 					}
 					*/
 
@@ -293,20 +293,21 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 			const vec3f objVel =
 				coh->GetSimObjectDirection(objID) *
 				coh->GetSimObjectSpeed(objID);
-			const float objRad = objDef->GetObjectRadius();
+			const float minObjRad = coh->GetSimObjectModelRadius(objID);
+			const float maxObjRad = objDef->GetObjectRadius();
 
 			// sanity-check: the influence range of any sim-object should
 			// always be larger than the range at which minimum distance
 			// enforcement becomes active (which checks the model radius)
 			// regardless of grid resolution
-			PFFG_ASSERT(objRad >= coh->GetSimObjectModelRadius(objID));
+			PFFG_ASSERT(maxObjRad >= minObjRad);
 
 			// NOTE:
 			//   if objVel is a zero-vector, then avgVel will not change
 			//   therefore the flow speed can stay zero in a region, so
 			//   that *only* the topological speed determines the speed
 			//   field there
-			mGrid.AddDensity(objPos, objVel, objRad);
+			mGrid.AddDensity(objPos, objVel, minObjRad, maxObjRad);
 
 			#if (SIMOBJECT_PREDICTIVE_DISCOMFORT_FRAMES > 0)
 			// NOTE:
@@ -325,7 +326,10 @@ void CCPathModule::UpdateGrid(bool isUpdateFrame) {
 			//   for faster units, SIMOBJECT_PREDICTIVE_DISCOMFORT_FRAMES
 			//   must be larger (and the grid update interval shorter) for
 			//   proper vortex and lane formation
-			mGrid.AddDiscomfort(objPos, objVel, objRad, SIMOBJECT_PREDICTIVE_DISCOMFORT_FRAMES, (mGrid.GetSquareSize() / objDef->GetMaxForwardSpeed()));
+			const unsigned int ns = SIMOBJECT_PREDICTIVE_DISCOMFORT_FRAMES;
+			const float ss = mGrid.GetSquareSize() / objDef->GetMaxForwardSpeed();
+
+			mGrid.AddDiscomfort(objPos, objVel, minObjRad, maxObjRad, ns, ss);
 			#endif
 		}
 

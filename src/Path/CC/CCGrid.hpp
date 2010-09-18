@@ -120,9 +120,9 @@ public:
 	void Kill();
 	void Reset();
 
-	void AddGlobalDynamicCellData(std::vector<Cell>&, std::vector<Cell>&, const Cell*, int, const vec3f&, unsigned int, unsigned int);
-	void AddDensity(const vec3f&, const vec3f&, float);
-	void AddDiscomfort(const vec3f&, const vec3f&, float, unsigned int, float);
+	void AddGlobalDynamicCellData(std::vector<Cell>&, std::vector<Cell>&, const Cell*, int, int, const vec3f&, unsigned int, unsigned int);
+	void AddDensity(const vec3f&, const vec3f&, float, float);
+	void AddDiscomfort(const vec3f&, const vec3f&, float, float, unsigned int, float);
 	void ComputeAvgVelocity();
 
 	void UpdateGroupPotentialField(unsigned int, const std::set<unsigned int>&, const std::set<unsigned int>&);

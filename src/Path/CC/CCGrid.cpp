@@ -459,7 +459,8 @@ void CCGrid::AddGlobalDynamicCellData(
 	std::vector<Cell>& currCells,
 	std::vector<Cell>& prevCells,
 	const Cell* cell,
-	int cellsInRadius,
+	int minCellsInRadius,
+	int maxCellsInRadius,
 	const vec3f& vel,
 	unsigned int cellDataType,
 	unsigned int cellTmpID
@@ -475,8 +476,8 @@ void CCGrid::AddGlobalDynamicCellData(
 	// 4- rather than 8-connected)
 	// cellsInRadius = 0;
 
-	for (int x = -cellsInRadius; x <= cellsInRadius; x++) {
-		for (int z = -cellsInRadius; z <= cellsInRadius; z++) {
+	for (int x = -maxCellsInRadius; x <= maxCellsInRadius; x++) {
+		for (int z = -maxCellsInRadius; z <= maxCellsInRadius; z++) {
 			const int cx = int(cell->x) + x;
 			const int cz = int(cell->y) + z;
 
@@ -485,7 +486,7 @@ void CCGrid::AddGlobalDynamicCellData(
 			if (cx < 0 || cx >= int(numCellsX)) { continue; }
 			if (cz < 0 || cz >= int(numCellsZ)) { continue; }
 
-			if ((x * x) + (z * z) > (cellsInRadius * cellsInRadius)) {
+			if ((x * x) + (z * z) > (maxCellsInRadius * maxCellsInRadius)) {
 				continue;
 			}
 
@@ -563,16 +564,19 @@ void CCGrid::AddGlobalDynamicCellData(
 	}
 }
 
-void CCGrid::AddDensity(const vec3f& pos, const vec3f& vel, float radius) {
+void CCGrid::AddDensity(const vec3f& pos, const vec3f& vel, float minRadius, float maxRadius) {
 	std::vector<Cell>& currCells = mGridStates[mCurrBufferIdx].cells;
 	std::vector<Cell>& prevCells = mGridStates[mPrevBufferIdx].cells;
 
 	const Cell* cell = &currCells[ GetCellIndex1D(pos) ];
 
-	AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DENSITY, -1);
+	const int minCells = CELLS_IN_RADIUS(minRadius);
+	const int maxCells = CELLS_IN_RADIUS(maxRadius);
+
+	AddGlobalDynamicCellData(currCells, prevCells, cell, minCells, maxCells, vel, DATATYPE_DENSITY, -1);
 }
 
-void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, unsigned int numFrames, float stepSize) {
+void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float minRadius, float maxRadius, unsigned int numSteps, float stepSize) {
 	if (vel.sqLen2D() <= EPSILON) {
 		// no predictive discomfort for stationary objects
 		// (density alone should cause those to be avoided)
@@ -592,16 +596,19 @@ void CCGrid::AddDiscomfort(const vec3f& pos, const vec3f& vel, float radius, uns
 	// const unsigned int posCellIdx = GetCellIndex1D(pos);
 	// stepSize = 1.0f;
 
+	const int minCells = CELLS_IN_RADIUS(minRadius);
+	const int maxCells = CELLS_IN_RADIUS(maxRadius);
+
 	static unsigned int tmpID = -1;
 
-	for (unsigned int n = 0; n <= numFrames; n++) {
+	for (unsigned int n = 0; n <= numSteps; n++) {
 		const vec3f        stepPos = pos + vel * n * stepSize;
 		const unsigned int cellIdx = GetCellIndex1D(stepPos);
 		const Cell*        cell    = &currCells[cellIdx];
 
 		// skip our own cell
 		// if (cellIdx == posCellIdx) { continue; }
-		AddGlobalDynamicCellData(currCells, prevCells, cell, CELLS_IN_RADIUS(radius), vel, DATATYPE_DISCOMFORT, tmpID);
+		AddGlobalDynamicCellData(currCells, prevCells, cell, minCells, maxCells, vel, DATATYPE_DISCOMFORT, tmpID);
 	}
 
 	tmpID += 1;
