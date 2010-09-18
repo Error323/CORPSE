@@ -474,19 +474,21 @@ void CCGrid::AddGlobalDynamicCellData(
 	// directions parallel to grid-axes and weakest along
 	// directions at 45-degree angles (because the grid is
 	// 4- rather than 8-connected)
-	// cellsInRadius = 0;
+	// minCellsInRadius = 0;
+	// maxCellsInRadius = 0;
 
 	for (int x = -maxCellsInRadius; x <= maxCellsInRadius; x++) {
 		for (int z = -maxCellsInRadius; z <= maxCellsInRadius; z++) {
 			const int cx = int(cell->x) + x;
 			const int cz = int(cell->y) + z;
+			const int rr = (x * x) + (z * z);
 
 			bool cellTouched = false;
 
 			if (cx < 0 || cx >= int(numCellsX)) { continue; }
 			if (cz < 0 || cz >= int(numCellsZ)) { continue; }
 
-			if ((x * x) + (z * z) > (maxCellsInRadius * maxCellsInRadius)) {
+			if (rr > (maxCellsInRadius * maxCellsInRadius)) {
 				continue;
 			}
 
@@ -518,8 +520,8 @@ void CCGrid::AddGlobalDynamicCellData(
 					// if (vel.sqLen2D() <= EPSILON) { rho = mRhoMax; }
 					// if (x == 0 && z == 0) { rho = mRhoMax; }
 
-					cf->density += mRhoBar;
-					cb->density += mRhoBar;
+					cf->density += ((rr <= (minCellsInRadius * minCellsInRadius))? mRhoBar: mRhoBar * 0.5f);
+					cb->density += ((rr <= (minCellsInRadius * minCellsInRadius))? mRhoBar: mRhoBar * 0.5f);
 					cf->avgVelocity += (vel * mRhoBar);
 					cb->avgVelocity += (vel * mRhoBar);
 
