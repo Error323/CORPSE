@@ -517,13 +517,15 @@ void CCGrid::AddGlobalDynamicCellData(
 					// const float scale = 1.0f - ((std::abs(x) + std::abs(z)) / float(cellsInRadius << 1));
 					// const float rho = mRhoBar + ((mRhoMin - mRhoBar - EPSILON) * scale);
 
-					// if (vel.sqLen2D() <= EPSILON) { rho = mRhoMax; }
-					// if (x == 0 && z == 0) { rho = mRhoMax; }
+					float rho = mRhoBar;
 
-					cf->density += ((rr <= (minCellsInRadius * minCellsInRadius))? mRhoBar: mRhoBar * 0.5f);
-					cb->density += ((rr <= (minCellsInRadius * minCellsInRadius))? mRhoBar: mRhoBar * 0.5f);
-					cf->avgVelocity += (vel * mRhoBar);
-					cb->avgVelocity += (vel * mRhoBar);
+					if (x == 0 && z == 0) { rho = mRhoMax; }
+					if (rr > (minCellsInRadius * minCellsInRadius)) { rho = mRhoBar * 0.5f; }
+
+					cf->density += rho;
+					cb->density += rho;
+					cf->avgVelocity += (vel * rho);
+					cb->avgVelocity += (vel * rho);
 
 					cellTouched = true;
 				} break;
