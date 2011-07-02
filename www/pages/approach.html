@@ -1,0 +1,153 @@
+<h1>Approach</h1>
+This section explains some (unmentioned) details of the algorithm that are
+extracted from the paper by <i>Treuille et al., 2006</i>. Furthermore we will
+explain key areas where we apply alternatives to certain parts of the suggested
+algorithm. We highly recommend reading the paper itself, listed in the <a
+href="/corpse/references">references</a>, before proceeding this section. For
+the full details of our work we refer the reader to our <a
+href="http://github.com/Error323/CORPSE">sourcecode</a>.
+<br></br>
+The first step toward implementing the full CC algorithm is to be able to
+compute the potential field for a group.  This requires that the group's cost
+field be known, which is formed by a simple linear combination of its speed-
+and discomfort field. Next, the gradient of the group's potential field is
+multiplied with the speed field to construct the velocity field, which finally
+can be interpolated to update the individual positions of group members.
+
+<h2>UpdateGroupPotentialField</h2>
+This is the main function of the algorithm. It assumes the cost field has been
+computed, and that the goal cells (the set of cells that units in a group want
+to travel to) are given. From this information the new potential field is
+calculated. As described above, this potential field (or rather its gradient)
+is then used in a second step to move each unit along the shortest path of
+least resistance to one of the goal cells. In pseudo-code, this looks as
+follows:
+
+<div class="Pseudocode">UpdateGroupPotentialField(IN goalCells, IN costField, OUT potField):
+   CANDIDATES = PriorityQueue ## sorted by cell-potential, asc order
+   KNOWN      = goalCells
+   UNKNOWN    = allCells - goalCells
+
+   foreach cell in KNOWN:
+      potField[cell] = 0
+
+   foreach cell in UNKNOWN:
+      potField[cell] = +inf
+
+   foreach cell in KNOWN:
+      UpdateCandidates(cell)
+
+   while (not Empty(CANDIDATES)):
+      cell = Pop(CANDIDATES)
+      Add(KNOWN, cell)
+      UpdateCandidates(cell)
+</div>
+
+<h2>UpdateCandidates</h2>
+This function examines possible candidate cells for the goal cells. Starting
+with the neighbours of the goal cell as possible candidates, the algorithm
+propagates outwards until all cells in the grid have a defined potential value.
+
+<div class="Pseudocode">UpdateCandidates(IN cell):
+   NEIGHBOURS = Neighbours(cell)
+   foreach neighbour in NEIGHBOURS-KNOWN-CANDIDATES:
+      costWest =
+           potField[neighbour + WEST ] +
+           costField[neighbour, neighbour + WEST ]
+      costEast =
+           potField[neighbour + EAST ] +
+           costField[neighbour, neighbour + EAST ]
+      costNorth =
+           potField[neighbour + NORTH] +
+           costField[neighbour, neighbour + NORTH]
+      costSouth =
+           potField[neighbour + SOUTH] +
+           costField[neighbour, neighbour + SOUTH]
+
+      ## potential is undefined along x-axis
+      if (costWest is +inf and costEast is +inf):
+         minPotCellVer = ArgMin_{cell}(costNorth, costSouth)
+         potField[neighbour] = Potential1D(minPotCellVer)
+         potFieldDelta{neighbour, minPotCellVer} =
+            potField[neighbour] - potField[minPotCellVer]
+
+      ## potential is undefined along y-axis
+      elif (costNorth is +inf and costSouth is +inf):
+         minPotCellHor = ArgMin_{cell}(costEast, costWest)
+         potField[neighbour] = Potential1D(minPotCellHor)
+         potFieldDelta{neighbour, minPotCellHor} =
+            potField[neighbour] - potField[minPotCellHor]
+
+      ## potential defined along both axes
+      else:
+         minPotCellHor = ArgMin_{cell}(costEast, costWest)
+         minPotCellVer = ArgMin_{cell}(costNorth, costSouth)
+
+         potField[neighbour] =
+            Potential2D(neighbour, minPotCellHor, minPotCellVer)
+         potFieldDelta{neighbour, minPotCellHor} =
+            potField[neighbour] - potField[minPotCellHor]
+         potFieldDelta{neighbour, minPotCellVer} =
+            potField[neighbour] - potField[minPotCellVer]
+
+      Push(CANDIDATES, neighbour)
+</div>
+
+<h2>Potential1D</h2>
+Computes the potential of a cell for one dimension only as the other dimension
+is undefined and can be neglected according to section 4.3 of the paper.
+
+<div class="Pseudocode">Potential1D(IN curCell, IN neighbourCell):
+   pot  = potField[neighbourCell]
+   cost = costField[curCell, neighbourCell]
+
+   solution1 = pot + cost
+   solution2 = pot - cost
+   return Max(solution1, solution2)
+</div>
+
+<h2>Potential2D</h2>
+Computes the potential of a cell for both the X and Y dimension. This is based
+on solving a quadratic equation Q for the unknown variable PHI_M (the new
+potential value  for cell M), where Q defines a certain finite-difference
+approximation to the underlying eikonal partial differential equation.
+
+<div class="Pseudocode">Potential2D(IN curCell, IN horCell, IN verCell):
+   potX  = potField[horCell]
+   potY  = potField[verCell]
+   costX = costField[curCell, horCell]
+   costY = costField[curCell, verCell]
+
+   a = (costX^2*potY + costY^2*costX) / (costX^2+costY^2)
+   b = sqrt(costX^2 + costY^2)
+   c = (costX * costY) / b
+
+   phi_m_1 = a + c
+   phi_m_2 = a - c
+   return Max(phi_m_1, phi_m_2)
+</div>
+
+<h2>Density conversion</h2>
+The density computation is used to compute a proper speedfield of the grid.
+Each invidual unit projects a density around itself, making sure speed
+decreases for other units approaching. The paper suggests a density conversion
+scheme that is somewhat unconventional see section 4.1 for the "ABCD" scheme.
+<br></br>
+For our density conversion we applied a 2D gaussian density conversion around
+each individual unit. As with this scheme individual units can have greater
+dimensions then a single gridcell.
+
+<h2>Discomfort field</h2>
+The main purpose of the discomfort field is to handle geographic preferences.
+A second usage of the discomfort field is to project a small amount in front of
+each single unit in order to clear a path for this unit. The paper suggests a
+discomfort scalar per cell. During our tests we discovered that this raised
+problems when multiple rows of units are moving "in file" as they try to avoid
+eachother's discomfort, creating lines of units instead of coherent groups. As
+such, we decided to implement discomfort as a vector field.
+<br></br>
+With the discomfort now represented as a vector field (one vector per grid
+cell) we could let the algorithm take directional information into account and
+calculate a more accurate value for the true discomfort level influencing each
+group's cost field (C) every frame, so that units all heading the same way
+would minimally self-obstruct and maintain better coherence.

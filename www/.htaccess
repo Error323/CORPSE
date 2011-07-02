@@ -1,0 +1,7 @@
+RewriteEngine On
+
+RewriteCond    %{REQUEST_URI}    !^/corpse/css        [NC]
+RewriteCond    %{REQUEST_URI}    !^/corpse/images     [NC]
+RewriteCond    %{REQUEST_URI}    !^/corpse/index.php  [NC]
+RewriteCond    %{QUERY_STRING}   ^(.*)$
+RewriteRule    ^(.+)$            index.php?page=$1&%1 [L]

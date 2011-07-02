@@ -1,0 +1,27 @@
+<h1>Introduction</h1>
+Avoiding collisions between groups of friendly units whose paths cross one
+another, mixing units of various sizes and masses within groups, maintaining
+group coherency as the units in them move to their individual destinations:
+these are just some of the long-standing problematic areas in <i>Real-Time
+Strategy</i> (RTS) games that surround the tasks of pathfinding and -following.
+Many different approaches to these problems have been attempted, such as
+emergent flocking behavior, social force rules, constrained particle-system
+interactions, and others. One of the most recent models, introduced by
+<i>Treuille et al., 2006</i>, is based on continuum dynamics. This website
+will serve as a project report of our implementation of their <i>Continuum
+Crowds</i> (CC) algorithm within our own (bare bones) RTS game engine.
+
+<h2>Learning Goals</h2>
+A thorough understanding of the real-time global crowd model presented in the
+CC paper. Since this model is based on continuum dynamics, becoming familiar
+with the <i>Fast Marching Method</i> (FMM) for solving constrained differential
+equations will also be required. The overall goal is to gain experience with
+state-of-the-art algorithms to perform pathfinding for large groups of agents
+in full 3D, by implementing the model within a real-time strategy game engine.
+The work will also serve as a stepping stone to a possible MSc. thesis.
+
+<h2>Contents</h2>
+The project will start by examining the literature, in particular on fluid
+simulation methods and numerical integration. A 3D engine framework will be
+programmed in which the CC algorithm can be integrated and evaluated under
+crowd conditions typical of modern RTS games.

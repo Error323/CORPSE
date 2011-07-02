@@ -1,0 +1,36 @@
+<h1>Conclusions</h1>
+After implementing the algorithm near-verbatim as described in the paper
+<i>(Treuille et al., 2006)</i> we found that we could not reproduce several of
+the "flow" effects such as lane formation for two groups moving in opposite
+directions.  Furthermore, each individual group tended to spread out far too
+much from self-obstruction.
+<br></br>
+We discussed whether this was due to implementation errors or fundamental flaws
+in the CC method. Looking at the <a
+href="http://grail.cs.washington.edu/projects/crowd-flows/movs/continuum-crowds-divx.avi">demo
+video</a> for clues etc. At this point we also mailed Treuille and replaced the
+"weird" ABCD density conversion step with our own.
+<br></br>
+We eventually concluded that the scalar discomfort field was responsible
+(because the projection of [predictive] discomfort values caused units "further
+back" in a group to avoid those in front) and came up with the idea to convert
+this to a vector field instead, which we later subdivided into mobile and
+static components for even more fine-grained control.
+<br></br>
+Still we were largely unable to create single-file interleaving lanes as seen
+in some CC videos, since dense multi-row groups of units will project
+high-discomfort elongated "blob" zones (unless the grid is given extremely
+large resolution) that typically force a number of wider "tracks" to form.
+Furthermore, this change actually makes it harder for swirling vortices to
+appear (one group moving SE and another moving SW generate an average
+discomfort vector pointing S in the grid cells where their predictions overlap,
+so both groups think the discomfort ahead is misaligned 45 degrees which has
+only minor influence on their C's) without using an extreme amount of
+prediction.
+<br></br>
+Our overall conclusion for applying CC in RTS games is that although it is
+possible as we have shown, it requires a lot of tweaking and experimenting with
+the parameters. For this project, unfortunately, we didn't have enough time to
+make it work properly beyond a standard implementation as suggested in the
+paper. However, we feel that our work provides a good basis/testbed to further
+develop a robust pathfinding system for large groups within an RTS environment.
