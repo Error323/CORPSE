@@ -127,6 +127,24 @@ approximation to the underlying eikonal partial differential equation.
    return Max(phi_m_1, phi_m_2)
 </div>
 
+<!--
+Density conversion:
+	- How did we chose the gaussian parameter?
+	- Why did we chose it like that?
+	- Are other settings also usefull?
+	- Why is it better than ABCD?
+
+Discomfort field:
+	- How is the vector computed by the situation?
+	- Which parameters cause that and how did we chose the settings?
+	- Will it still produce a scalar potential such that the eikonal approximation can be applied and how?
+
+Results:
+	- Where should the viewer look at?
+	- Use the same setup with the same goals to show improvement
+	- Discuss results, why does asymmetry occur in a symmetric setup?
+	- Is it because of noise by manual goal selection? How much noise is caused by that?
+!-->
 <h2>Density conversion</h2>
 The density computation is used to compute a proper speedfield of the grid.
 Each invidual unit projects a density around itself, making sure speed
