@@ -165,7 +165,7 @@
 #endif
 
 #include <cstring>
-// #include <cstdio>
+#include <cstdio>
 #include "./NVDDS.hpp"
 
 #include "../../System/FileHandler.hpp"

@@ -41,13 +41,13 @@ FTFont* ui::FTGLFontManager::GetFont(const std::string& fontName, int fontSize) 
 		return it->second;
 	}
 
-	FTTextureFont* font = new FTTextureFont(fontName.c_str());
+        FTTextureFont* font = new FTTextureFont(fontName.c_str());
 
-	if (!font->FaceSize(fontSize)) {
-		LOG << "[FTGLFontManager::GetFont] failed to set size " << fontSize << " for font " << fontName;
-		delete font;
-		return NULL;
-	}
+        if (!font->FaceSize(fontSize)) {
+                LOG << "[FTGLFontManager::GetFont] failed to set size " << fontSize << " for font " << fontName;
+                delete font;
+                return NULL;
+        }
 
 	fonts[fontName] = font;
 	return font;

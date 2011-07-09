@@ -1,12 +1,12 @@
 params = {
 	["general"] = {
 		-- note: paths are wrt. the CWD
-		fontsDir        = "./data/fonts/",
-		mapsDir         = "./data/maps/",
-		modelsDir       = "./data/models/",
-		shadersDir      = "./data/shaders/",
-		texturesDir     = "./data/textures/",
-		logDir          = "./data/logs/",
+		fontsDir        = "../data/fonts/",
+		mapsDir         = "../data/maps/",
+		modelsDir       = "../data/models/",
+		shadersDir      = "../data/shaders/",
+		texturesDir     = "../data/textures/",
+		logDir          = "../data/logs/",
 
 		-- only meaningful in FPS mode
 		mouseLook       =  0,
@@ -17,7 +17,7 @@ params = {
 
 	["ui"] = {
 		fontName        = "Vera.ttf",
-		fontSize        = 60,
+		fontSize        = 72,
 	},
 
 	["server"] = {

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdio>
 
 #include "./CCPathModule.hpp"
 #include "../../Math/vec3.hpp"

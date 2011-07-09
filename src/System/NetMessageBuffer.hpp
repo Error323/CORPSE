@@ -4,6 +4,7 @@
 #include <list>
 #include "./NetMessages.hpp"
 
+#define PFFG_SERVER_NOTHREAD 1
 #ifndef PFFG_SERVER_NOTHREAD
 namespace boost {
 	 class mutex;

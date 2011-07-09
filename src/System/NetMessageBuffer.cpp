@@ -5,9 +5,9 @@
 #include "./NetMessageBuffer.hpp"
 
 CNetMessageBuffer::CNetMessageBuffer() {
-	#ifndef PFFG_SERVER_NOTHREAD
-	msgMutex = new boost::mutex::mutex();
-	#endif
+        #ifndef PFFG_SERVER_NOTHREAD
+        msgMutex = new boost::mutex::mutex();
+        #endif
 }
 
 CNetMessageBuffer::~CNetMessageBuffer() {

@@ -1,6 +1,7 @@
 #include <cmath>
 #include <algorithm>
 #include <limits>
+#include <cstdio>
 
 #include "./CCGrid.hpp"
 #include "../../Ext/ICallOutHandler.hpp"
